@@ -229,7 +229,8 @@
       (assert node.color "should have color")
       (assert node.entity-deleted "should have entity-deleted signal")
       (assert node.get-entity "should have get-entity method")
-      (assert node.update-value "should have update-value method")
+      (assert node.read-text "should have read-text method")
+      (assert node.replace-text "should have replace-text method")
       (assert node.delete-entity "should have delete-entity method")
       (node:drop))))
 

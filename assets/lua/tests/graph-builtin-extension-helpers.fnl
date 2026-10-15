@@ -2,6 +2,11 @@
 (local BuiltInGraphExtensions (require :graph/extensions/builtins))
 (local {:EntityTypeCatalog EntityTypeCatalog} (require :entities/type-catalog))
 (local fs (require :fs))
+(local Graph (require :graph/init))
+(local GraphMap (require :graph/map))
+(local Strings (require :entities/string))
+(local Links (require :entities/link))
+(local tempfile (require :tempfile))
 
 (var temp-counter 0)
 
@@ -12,6 +17,46 @@
     (fs.remove-all dir))
   (fs.create-dirs dir)
   dir)
+
+(fn make-graph [opts]
+  (assert (or (= opts nil) (= (type opts) :table)) "make-graph requires options table")
+  (local dir (tempfile.TemporaryDirectory {:prefix "graph-view-stores-"}))
+  (local options (collect [key value (pairs (or opts {}))] (values key value)))
+  (set options.string-store (or options.string-store (Strings.StringEntityStore {:base-dir dir.path})))
+  (set options.link-store (or options.link-store (Links.LinkEntityStore {:base-dir dir.path})))
+  (local graph (Graph options))
+  (local drop graph.drop)
+  (set graph.drop (fn drop-owned-graph [self]
+                    (drop self)
+                    (dir:drop)))
+  graph)
+
+(fn make-test-graph []
+  (local graph (make-graph {:with-start false}))
+  (local original-has-key-loader graph.has-key-loader-for-key)
+  (set graph.has-key-loader-for-key
+       (fn has-test-loader [self key]
+         (if (and original-has-key-loader (original-has-key-loader self key)) true
+             (if key true false))))
+  graph)
+
+(fn make-graph-map [graph opts]
+  (assert (and graph graph.drop) "make-graph-map requires an owned graph")
+  (local options (or opts {}))
+  (local graph-map (GraphMap.GraphMap {:graph graph :id (or options.id "main")}))
+  (local drop graph-map.drop)
+  (set graph-map.drop (fn drop-owned-map [self]
+                        (drop self)
+                        (graph:drop)))
+  graph-map)
+
+(fn make-test-graph-map [opts]
+  (make-graph-map (make-test-graph) opts))
+
+(fn ordered-fixtures [first second]
+  (fn run-ordered-fixtures []
+    (first)
+    (second)))
 
 (fn make-default-kernels []
   (local Signal (require :signal))
@@ -110,4 +155,9 @@
            (when (fs.exists dir)
              (fs.remove-all dir)))})
 
-{:install-builtins! install-builtins!}
+{:install-builtins! install-builtins!
+ :make-graph make-graph
+ :make-test-graph make-test-graph
+ :make-graph-map make-graph-map
+ :ordered-fixtures ordered-fixtures
+ :make-test-graph-map make-test-graph-map}

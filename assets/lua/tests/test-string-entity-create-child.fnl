@@ -138,11 +138,126 @@
   (local original-load-by-key ctx.graph-map.load-by-key)
   (set ctx.graph-map.load-by-key (fn [_self _key] nil))
   (local action (find-action ctx.parent-node "Create child"))
-  (assert-error-contains (fn [] (invoke-action action))
-                          "StringEntityNode.create-child failed to load child key into GraphMap")
-  (assert (= (length (ctx.stores.string-store:list-entities)) 1) "must roll back child string entity on load failure")
-  (assert (= (length (ctx.stores.link-store:list-entities)) 0) "must roll back link entity on load failure")
+  (local (ok err) (pcall invoke-action action))
+  (assert (not ok))
+  (assert (= (type err) :table) "partial failure must report structured outcomes")
+  (assert (= err.stage :reveal))
+  (assert (= err.outcomes.child :committed))
+  (assert (= err.outcomes.link :committed))
+  (assert err.result.child-key)
+  (assert err.result.link-key)
+  (assert (= (length (ctx.stores.string-store:list-entities)) 2) "committed child must survive reveal failure")
+  (assert (= (length (ctx.stores.link-store:list-entities)) 1) "committed link must survive reveal failure")
   (set ctx.graph-map.load-by-key original-load-by-key))
+
+(fn create-child-preflight-case [ctx]
+  (local created {:count 0})
+  (local handler (ctx.stores.string-store.string-entity-created:connect
+                   (fn count-child [] (set created.count (+ created.count 1)))))
+  (local original ctx.graph-map.load-by-key)
+  (set ctx.graph-map.load-by-key true)
+  (local (ok _err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (set ctx.graph-map.load-by-key original)
+  (ctx.stores.string-store.string-entity-created:disconnect handler)
+  (assert (not ok))
+  (assert (= created.count 0) "preflight must not write then compensate")
+  (assert (= (length (ctx.stores.string-store:list-entities)) 1) "reveal API must be callable before writes")
+  (assert (= (length (ctx.stores.link-store:list-entities)) 0)))
+
+(fn child-link-storage-failure [ctx]
+  (local original ctx.stores.link-store.create-entity)
+  (set ctx.stores.link-store.create-entity
+       (fn fail-link [_self _opts] (error {:code :storage-failed :message "injected" :outcome :not-committed})))
+  (local (ok err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (set ctx.stores.link-store.create-entity original)
+  (assert (not ok))
+  (assert (= err.stage :link))
+  (assert (= err.code :storage-failed))
+  (assert (= err.outcomes.child :committed))
+  (assert (= err.outcomes.link :not-committed))
+  (assert (= err.outcomes.reveal :not-attempted))
+  (assert err.result.child-key)
+  (assert (= err.result.link nil))
+  (assert (= (length (ctx.stores.string-store:list-entities)) 2))
+  (assert (= (length (ctx.stores.link-store:list-entities)) 0))
+  (assert (= (ctx.graph-map:node-count) 1) "failed domain step must not reveal child"))
+
+(fn child-notification-failure [ctx]
+  (local handler (ctx.stores.string-store.string-entity-created:connect
+                   (fn fail-notify [] (error "injected child notification"))))
+  (local (ok err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (ctx.stores.string-store.string-entity-created:disconnect handler)
+  (assert (not ok))
+  (assert (= err.stage :child))
+  (assert (= err.code :notification-failed))
+  (assert (= err.outcomes.child :committed))
+  (assert (= err.outcomes.link :not-attempted))
+  (assert err.result.child-key)
+  (assert (= (. (ctx.stores.string-store:read-text err.result.child.id) :value) ""))
+  (assert (= (length (ctx.stores.string-store:list-entities)) 2))
+  (assert (= (length (ctx.stores.link-store:list-entities)) 0))
+  (assert (= (ctx.graph-map:node-count) 1)))
+
+(fn link-notification-failure [ctx]
+  (local handler (ctx.stores.link-store.link-entity-created:connect
+                   (fn fail-notify [] (error "injected link notification"))))
+  (local (ok err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (ctx.stores.link-store.link-entity-created:disconnect handler)
+  (assert (not ok))
+  (assert (= err.stage :link))
+  (assert (= err.code :notification-failed))
+  (assert (= err.outcomes.child :committed))
+  (assert (= err.outcomes.link :committed))
+  (assert (= err.outcomes.reveal :not-attempted))
+  (assert err.result.child-key)
+  (assert err.result.link-key)
+  (assert (= err.result.link.target-key err.result.child-key))
+  (assert (= (length (ctx.stores.string-store:list-entities)) 2))
+  (assert (= (length (ctx.stores.link-store:list-entities)) 1))
+  (assert (= (ctx.graph-map:node-count) 1)))
+
+(fn child-storage-failure [ctx]
+  (local original ctx.stores.string-store.create-entity)
+  (set ctx.stores.string-store.create-entity
+       (fn fail-create [] (error {:code :storage-failed :message "injected" :outcome :not-committed})))
+  (local (ok err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (set ctx.stores.string-store.create-entity original)
+  (assert (not ok))
+  (assert (= err.stage :child))
+  (assert (= err.outcome :not-committed))
+  (assert (= err.outcomes.child :not-committed))
+  (assert (= err.outcomes.link :not-attempted))
+  (assert (= err.result.child-key nil))
+  (assert (= (length (ctx.stores.string-store:list-entities)) 1)))
+
+(fn relationship-validation [ctx]
+  ;; A persisted endpoint disappears without a store event; cached data cannot
+  ;; satisfy the shared relationship operation's owning validation boundary.
+  ((. (require :entities/record-files) :remove!)
+    (fs.join-path ctx.stores.string-store.entities-dir (.. ctx.parent.id ".md")))
+  (local (ok err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (assert (not ok))
+  (assert (= err.stage :link))
+  (assert (= err.code :not-found))
+  (assert (= err.outcomes.child :committed))
+  (assert (= err.outcomes.link :not-committed))
+  (assert err.result.child-key)
+  (assert (= (length (ctx.stores.link-store:list-entities)) 0)))
+
+(fn reveal-notification-failure [ctx]
+  (local handler (ctx.graph-map.node-added:connect (fn fail-reveal [] (error "injected reveal notification"))))
+  (local (ok err) (pcall ctx.parent-node.create-child ctx.parent-node))
+  (ctx.graph-map.node-added:disconnect handler)
+  (assert (not ok))
+  (assert (= err.stage :reveal))
+  (assert (= err.outcomes.child :committed))
+  (assert (= err.outcomes.link :committed))
+  (assert (= err.outcomes.reveal :unknown))
+  (assert err.result.child-key)
+  (assert err.result.link-key)
+  (assert (ctx.graph-map:lookup err.result.child-key) "reveal may already have materialized child before throwing")
+  (assert (= (length (ctx.stores.string-store:list-entities)) 2))
+  (assert (= (length (ctx.stores.link-store:list-entities)) 1)))
 
 (fn test-create-child-success []
   (with-real-graph-map create-child-success-case))
@@ -164,6 +279,14 @@
 (table.insert tests {:name "Create child fails without load-by-key" :fn test-create-child-without-load-by-key-fails})
 (table.insert tests {:name "Create child rejects shared Graph mount" :fn test-create-child-shared-graph-fails})
 (table.insert tests {:name "Create child fails when child load fails" :fn test-create-child-load-failure-fails-loudly})
+(each [_ scenario (ipairs [{:name "Create child preflights callable reveal" :run create-child-preflight-case}
+                           {:name "Create child retains child on link storage failure" :run child-link-storage-failure}
+                           {:name "Create child reports committed child notification failure" :run child-notification-failure}
+                           {:name "Create child reports committed link notification failure" :run link-notification-failure}
+                           {:name "Create child reports child storage failure" :run child-storage-failure}
+                           {:name "Create child uses shared relationship endpoint validation" :run relationship-validation}
+                           {:name "Create child retains records after reveal notification failure" :run reveal-notification-failure}])]
+  (table.insert tests {:name scenario.name :fn (fn run-scenario [] (with-real-graph-map scenario.run))}))
 
 (local main
   (fn []

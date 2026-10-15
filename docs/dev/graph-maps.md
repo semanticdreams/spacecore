@@ -30,6 +30,8 @@ Implemented:
 - Graph node panel persistence includes `graph-map-id`; restore only applies to the active map and hydration prunes stale panel records.
 - The root `Add to Map` action opens a dialog that loads an entered graph key into the active map and preserves target-owned close lifecycle handling.
 - String entity nodes expose a `Create child` action that creates a child string entity, creates a link entity from parent key to child key, and loads the child key into the containing `GraphMap`.
+- `Create child` preflights the map/reveal API before writes, shares owning text creation and `entities/relationships.create!` with graph capabilities, then reveals explicitly. The visible edge is derived, not an explicit persisted display edge. Partial failures report the failed stage, per-step outcomes, and retained child/link keys; already committed records are never silently deleted as compensation. See [GUI text editors and child creation](/dev/features/graph-capabilities#participating-gui-text-editors-and-child-creation).
+- Full string views and previews use independent displayed-revision editor baselines. Store events update labels but do not reload an editor or let stale text silently overwrite newer GUI/agent writes; conflicts/errors preserve attempted input and display save status.
 - Fast tests cover the main GraphMap, manager, sidebar, GraphView persistence/panel, and menu action behavior.
 
 Remaining:

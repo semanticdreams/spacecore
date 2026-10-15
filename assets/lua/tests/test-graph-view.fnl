@@ -156,7 +156,7 @@
     graph)
 
 (fn make-test-graph []
-    (local graph (Graph {:with-start false}))
+    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
     (local original-has-key-loader graph.has-key-loader-for-key)
     (set graph.has-key-loader-for-key
          (fn [self key]
@@ -167,7 +167,7 @@
 (fn make-test-graph-map [opts]
     (local options (if opts opts {}))
     (local graph (make-test-graph))
-    (GraphMap.GraphMap {:graph graph :id (if options.id options.id "main")}))
+    (BuiltinGraphTestHelpers.make-graph-map graph options))
 (var temp-counter 0)
 (local temp-root (fs.join-path "/tmp/space/tests" "graph-fs-node-tmp"))
 (fn make-temp-dir []
@@ -454,7 +454,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {}))
             (local start ((require :graph/nodes/start))) (graph:add-node start {:auto-focus? true})
             (local builder (start.view start))
             (local view (builder ctx))
@@ -485,7 +485,7 @@
                     (fs.write-file cpp-file "#include \"sub/dep.h\"\n")
                     (fs.write-file txt-file "skip")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (CodeDirNode {:path root :root root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local builder (node.view node))
@@ -532,7 +532,7 @@
                 (fn [root]
                     (local child-dir (fs.join-path root "sub"))
                     (fs.create-dirs child-dir)
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (FsNode {:path root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local actions (node:actions))
@@ -556,7 +556,7 @@
                 (fn [root]
                     (local path (fs.join-path root "main.fnl"))
                     (fs.write-file path "(local x 1)\n")
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (FsNode {:path path}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local actions (node:actions))
@@ -580,7 +580,7 @@
                 (fn [root]
                     (local fnl-file (fs.join-path root "main.fnl"))
                     (fs.write-file fnl-file "(local x 1)\n")
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local builtins (BuiltinGraphTestHelpers.install-builtins! graph {}))
                     (local graph-map (GraphMap.GraphMap {:graph graph :id "code-actions"}))
                     (local dir-key (.. "fs:" (fs.absolute root)))
@@ -623,7 +623,7 @@
                     (fs.write-file main-file "(local dep (require :sub/dep))\n")
                     (fs.write-file dep-file "(local x 1)\n")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (FnlModuleNode {:path main-file :lua-root root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local actions (node:actions))
@@ -658,7 +658,7 @@
                     (fs.write-file main-file "#include \"sub/dep.h\"\n")
                     (fs.write-file dep-file "#pragma once\n")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local code-dir (CodeDirNode {:path root :root root}))
                     (graph:add-node code-dir {:position (glm.vec3 0 0 0)})
                     (local code-dir-view ((code-dir.view code-dir) ctx))
@@ -703,7 +703,7 @@
                     (fs.write-file path "See [README](../README.md)\n")
                     (fs.write-file (fs.join-path root "README.md") "# title\n")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (TextModuleNode {:path path :project-root root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local view ((node.view node) ctx))
@@ -773,7 +773,7 @@
             (with-temp-dir
                 (fn [root]
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local child-dir (fs.join-path root "child"))
                     (local file (fs.join-path root "note.txt"))
                     (fs.create-dirs child-dir)
@@ -842,7 +842,7 @@
                         (fn []
                           (local ctx (make-ctx))
                           (set ctx.panel-target panel-target)
-                          (local graph (Graph {:with-start false}))
+                          (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                           (local node (FsNode {:path root}))
                           (graph:add-node node {:position (glm.vec3 0 0 0)})
                           (local builder (node.view node))
@@ -895,7 +895,7 @@
           (fn []
             (local ctx (make-ctx))
             (set ctx.panel-target panel-target)
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local conversation (LlmConversationNode {}))
             (graph:add-node conversation {:position (glm.vec3 0 0 0)})
             (local builder (conversation.view conversation))
@@ -928,7 +928,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local target {:one 1 :nested {:two 2}})
             (local node (TableNode {:table target
                                     :label "root"
@@ -967,7 +967,7 @@
             (local selector (ObjectSelector {:project (fn [position _opts] position)
                                              :ctx ctx
                                              :enabled? true}))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["a" "b" "c"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-remove-selected"}))
             (local view (GraphView {:graph-map map
@@ -1060,7 +1060,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local conversation (LlmConversationNode {}))
             (graph:add-node conversation {:position (glm.vec3 0 0 0)})
             (local builder (conversation.view conversation))
@@ -1082,7 +1082,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local node (LlmMessageNode {:key "llm-message:test"
                                          :role "assistant"
                                          :content "Hello"
@@ -1113,7 +1113,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local node (LlmNode))
             (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local builder (node.view node))
@@ -1134,7 +1134,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local node (LlmConversationsNode {}))
             (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local builder (node.view node))
@@ -1603,7 +1603,7 @@
                                                                                  :position [50 60 0]
                                                                                  :size [400 300 0]})
                                                            captured-state)})
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["panel-swap"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-panel-placement"}))
             (local first (Graph.GraphNode {:key "panel-swap"
@@ -1858,7 +1858,7 @@
                            :remove-panel-child (fn [_self _element] nil)})
             (local ctx (make-ctx))
             (var view nil)
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["header-button-test"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-header-buttons"}))
             (var opened? false)
@@ -1973,7 +1973,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["menu-node"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-menu"}))
             (var opened nil)
@@ -2093,7 +2093,7 @@
                                                  (for [i (length self.children) 1 -1]
                                                      (when (= (. self.children i) element)
                                                          (table.remove self.children i))))})
-            (local graph (Graph {}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {}))
             (local node ((require :graph/nodes/start))) (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local views (GraphViewNodeViews {:ctx ctx
                                               :view-target target}))
@@ -3403,7 +3403,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local (ok err) (pcall (fn [] (GraphView {:graph graph :ctx ctx}))))
             (assert (not ok) "GraphView should reject :graph without :graph-map")
             (assert (string.find (tostring err) "GraphView requires :graph-map" 1 true)
@@ -3641,7 +3641,7 @@
             (view:drop)
             (graph:drop))))
 
-(table.insert tests {:name "GraphView draws triangle edge between nodes" :fn edge-produces-triangles})
+(table.insert tests {:name "GraphView draws triangle edge between nodes" :fn (BuiltinGraphTestHelpers.ordered-fixtures edge-produces-triangles start-node-view-adds-quit-node)})
 (table.insert tests {:name "Start node view adds quit node edge" :fn start-node-view-adds-quit-node})
 (table.insert tests {:name "Start node view adds fs node edge" :fn start-node-view-adds-fs-node})
 (table.insert tests {:name "Start node view adds table node edge" :fn start-node-view-adds-table-node})
@@ -4247,7 +4247,7 @@
                 (pcall
                   (fn []
                     (local ctx (make-ctx))
-                    (set graph (Graph {:with-start false}))
+                    (set graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (set graph-map (GraphMap.GraphMap {:graph graph :id "receiver-map"}))
                     (set view (GraphView {:graph-map graph-map :ctx ctx}))
                     (local state {:extra_panels [{:kind "llm-conversation-messages-view-dialog"
@@ -4405,7 +4405,7 @@
       (local path (fs.join-path root "main.fnl"))
       (fs.write-file path "(local x 1)\n")
       (local ctx (make-ctx))
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local node (FsNode {:path path}))
       (set node.list-directory
            (fn [_self _path]
@@ -4433,7 +4433,7 @@
       (local ExternalEditor (require :external-editor))
       (local path (fs.join-path root "main.fnl"))
       (fs.write-file path "(local x 1)\n")
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local node (FsNode {:path path}))
       (graph:add-node node {:position (glm.vec3 0 0 0)})
       (local interaction (find-search-row (node:emit-items) "Edit externally"))
@@ -4464,7 +4464,7 @@
     (fn [root]
       (local path (fs.join-path root "note.md"))
       (fs.write-file path "# hello\n")
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local node (FsNode {:path path}))
       (graph:add-node node {:position (glm.vec3 0 0 0)})
       (local interaction (find-search-row (node:emit-items) "View text"))
@@ -4486,7 +4486,7 @@
   (var graph nil)
   (local (ok err) (pcall (fn []
     (fs.create-dirs relative-parent) (fs.write-file absolute-path "# relative viewer\n")
-    (set graph (Graph {:with-start false})) (local node (FsNode {:path relative-path})) (graph:add-node node {:position (glm.vec3 0 0 0)})
+    (set graph (BuiltinGraphTestHelpers.make-graph {:with-start false})) (local node (FsNode {:path relative-path})) (graph:add-node node {:position (glm.vec3 0 0 0)})
     (local interaction (find-search-row (node:emit-items) "View text"))
     (assert interaction "Relative text file should expose View text interaction")
     (assert (= interaction.path absolute-path) "File interaction path should be absolute")
@@ -4499,7 +4499,7 @@
 (fn fs-node-module-interactions-preserve-key-formats []
   (with-fs-interaction-test-dir
     (fn [root]
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local file-cases
         [{:name "main.fnl"
           :label "Open as Fennel Module"
@@ -4530,7 +4530,7 @@
 (fn fs-node-uppercase-module-interactions-restore-through-key-loaders []
   (with-fs-interaction-test-dir
       (fn [root]
-      (local source-graph (Graph {:with-start false}))
+      (local source-graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local source-builtins (BuiltinGraphTestHelpers.install-builtins! source-graph {}))
       (local file-cases
         [{:name "MAIN.FNL"
@@ -4553,7 +4553,7 @@
         (assert (source-graph:lookup module-key)
                 (.. file-case.name " should add module node before persistence")))
       (local state (source-graph:capture-state))
-      (local restored-graph (Graph {:with-start false}))
+      (local restored-graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local restored-builtins (BuiltinGraphTestHelpers.install-builtins! restored-graph {}))
       (restored-graph:restore-state state)
       (each [_ file-case (ipairs file-cases)]
@@ -4577,7 +4577,7 @@
     (pcall
       (fn []
         (when (fs.exists absolute-root) (fs.remove-all absolute-root)) (fs.create-dirs absolute-root) (fs.write-file (fs.join-path absolute-root "child.txt") "hello")
-        (set graph (Graph {:with-start false})) (local node (FsNode {:path relative-root})) (graph:add-node node {:position (glm.vec3 0 0 0)})
+        (set graph (BuiltinGraphTestHelpers.make-graph {:with-start false})) (local node (FsNode {:path relative-root})) (graph:add-node node {:position (glm.vec3 0 0 0)})
         (local entry (find-search-row (node:emit-items) "child.txt"))
         (assert entry "Relative directory should list child file")
         (assert (not (= entry.path (fs.absolute expected-child-path))) "Directory entry path should remain relative by raw comparison") (assert (paths-eq entry.path expected-child-path) "Directory entry path should match expected relative child path") (assert (= entry.path expected-child-path) "Directory entry path should preserve relative parent style")
@@ -4592,7 +4592,7 @@
     (fn [root]
       (local node (FsNode {:path root}))
       (local fallback-ctx (make-ctx))
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (set graph.ctx fallback-ctx)
       (graph:add-node node {:position (glm.vec3 0 0 0)})
       (local builder (node.view node))

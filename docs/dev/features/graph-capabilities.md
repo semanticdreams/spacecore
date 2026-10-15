@@ -255,7 +255,7 @@ link creation to `relationships.create!`. Notification failures after persistenc
 retain `outcome: "committed"` and map their owning result to the declared written
 text/relation DTO; failed storage writes remain explicit. No compensation or
 automatic retry occurs. These are the domain operations for participating GUI
-actions as well; revision-aware GUI migration is a separate follow-on slice.
+actions as well, as described below.
 
 Nonvisual writes do not materialize graph adapters. Raw Graph's string-created
 auto-loading is removed; link/identity events reconcile only already-visible
@@ -264,6 +264,49 @@ endpoints, using owning identity data without loaders. Explicit `load-by-key`,
 labels and derived domain edges may update, but nonvisual access does not change
 GraphMap membership, explicit display edges, focus, selection, islands, or
 projection settings. No map/view is required or consulted by a provider callback.
+
+### Participating GUI text editors and child creation
+
+Full string-entity views and previews compose the shared
+`graph/view/string-entity-editor` widget. The node's `read-text()` and
+`replace-text(value, revision)` delegate directly to the same owning string-store
+operations as `text.read` and `text.replace`. There is no revisionless node edit
+alias. Full views retain the `Enter value...` placeholder and 3–20 lines; previews
+retain `Value...` and exactly three visible lines.
+
+Each mounted editor owns a detached content/revision baseline. Opening initializes
+Input through its `text` option, without emitting a save or advancing the revision.
+Edits submit the revision that produced that editor's displayed content, never a
+fresh revision borrowed from a store signal or a conflict. Only a successful save
+or an explicit committed error result advances that baseline. Thus two editors,
+GUI/agent edits in either direction, unconditional legacy writes, and same-second
+A-to-B-to-A writes all reject stale replacement rather than silently overwriting.
+Store signals continue to update node labels, not editor content or baselines.
+
+Conflicts and storage errors retain attempted input and the prior baseline, and
+display an owned status line. A committed notification error retains the input,
+advances to its committed result, and explicitly says **Save committed**. There is
+no automatic reload, retry, or merge. Empty status occupies no extra layout space;
+dropping the surface recursively drops its editor, Input, and status renderables.
+
+`node:create-child()` is a GUI convenience, not a generic deletion or transaction
+capability. It preflights its containing GraphMap and callable reveal API before
+writing, creates an empty string through the owning store, links through
+`entities/relationships.create!`, then explicitly reveals that child in the same
+map. The link supplies a derived edge; no explicit persisted display edge is added.
+Successful results retain `child`, `child-key`, `child-node`, and `link`, and also
+include `link-key`.
+
+Once a child or link commits it is **not deleted as compensation** if a subsequent
+step fails. Errors include `stage` (`child`, `link`, or `reveal`), the original
+`code` and `cause`, a `result` holding known created records/keys, and per-step
+`outcomes`. Domain outcomes are `not-attempted`, `not-committed`, `committed`, or
+`unknown`; reveal is `not-attempted`, `revealed`, or `unknown` (a throwing reveal
+may already have inserted the child). The top-level `outcome` is `committed` when
+any known domain record committed, otherwise the failing operation's outcome.
+Committed notification failures retain the created keys from their owning result,
+stop the sequence, and do not imply that later steps ran. Inspect per-step outcomes
+and retained keys rather than blindly repeating the whole action.
 
 ## Registration and ownership
 

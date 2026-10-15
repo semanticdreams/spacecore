@@ -19,12 +19,16 @@
       (or (and entity entity.id) "string entity")))
 
 (local LinkEntityStore (require :entities/link))
+(local Relationships (require :entities/relationships))
 (local GraphMapContext (require :graph/map-context))
 
 (fn require-graph-map [node]
   (local graph-map node.graph)
   (assert graph-map "StringEntityNode.create-child requires mounted GraphMap")
-  (GraphMapContext.assert-graph-map graph-map "StringEntityNode.create-child"))
+  (GraphMapContext.assert-graph-map graph-map "StringEntityNode.create-child")
+  (assert (= (type graph-map.load-by-key) :function)
+          "StringEntityNode.create-child requires callable GraphMap.load-by-key")
+  graph-map)
 
 (fn resolve-link-store [graph-map]
   (local store
@@ -35,25 +39,50 @@
         (LinkEntityStore.get-default)))
   (assert store "StringEntityNode.create-child requires link store"))
 
-(fn require-created-entity [entity context]
-  (assert entity (.. context " failed to create entity"))
-  (assert entity.id (.. context " created entity is missing id"))
-  entity)
+(fn child-stage! [stage outcomes result operation]
+  (var (ok value) (pcall operation))
+  (when ok
+    (if (= stage :reveal)
+        (when (not value)
+          (set ok false)
+          (set value {:code :reveal-failed :message "GraphMap did not return the child" :outcome :unknown}))
+        (when (not (and (= (type value) :table) value.id))
+          (set ok false)
+          (set value {:code :invalid-result :message "Created entity is missing id" :outcome :unknown}))))
+  (if ok
+      (do (set (. outcomes stage) (if (= stage :reveal) :revealed :committed)) value)
+      (do
+        (local cause (if (and (= (type value) :table) value.code) value
+                         {:code :internal-error :message (tostring value) :outcome :unknown}))
+        (set (. outcomes stage) (if (= stage :reveal) :unknown (or cause.outcome :unknown)))
+        (when (and (= cause.outcome :committed) cause.result cause.result.id)
+          (set (. result stage) cause.result)
+          (set (. result (.. stage "-key"))
+               (.. (if (= stage :child) KEY_PREFIX "link-entity:") cause.result.id)))
+        (error {:code cause.code :message (.. "Create child failed at " stage ": " cause.message)
+                :stage stage :outcome (if (or (= outcomes.child :committed) (= outcomes.link :committed))
+                                        :committed (or cause.outcome :unknown))
+                :outcomes outcomes :result result :cause cause}))))
 
-(fn rollback-created-child [string-store link-store child link]
-  (when (and link link.id)
-    (link-store:delete-entity link.id))
-  (when (and child child.id)
-    (string-store:delete-entity child.id)))
-
-(fn load-created-child [graph-map string-store link-store child link child-key]
-  (local (load-ok child-node) (pcall graph-map.load-by-key graph-map child-key))
-  (when (or (not load-ok) (not child-node))
-    (rollback-created-child string-store link-store child link)
-    (if load-ok
-        (error (.. "StringEntityNode.create-child failed to load child key into GraphMap: " child-key))
-        (error child-node)))
-  child-node)
+(fn create-child [self]
+  ;; Resolve and validate presentation dependencies before any owning mutation.
+  (local graph-map (require-graph-map self))
+  (local link-store (resolve-link-store graph-map))
+  (assert (= (type link-store.create-entity) :function) "Create child requires link creation")
+  (local result {})
+  (local outcomes {:child :not-attempted :link :not-attempted :reveal :not-attempted})
+  (local child (child-stage! :child outcomes result
+                (fn create-string [] (self.store:create-entity {}))))
+  (set result.child child)
+  (set result.child-key (.. KEY_PREFIX child.id))
+  (local link (child-stage! :link outcomes result
+               (fn create-link []
+                 (Relationships.create! self.store link-store {:key self.key} {:key result.child-key}))))
+  (set result.link link)
+  (set result.link-key (.. "link-entity:" link.id))
+  (set result.child-node (child-stage! :reveal outcomes result
+                          (fn reveal [] (graph-map:load-by-key result.child-key))))
+  result)
 
 (fn StringEntityNode [opts]
   (local options (or opts {}))
@@ -91,32 +120,17 @@
        (fn [self]
          (self.store:get-entity self.entity-id)))
 
-  (set node.update-value
-       (fn [self new-value]
-         (self.store:update-entity self.entity-id {:value new-value})
-         (self:refresh-label)))
+  (set node.read-text
+       (fn [self] (self.store:read-text self.entity-id)))
+  (set node.replace-text
+       (fn [self value revision]
+         (self.store:replace-text self.entity-id value revision)))
 
   (set node.delete-entity
        (fn [self]
          (self.store:delete-entity self.entity-id)))
 
-  (set node.create-child
-       (fn [self]
-         (local graph-map (require-graph-map self))
-         (local child (require-created-entity
-                        (self.store:create-entity {})
-                        "StringEntityNode.create-child string store"))
-         (local child-key (.. KEY_PREFIX (tostring child.id)))
-         (local link-store (resolve-link-store graph-map))
-         (local link (require-created-entity
-                       (link-store:create-entity {:source-key self.key
-                                                  :target-key child-key})
-                       "StringEntityNode.create-child link store"))
-         (local child-node (load-created-child graph-map self.store link-store child link child-key))
-         {:child child
-          :child-key child-key
-          :child-node child-node
-          :link link}))
+  (set node.create-child create-child)
 
   (set node.actions
        [{:name "Create child"
