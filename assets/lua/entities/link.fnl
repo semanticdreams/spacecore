@@ -3,174 +3,160 @@
 (local fs (require :fs))
 (local Uuid (require :uuid))
 (local json (require :json))
+(local RecordFiles (require :entities/record-files))
 
-(fn ensure-dir [path]
-  (when (and path fs fs.create-dirs)
-    (pcall (fn [] (fs.create-dirs path))))
-  path)
+(fn fail [code message]
+  (error {:code code :message message :outcome :not-committed}))
+(fn storage! [f ...]
+  (local (ok result) (pcall f ...))
+  (if ok result
+      (and (= (type result) :table) result.code) (error result)
+      (fail :storage-failed (tostring result))))
+(fn valid-id! [id]
+  (when (not (and (= (type id) :string) (<= 1 (length id) 256) (string.match id "^[%w_-]+$")))
+    (fail :invalid-arguments "invalid link entity id"))
+  id)
+(fn copy-record [entity] (json.loads (json.dumps entity)))
+(fn validate-record! [entity id code]
+  (when (not (and (= (type entity) :table) (= entity.id id)
+                  (= (type entity.source-key) :string) (= (type entity.target-key) :string)
+                  (= (type entity.created-at) :number) (= (type entity.metadata) :table)))
+    (fail code "invalid link record identity or required fields"))
+  entity)
+(fn notify! [signal entity]
+  (local result (copy-record entity))
+  (local (ok err) (pcall signal.emit signal entity))
+  (when (not ok)
+    (error {:code :notification-failed :message (tostring err) :outcome :committed :result result})))
+(fn page-limit [value default maximum]
+  (local n (if (= value nil) default value))
+  (when (not (and (= (type n) :number) (= n (math.floor n)) (>= n 1)))
+    (fail :invalid-arguments "page limits must be positive integers"))
+  (when (> n maximum) (fail :limit-exceeded "page limit exceeded"))
+  n)
 
 (fn LinkEntityStore [opts]
   (local options (or opts {}))
-  (local base-dir (or options.base-dir
-                      (and appdirs (appdirs.user-data-dir "space"))))
-  (local root (and base-dir fs (fs.join-path base-dir "entities")))
-  (local entities-dir (and root fs (fs.join-path root "link")))
-  (ensure-dir entities-dir)
-
+  (assert (= (type options) :table) {:code :invalid-arguments :message "store options must be a table" :outcome :not-committed})
+  (local files (or options.files RecordFiles))
+  (local base-dir (or options.base-dir (appdirs.user-data-dir "space")))
+  (local root (fs.join-path base-dir "entities"))
+  (local entities-dir (fs.join-path root "link"))
+  (storage! fs.create-dirs entities-dir)
   (local cache {})
-
   (local link-entity-created (Signal))
   (local link-entity-updated (Signal))
   (local link-entity-deleted (Signal))
 
-  (fn entity-path [id]
-    (and entities-dir (fs.join-path entities-dir (.. (tostring id) ".json"))))
-
-  (fn read-entity [path]
-    (when (and path fs fs.exists (fs.exists path))
-      (local (ok content) (pcall fs.read-file path))
-      (when ok
-        (local (parse-ok data) (pcall json.loads content))
-        (when parse-ok
-          {:id (or data.id "")
-           :source-key (or data.source-key "")
-           :target-key (or data.target-key "")
-           :created-at (tonumber (or data.created-at 0))
-           :metadata (or data.metadata {})}))))
-
-  (fn write-entity [entity]
-    (when entity
-      (local path (entity-path entity.id))
-      (when path
-        (ensure-dir entities-dir)
-        (local data {:id entity.id
-                     :source-key entity.source-key
-                     :target-key entity.target-key
-                     :created-at entity.created-at
-                     :metadata entity.metadata})
-        (local content (json.dumps data))
-        (fs.write-file path content)))
-    entity)
-
+  (fn entity-path [id] (fs.join-path entities-dir (.. (valid-id! id) ".json")))
+  (fn read-record [id max-bytes]
+    (local content (storage! files.read! (entity-path id) max-bytes))
+    (local (ok data) (pcall json.loads content))
+    (when (not ok) (fail :corrupt-data "invalid link JSON"))
+    (validate-record! data id :corrupt-data))
   (fn load-entity [id]
-    (local key (tostring id))
-    (if (. cache key)
-        (. cache key)
-        (let [data (read-entity (entity-path key))]
-          (when data
-            (set (. cache key) data))
-          data)))
-
-  (fn get-entity [_self id]
-    (if id (load-entity id) nil))
+    (local path (entity-path id))
+    (if (. cache id) (. cache id)
+        (storage! fs.exists path)
+        (do (local data (read-record id)) (set (. cache id) data) data)
+        nil))
+  (fn get-entity [_self id] (when id (load-entity id)))
+  (fn write-record! [entity]
+    (storage! files.write-json! (entity-path entity.id) entity))
 
   (fn create-entity [_self opts]
-    (local options (or opts {}))
-    (local id (tostring (or options.id (Uuid.v4))))
-    (local now (os.time))
-    (local entity {:id id
-                   :source-key (or options.source-key "")
-                   :target-key (or options.target-key "")
-                   :created-at (or options.created-at now)
-                   :metadata (or options.metadata {})})
-    (set (. cache id) entity)
-    (write-entity entity)
-    (pcall (fn [] (link-entity-created:emit entity)))
-    entity)
+    (local settings (or opts {}))
+    (assert (= (type settings) :table) {:code :invalid-arguments :message "create options must be a table" :outcome :not-committed})
+    (when (not= settings.revision nil) (fail :invalid-arguments "revision cannot be supplied"))
+    (local id (valid-id! (or settings.id (Uuid.v4))))
+    (when (or (. cache id) (storage! fs.exists (entity-path id)))
+      (fail :conflict "link entity already exists"))
+    (local entity {:id id :source-key (or settings.source-key "") :target-key (or settings.target-key "")
+                  :created-at (or settings.created-at (os.time)) :metadata (or settings.metadata {})})
+    (validate-record! entity id :invalid-arguments)
+    (local detached (copy-record entity))
+    (write-record! detached)
+    (set (. cache id) detached)
+    (notify! link-entity-created detached)
+    detached)
 
   (fn update-entity [_self id updates]
+    (local changes (or updates {}))
+    (assert (= (type changes) :table) {:code :invalid-arguments :message "updates must be a table" :outcome :not-committed})
+    (when (or (not= changes.id nil) (not= changes.revision nil))
+      (fail :invalid-arguments "identity and revision cannot be overridden"))
     (local entity (load-entity id))
     (when entity
-      (each [k v (pairs (or updates {}))]
-        (set (. entity k) v))
-      (write-entity entity)
-      (link-entity-updated:emit entity))
+      (local staged (copy-record entity))
+      (each [k v (pairs changes)] (set (. staged k) v))
+      (validate-record! staged id :invalid-arguments)
+      (local detached (copy-record staged))
+      (write-record! detached)
+      (each [k v (pairs detached)] (set (. entity k) v))
+      (notify! link-entity-updated entity))
     entity)
 
   (fn delete-entity [_self id]
     (local entity (load-entity id))
     (when entity
-      (local path (entity-path id))
-      (when (and path fs fs.remove (fs.exists path))
-        (local (rm-ok _rm-err) (pcall (fn [] (fs.remove path))))
-        (when (not rm-ok)
-          (error (.. "link entity delete failed to remove file: " (tostring path)))))
-      (set (. cache (tostring id)) nil)
-      (link-entity-deleted:emit entity))
+      (storage! files.remove! (entity-path id))
+      (set (. cache id) nil)
+      (notify! link-entity-deleted entity))
     entity)
 
+  (fn ids [] (storage! files.list-ids entities-dir ".json"))
   (fn list-entities [_self]
     (local items [])
-    (when (and entities-dir fs fs.list-dir (fs.exists entities-dir))
-      (local (ok entries) (pcall fs.list-dir entities-dir false))
-      (when ok
-        (each [_ entry (ipairs (or entries []))]
-          (when (and entry entry.is-file entry.name (string.match entry.name "%.json$"))
-            (local data (read-entity entry.path))
-            (when data
-              (set (. cache (tostring data.id)) data)
-              (table.insert items data))))))
-    (table.sort items
-                (fn [a b]
-                  (> (or a.created-at 0) (or b.created-at 0))))
+    (each [_ id (ipairs (ids))] (table.insert items (load-entity id)))
+    (table.sort items (fn [a b] (> a.created-at b.created-at)))
     items)
-
-  (fn find-edges-for-nodes [_self node-keys]
+  (fn find-edges-for-nodes [self node-keys]
+    (assert (or (= node-keys nil) (= (type node-keys) :table))
+            {:code :invalid-arguments :message "node keys must be a table" :outcome :not-committed})
     (local key-set {})
-    (each [_ k (ipairs (or node-keys []))]
-      (set (. key-set (tostring k)) true))
+    (each [_ key (ipairs (or node-keys []))] (set (. key-set (tostring key)) true))
     (local results [])
-    (when (and entities-dir fs fs.list-dir (fs.exists entities-dir))
-      (local (ok entries) (pcall fs.list-dir entities-dir false))
-      (when ok
-        (each [_ entry (ipairs (or entries []))]
-          (when (and entry entry.is-file entry.name (string.match entry.name "%.json$"))
-            (local data (read-entity entry.path))
-            (when (and data
-                       (. key-set (tostring data.source-key))
-                       (. key-set (tostring data.target-key)))
-              (set (. cache (tostring data.id)) data)
-              (table.insert results data))))))
+    (each [_ data (ipairs (list-entities self))]
+      (when (and (. key-set data.source-key) (. key-set data.target-key)) (table.insert results data)))
     results)
-
-  (fn find-entities-for-key [_self key]
+  (fn find-entities-for-key [self key]
+    (assert (= (type key) :string) {:code :invalid-arguments :message "key must be text" :outcome :not-committed})
     (local key-str (tostring key))
     (local results [])
-    (when (and entities-dir fs fs.list-dir (fs.exists entities-dir))
-      (local (ok entries) (pcall fs.list-dir entities-dir false))
-      (when ok
-        (each [_ entry (ipairs (or entries []))]
-          (when (and entry entry.is-file entry.name (string.match entry.name "%.json$"))
-            (local data (read-entity entry.path))
-            (when (and data
-                       (or (= (tostring data.source-key) key-str)
-                           (= (tostring data.target-key) key-str)))
-              (set (. cache (tostring data.id)) data)
-              (table.insert results data))))))
+    (each [_ data (ipairs (list-entities self))]
+      (when (or (= data.source-key key-str) (= data.target-key key-str)) (table.insert results data)))
     results)
 
-  {:base-dir base-dir
-   :root root
-   :entities-dir entities-dir
-   :link-entity-created link-entity-created
-   :link-entity-updated link-entity-updated
+  (fn scan-page [_self opts]
+    (local settings (or opts {}))
+    (assert (= (type settings) :table) {:code :invalid-arguments :message "scan options must be a table" :outcome :not-committed})
+    (local limit (page-limit settings.limit 20 50))
+    (local examined-limit (page-limit settings.examined-limit 200 200))
+    (when (not= settings.after-id nil) (valid-id! settings.after-id))
+    (when (and (not= settings.key nil) (not= (type settings.key) :string))
+      (fail :invalid-arguments "incident key must be text"))
+    (local page {:items [] :examined 0 :has-more false})
+    (each [_ id (ipairs (ids))]
+      (when (or (not settings.after-id) (> id settings.after-id))
+        (if (or (>= (length page.items) limit) (>= page.examined examined-limit))
+            (set page.has-more true)
+            (do
+              (local data (read-record id 131072))
+              (set page.examined (+ page.examined 1))
+              (set page.last-id id)
+              (when (or (not settings.key) (= settings.key data.source-key) (= settings.key data.target-key))
+                (table.insert page.items (copy-record data)))))))
+    page)
+
+  {:base-dir base-dir :root root :entities-dir entities-dir
+   :link-entity-created link-entity-created :link-entity-updated link-entity-updated
    :link-entity-deleted link-entity-deleted
-   :get-entity get-entity
-   :create-entity create-entity
-   :update-entity update-entity
-   :delete-entity delete-entity
-   :list-entities list-entities
-   :find-edges-for-nodes find-edges-for-nodes
-   :find-entities-for-key find-entities-for-key})
+   :get-entity get-entity :create-entity create-entity :update-entity update-entity
+   :delete-entity delete-entity :list-entities list-entities :scan-page scan-page
+   :find-edges-for-nodes find-edges-for-nodes :find-entities-for-key find-entities-for-key})
 
 (var default-store nil)
-
 (fn get-default [opts]
-  (if default-store
-      default-store
-      (do
-        (set default-store (LinkEntityStore (or opts {})))
-        default-store)))
-
-{:LinkEntityStore LinkEntityStore
- :get-default get-default}
+  (if default-store default-store
+      (do (set default-store (LinkEntityStore opts)) default-store)))
+{:LinkEntityStore LinkEntityStore :get-default get-default}

@@ -148,6 +148,7 @@
     :tests.test-string-utils
     :tests.test-entity-type-catalog
     :tests.test-string-entities
+    :tests.test-entity-record-persistence
     :tests.test-string-entity-search
     :tests.test-string-entity-create-child
     :tests.test-code-entities

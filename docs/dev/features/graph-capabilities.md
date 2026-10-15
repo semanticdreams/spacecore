@@ -124,6 +124,72 @@ An error is not a rollback guarantee:
 Each mutation stands alone; there is no multi-record transaction, automatic
 merge, automatic retry, or compensation of already committed work.
 
+### Owning text and relationship stores
+
+`entities/string` owns Markdown text records; `entities/link` owns directed JSON
+relationship records. Their existing successful CRUD methods and signals remain
+available. Updates preserve cached record identity for existing subscribers, but
+write an independent staged record **before** publishing fields to that cache.
+
+The text store additionally provides:
+
+- `store:read-text(id) -> {id, value, revision}`: a detached snapshot, limited to
+  **131072 stored bytes**, including frontmatter.
+- `store:replace-text(id, value, expected-revision) -> snapshot`: checks the
+  persisted revision and writes synchronously, without yielding. A stale token
+  raises `conflict`, `outcome: "not-committed"`, and `current-revision`, without
+  changing the prior file or cached record. There is no external-writer lock.
+
+Every successful text update, including unconditional `update-entity`, same-value
+and metadata-only updates, persists a fresh UUID revision. Legacy Markdown files
+without a revision receive stable `legacy:<id>` tokens on reads, without file
+rewrites. Only format-owned frontmatter and one empty separator line are removed;
+user body whitespace, CRLF, Unicode, blank lines, and delimiter-looking text are
+preserved byte-for-byte. IDs must be 1–256 ASCII letters/digits/underscore/hyphen;
+path traversal, record/filename identity mismatches, caller revision overrides,
+identity changes, and create collisions are errors.
+
+Both stores expose `store:scan-page(opts) -> {items, examined, has-more, last-id?}`:
+
+- `limit`: 1–50, default 20; `examined-limit`: 1–200, default 200.
+- `after-id`: optional last **examined** filename ID, exclusive; IDs are sorted.
+- Text `query` is an optional case-sensitive literal substring, not a pattern.
+  Link `key` optionally matches either incident endpoint; direction is preserved.
+- Items are detached owning records. Each decoded record is limited to 131072
+  stored bytes. A page may have zero matches and still have `has-more: true`;
+  continue from its `last-id`. The last examined ID is also returned on a final
+  nonempty examination; it is absent when nothing was examined.
+- Corrupt, unreadable, oversized records or listing failure fail the whole page.
+  Directory enumeration/sorting itself is not indexed or bounded total work.
+  Continuations are live, not snapshot pagination.
+
+Store methods raise structured Error records using the vocabulary above, rather
+than Result envelopes. Missing legacy CRUD lookup/update/delete still returns
+nil; missing `read-text`/`replace-text` raises `not-found`. A listener exception
+after persistence raises committed `notification-failed` with the owning record
+in `result` (a text snapshot for `replace-text`). It does not undo the mutation;
+in particular link creation errors are no longer swallowed.
+
+`entities/record-files` is the local publication boundary. It exports
+`read!(path, max-bytes?)`, `write-text!(path, text)`, `write-json!(path, data)`,
+`list-ids(dir, suffix)`, and `remove!(path)`. Text uses checked binary Lua I/O,
+including write/flush/close, followed by staged-byte verification and a
+same-directory rename. JSON uses `json-utils.write-json!` on a unique staging
+path and verifies the exact serialized bytes before destination replacement.
+Failure cleans only that attempt's staging artifacts, never the destination or
+unrelated temporary files. This is checked publication, not power-loss durability.
+Constructors may accept a local `files` boundary for fault injection; the helper's
+`RecordFiles({open?, rename?, stage-json!?})` factory provides checked staging
+seams for local tests. No module defaults or native/global helpers are rebound.
+
+Directory enumeration uses the existing `fs.list-dir(path, include-hidden?)`,
+which is now **always strict** for every caller: permission-denied and other
+enumeration errors raise instead of being suppressed. There is no opt-in flag or
+second listing API. Previously an inaccessible directory could appear to be an
+empty successful listing; callers now receive an error. Readable empty/nonempty
+result shapes, default inclusion of hidden entries, explicit hidden filtering,
+and checked iterator increments are unchanged.
+
 ## Registration and ownership
 
 Descriptor installers add optional `access` to the **existing** key-loader opts:

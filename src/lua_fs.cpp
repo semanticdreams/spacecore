@@ -695,7 +695,7 @@ sol::table fs_list_dir(sol::this_state ts, const std::string& path, sol::optiona
     bool include_hidden = include_hidden_opt.value_or(true);
 
     std::error_code ec;
-    fs::directory_options options = fs::directory_options::skip_permission_denied;
+    fs::directory_options options = fs::directory_options::none;
     fs::directory_iterator it(path.empty() ? fs::path(".") : fs::path(path), options, ec);
     throw_with_message("fs.list_dir", ec);
 

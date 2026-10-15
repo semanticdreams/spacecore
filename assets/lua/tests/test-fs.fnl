@@ -37,6 +37,57 @@
 (fn string-contains? [haystack needle]
   (not= nil (string.find (tostring haystack) needle 1 true)))
 
+(fn chmod! [path mode]
+  (local result (process.run {:args ["chmod" mode path] :timeout 10}))
+  (assert (= result.exit-code 0) (.. "permission fixture chmod failed: " result.stderr)))
+
+(fn permission-mode [path]
+  (local permissions (. (fs.stat path) :permissions))
+  (local digits [])
+  (for [group 0 2]
+    (local start (+ (* group 3) 1))
+    (local r (if (= (string.sub permissions start start) "r") 4 0))
+    (local w (if (= (string.sub permissions (+ start 1) (+ start 1)) "w") 2 0))
+    (local x (if (= (string.sub permissions (+ start 2) (+ start 2)) "x") 1 0))
+    (table.insert digits (tostring (+ r w x))))
+  (table.concat digits))
+
+(fn with-denied-directory [dir f mode]
+  (local denied-mode (if (= mode nil) "000" mode))
+  (if (not= (string.sub package.config 1 1) "/")
+      (print "permission fixture: NOT APPLICABLE (non-POSIX platform; portable fault tests still run)")
+      (do
+        (local identity (process.run {:args ["id" "-u"] :timeout 10}))
+        (assert (= identity.exit-code 0) "cannot establish effective permission-fixture privilege")
+        (local euid (assert (tonumber identity.stdout) "id -u must return an effective uid"))
+        (if (= euid 0)
+            (print "permission fixture: NOT APPLICABLE (POSIX effective uid 0 bypasses mode denial)")
+            (do
+              (print (.. "permission fixture: APPLICABLE (POSIX effective uid " euid ", mode " denied-mode ")"))
+              (local original (permission-mode dir))
+              (chmod! dir denied-mode)
+              (local (ok result) (pcall f))
+              (local (restored restore-error) (pcall chmod! dir original))
+              (assert restored restore-error)
+              (when (not ok) (error result)))))))
+
+(fn assert-list-error [path]
+  (local (ok err) (pcall fs.list-dir path))
+  (assert (not ok) "fs.list-dir must reject inaccessible/non-directory paths by default")
+  (assert (string-contains? err "fs.list_dir") (tostring err)))
+
+(fn fs-list-dir-errors []
+  (with-temp-dir (fn list-errors [root]
+    (assert (= (length (fs.list-dir root)) 0) "readable empty directory must succeed")
+    (local file (fs.join-path root "record"))
+    (fs.write-file file "data")
+    (assert-list-error (fs.join-path root "missing"))
+    (assert-list-error file)
+    (assert (= (length (fs.list-dir root)) 1) "readable nonempty directory must succeed")
+    (fn denied [] (assert-list-error root))
+    (with-denied-directory root denied)
+    (assert (= (length (fs.list-dir root)) 1) "permissions must be restored"))))
+
 (fn repeated-text [chunk count]
   (local parts [])
   (for [i 1 count]
@@ -116,7 +167,9 @@
     (local entries (fs.list-dir root false))
     (local names (list-names entries))
     (assert (contains? names "visible.txt") "visible entry missing")
-    (assert (not (contains? names ".secret")) "hidden entry should be filtered"))))
+    (assert (not (contains? names ".secret")) "hidden entry should be filtered")
+    (assert (contains? (list-names (fs.list-dir root)) ".secret") "default includes hidden entries")
+    (assert (contains? (list-names (fs.list-dir root true)) ".secret") "explicit true includes hidden entries"))))
 
 (fn fs-copy-rename-remove []
   (with-temp-dir (fn [root]
@@ -346,6 +399,7 @@
 
 (table.insert tests {:name "fs write/read/stat" :fn fs-write-read-stat})
 (table.insert tests {:name "fs list_dir filters hidden files" :fn fs-list-dir-hidden-filter})
+(table.insert tests {:name "fs list_dir always reports enumeration errors" :fn fs-list-dir-errors})
 (table.insert tests {:name "fs copy and rename" :fn fs-copy-rename-remove})
 (table.insert tests {:name "fs read-text-window reads bounded range" :fn fs-read-text-window-bounded-range})
 (table.insert tests {:name "fs read-text-window caps max bytes" :fn fs-read-text-window-caps-max-bytes})
@@ -371,6 +425,7 @@
 {:name "fs"
   :tests tests
   :main main
+  :with-denied-directory with-denied-directory
   :invalid-argument-main invalid-argument-main
   :read-byte-range-invalid-argument-main read-byte-range-invalid-argument-main
   :atomic-replace-stale-token-main atomic-replace-stale-token-main
