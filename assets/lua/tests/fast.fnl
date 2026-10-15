@@ -127,6 +127,7 @@
      :tests.test-tempfile
     :tests.test-graph-loaders
      :tests.test-graph-capabilities
+     :tests.test-graph-entity-capabilities
     :tests.test-sysinfo
     :tests.test-flamegraph
     :tests.test-units

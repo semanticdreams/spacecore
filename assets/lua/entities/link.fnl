@@ -23,6 +23,11 @@
                   (= (type entity.created-at) :number) (= (type entity.metadata) :table)))
     (fail code "invalid link record identity or required fields"))
   entity)
+(fn read-record [files path id max-bytes]
+  (local content (storage! files.read! path max-bytes))
+  (local (ok data) (pcall json.loads content))
+  (when (not ok) (fail :corrupt-data "invalid link JSON"))
+  (validate-record! data id :corrupt-data))
 (fn notify! [signal entity]
   (local result (copy-record entity))
   (local (ok err) (pcall signal.emit signal entity))
@@ -49,18 +54,19 @@
   (local link-entity-deleted (Signal))
 
   (fn entity-path [id] (fs.join-path entities-dir (.. (valid-id! id) ".json")))
-  (fn read-record [id max-bytes]
-    (local content (storage! files.read! (entity-path id) max-bytes))
-    (local (ok data) (pcall json.loads content))
-    (when (not ok) (fail :corrupt-data "invalid link JSON"))
-    (validate-record! data id :corrupt-data))
   (fn load-entity [id]
     (local path (entity-path id))
     (if (. cache id) (. cache id)
         (storage! fs.exists path)
-        (do (local data (read-record id)) (set (. cache id) data) data)
+        (do (local data (read-record files path id)) (set (. cache id) data) data)
         nil))
   (fn get-entity [_self id] (when id (load-entity id)))
+  ;; Participating nonvisual reads are bounded, detached and never prime cache.
+  ;; Legacy get-entity retains its existing lookup/cache semantics.
+  (fn read-link [_self id]
+    (valid-id! id)
+    (when (not (storage! fs.exists (entity-path id))) (fail :not-found "link entity not found"))
+    (read-record files (entity-path id) id 131072))
   (fn write-record! [entity]
     (storage! files.write-json! (entity-path entity.id) entity))
 
@@ -141,7 +147,7 @@
         (if (or (>= (length page.items) limit) (>= page.examined examined-limit))
             (set page.has-more true)
             (do
-              (local data (read-record id 131072))
+              (local data (read-record files (entity-path id) id 131072))
               (set page.examined (+ page.examined 1))
               (set page.last-id id)
               (when (or (not settings.key) (= settings.key data.source-key) (= settings.key data.target-key))
@@ -151,7 +157,7 @@
   {:base-dir base-dir :root root :entities-dir entities-dir
    :link-entity-created link-entity-created :link-entity-updated link-entity-updated
    :link-entity-deleted link-entity-deleted
-   :get-entity get-entity :create-entity create-entity :update-entity update-entity
+   :get-entity get-entity :read-link read-link :create-entity create-entity :update-entity update-entity
    :delete-entity delete-entity :list-entities list-entities :scan-page scan-page
    :find-edges-for-nodes find-edges-for-nodes :find-entities-for-key find-entities-for-key})
 

@@ -45,7 +45,8 @@
     (checked closed close-err))
 
   (fn publish! [path payload stage!]
-    (local staging (.. path ".stage-" (Uuid.v4)))
+    ;; Keep staging a same-directory sibling, independent of destination length.
+    (local staging (fs.join-path (fs.parent path) (.. "record-stage-" (Uuid.v4))))
     (fn attempt []
       (stage! staging)
       (when (not= (read! staging (+ (length payload) 1)) payload)

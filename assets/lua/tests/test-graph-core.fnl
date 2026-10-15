@@ -179,6 +179,44 @@
                     "create-identity node should resolve to target key")
             (graph:drop))))
 
+(fn graph-core-domain-events-never-load-hidden-records []
+    (with-temp-dir
+        (fn exercise [dir]
+            (local Strings (require :entities/string))
+            (local Links (require :entities/link))
+            (local Identities (require :entities/identity))
+            (local strings (Strings.StringEntityStore {:base-dir dir}))
+            (local links (Links.LinkEntityStore {:base-dir dir}))
+            (local identities (Identities.IdentityStore {:base-dir dir}))
+            (local graph (Graph {:string-store strings :link-store links :identity-store identities :morphs {}}))
+            (fn tripwire [_key] (error "domain event must not invoke a loader"))
+            (graph:register-key-loader "string-entity" tripwire)
+            (graph:register-key-loader "identity" tripwire)
+            (strings:create-entity {:id "hidden" :value "hidden"})
+            (identities:create-entity {:id "alias" :target-key "a"})
+            (links:create-entity {:id "edge" :source-key "identity:alias" :target-key "b"})
+            (assert (= (graph:node-count) 0))
+            (local a (Graph.GraphNode {:key "a"}))
+            (local b (Graph.GraphNode {:key "b"}))
+            (graph:add-node a)
+            (assert (= (graph:edge-count) 0))
+            (graph:add-node b)
+            (assert (= (graph:node-count) 2) "hidden identity must not materialize")
+            (assert (= (graph:edge-count) 1) "hidden domain identity may map already-visible endpoints")
+            (identities:update-entity "alias" {:target-key "string-entity:hidden"})
+            (assert (= (graph:edge-count) 0))
+            (assert (= (graph:node-count) 2))
+            (identities:update-entity "alias" {:target-key "a"})
+            (assert (= (graph:edge-count) 1))
+            (links:update-entity "edge" {:target-key "string-entity:hidden"})
+            (assert (= (graph:edge-count) 0))
+            (links:update-entity "edge" {:target-key "b"})
+            (assert (= (graph:edge-count) 1))
+            (identities:delete-entity "alias")
+            (assert (= (graph:edge-count) 0))
+            (assert (= (graph:node-count) 2))
+            (graph:drop))))
+
 (fn graph-core-ensure-identity-key-reuses-existing-identity []
     (with-temp-dir
         (fn [dir]
@@ -344,6 +382,7 @@
 (table.insert tests {:name "Graph core emits node and edge added signals" :fn graph-core-emits-node-and-edge-added})
 (table.insert tests {:name "Graph core resolves identity key to target" :fn graph-core-resolves-identity-key-to-target})
 (table.insert tests {:name "Graph core link edges resolve identity endpoints" :fn graph-core-link-edges-resolve-identity-endpoints})
+(table.insert tests {:name "Graph core domain events reconcile only visible endpoints without loaders" :fn graph-core-domain-events-never-load-hidden-records})
 (table.insert tests {:name "Graph core create-identity creates node and resolves" :fn graph-core-create-identity-creates-node-and-resolves})
 (table.insert tests {:name "Graph core ensure-identity-key reuses existing identity" :fn graph-core-ensure-identity-key-reuses-existing-identity})
 (table.insert tests {:name "Graph core captures node and edge state" :fn graph-core-captures-state})

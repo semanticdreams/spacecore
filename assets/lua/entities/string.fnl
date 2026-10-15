@@ -82,6 +82,8 @@
           (set page.has-more true)
           (do
             (local data (read-record id max-record-bytes))
+            (when (not (utf8.len data.value))
+              (fail :corrupt-data "string record body is not valid UTF-8"))
             (set page.examined (+ page.examined 1))
             (set page.last-id id)
             (when (or (not settings.query) (string.find data.value settings.query 1 true))

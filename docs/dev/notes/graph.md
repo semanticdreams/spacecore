@@ -14,6 +14,22 @@ tags:
 
 Related objects become graph-visible only through explicit preview, view, search-row, or action controls. A node may offer actions such as `Show Code`, `Open Timeline`, `Show Run Steps`, `Reveal Failed Steps`, `Start`, or a searchable picker that loads a selected key into the current graph map and adds any display edge needed for that user-visible relationship. Dense records such as logs, JSON, inputs, outputs, and errors belong in payload panels or full node views rather than generic detail toggles. Graph code should not rely on hidden relationship expansion hooks to bulk-materialize neighboring records.
 
+Nonvisual access uses the existing extension/key-loader registrations' declared
+`discover` / `describe` / `invoke` capabilities, not adapters or UI actions. The
+initial text/relationship family delegates to owning stores and the context-free
+`entities/relationships.create!` domain operation. Consumers select discovered
+references by advertised capability metadata, never by concrete object type.
+See [Nonvisual graph capabilities](/dev/features/graph-capabilities).
+
+Raw Graph does not auto-load created strings or hidden link endpoints on domain
+events. Link and identity events reconcile derived edges only between endpoints
+that have already been explicitly materialized; domain identity mapping does not
+invoke visual loaders. Explicit load/resolve APIs retain their loading semantics,
+including deriving edges when endpoints are loaded or re-added. Nonvisual domain
+writes leave GraphMap membership, explicit display edges, selection, focus,
+islands, and projection state alone. Existing subscribed labels and derived edges
+may reflect the shared domain changes; this is not view-state synchronization.
+
 ### Canonical terminology
 
 | Use | Avoid |

@@ -529,15 +529,26 @@
                                 node.key
                                 key)))))))
 
+    ;; Domain notifications may reconcile visible endpoints, never materialize
+    ;; adapters. Explicit resolve-key/resolve-node retain their loading behavior.
+    (fn visible-endpoint [key]
+        (local visited {})
+        (var current key)
+        (var depth 0)
+        (while (and current (< depth 32))
+            (when (. visited current)
+                (error (.. "link endpoint identity cycle detected at " current)))
+            (set (. visited current) true)
+            (local id (string.match current "^identity:(.+)$"))
+            (local entity (and id (identity-store:get-entity id)))
+            (if (and entity (> (length entity.target-key) 0))
+                (do (set current entity.target-key) (set depth (+ depth 1)))
+                (lua "return nodes[current]")))
+        nil)
+
     (fn add-link-edge-for-entity [entity entity-id]
-        (local source-key (self:resolve-key entity.source-key))
-        (local target-key (self:resolve-key entity.target-key))
-        (var source-node (. nodes source-key))
-        (var target-node (. nodes target-key))
-        (when (and (not source-node) source-key)
-            (set source-node (self:load-by-key source-key)))
-        (when (and (not target-node) target-key)
-            (set target-node (self:load-by-key target-key)))
+        (local source-node (visible-endpoint entity.source-key))
+        (local target-node (visible-endpoint entity.target-key))
         (when (and source-node target-node)
             (local label (or (and entity.metadata entity.metadata.name) ""))
             (local edge (GraphEdge {:source source-node
@@ -581,8 +592,7 @@
     (set check-link-edges-for-node
         (fn [node]
             (when (and node node.key)
-                (local all-keys (icollect [k _ (pairs nodes)] k))
-                (local link-entities (link-store:find-edges-for-nodes all-keys))
+                (local link-entities (link-store:list-entities))
                 (each [_ entity (ipairs link-entities)]
                     (when (not (. link-edge-map (tostring entity.id)))
                         (maybe-add-link-edge entity))))))
@@ -590,7 +600,6 @@
     (var link-created-handler nil)
     (var link-updated-handler nil)
     (var link-deleted-handler nil)
-    (var string-entity-created-handler nil)
 
     (fn refresh-link-edges-for-key [key]
         (local key-str (tostring (or key "")))
@@ -620,12 +629,6 @@
             (link-store.link-entity-deleted:connect
                 (fn [entity]
                     (maybe-remove-link-edge entity))))
-
-        (set string-entity-created-handler
-            (string-store.string-entity-created:connect
-                (fn [entity]
-                    (when (and entity entity.id)
-                        (self:load-by-key (.. "string-entity:" (tostring entity.id)))))))
 
         (set identity-updated-handler
             (identity-store.identity-updated:connect
@@ -667,9 +670,6 @@
         (when link-deleted-handler
             (link-store.link-entity-deleted:disconnect link-deleted-handler true)
             (set link-deleted-handler nil))
-        (when string-entity-created-handler
-            (string-store.string-entity-created:disconnect string-entity-created-handler true)
-            (set string-entity-created-handler nil))
         (when identity-updated-handler
             (identity-store.identity-updated:disconnect identity-updated-handler true)
             (set identity-updated-handler nil))

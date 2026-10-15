@@ -544,7 +544,9 @@
   (store:update-entity entity.id {:metadata {:payload payload}})
   (assert (= (length (fs.read-file path)) 131072))
   (assert (= (length (. (store:scan-page {}) :items)) 1))
+  (assert (= (. (store:read-link entity.id) :metadata :payload) payload))
   (store:update-entity entity.id {:metadata {:payload (.. payload "x")}})
+  (expect-error :limit-exceeded (fn link-read-oversized [] (store:read-link entity.id)))
   (expect-error :limit-exceeded (fn link-oversized [] (store:scan-page {}))))
 
 (test "link scan byte budget is inclusive and counts serialized metadata"
@@ -661,6 +663,86 @@
       (assert (= entity.value "unchanged"))
       (assert (= entity.revision revision))
       (assert (= (. (store:read-text entity.id) :value) "unchanged"))))))
+
+(test "long destination basenames publish text through short sibling staging"
+  (fn long-text-destination []
+    (with-root (fn long-root [root]
+      (local Files (require :entities/record-files))
+      (local text-path (fs.join-path root (.. (string.rep "t" 242) ".md")))
+      (Files.write-text! text-path "before")
+      (Files.write-text! text-path "  after 雪\r\n\n")
+      (assert (= (Files.read! text-path) "  after 雪\r\n\n"))
+      (assert (= (length (fs.list-dir root)) 1) "successful publication must leave no staging files")))))
+
+(test "long destination basenames publish JSON through short sibling staging"
+  (fn long-json-destination []
+    (with-root (fn long-root [root]
+      (local Files (require :entities/record-files))
+      (local json-path (fs.join-path root (.. (string.rep "j" 242) ".json")))
+      (Files.write-json! json-path {:value "before"})
+      (Files.write-json! json-path {:value "after 雪"})
+      (assert (= (. (json.loads (Files.read! json-path)) :value) "after 雪"))
+      (assert (= (length (fs.list-dir root)) 1) "successful publication must leave no staging files")))))
+
+(test "short staging names are attempt-unique siblings and cleanup preserves unrelated files"
+  (fn short-staging-ownership []
+    (with-root (fn stage-root [root]
+      (local Files (require :entities/record-files))
+      (local path (fs.join-path root (.. (string.rep "d" 242) ".json")))
+      (local unrelated (fs.join-path root "record-stage-unrelated.tmp"))
+      (Files.write-text! unrelated "unrelated")
+      (local stages [])
+      (fn rename [from to]
+        (assert (= (fs.parent from) (fs.parent to)) "rename must stay in the destination directory")
+        (assert (< (length from) (length to)) "staging basename must not extend the long destination basename")
+        (table.insert stages from)
+        (values nil "intentional rename failure"))
+      (local boundary (Files.RecordFiles {:rename rename}))
+      (expect-error :storage-failed (fn first [] (boundary.write-json! path {:value "first"})))
+      (expect-error :storage-failed (fn second [] (boundary.write-json! path {:value "second"})))
+      (assert (= (length stages) 2))
+      (assert (not= (. stages 1) (. stages 2)))
+      (assert (= (length (fs.list-dir root)) 1) "only each attempt's stage and JSON temporary may be cleaned")
+      (assert (= (Files.read! unrelated) "unrelated"))))))
+
+(test "text scans validate every examined body before applying a nonmatching query"
+  (fn nonmatching-corruption []
+    (with-root (fn corrupt-root [root]
+      (local store (string-store root))
+      (local value (string.char 255))
+      (store:create-entity {:id "invalid-utf8" :value value})
+      (assert (= (. (store:get-entity "invalid-utf8") :value) value) "legacy getter semantics remain unchanged")
+      (local err (expect-error :corrupt-data (fn scan [] (store:scan-page {:query "absent literal"}))))
+      (assert (= err.outcome :not-committed))))))
+
+(test "bounded owning link reads are detached and bypass rather than populate the legacy cache"
+  (fn detached-bounded-links []
+    (with-root (fn bounded-root [root]
+      (local Files (require :entities/record-files))
+      (local original (link-store root))
+      (local entity (original:create-entity {:id "bounded" :source-key "a" :target-key "b"
+                                            :metadata {:payload "before"}}))
+      (local reads {:count 0 :unbounded 0})
+      (fn read [path maximum]
+        (set reads.count (+ reads.count 1))
+        (if (= maximum nil) (set reads.unbounded (+ reads.unbounded 1))
+            (assert (= maximum 131072)))
+        (Files.read! path maximum))
+      (local cold (link-store root {:read! read}))
+      (expect-error :not-found (fn missing [] (cold:read-link "missing")))
+      (local snapshot (cold:read-link entity.id))
+      (set snapshot.metadata.payload "caller changed")
+      (assert (= (. (cold:read-link entity.id) :metadata :payload) "before"))
+      (assert (= reads.count 2))
+      (assert (= reads.unbounded 0))
+      (local cached (cold:get-entity entity.id))
+      (assert (= reads.count 3) "successful bounded reads must not prime legacy cache")
+      (assert (= reads.unbounded 1) "legacy getter's unbounded semantics remain available")
+      (original:update-entity entity.id {:metadata {:payload "after"}})
+      (assert (= (. (cold:read-link entity.id) :metadata :payload) "after"))
+      (assert (= (cold:get-entity entity.id) cached))
+      (assert (= cached.metadata.payload "before"))
+      (assert (= reads.unbounded 1))))))
 
 (fn main [] (runner.run-tests {:name "entity-record-persistence" :tests tests}))
 {:name "entity-record-persistence" :tests tests :main main}

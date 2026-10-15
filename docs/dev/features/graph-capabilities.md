@@ -149,6 +149,12 @@ preserved byte-for-byte. IDs must be 1–256 ASCII letters/digits/underscore/hyp
 path traversal, record/filename identity mismatches, caller revision overrides,
 identity changes, and create collisions are errors.
 
+The link store also provides `store:read-link(id) -> LinkEntity`: a detached
+persisted read limited to **131072 stored bytes**, including serialized metadata.
+Missing records raise `not-found`. It bypasses and never primes the legacy getter
+cache. Capability link descriptions use this bounded read, not `get-entity`;
+legacy CRUD getter/cache behavior is unchanged.
+
 Both stores expose `store:scan-page(opts) -> {items, examined, has-more, last-id?}`:
 
 - `limit`: 1–50, default 20; `examined-limit`: 1–200, default 200.
@@ -160,6 +166,8 @@ Both stores expose `store:scan-page(opts) -> {items, examined, has-more, last-id
   continue from its `last-id`. The last examined ID is also returned on a final
   nonempty examination; it is absent when nothing was examined.
 - Corrupt, unreadable, oversized records or listing failure fail the whole page.
+  Every examined text body is checked for valid UTF-8 before query filtering;
+  corrupt nonmatches cannot be reported as a successful absence.
   Directory enumeration/sorting itself is not indexed or bounded total work.
   Continuations are live, not snapshot pagination.
 
@@ -174,7 +182,9 @@ in particular link creation errors are no longer swallowed.
 `read!(path, max-bytes?)`, `write-text!(path, text)`, `write-json!(path, data)`,
 `list-ids(dir, suffix)`, and `remove!(path)`. Text uses checked binary Lua I/O,
 including write/flush/close, followed by staged-byte verification and a
-same-directory rename. JSON uses `json-utils.write-json!` on a unique staging
+same-directory rename. Attempt-owned sibling staging basenames are short and
+independent of the destination basename, so valid long record filenames remain
+replaceable. JSON uses `json-utils.write-json!` on a unique staging
 path and verifies the exact serialized bytes before destination replacement.
 Failure cleans only that attempt's staging artifacts, never the destination or
 unrelated temporary files. This is checked publication, not power-loss durability.
@@ -189,6 +199,71 @@ second listing API. Previously an inaccessible directory could appear to be an
 empty successful listing; callers now receive an error. Readable empty/nonempty
 result shapes, default inclusion of hidden entries, explicit hidden filtering,
 and checked iterator increments are unchanged.
+
+### First family: texts and directed relationships
+
+The built-in entities descriptor attaches access to its existing loader
+registrations. Discover entry points and choose them by their **advertised
+capabilities**, not their key schemes. The text collection advertises list,
+literal search, and creation; the relationship provider advertises incident
+listing and directed creation. Text records advertise read and revision-required
+replacement. Link records describe their endpoints in a short summary but expose
+no incidental CRUD operations. Other entity/UX registrations remain visual-only.
+
+| Capability | Arguments (closed record) | Result | Effect / revision |
+|---|---|---|---|
+| `collection.list` | `{limit?, cursor?}` | `Page<Entry>` | read / none |
+| `collection.search` | `{query, limit?, cursor?}` | `Page<Entry>` | read / none |
+| `collection.create` | `{text}` | `{ref, revision}` | write / none |
+| `text.read` | `{}` | `{ref, text, revision}` | read / none |
+| `text.replace` | `{text}` | `{ref, revision}` | write / required |
+| `relationships.list` | `{subject: Ref, limit?, cursor?}` | `Page<Relation>` | read / none |
+| `relationships.create` | `{source: Ref, target: Ref}` | `Relation` | write / none |
+
+`Relation` is `{ref, source: Ref, target: Ref}`. The first family's references are
+limited to **256 bytes**, text to **65536 bytes**, queries to **1–256 bytes**, and
+summaries to **160 bytes**, truncated only at a valid UTF-8 boundary. Empty text
+is allowed and whitespace/CRLF/Unicode are preserved. Oversized existing text
+reads fail with `limit-exceeded`; invalid stored UTF-8 is `corrupt-data`. All
+requests/results also obey the generic aggregate DTO budgets. Generic shape
+mismatches (including declared per-field argument bounds) are `invalid-arguments`.
+
+Search is the case-sensitive literal `string.find(body, query, 1, true)`, never a
+Lua pattern, and searches the stored body only, not IDs/frontmatter. Pages default
+to 20 results, accept limits 1–50, and delegate to the owning `scan-page` with at
+most **200 examined/decoded records** per call. IDs sort lexicographically. A
+zero-result page may still have `has-more: true`: pass its cursor back unchanged.
+Continuation is live, not a snapshot. Directory enumeration/sorting is not an
+indexed or globally bounded search.
+
+Provider cursors are opaque, versioned `v1:` continuations, bounded to 2048 bytes.
+Their closed payload binds the operation, provider reference, query (or incident
+subject key), and last **examined** ID. Unknown versions, malformed/extra fields,
+invalid IDs, and mismatched scope are rejected. Limits may change between pages.
+A cursor is returned only with `has-more: true`. It is not an authorization token.
+
+Relationship listing returns only direct incident persisted links and preserves
+source/target direction. It does not traverse identities, inspect display edges,
+or invent collection membership. Creation currently accepts **existing text record
+endpoints only**, validated synchronously inside the context-free
+`entities/relationships.create!(string-store, link-store, source-ref, target-ref)`
+operation. Listing can report direct links to other bounded opaque references
+already stored by their owners; it does not make those endpoints executable.
+
+The family delegates creation/read/replacement to the owning string store and
+link creation to `relationships.create!`. Notification failures after persistence
+retain `outcome: "committed"` and map their owning result to the declared written
+text/relation DTO; failed storage writes remain explicit. No compensation or
+automatic retry occurs. These are the domain operations for participating GUI
+actions as well; revision-aware GUI migration is a separate follow-on slice.
+
+Nonvisual writes do not materialize graph adapters. Raw Graph's string-created
+auto-loading is removed; link/identity events reconcile only already-visible
+endpoints, using owning identity data without loaders. Explicit `load-by-key`,
+`resolve-key`, and `resolve-node` retain their loading behavior. Existing visible
+labels and derived domain edges may update, but nonvisual access does not change
+GraphMap membership, explicit display edges, focus, selection, islands, or
+projection settings. No map/view is required or consulted by a provider callback.
 
 ## Registration and ownership
 
