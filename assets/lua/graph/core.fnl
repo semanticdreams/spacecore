@@ -13,6 +13,7 @@
 (local StringEntityStore (require :entities/string))
 (local Morphs (require :morphs/init))
 (local KeyLoaderUtils (require :graph/key-loader-utils))
+(local Capabilities (require :graph/capabilities))
 
 (local GraphNode NodeBase.GraphNode)
 (local GraphEdge Edge.GraphEdge)
@@ -41,7 +42,9 @@
     (assert (not (. key-loaders scheme))
             (.. "register-key-loader duplicate scheme: " scheme))
     (local options (or opts {}))
+    (local access (and (not (= options.access nil)) (Capabilities.prepare-access scheme options.access)))
     (local registration {:scheme scheme
+                         :access access
                          :loader-fn loader-fn
                          :owner-id options.owner-id
                          :extension-id options.extension-id
@@ -125,6 +128,10 @@
                  :edge-map edge-map
                  ;; Built-in start nodes are descriptor-loaded, not auto-created.
                  :entity-events? entity-events?
+                  :discover (fn [_self args] (Capabilities.discover key-loaders args))
+                  :describe (fn [_self ref] (Capabilities.describe key-loaders ref))
+                  :invoke (fn [_self ref id args preconditions]
+                            (Capabilities.invoke key-loaders ref id args preconditions))
                  :node-added node-added
                  :node-removed node-removed
                  :node-replaced node-replaced
@@ -675,6 +682,9 @@
 
     (set self.drop
         (fn [_self]
+            (each [scheme _ (pairs key-loaders)]
+                (unregister-key-loader-scheme key-loaders scheme
+                                             {:owner-id (. key-loaders scheme :owner-id)}))
             (each [_ node (pairs nodes)]
                 (when node.unmount
                     (node:unmount))

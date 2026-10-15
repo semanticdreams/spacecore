@@ -63,6 +63,23 @@ before additional installer work can fail. If any runtime install fails, the
 registry rolls back every handle installed during that attempt and rethrows the
 error.
 
+### Optional nonvisual access
+
+An installer can pass `:access {:entry-points [...] :describe describe-object
+:handlers {capability-id handler}}` in the existing `register-key-loader` opts.
+This is owned by the same private loader registration and handle, not a separate
+registry. The graph's `discover`, `describe`, and `invoke` methods resolve current
+registrations without constructing visual adapters or requiring a graph map/view.
+Visual-only extensions need no changes and are not automatically exposed.
+
+Entry metadata and handler mappings are validated/copied before publication;
+dynamic descriptions, arguments, preconditions, and results are checked at call
+time. Unload, replacement, runtime uninstall, Graph drop, and recorded installer
+rollback remove access with the loader. Descriptions are detached data and cannot
+retain an executable handler from an old registration. The same live/future
+runtime installation behavior applies. See [Graph Capabilities](/dev/features/graph-capabilities)
+for the shape vocabulary, explicit outcomes, limits, and a registration example.
+
 ## Adapter refresh on reload
 
 Unit reload and hot reload use the registry refresh seam after the unit has been
