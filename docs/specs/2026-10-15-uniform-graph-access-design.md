@@ -1,180 +1,177 @@
-# Uniform, view-independent graph access
+# Uniform graph capabilities: contract-first slice
 
-## Intent and agreed scope
+## Status and scope correction
 
-Make graph's exposure contract usable by nonvisual consumers without coupling
-them to concrete object families or a GraphMap. The first authority is the
-running Space process. CLI, HTTP/MCP, and voice are future consumers of the same
-contract; this slice delivers the contract and one narrow MCP-over-HTTP adapter
-using existing transport infrastructure. It does not implement four front ends.
+This document supersedes the earlier six-method/server-oriented proposal in
+this same path. The user approved the smaller design below after a read-only
+contract audit. Earlier planning reports are not implementation authority.
 
-The user approved trusted, explicitly enabled local access to shared app data.
-No world/project restriction is inferred from graph-map visibility. An endpoint
-is disabled by default and binds only to loopback; this is not authentication.
+Deliver the uniform graph contract and exercise it inside Space's runtime.
+Do not build a CLI, HTTP/MCP server, voice interface, additional app runtime,
+or transport lifecycle in this change. Those are later consumers, not reasons
+to expand this slice. The initial single authority is the running Space process.
 
-The representative acceptance workflow finds a project brief, reads it and its
-domain relationships, creates two notes, links them to the brief, updates one,
-and reads back persisted results. String and link entities implement this first
-example behind the graph boundary. They must not determine transport verbs or
-require consumers to branch on entity types.
+## Agreed goals
 
-## Existing architecture and choices
+- Uniform access must not make consumers dispatch on concrete object types.
+- Nonvisual consumers are independent of GraphMap and GraphView state.
+- Participating graph-view operations use the same domain implementation now,
+  rather than leaving a parallel interface to converge later.
+- Replacement-style edits reject stale revisions explicitly, for participating
+  GUI edits as well as nonvisual edits. No silent overwrite or automatic merge.
+- The representative workflow is a project brief with two related notes.
+  Strings and link records are its backing implementation, not its public API.
+- Demonstrate extensibility with a second, different test-only family.
 
-Graph is an exposure/adaptor layer, not the owner of domain objects. Owning
-systems retain persistence. GraphMap owns materialized topology and interaction
-context; GraphView is its runtime visual projection. Current key loaders can
-create unmounted adapters, but those adapters mix UI constructors, subscriptions,
-map-related callbacks, and domain methods. UI action closures are not a safe
-machine-readable command interface.
+## Existing boundary and the intended refinement
 
-Three approaches were considered:
+Graph is an exposure/adaptor layer. Domain systems own objects and persistence.
+GraphMap owns materialized topology and interaction context; GraphView owns
+runtime visual projection. These ownership boundaries do not change.
 
-1. Invoke unmounted visual node adapters: smallest apparent change, but retains
-   presentation dependencies and request-scoped subscription/lifecycle hazards.
-2. Extend existing graph extension/key-loader registrations with nonvisual
-   exposure: selected. One family registration owns visual and nonvisual
-   adaptation and shares domain operations between them.
-3. Add a parallel domain service/registry: rejected. A type-specific entity API
-   or second universal registry would bypass the intended graph interface.
+Today common graph behavior includes key-loader dispatch, adapter identity,
+presentation metadata, and mount/drop lifecycle. Domain access is heterogeneous:
+for example, text adapters expose store methods, while filesystem adapters
+expose stat/listing and UI-oriented opening methods. Menu actions are executable
+callbacks, not a declared nonvisual contract. A capability must not be inferred
+from a menu label or arbitrary callback.
 
-Only participating families need exposure initially. Older visual extensions
-continue to function; they do not acquire remotely executable actions by
-reflection or by having a key-loader scheme.
+Add explicit context-independent capabilities within the existing graph
+extension/key-loader boundary. Reuse its registration ownership and cleanup,
+not a second family registry or a type-specific external service. Ordinary
+visual extensions remain supported without being automatically executable
+through the new contract. Do not construct visual adapters to invoke a
+nonvisual capability or materialize topology as a side effect of resolution.
 
-## Contract and ownership
+## Public contract
 
-A graph-owned access facade dispatches exclusively through explicit exposure
-metadata registered alongside existing owner-safe key loaders. Visual loading
-and exposure registration share replacement, unload, rollback, and lifetime.
-There is no separate family dispatch table in any transport. Exposures resolve
-without constructing visual adapters or materializing graph topology.
+Use three generic concepts, named `discover`, `describe`, and `invoke` in the
+implementation plan:
 
-The facade exposes six generic operations:
+1. **Discover entry points.** Return a bounded set of explicitly exposed starting
+   references and summaries. Clients need not know concrete key schemes.
+2. **Describe an object.** Resolve an opaque reference and return a summary and
+   explicitly available capabilities. Each capability has a stable identifier,
+   description, declared argument/result shapes, effect (`read` or `write`), and
+   revision requirement. Descriptions contain data, not executable closures.
+3. **Invoke a capability.** Resolve a key and capability identifier, validate its
+   arguments and preconditions, and execute the current registered handler.
 
-- `discover`: bounded enumeration of registered entry-point references.
-- `inspect`: describe an opaque key, its summary, resources, actions, and support
-  for search and direct domain relationships.
-- `read`: read a named resource with schema-described arguments; return its
-  value and revision when relevant.
-- `search`: bounded search within an explicitly discovered searchable scope.
-- `relations`: bounded one-hop domain relationship reads for a key and direction.
-- `invoke`: invoke a named action with validated arguments and any required
-  expected revision.
+Read, search, list relationships, create, and replace content are capabilities,
+not additional generic service methods. Different families may expose different
+capabilities and data. Uniform access does not imply universal CRUD.
 
-Keys remain opaque to consumers. Descriptions and results are data-only and
-JSON serializable: no Lua closures, live adapters, glm values, or view handles.
-Resource/action descriptors include stable IDs, descriptions, argument/result
-schemas, effect information, and revision requirements. Uniform access does not
-imply uniform CRUD: unsupported operations fail explicitly. Only a deliberately
-supported, documented schema subset may be advertised; argument validation is
-mandatory at the service boundary, not merely a promise in MCP tool schemas.
+The supported argument/result-description vocabulary must be small, documented,
+and actually checked; do not implement a general JSON Schema framework. Results
+are detached data suitable for future serialization: no live adapters, callbacks,
+view handles, or userdata. References have a uniform opaque key field.
 
-Creation is an advertised action on an entry point/collection/provider. A
-consumer discovers that action and its schema and invokes it through the same
-generic operation used for any other action. Results contain created references.
-No `create-string` or other family-specific transport method is introduced.
+Resolve current registrations for each call. Unload/replacement must invalidate
+old behavior; a stale handle cannot remove its replacement. No executable
+handler should escape inside a description or be cached by a consumer.
 
-Domain relationships are distinct from display edges, collection membership,
-and discovery roots. Initial relationship records expose their own opaque key,
-source and target references, and kind. The initial creation provider persists
-directed link relationships between existing supported endpoints. There is no
-implicit identity dereference, recursive traversal, or graph-map edge write.
+Creation is a discoverable collection/provider capability. Its result contains
+the created reference. There is no family-specific method on the generic graph
+contract and no consumer-side key-prefix dispatch.
 
-## Runtime and UI integration
+## Representative capabilities and workflow
 
-The app owns one nonvisual graph resolver/access runtime installed by the
-existing extension mechanism in an explicit resolver-only role. It uses the
-same owning stores as participating GUI adapters. It does not depend on an
-active world, activity, map, or view, and disables topology-oriented entity
-event handling. Resolver-only extension installation must not require map
-refresh; ordinary world-runtime refresh behavior remains intact.
+The initial family supplies enough capabilities to:
 
-Participating UI adapters delegate context-free domain reads and mutations to
-the same exposure operations. They retain explicit visual consequences such as
-revealing a newly created note in their own map. Existing UI convenience
-behavior must not be broken or copied into nonvisual invocation.
+1. Discover a searchable text collection and a domain-relationship provider.
+2. Find an existing brief by text, obtaining references and short summaries.
+3. Describe/read the brief and list its direct domain relationships.
+4. Create two notes through the collection's advertised creation capability.
+5. Create directed persisted relationships from the brief to each note through
+   the relationship provider's advertised capability.
+6. Read a note and replace its text with the returned revision.
+7. Read back the results and reopen the owning stores to verify persistence.
 
-Nonvisual operations never change map membership, explicit display edges,
-selection, focus, layout, expanded cards, or panels. Existing views may still
-reflect changes to the underlying objects through existing store subscriptions.
+Domain relationships are not display edges. Discovery roots and collection
+membership are not silently reported as persisted relationships. Limit this
+example to direct stored links; no identity dereference or recursive traversal.
+The first relationship provider validates its supported endpoints internally.
 
-## Consistency, persistence, and limits
+Search and collection reads have bounded pages, deterministic continuation,
+and an explicit indication of remaining results. Provider scans have an
+examined-record budget, including pages with no matches. No claim of indexed
+search or snapshot pagination is made. Content/result budgets and the initial
+literal search semantics are specified in the plan, not copied from UI search.
+Corrupt/unreadable data is an error, not an empty successful page.
 
-Requests execute on the authority's Lua dispatch thread. Serialization alone is
-not stale-edit protection. Revision-guarded resource updates compare an opaque
-expected revision at the owning store mutation boundary, without yielding
-between comparison and persistence. Every successful store mutation, including
-GUI-originated writes, changes the persisted revision. Timestamps are not
-revision tokens. Legacy records have stable read tokens until first mutation;
-reads do not rewrite them. Conflicts perform no write and identify the current
-revision. There is no multi-editor merge or retrofit of GUI conflict dialogs.
+## Shared GUI/domain behavior
 
-Mutation success means checked atomic replacement of the individual record,
-followed by cache publication. Failed persistence leaves prior data/cache/token
-authoritative. Preserve existing Markdown/JSON formats and exact user text.
-If notification fails after persistence, report the committed outcome explicitly
-rather than claiming rollback. This requires localized fixes in owning stores
-and native write-completion checks where existing helpers are insufficient.
+Participating GUI actions delegate domain reads and mutations to the same
+implementation used by graph capabilities. GUI callbacks retain only their
+presentation consequences. In particular, creating a child currently combines
+domain creation/linking with revealing it in the containing map; preserve the
+visual convenience without requiring a map for its domain operations.
 
-Each action commits independently. No cross-record transaction, rollback of
-earlier successful actions, exactly-once retry, power-loss durability guarantee,
-or coordination with independent external file writers is promised.
+Text editing reads a revision corresponding to the content actually presented
+to the editor, and submits that revision when replacing it. A conflict preserves
+the attempted edit and surfaces an explicit error; it does not silently retry
+with a newly read revision. No new confirmation-dialog or merge-editor product
+is part of this slice. Existing callers outside the participating graph UI can
+remain on their existing APIs, but their persisted writes must invalidate older
+revisions so nonvisual consumers cannot overwrite them unknowingly.
 
-Initial limits: default page size 20, maximum 100; search query 1–256 UTF-8 bytes;
-summary previews at most 240 UTF-8 bytes; inspected/written text at most 64 KiB;
-each provider search/relationship page examines at most 1,000 records. Provider
-pagination uses deterministic ordering and last-examined continuation, including
-empty pages. Cursors are opaque at the generic boundary. Pages are not snapshots
-across concurrent changes. Directory enumeration is not claimed to be indexed
-or bounded independently of directory size. Oversized/corrupt/unreadable records
-produce explicit errors rather than silently incomplete successful results.
+Nonvisual calls do not add map members, write explicit display edges, move nodes,
+change focus/selection, open panels, or change projection settings. Existing
+store-driven views and derived relationships may reflect underlying changes;
+this is shared domain state, not view-state synchronization.
 
-Errors distinguish invalid arguments, unsupported capabilities, missing objects,
-conflicts, exhausted budgets, storage failures, post-commit notification failures,
-and unavailable/dropped services. No silent fallback to the UI's active map or
-another runtime is permitted.
+## Consistency and errors
 
-## Transport and lifecycle
+Execution is synchronous on the authority's Lua thread. Opaque revision checks
+belong at the owning mutation boundary and cover all successful changes to the
+participating text record. Comparison and write do not yield. Timestamps alone
+are not revision tokens. Reads of legacy records must produce stable revisions
+without rewriting files; subsequent writes produce fresh persisted revisions.
 
-Expose the six generic operations through a dedicated narrow MCP registry using
-the existing loopback HTTP/SSE server and bridge lifecycle. Keep it separate from
-the internal agent endpoint: the existing SSE mode supports one active stream
-and external reconnects must not displace internal agent ownership. Document
-that limitation; this slice does not promise general multi-client SSE sessions.
-Independent clients can share the service authority without sharing view state.
+A stale replacement changes neither persisted content nor the cached record,
+and returns a conflict with the current revision. Missing objects, unsupported
+capabilities, invalid arguments, limits, storage failures, and unavailable
+registrations are explicit and distinguishable. Empty success is not failure.
 
-Explicit app startup/stop APIs enable the endpoint and return connection
-information. Startup must not modify global client configuration or launch a
-second Space runtime. Shutdown stops ingress before releasing the facade and
-resolver. Failed starts clean up; retained dropped references fail explicitly.
-Requests resolve current registrations afresh rather than retaining executable
-handlers across extension reloads.
+Mutation success must not be reported before the owning store completes its
+write. Preserve existing storage formats and exact user text on readback. Keep
+necessary persistence fixes local to the participating write paths; do not turn
+this into a global filesystem/persistence redesign. If a listener fails after a
+write has committed, disclose the committed outcome rather than claiming that
+the operation rolled back. Failure handling must not silently compensate an
+already committed operation or erase unrelated state.
+
+Each mutation stands alone. The workflow is not a multi-record transaction.
+There is no exactly-once retry, automatic merge, external-writer coordination,
+distributed synchronization, or power-loss durability guarantee.
 
 ## Acceptance and validation
 
-1. Run the brief-and-notes workflow entirely through generic calls and schemas.
-2. Reopen stores and recover exact text, created references, and domain links.
-3. Persist a GUI-style edit between read and invocation; reject stale update
-   without overwriting it, including same-second and A→B→A edits.
-4. Exercise no-view/no-map operation, app lifetime, and world/map independence.
-5. Register a second test-only family with different resources/actions; use it
-   through the unchanged generic transport, then unload and replace it safely.
-6. Verify owner-safe replacement, rollback, failed startup, shutdown, invalid
-   inputs, unsupported operations, bounds, storage errors, and committed errors.
-7. Confirm participating UI behavior still works and no nonvisual operation
-   materializes or changes map interaction state.
+- Run the complete workflow through only discover/describe/invoke and returned
+  references/capability metadata, without an active map/view or UI adapter.
+- Reopen stores and verify exact text, created references, and link direction.
+- Reject an agent edit after a GUI edit, and a participating GUI edit after a
+  nonvisual edit; preserve attempted GUI content. Include same-second and
+  A-to-B-to-A changes.
+- Verify existing creation/reveal conveniences and subscribed label updates.
+- Exercise a second test-only family with different arguments/results through
+  unchanged generic dispatch; test ownership, unload, replacement, rollback,
+  stale handles, and description isolation.
+- Test invalid arguments, unsupported operations, result bounds, pagination,
+  storage failures, and post-commit failures. Never silently skip failed work.
+- Confirm nonvisual calls do not mutate map interaction/materialization state.
 
-Validation follows native build freshness, Fennel compile, constraints, focused
-store/access/extension/MCP tests, and a final full local suite. A live-process
-transport smoke is required; no model-backed test is necessary. Native write
-changes require `make build` with the repository's explicit timeout. Use isolated
-XDG test data, absolute assets/macro paths, disabled audio, and skipped keyring
-tests. Required CI and merge-group checks remain the integration gate.
+Follow project-native compile, constraints, and focused tests. Build when the
+runtime is missing/stale or native code changes, with repository timeouts.
+Use isolated test data, absolute assets/macro paths, disabled audio, and skipped
+keyring tests. Broaden validation for any genuinely shared runtime changes;
+no live network smoke is required because no transport is built. Required CI
+remains the integration gate. Report constraint impact in Fennel handoffs.
 
 ## Explicit exclusions
 
-No separate writable runtime, distributed synchronization, headless bootstrap,
-CLI or voice front end, separate REST API, view control protocol, universal CRUD,
-generic deletion, bulk actions, semantic/global federated search, relationship
-ontology, arbitrary UI callback invocation, automatic exposure of all schemes,
-authentication system, or unrelated adapter/store redesign.
+No transport/server implementation or refactoring, additional app-wide resolver
+runtime, startup-network API, global store-default rebinding, headless bootstrap,
+general schema engine, automatic exposure of all node types, arbitrary UI action
+execution, migration of every adapter, generic deletion/bulk operations, view
+control, authentication, global/federated semantic search, or unrelated cleanup.
