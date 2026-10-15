@@ -141,6 +141,14 @@ write has committed, disclose the committed outcome rather than claiming that
 the operation rolled back. Failure handling must not silently compensate an
 already committed operation or erase unrelated state.
 
+Authorized filesystem prerequisite: the existing `fs.list-dir` binding must
+always report enumeration errors, including permission denial. Remove its
+permission-denied suppression for all callers; strictness is not opt-in. Preserve
+successful result shapes and hidden-file filtering. A readable empty directory
+still returns an empty list. Cover real denied access where the platform and
+effective privileges permit reproduction, plus portable missing/non-directory
+failures. This is the only approved native/global scope expansion.
+
 Each mutation stands alone. The workflow is not a multi-record transaction.
 There is no exactly-once retry, automatic merge, external-writer coordination,
 distributed synchronization, or power-loss durability guarantee.
@@ -165,8 +173,10 @@ Follow project-native compile, constraints, and focused tests. Build when the
 runtime is missing/stale or native code changes, with repository timeouts.
 Use isolated test data, absolute assets/macro paths, disabled audio, and skipped
 keyring tests. Broaden validation for any genuinely shared runtime changes;
-no live network smoke is required because no transport is built. Required CI
-remains the integration gate. Report constraint impact in Fennel handoffs.
+no live network smoke is required because no transport is built. The approved
+shared filesystem behavior change requires the final full local `make test`
+gate as well as focused filesystem/store regressions. Required CI remains the
+integration gate. Report constraint impact in Fennel handoffs.
 
 ## Explicit exclusions
 

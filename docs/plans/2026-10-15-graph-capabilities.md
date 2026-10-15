@@ -21,7 +21,7 @@
 - “Timestamps alone are not revision tokens.”
 - “Each mutation stands alone. The workflow is not a multi-record transaction.”
 - “No transport/server implementation or refactoring, additional app-wide resolver runtime, startup-network API, global store-default rebinding, headless bootstrap, general schema engine, automatic exposure of all node types, arbitrary UI action execution, migration of every adapter, generic deletion/bulk operations, view control, authentication, global/federated semantic search, or unrelated cleanup.”
-- No edits to app startup, native filesystem bindings, global JSON helpers, or transport modules are planned. Escalate evidence of a necessary wider change before expanding.
+- No edits to app startup, global JSON helpers, or transport modules are planned. The user explicitly authorized one native prerequisite after a reproduced failure: make existing `fs.list-dir` always strict on enumeration errors, not opt-in. Other native/global changes still require escalation.
 - Implementers do not commit. Each task requires an independent reviewer PASS; the supervisor then commits reviewed files and its progress ledger.
 - Use final-literal Fennel factories, `local`, canonical option keys, explicit errors, and owned teardown.
 
@@ -119,6 +119,8 @@ Report compile, constraints, focused-test, and constraint-impact evidence. Requi
 ### Task 2: Owning Text Revisions and Local Checked Persistence
 
 **Files:**
+- Modify: `src/lua_fs.cpp` (strict directory enumeration only)
+- Modify/Test: `assets/lua/tests/test-fs.fnl`
 - Create: `assets/lua/entities/record-files.fnl`
 - Modify: `assets/lua/entities/string.fnl`, `assets/lua/entities/link.fnl`
 - Create/Test: `assets/lua/tests/test-entity-record-persistence.fnl`
@@ -135,6 +137,7 @@ Report compile, constraints, focused-test, and constraint-impact evidence. Requi
 - Constructors optionally accept `files` for a local injected record-file boundary, never a global default replacement.
 - RecordFiles exports `read!(path,max-bytes?)`, `write-text!(path,text)`, `write-json!(path,data)`, `list-ids(dir,suffix)`, `remove!(path)`.
 - Store errors use the Task 1 outcome vocabulary, with committed owning records/snapshots in `result` where applicable.
+- Existing `fs.list-dir(path,include-hidden?)` always raises enumeration errors; no new option/mode/alias. Readable empty/nonempty results and hidden filtering are unchanged. Remove `skip_permission_denied` at iterator construction; retain checked increments. The systematic-debugging report in `task-2-report.md` establishes the reproduced native suppression gap; debug-advisor confirmed it and the user approved strictness for all callers.
 
 - [ ] **1. Add RED persistence/concurrency cases.** Verify empty text, spaces/blank lines, CRLF, Unicode, and delimiter-looking text round-trip exactly. Legacy records receive stable `legacy:<id>` tokens across reopen without rewriting. Include same-second, same-value, metadata-only, and A-to-B-to-A writes. Reject caller-provided identity/revision overrides and create collisions.
 
@@ -148,13 +151,13 @@ Report compile, constraints, focused-test, and constraint-impact evidence. Requi
   (assert (= (. (store:read-text entity.id) :value) before.value))
   ```
 
-- [ ] **2. Implement checked local record publication.** Use checked binary Lua I/O for text staging, checking write, flush, and close before same-directory rename. Use `json-utils.write-json!` for JSON staging and verify staged serialized bytes before destination replacement, because the current native write binding does not check completion. Use unique attempt-owned staging paths and clean only those artifacts. Never delete a destination to make rename succeed. Inject failures at open/write/close/verification/rename; if wider filesystem work is indispensable, stop and report evidence rather than changing native/global code.
+- [ ] **2. Implement checked local record publication.** Use checked binary Lua I/O for text staging, checking write, flush, and close before same-directory rename. Use `json-utils.write-json!` for JSON staging and verify staged serialized bytes before destination replacement, because the current native write binding does not check completion. Use unique attempt-owned staging paths and clean only those artifacts. Never delete a destination to make rename succeed. Inject failures at open/write/close/verification/rename. Include the approved strict native directory-listing prerequisite and its RED/GREEN regression, rebuild with timeout 14400000 ms, and do not expand other native/global behavior.
 
 - [ ] **3. Add owning-store revision comparison and exact text parsing.** Remove only format-owned frontmatter/separator bytes, not user whitespace. Validate IDs against path traversal and record/filename mismatch; malformed required data is explicit corruption. Stage an independent record, compare expected revision without yielding, persist with fresh UUID revision, then publish cache and emit. Precommit failure/conflict leaves prior cache/file unchanged. Preserve compatible cached reference behavior where existing callers rely on it; snapshots remain detached. No rewrite on legacy reads.
 
 - [ ] **4. Make scans and outcomes explicit.** Scan sorted filename IDs and advance last examined ID on nonmatches; bound each scan to 200 decoded records and each capability record to 131072 stored bytes. Directory enumeration is not indexed/bounded total work. Corruption, unreadable/oversized records, and listing failure fail the page rather than silently skipping. Cache publication follows persistence for both stores. Listener errors after persistence report committed `notification-failed`, including the owning result; do not silently swallow link creation errors or undo committed data.
 
-- [ ] **5. Test reopen and failure invariants, document, and validate.** Check file/cache/revision unchanged at each precommit fault; committed record survives listener fault; empty-match pagination makes progress. Run compile/constraints, then `tests.test-entity-record-persistence:main`, `tests.test-string-entities:main`, `tests.test-link-entities:main`, and `tests.test-board-activity-string-entities:main`. Hand off for independent review before commit.
+- [ ] **5. Test reopen and failure invariants, document, and validate.** Check file/cache/revision unchanged at each precommit fault; committed record survives listener fault; empty-match pagination makes progress. Cover readable empty/nonempty, hidden filtering, missing/non-directory errors, and real denied enumeration through both stores; restore fixture permissions reliably and state platform/privilege applicability honestly. Build native binding first, then run compile/constraints, `tests.test-fs:main`, `tests.test-entity-record-persistence:main`, `tests.test-string-entities:main`, `tests.test-link-entities:main`, and `tests.test-board-activity-string-entities:main`. Hand off for independent review before commit.
 
 ### Task 3: First Family and Complete Nonvisual Workflow
 
@@ -248,4 +251,4 @@ Report compile, constraints, focused-test, and constraint-impact evidence. Requi
   done
   ```
 
-  This covers changed owning stores, shared graph API, lifecycle, maps, and editor embedding. Full `make test` is not a mandatory local gate absent additional risk or reviewer evidence. No native/startup/transport changes are planned. Check `git diff --check`, review against freshly fetched `origin/main`, report constraints impact, and obtain reviewer PASS before final commit. Required PR/merge-group CI remains authoritative for integration.
+  This covers changed owning stores, shared graph API, lifecycle, maps, and editor embedding. The user-approved always-strict filesystem binding affects shared utility behavior, so additionally run `SKIP_KEYRING_TESTS=1 XDG_DATA_HOME=/tmp/space/tests/xdg-data SPACE_DISABLE_AUDIO=1 SPACE_ASSETS_PATH=$(pwd)/assets make test` as the final broad gate after the native rebuild. No startup/transport changes are planned. Check `git diff --check`, review against freshly fetched `origin/main`, report constraints impact, and obtain reviewer PASS before final commit. Required PR/merge-group CI remains authoritative for integration.
