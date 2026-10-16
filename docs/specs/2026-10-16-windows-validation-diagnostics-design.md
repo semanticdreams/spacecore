@@ -117,3 +117,13 @@ test progress, a specific failing test/native call, or shutdown. A repeated124 i
 still failure/incomplete evidence—not success. Any runtime fix or new profile
 then follows systematic diagnosis, bounded planning, implementation and review.
 Do not declare the underlying Wine timeout fixed merely because diagnostics work.
+
+## Observed result and follow-up
+
+The first diagnostic cycle completed at `9b261b0`: build/package/admission passed,
+93 tests began and92 passed without failures before the180s cutoff, while
+descendants retained output pipes. The required unchanged first-run deadline and
+context served their diagnostic purpose; they are not a permanent performance
+requirement. The evidence-backed follow-up is specified separately in
+`2026-10-16-wine-suite-lifecycle-design.md`: sufficient bounded full-suite time
+and independently owned prefix teardown, with no application-test weakening.
