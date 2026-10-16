@@ -173,24 +173,121 @@ Both stores expose `store:scan-page(opts) -> {items, examined, has-more, last-id
 
 Store methods raise structured Error records using the vocabulary above, rather
 than Result envelopes. Missing legacy CRUD lookup/update/delete still returns
-nil; missing `read-text`/`replace-text` raises `not-found`. A listener exception
-after persistence raises committed `notification-failed` with the owning record
-in `result` (a text snapshot for `replace-text`). It does not undo the mutation;
-in particular link creation errors are no longer swallowed.
+nil; missing `read-text`/`replace-text` raises `not-found`. After a write commits,
+both stores publish the cache/revision (preserving cached identity), form a
+detached owning result, and attempt the existing notification exactly once before
+disclosing any postcommit diagnostics:
+
+| Cleanup error | Notification error | Owning outcome |
+| --- | --- | --- |
+| No | No | Existing successful result |
+| No | Yes | Committed `notification-failed`, existing listener-error message |
+| Yes | No | Committed `storage-failed`, `Record committed; staging cleanup failed.` |
+| Yes | Yes | Committed `storage-failed`, `Record committed; staging cleanup and notification failed.` |
+
+Committed errors carry `result`: `{id, value, revision}` for `replace-text`, or
+the detached owning entity for other writes. Cleanup failures also carry the
+local string `cleanup-error` and, when both fail, the local string
+`notification-error`. These diagnostics do **not** extend graph DTOs: the existing
+provider mapping retains the committed outcome and converts the owning result to
+the declared graph result. Neither error undoes persistence or warrants a blind
+retry. The full and preview text editors distinguish notification-only failure
+(`Save committed; notification failed.`) from committed storage failure
+(`Save committed; post-save error.`), keep input, and advance their baseline from
+the committed result so the next save uses the correct revision. Delete behavior
+is unchanged.
 
 `entities/record-files` is the local publication boundary. It exports
 `read!(path, max-bytes?)`, `write-text!(path, text)`, `write-json!(path, data)`,
-`list-ids(dir, suffix)`, and `remove!(path)`. Text uses checked binary Lua I/O,
-including write/flush/close, followed by staged-byte verification and a
-same-directory rename. Attempt-owned sibling staging basenames are short and
-independent of the destination basename, so valid long record filenames remain
-replaceable. JSON uses `json-utils.write-json!` on a unique staging
-path and verifies the exact serialized bytes before destination replacement.
-Failure cleans only that attempt's staging artifacts, never the destination or
-unrelated temporary files. This is checked publication, not power-loss durability.
-Constructors may accept a local `files` boundary for fault injection; the helper's
-`RecordFiles({open?, rename?, stage-json!?})` factory provides checked staging
-seams for local tests. No module defaults or native/global helpers are rebound.
+`list-ids(dir, suffix)`, and `remove!(path)`. Both writers return
+`true, cleanup-error?: string`: the first successful value remains the boolean
+`true`; a second value reports an error **after** atomic publication, not rollback.
+Text passes its payload directly to the native writer. JSON uses canonical
+`json-utils.write-json!` with its `publish!` option: serialization happens once,
+and both the success boolean and cleanup diagnostic are forwarded. Ordinary
+two-argument JSON callers retain the default atomic sibling-temporary path.
+
+The synchronous native API is:
+
+```text
+fs.publish-record(destination, payload, opts?)
+  -> {committed: true, cleanup-error?: string}
+```
+
+The reserved `.space-publication` directory is a persistent private anchor in
+each target parent. It is created exclusively or reused only after no-follow
+owner/privacy/identity checks. The public anchor entry is intentionally **never
+deleted** by publication cleanup. Each attempt exclusively creates a short private
+child directory and one private `record` file beneath the retained anchor handle.
+Native code writes all payload bytes through that retained file handle, checks
+completion/flush/readback, and retains the relevant handles through commit. There
+is no Lua path-writer callback, no `record.tmp`, and no insecure fallback.
+
+Before commit, callback/I/O/verification/security/identity failures raise explicitly
+and do not publish destination bytes, cache fields, or revisions. The native
+boundary checks exact bytes, identities, regular-file/link restrictions, policy,
+and relevant pinned names immediately before same-filesystem atomic replacement, with
+no intervening Lua callback. POSIX uses native `renameat`; Windows uses native
+`NtCreateFile` root-handle-relative acquisition and `NtSetInformationFile`
+(`FileRenameInformation`) with the source handle and pinned destination parent.
+Native pending status is awaited and checked before commit is latched. This is
+not Win32 `FILE_RENAME_INFO.RootDirectory`, pathname `MoveFileExW`, CRT rename,
+delete-first, or a copy fallback.
+Cleanup is attempt-local, identity-checked, nonrecursive, and still attempted after
+Lua errors. Substituted/unrelated entries are left untouched and cleanup failures
+are reported; the destination is never removed to enable replacement.
+
+Supported/refused security policies:
+
+- **POSIX:** the anchor and attempt are verified owned with exact mode0700, and
+  the native file with mode0600, **before** bytes. Group ownership need not be the
+  effective user's primary group. New records are verified mode0600
+  before publication; existing owner/group/mode restrictions are reproduced and
+  checked before replacement. Only inspectable mode-only policy is supported:
+  extended ACLs, xattrs/extended security metadata, special bits, unsafe links,
+  or uninspectable policy fail closed rather than being silently dropped.
+- **POSIX namespaces:** creation, writes, commit and cleanup use retained handles
+  (`mkdirat`/`openat`/`fstatat`/`renameat`/`unlinkat`), not reconstructed paths.
+  Writable ancestors are not a blanket refusal condition. Public-name changes
+  cannot redirect private bytes; relevant anchor/attempt changes can fail before
+  commit. Cleanup checks identities only inside the original private namespace,
+  never deletes a substituted public anchor, and never sweeps foreign entries.
+- **Windows:** a protected owner-only inheritable DACL protects the workspace and
+  intermediates before content. Supported existing owner/group and ordinary
+  allow/deny DACL ACEs are reproduced and verified, retaining restrictions (DACL
+  protection may narrow inheritance). Absent/null/invalid DACLs, nonordinary ACEs,
+  explicit label/resource/scoped/trust/access-filter policies, denied or unsupported
+  security queries, EFS, reparse/multiple-link objects, alternate streams, and
+  remote/device/nonpersistent-ACL filesystems fail explicitly. Child-file DACLs
+  are protected before bytes, not only by private directory traversal. Inspection
+  handles allow delete sharing; an external handle that denies it causes an
+  explicit failed replacement, never a false commit result.
+
+Store constructors still create their ordinary directories; they do not repair
+existing userdata security policy or chmod ancestors. Ordinary default/custom
+userdata under umask022 **and umask002**, including home0750/inner0775, works
+without changing parent permissions or the process umask. An unsafe preexisting
+anchor is refused without chmod or ownership takeover.
+
+Constructors may accept a local `files` boundary for fault injection. The helper's
+factory is `RecordFiles({open?, publication-hooks?})`; `open` serves reads only.
+There are no legacy `stage-json!`, stage callback, or path-writer aliases.
+Publication phase hooks are `test-before-write`, `test-before-security`, `test-before-commit`, or
+`test-before-cleanup`, each a zero-argument function returning exactly `true` or
+raising on a fault. Final native verification follows the before-commit hook.
+Cleanup-hook errors are committed diagnostics, but do not skip the actual cleanup
+attempt. Native tests exercise real bounded OS partial-write failure and exact
+completion/byte verification; store tests retain their injected `files` boundary
+for owning-state failure invariants. No module defaults or globals are rebound.
+
+These guarantees assume supported local filesystem atomic replacement semantics,
+and no hostile same-identity writer. There is no general
+external-writer transaction, metadata migration, remote-filesystem, or power-loss
+durability guarantee; file flush is not a directory/crash-durability protocol. No production
+shell, process-wide umask change, or post-publication privacy chmod is used.
+Native Windows runtime/DACL and macOS acceptance evidence remains pending; Linux
+or Wine results do not establish those platform proofs. The historical native
+SIGSEGV incident remains separately open.
 
 Directory enumeration uses the existing `fs.list-dir(path, include-hidden?)`,
 which is now **always strict** for every caller: permission-denied and other

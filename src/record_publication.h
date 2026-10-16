@@ -8,10 +8,8 @@
 
 namespace record_publication {
 
-using Stage = std::function<void(const std::filesystem::path&)>;
-
 struct Hooks {
-    std::function<void()> before_security, before_commit, before_cleanup;
+    std::function<void()> before_write, before_security, before_commit, before_cleanup;
 };
 
 struct Result {
@@ -20,7 +18,6 @@ struct Result {
 };
 
 Result publish(const std::filesystem::path& destination,
-               std::string_view expected_bytes, const Stage& stage,
-               const Hooks& hooks = {});
+               std::string_view payload, const Hooks& hooks = {});
 
 } // namespace record_publication

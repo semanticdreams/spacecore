@@ -3,6 +3,8 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <algorithm>
+#include <limits>
 #include <cstring>
 #include <exception>
 #include <stdexcept>
@@ -14,6 +16,7 @@
 #define NOMINMAX
 #include <windows.h>
 #include <aclapi.h>
+#include <winternl.h>
 #else
 #include <cerrno>
 #include <fcntl.h>
@@ -84,6 +87,13 @@ public:
     Handle(const Handle&) = delete;
     Handle& operator=(const Handle&) = delete;
     int get() const { return value_; }
+    void close_checked()
+    {
+        const int fd = std::exchange(value_, -1);
+        // Do not retry close(EINTR): on some hosts the descriptor is already
+        // released and a retry could close an unrelated descriptor.
+        if (fd >= 0 && ::close(fd) != 0) os_error("close private file/directory");
+    }
 private:
     int value_;
 };
@@ -167,21 +177,15 @@ void regular_private_owner(const struct stat& value)
     }
 }
 
-void trusted_directory(int fd)
+void private_directory(int fd)
 {
     const auto value = metadata(fd);
-    if (!S_ISDIR(value.st_mode) || (value.st_uid != 0 && value.st_uid != ::geteuid())
-        || ((value.st_mode & 0022) && !(value.st_mode & S_ISVTX))) {
-        fail("untrusted writable/foreign directory ancestry");
+    if (!S_ISDIR(value.st_mode) || value.st_uid != ::geteuid()
+        || (value.st_mode & 07777) != 0700) {
+        fail("private directory must be owned with exact mode0700");
     }
     mode_only(fd);
 }
-
-struct PinnedDirectory {
-    fs::path path;
-    Handle handle;
-    struct stat original;
-};
 
 class Attempt {
 public:
@@ -189,29 +193,16 @@ public:
     {
         if (destination.empty() || destination.filename().empty()
             || destination.filename() == "." || destination.filename() == ".."
+            || destination.filename() == ".space-publication"
             || destination.native().find('\0') != std::string::npos) fail("invalid destination path");
         const auto absolute = fs::absolute(destination);
-        // Resolve only trusted aliases. The callback receives the canonical path,
-        // never a mutable alias. Check each original prefix before resolving it.
-        fs::path prefix = absolute.root_path();
-        for (const auto& part : absolute.parent_path().relative_path()) {
-            prefix /= part;
-            struct stat link {};
-            if (::lstat(prefix.c_str(), &link) != 0) os_error("inspect ancestry");
-            if (S_ISLNK(link.st_mode) && link.st_uid != 0 && link.st_uid != ::geteuid())
-                fail("foreign ancestry alias");
-            Handle fd(::open(prefix.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
-            if (fd.get() < 0) os_error("open ancestry");
-            trusted_directory(fd.get());
-        }
-        parent_path_ = fs::canonical(absolute.parent_path());
+        // Aliases are resolved only during acquisition. Every subsequent access
+        // is relative to these handles, including creation, rename and cleanup.
+        // Writable ancestors therefore cannot redirect private payload bytes.
+        parent_ = Handle(::open(absolute.parent_path().c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
+        if (parent_.get() < 0) os_error("pin target parent");
+        mode_only(parent());
         name_ = absolute.filename().native();
-        pin(parent_path_.root_path());
-        prefix = parent_path_.root_path();
-        for (const auto& part : parent_path_.relative_path()) {
-            prefix /= part;
-            pin(prefix);
-        }
         destination_ = read_destination();
     }
 
@@ -224,53 +215,60 @@ public:
 
     void prepare()
     {
+        if (::mkdirat(parent(), ".space-publication", 0700) != 0 && errno != EEXIST)
+            os_error("create persistent private anchor");
+        anchor_ = acquire_directory(parent(), ".space-publication", anchor_id_);
         for (int tries = 0; tries < 64; ++tries) {
             workspace_name_ = workspace_name();
-            if (::mkdirat(parent(), workspace_name_.c_str(), 0700) == 0) {
+            if (::mkdirat(anchor_.get(), workspace_name_.c_str(), 0700) == 0) {
                 owned_ = true;
                 break;
             }
             if (errno != EEXIST) os_error("create private workspace");
         }
         if (!owned_) fail("cannot allocate exclusive workspace");
-        workspace_ = Handle(::openat(parent(), workspace_name_.c_str(),
-            O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
-        if (workspace_.get() < 0) os_error("open private workspace");
-        workspace_id_ = metadata(workspace_.get());
+        workspace_ = acquire_directory(anchor_.get(), workspace_name_.c_str(), workspace_id_);
         validate_workspace();
-        temporary_ = Handle(::openat(workspace_.get(), "record.tmp",
+        record_ = Handle(::openat(workspace_.get(), "record",
             O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600));
-        if (temporary_.get() < 0) os_error("precreate private temporary");
-        temporary_id_ = metadata(temporary_.get());
-        regular_private_owner(*temporary_id_);
-        if ((temporary_id_->st_mode & 0777) != 0600) fail("temporary mode must be0600");
-        mode_only(temporary_.get());
+        if (record_.get() < 0) os_error("create private record");
+        record_id_ = metadata(record_.get());
+        validate_private_record();
     }
 
-    fs::path stage_path() const { return parent_path_ / workspace_name_ / "record"; }
     bool owns_workspace() const { return owned_; }
 
-    void observe_stage()
+    void write(std::string_view bytes)
     {
-        if (record_id_ || workspace_.get() < 0) return;
-        Handle fd(::openat(workspace_.get(), "record", O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC));
-        if (fd.get() < 0) return; // secure/cleanup surface any missing or unsafe entry.
-        struct stat value {};
-        if (::fstat(fd.get(), &value) == 0
-            && S_ISREG(value.st_mode) && value.st_uid == ::geteuid() && value.st_nlink == 1) {
-            record_id_ = value;
-            record_ = std::move(fd); // Pin identity across the before-security callback too.
+        validate_workspace();
+        validate_private_record();
+        Handle writer(::fcntl(record_.get(), F_DUPFD_CLOEXEC, 0));
+        if (writer.get() < 0) os_error("retain writer descriptor");
+        std::size_t offset = 0;
+        while (offset < bytes.size()) {
+            const auto size = std::min(bytes.size() - offset, std::size_t(65536));
+            const ssize_t count = ::write(writer.get(), bytes.data() + offset, size);
+            if (count < 0) {
+                if (errno == EINTR) continue;
+                os_error("write private record");
+            }
+            if (count == 0 || static_cast<std::size_t>(count) > size)
+                fail("private record write made invalid progress");
+            offset += static_cast<std::size_t>(count);
         }
+        if (::fsync(writer.get()) != 0) os_error("flush private record");
+        writer.close_checked();
+        verify_bytes(bytes);
     }
 
     void secure(std::string_view bytes)
     {
         validate_workspace();
-        if (record_.get() < 0) fail("callback record is missing, unreadable or unsafe");
+        validate_private_record();
         const auto value = metadata(record_.get());
         struct stat named {};
         if (::fstatat(workspace_.get(), "record", &named, AT_SYMLINK_NOFOLLOW) != 0)
-            os_error("inspect callback record name");
+            os_error("inspect native record name");
         regular_private_owner(value);
         if (!record_id_ || !identity(*record_id_, value) || !identity(named, value)) fail("stage identity changed");
         verify_bytes(bytes);
@@ -290,7 +288,6 @@ public:
     void validate(std::string_view bytes)
     {
         validate_workspace();
-        validate_temporary();
         struct stat named {};
         if (::fstatat(workspace_.get(), "record", &named, AT_SYMLINK_NOFOLLOW) != 0)
             os_error("revalidate stage name");
@@ -299,6 +296,7 @@ public:
             || !S_ISREG(value.st_mode) || value.st_nlink != 1) fail("stage identity/security changed");
         mode_only(record_.get());
         verify_bytes(bytes);
+        if (::fsync(record_.get()) != 0) os_error("flush final record policy");
         const auto current = read_destination();
         if (current.has_value() != destination_.has_value()
             || (current && !snapshot(*destination_, *current))) fail("destination identity/security changed");
@@ -319,48 +317,64 @@ public:
             append_error(errors, "workspace identity unavailable; left untouched");
             return errors;
         }
+        try {
+            private_directory(anchor_.get());
+            private_directory(workspace_.get());
+            if (!anchor_id_ || !identity(metadata(anchor_.get()), *anchor_id_)
+                || !identity(metadata(workspace_.get()), *workspace_id_))
+                fail("private cleanup namespace identity changed");
+        } catch (...) {
+            append_error(errors, current_error());
+            return errors;
+        }
         cleanup_entry("record", record_id_, errors);
-        cleanup_entry("record.tmp", temporary_id_, errors);
         struct stat named {};
-        if (::fstatat(parent(), workspace_name_.c_str(), &named, AT_SYMLINK_NOFOLLOW) != 0
+        if (::fstatat(anchor_.get(), workspace_name_.c_str(), &named, AT_SYMLINK_NOFOLLOW) != 0
             || !identity(named, *workspace_id_)) {
             append_error(errors, "workspace identity changed; directory left untouched");
-        } else if (::unlinkat(parent(), workspace_name_.c_str(), AT_REMOVEDIR) != 0) {
+        } else if (::unlinkat(anchor_.get(), workspace_name_.c_str(), AT_REMOVEDIR) != 0) {
             append_error(errors, "remove workspace: " + std::error_code(errno, std::generic_category()).message());
+        }
+        for (Handle* handle : {&record_, &workspace_, &anchor_, &parent_}) {
+            try { handle->close_checked(); }
+            catch (...) { append_error(errors, current_error()); }
         }
         return errors;
     }
 
 private:
-    int parent() const { return ancestry_.back().handle.get(); }
+    int parent() const { return parent_.get(); }
 
-    void pin(const fs::path& path)
+    Handle acquire_directory(int parent, const char* name, std::optional<struct stat>& expected)
     {
-        Handle handle(::open(path.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
-        if (handle.get() < 0) os_error("pin ancestry");
-        trusted_directory(handle.get());
+        struct stat named {};
+        if (::fstatat(parent, name, &named, AT_SYMLINK_NOFOLLOW) != 0) os_error("inspect private directory");
+        Handle handle(::openat(parent, name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+        if (handle.get() < 0) os_error("open private directory");
+        private_directory(handle.get());
         const auto value = metadata(handle.get());
-        ancestry_.push_back({path, std::move(handle), value});
+        if (!identity(named, value)) fail("private directory acquisition identity changed");
+        expected = value;
+        return handle;
     }
 
     void validate_workspace()
     {
-        for (const auto& directory : ancestry_) {
-            struct stat named {};
-            if (::lstat(directory.path.c_str(), &named) != 0) os_error("revalidate ancestry");
-            const auto value = metadata(directory.handle.get());
-            if (!identity(named, directory.original) || !identity(value, directory.original)
-                || !security(value, directory.original)) fail("ancestry identity/security changed");
-            trusted_directory(directory.handle.get());
-        }
+        // Identity is device/inode, not volatile timestamps or directory link
+        // counts: independent attempts may add/remove children concurrently.
         struct stat named {};
-        if (::fstatat(parent(), workspace_name_.c_str(), &named, AT_SYMLINK_NOFOLLOW) != 0)
+        if (::fstatat(parent(), ".space-publication", &named, AT_SYMLINK_NOFOLLOW) != 0)
+            os_error("revalidate anchor name");
+        if (!anchor_id_ || !identity(named, *anchor_id_)
+            || !identity(metadata(anchor_.get()), *anchor_id_)) fail("anchor identity changed");
+        private_directory(anchor_.get());
+        if (::fstatat(anchor_.get(), workspace_name_.c_str(), &named, AT_SYMLINK_NOFOLLOW) != 0)
             os_error("revalidate workspace");
         const auto value = metadata(workspace_.get());
         if (!workspace_id_ || !identity(named, *workspace_id_) || !identity(value, *workspace_id_)
             || !S_ISDIR(value.st_mode) || value.st_uid != ::geteuid()
             || (value.st_mode & 07777) != 0700) fail("workspace identity/privacy changed");
-        mode_only(workspace_.get());
+        private_directory(workspace_.get());
     }
 
     std::optional<struct stat> read_destination()
@@ -412,24 +426,21 @@ private:
             append_error(errors, std::string("remove owned entry failed: ") + name);
     }
 
-    void validate_temporary()
+    void validate_private_record()
     {
-        Handle fd(::openat(workspace_.get(), "record.tmp", O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC));
-        if (fd.get() < 0) {
-            if (errno == ENOENT) return; // Canonical JSONUtils moved it to record.
-            os_error("revalidate temporary");
-        }
-        const auto value = metadata(fd.get());
+        const auto value = metadata(record_.get());
         regular_private_owner(value);
-        if (!temporary_id_ || !identity(value, *temporary_id_)) fail("temporary identity changed");
-        mode_only(fd.get());
+        struct stat named {};
+        if (::fstatat(workspace_.get(), "record", &named, AT_SYMLINK_NOFOLLOW) != 0)
+            os_error("inspect private record name");
+        if (!record_id_ || !identity(value, *record_id_) || !identity(named, value)
+            || (value.st_mode & 07777) != 0600) fail("private record identity/privacy changed");
+        mode_only(record_.get());
     }
 
-    fs::path parent_path_;
     std::string name_, workspace_name_;
-    std::vector<PinnedDirectory> ancestry_;
-    Handle workspace_, temporary_, record_;
-    std::optional<struct stat> destination_, workspace_id_, temporary_id_, record_id_, final_;
+    Handle parent_, anchor_, workspace_, record_;
+    std::optional<struct stat> destination_, anchor_id_, workspace_id_, record_id_, final_;
     bool owned_ = false, cleaned_ = false;
 };
 
@@ -446,7 +457,7 @@ std::wstring native_path(const fs::path& path)
 {
     // All callers supply verified absolute drive paths, not UNC/device aliases.
     // Use long-path native spelling so a long basename does not reintroduce a
-    // MAX_PATH-dependent publication fallback. Lua's short stage path is unchanged.
+    // MAX_PATH-dependent publication fallback.
     fs::path preferred = path;
     preferred.make_preferred();
     return L"\\\\?\\" + preferred.native();
@@ -470,6 +481,12 @@ public:
     {
         if (value_ != INVALID_HANDLE_VALUE && value_ != nullptr) ::CloseHandle(value_);
         value_ = INVALID_HANDLE_VALUE;
+    }
+    void close_checked()
+    {
+        const HANDLE handle = std::exchange(value_, INVALID_HANDLE_VALUE);
+        if (handle != INVALID_HANDLE_VALUE && handle != nullptr && !::CloseHandle(handle))
+            win_error("close private handle");
     }
 private:
     HANDLE value_;
@@ -569,24 +586,96 @@ bool snapshot(const BY_HANDLE_FILE_INFORMATION& left, const BY_HANDLE_FILE_INFOR
         && ::CompareFileTime(&left.ftLastWriteTime, &right.ftLastWriteTime) == 0;
 }
 
-Handle open_path(const fs::path& path, bool directory = false, bool writable_security = false)
-{
-    const DWORD access = READ_CONTROL | FILE_READ_ATTRIBUTES
-        | (directory ? 0 : FILE_READ_DATA)
-        | (writable_security ? WRITE_DAC | WRITE_OWNER : 0);
-    Handle handle(::CreateFileW(native_path(path).c_str(), access,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | (directory ? 0 : FILE_SHARE_DELETE), nullptr,
-        OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | (directory ? FILE_FLAG_BACKUP_SEMANTICS : 0), nullptr));
-    if (handle.get() == INVALID_HANDLE_VALUE) win_error("open pinned object");
-    metadata(handle.get(), directory);
-    return handle;
-}
+// This is the Native FILE_RENAME_INFORMATION ABI, not Win32
+// FILE_RENAME_INFO (whose RootDirectory is documented as always NULL).
+struct NativeRenameInformation {
+    BOOLEAN ReplaceIfExists;
+    HANDLE RootDirectory;
+    ULONG FileNameLength;
+    WCHAR FileName[1];
+};
+static_assert(offsetof(NativeRenameInformation, RootDirectory) == sizeof(void*));
+static_assert(offsetof(NativeRenameInformation, FileName) == 2 * sizeof(void*) + sizeof(ULONG));
 
-struct PinnedDirectory {
-    fs::path path;
-    Handle handle;
-    BY_HANDLE_FILE_INFORMATION original;
-    Policy policy;
+class NativeFiles {
+public:
+    using Create = NTSTATUS (NTAPI*)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES,
+        PIO_STATUS_BLOCK, PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+    using SetInformation = NTSTATUS (NTAPI*)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
+    using StatusError = ULONG (NTAPI*)(NTSTATUS);
+    using Wait = NTSTATUS (NTAPI*)(HANDLE, BOOLEAN, PLARGE_INTEGER);
+
+    NativeFiles()
+    {
+        const HMODULE module = ::GetModuleHandleW(L"ntdll.dll");
+        if (!module) win_error("load existing ntdll");
+        create_ = reinterpret_cast<Create>(::GetProcAddress(module, "NtCreateFile"));
+        set_ = reinterpret_cast<SetInformation>(::GetProcAddress(module, "NtSetInformationFile"));
+        status_error_ = reinterpret_cast<StatusError>(::GetProcAddress(module, "RtlNtStatusToDosError"));
+        wait_ = reinterpret_cast<Wait>(::GetProcAddress(module, "NtWaitForSingleObject"));
+        if (!create_ || !set_ || !status_error_ || !wait_) fail("required ntdll file operations unavailable");
+    }
+
+    Handle relative(HANDLE root, const std::wstring& name, bool directory, bool create,
+                    ACCESS_MASK access, PSECURITY_DESCRIPTOR security = nullptr,
+                    bool* collision = nullptr, bool* missing = nullptr) const
+    {
+        if (name.empty() || name == L"." || name == L".." || name.find_first_of(L"\\/:") != std::wstring::npos
+            || name.find(L'\0') != std::wstring::npos
+            || name.size() > std::numeric_limits<USHORT>::max() / sizeof(WCHAR)) fail("invalid relative Native leaf");
+        UNICODE_STRING unicode {};
+        unicode.Length = static_cast<USHORT>(name.size() * sizeof(WCHAR));
+        unicode.MaximumLength = unicode.Length;
+        unicode.Buffer = const_cast<PWSTR>(name.data());
+        OBJECT_ATTRIBUTES attributes {};
+        attributes.Length = sizeof(attributes);
+        attributes.RootDirectory = root;
+        attributes.ObjectName = &unicode;
+        attributes.Attributes = 0x40; // OBJ_CASE_INSENSITIVE
+        attributes.SecurityDescriptor = security;
+        IO_STATUS_BLOCK completion {};
+        HANDLE raw = INVALID_HANDLE_VALUE;
+        // FILE_CREATE=2 / FILE_OPEN=1. FILE_DIRECTORY_FILE=1 /
+        // FILE_NON_DIRECTORY_FILE=0x40; FILE_SYNCHRONOUS_IO_NONALERT=0x20
+        // requires SYNCHRONIZE. FILE_OPEN_REPARSE_POINT=0x200000 opens the
+        // entry itself, which metadata then refuses if it is a reparse point.
+        const NTSTATUS status = create_(&raw, access | SYNCHRONIZE, &attributes, &completion,
+            nullptr, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            create ? 2 : 1, (directory ? 1 : 0x40) | 0x20 | 0x200000, nullptr, 0);
+        if (collision && status == static_cast<NTSTATUS>(0xC0000035UL)) { *collision = true; return Handle(); }
+        if (missing && status == static_cast<NTSTATUS>(0xC0000034UL)) { *missing = true; return Handle(); }
+        Handle result(raw);
+        complete(status, raw, completion, "NtCreateFile relative acquisition");
+        if (create && completion.Information != 2) fail("exclusive Native creation did not create a new object");
+        metadata(result.get(), directory);
+        return result;
+    }
+
+    void information(HANDLE source, void* data, ULONG length, FILE_INFORMATION_CLASS kind,
+                     const char* operation) const
+    {
+        IO_STATUS_BLOCK completion {};
+        const NTSTATUS status = set_(source, &completion, data, length, kind);
+        complete(status, source, completion, operation);
+    }
+
+private:
+    void complete(NTSTATUS status, HANDLE handle, const IO_STATUS_BLOCK& completion, const char* operation) const
+    {
+        if (status == 0x103) { // STATUS_PENDING is not a completed operation.
+            const NTSTATUS waited = wait_(handle, FALSE, nullptr);
+            if (waited != 0) win_error("await Native file completion", status_error_(waited));
+            status = completion.Status;
+            if (status == 0x103) fail(std::string(operation) + ": completion remained pending");
+        }
+        if (status < 0) win_error(operation, status_error_(status));
+        if (completion.Status < 0) win_error(operation, status_error_(completion.Status));
+        if (completion.Status == 0x103) fail(std::string(operation) + ": incomplete status block");
+    }
+    Create create_ = nullptr;
+    SetInformation set_ = nullptr;
+    StatusError status_error_ = nullptr;
+    Wait wait_ = nullptr;
 };
 
 class Attempt {
@@ -597,9 +686,12 @@ public:
             || destination.filename() == L".." || destination.native().find(L'\0') != std::wstring::npos
             || destination.filename().native().find(L':') != std::wstring::npos)
             fail("invalid destination path/alternate stream");
-        destination_path_ = fs::absolute(destination).lexically_normal();
-        parent_path_ = destination_path_.parent_path();
-        if (parent_path_.native().rfind(L"\\\\", 0) == 0) fail("remote/device ancestry is unsupported");
+        if (::_wcsicmp(destination.filename().c_str(), L".space-publication") == 0)
+            fail("reserved publication anchor destination");
+        const auto absolute = fs::absolute(destination).lexically_normal();
+        const auto parent_path = absolute.parent_path();
+        name_ = absolute.filename().native();
+        if (parent_path.native().rfind(L"\\\\", 0) == 0) fail("remote/device ancestry is unsupported");
         HANDLE raw_token = nullptr;
         if (!::OpenThreadToken(::GetCurrentThread(), TOKEN_QUERY, TRUE, &raw_token)) {
             if (::GetLastError() != ERROR_NO_TOKEN) win_error("open effective thread token");
@@ -607,29 +699,29 @@ public:
         }
         Handle token(raw_token);
         DWORD size = 0;
-        ::GetTokenInformation(token.get(), TokenOwner, nullptr, 0, &size);
+        ::GetTokenInformation(token.get(), TokenUser, nullptr, 0, &size);
         if (::GetLastError() != ERROR_INSUFFICIENT_BUFFER) win_error("size token owner");
         Blob data(size);
-        if (!::GetTokenInformation(token.get(), TokenOwner, data.data(), size, &size)) win_error("read token owner");
-        owner_ = copy_sid(reinterpret_cast<TOKEN_OWNER*>(data.data())->Owner);
-        fs::path prefix = parent_path_.root_path();
-        pin(prefix);
-        for (const auto& part : parent_path_.relative_path()) {
-            prefix /= part;
-            pin(prefix);
-        }
+        if (!::GetTokenInformation(token.get(), TokenUser, data.data(), size, &size)) win_error("read effective token user");
+        owner_ = copy_sid(reinterpret_cast<TOKEN_USER*>(data.data())->User.Sid);
+        parent_ = Handle(::CreateFileW(native_path(parent_path).c_str(), directory_access,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+        if (parent_.get() == INVALID_HANDLE_VALUE) win_error("pin target parent");
+        parent_id_ = metadata(parent_.get(), true);
+        inspect_policy(parent_.get());
         std::array<wchar_t, MAX_PATH + 1> volume {};
-        if (!::GetVolumePathNameW(parent_path_.c_str(), volume.data(), volume.size())) win_error("inspect local volume");
+        if (!::GetVolumePathNameW(parent_path.c_str(), volume.data(), volume.size())) win_error("inspect local volume");
         const UINT type = ::GetDriveTypeW(volume.data());
         DWORD flags = 0;
         if ((type != DRIVE_FIXED && type != DRIVE_REMOVABLE)
             || !::GetVolumeInformationW(volume.data(), nullptr, 0, nullptr, nullptr, &flags, nullptr, 0))
             fail("local filesystem semantics unavailable");
         if (!(flags & FILE_PERSISTENT_ACLS)) fail("persistent ACL filesystem required");
-        destination_handle_ = optional_destination();
-        if (destination_handle_.get() != INVALID_HANDLE_VALUE) {
-            destination_ = metadata(destination_handle_.get());
-            destination_policy_ = inspect_policy(destination_handle_.get());
+        auto destination_handle = optional_destination();
+        if (destination_handle.get() != INVALID_HANDLE_VALUE) {
+            destination_ = metadata(destination_handle.get());
+            destination_policy_ = inspect_policy(destination_handle.get());
         }
     }
 
@@ -640,9 +732,9 @@ public:
 
     void prepare()
     {
-        Blob acl(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD) + owner_.size());
-        auto* dacl = reinterpret_cast<PACL>(acl.data());
-        if (!::InitializeAcl(dacl, acl.size(), ACL_REVISION)
+        private_acl_.resize(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD) + owner_.size());
+        auto* dacl = reinterpret_cast<PACL>(private_acl_.data());
+        if (!::InitializeAcl(dacl, private_acl_.size(), ACL_REVISION)
             || !::AddAccessAllowedAceEx(dacl, ACL_REVISION, OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE,
                 FILE_ALL_ACCESS, owner_.data())) win_error("construct owner-only DACL");
         SECURITY_DESCRIPTOR descriptor;
@@ -651,57 +743,54 @@ public:
             || !::SetSecurityDescriptorDacl(&descriptor, TRUE, dacl, FALSE)
             || !::SetSecurityDescriptorControl(&descriptor, SE_DACL_PROTECTED, SE_DACL_PROTECTED))
             win_error("construct private security descriptor");
-        SECURITY_ATTRIBUTES attributes {sizeof(SECURITY_ATTRIBUTES), &descriptor, FALSE};
+        bool collision = false;
+        anchor_ = native_.relative(parent_.get(), L".space-publication", true, true,
+            directory_access, &descriptor, &collision);
+        if (collision) anchor_ = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
+        anchor_id_ = metadata(anchor_.get(), true);
+        require_private(inspect_policy(anchor_.get()));
         for (int tries = 0; tries < 64; ++tries) {
-            workspace_path_ = parent_path_ / workspace_name();
-            if (::CreateDirectoryW(native_path(workspace_path_).c_str(), &attributes)) { owned_ = true; break; }
-            if (::GetLastError() != ERROR_ALREADY_EXISTS) win_error("create private workspace");
+            workspace_name_ = fs::path(workspace_name()).wstring();
+            collision = false;
+            workspace_ = native_.relative(anchor_.get(), workspace_name_, true, true,
+                directory_access | DELETE, &descriptor, &collision);
+            if (!collision) { owned_ = true; break; }
         }
         if (!owned_) fail("cannot allocate exclusive workspace");
-        workspace_ = open_path(workspace_path_, true);
         workspace_id_ = metadata(workspace_.get(), true);
-        workspace_policy_ = inspect_policy(workspace_.get());
-        if (workspace_policy_->owner != owner_ || !workspace_policy_->protected_dacl
-            || workspace_policy_->dacl != acl) fail("private workspace DACL reproduction failed");
-        const auto temporary_path = workspace_path_ / L"record.tmp";
-        temporary_ = Handle(::CreateFileW(native_path(temporary_path).c_str(), GENERIC_READ | GENERIC_WRITE | READ_CONTROL,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &attributes, CREATE_NEW,
-            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
-        if (temporary_.get() == INVALID_HANDLE_VALUE) win_error("precreate private temporary");
-        temporary_id_ = metadata(temporary_.get());
-        const auto policy = inspect_policy(temporary_.get());
-        if (policy.owner != owner_ || !policy.protected_dacl || policy.dacl != acl)
-            fail("temporary owner-only DACL reproduction failed");
+        require_private(inspect_policy(workspace_.get()));
+        record_ = native_.relative(workspace_.get(), L"record", false, true,
+            GENERIC_READ | GENERIC_WRITE | READ_CONTROL | WRITE_DAC | WRITE_OWNER | DELETE, &descriptor);
+        record_id_ = metadata(record_.get());
+        require_private(inspect_policy(record_.get()));
+        validate_workspace();
     }
 
-    fs::path stage_path() const { return workspace_path_ / L"record"; }
     bool owns_workspace() const { return owned_; }
 
-    void observe_stage()
+    void write(std::string_view bytes)
     {
-        if (record_id_ || !owned_) return;
-        // Failed/unsafe entries are deliberately left for diagnostic cleanup,
-        // never adopted through a reparse point or a multiple-link alias.
-        try {
-            auto handle = open_path(stage_path(), false, true);
-            const auto policy = inspect_policy(handle.get());
-            if (policy.owner == owner_) {
-                record_id_ = metadata(handle.get());
-                record_ = std::move(handle);
-            }
-        } catch (...) {}
+        validate_workspace();
+        validate_record_name();
+        require_private(inspect_policy(record_.get()));
+        std::size_t offset = 0;
+        while (offset < bytes.size()) {
+            DWORD count = 0;
+            const auto size = static_cast<DWORD>(std::min(bytes.size() - offset, std::size_t(65536)));
+            if (!::WriteFile(record_.get(), bytes.data() + offset, size, &count, nullptr)) win_error("write private record");
+            if (!count || count > size) fail("private record write completion made invalid progress");
+            offset += count;
+        }
+        if (!::FlushFileBuffers(record_.get())) win_error("flush private record");
+        verify_bytes(bytes);
     }
 
     void secure(std::string_view bytes)
     {
         validate_workspace();
-        if (record_.get() == INVALID_HANDLE_VALUE) fail("callback record is missing, unreadable or unsafe");
-        const auto value = metadata(record_.get());
-        auto named = open_path(stage_path());
-        if (!record_id_ || !identity(*record_id_, value) || !identity(metadata(named.get()), value))
-            fail("stage identity changed");
+        validate_record_name();
         const auto policy = inspect_policy(record_.get());
-        require_private_file(policy);
+        require_private(policy);
         verify_bytes(bytes);
         if (destination_policy_) {
             auto& desired = *destination_policy_;
@@ -726,19 +815,9 @@ public:
     void validate(std::string_view bytes)
     {
         validate_workspace();
-        const auto temporary_path = workspace_path_ / L"record.tmp";
-        const DWORD attributes = ::GetFileAttributesW(native_path(temporary_path).c_str());
-        if (attributes != INVALID_FILE_ATTRIBUTES) {
-            auto temporary = open_path(temporary_path);
-            if (!temporary_id_ || !identity(metadata(temporary.get()), *temporary_id_))
-                fail("temporary identity changed");
-            require_private_file(inspect_policy(temporary.get()));
-        } else if (::GetLastError() != ERROR_FILE_NOT_FOUND) {
-            win_error("revalidate temporary");
-        }
-        auto named = open_path(stage_path());
+        validate_record_name();
         const auto value = metadata(record_.get());
-        if (!identity(metadata(named.get()), value) || !final_ || !snapshot(*final_, value)
+        if (!final_ || !snapshot(*final_, value)
             || !same_policy(*final_policy_, inspect_policy(record_.get()))) fail("stage identity/security changed");
         verify_bytes(bytes);
         auto current = optional_destination();
@@ -746,14 +825,23 @@ public:
         if (destination_ && (!snapshot(*destination_, metadata(current.get()))
             || !same_policy(*destination_policy_, inspect_policy(current.get()))))
             fail("destination identity/security changed");
-        if (value.dwVolumeSerialNumber != ancestry_.back().original.dwVolumeSerialNumber)
+        if (value.dwVolumeSerialNumber != parent_id_.dwVolumeSerialNumber)
             fail("cross-volume publication is forbidden");
     }
 
     void commit()
     {
-        if (!::MoveFileExW(native_path(stage_path()).c_str(), native_path(destination_path_).c_str(),
-                destination_ ? MOVEFILE_REPLACE_EXISTING : 0)) win_error("atomic MoveFileExW publication");
+        const auto bytes = name_.size() * sizeof(WCHAR);
+        const auto size = offsetof(NativeRenameInformation, FileName) + bytes;
+        if (size > std::numeric_limits<ULONG>::max()) fail("Native rename name too long");
+        Blob storage(std::max(size, sizeof(NativeRenameInformation)), 0);
+        auto* rename = reinterpret_cast<NativeRenameInformation*>(storage.data());
+        rename->ReplaceIfExists = destination_.has_value();
+        rename->RootDirectory = parent_.get();
+        rename->FileNameLength = static_cast<ULONG>(bytes);
+        std::memcpy(rename->FileName, name_.data(), bytes);
+        native_.information(record_.get(), rename, static_cast<ULONG>(size),
+            static_cast<FILE_INFORMATION_CLASS>(10), "atomic NtSetInformationFile rename");
     }
 
     std::optional<std::string> cleanup()
@@ -762,72 +850,36 @@ public:
         std::optional<std::string> errors;
         if (!owned_) return errors;
         try {
-            auto named = open_path(workspace_path_, true);
+            auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
             if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_))
                 fail("workspace identity changed; left untouched");
-            cleanup_entry(stage_path(), record_id_, errors);
-            cleanup_entry(workspace_path_ / L"record.tmp", temporary_id_, errors);
+            require_private(inspect_policy(anchor_.get()));
+            require_private(inspect_policy(workspace_.get()));
+            cleanup_entry(errors);
+            record_.close_checked(); // Complete delete-pending children first.
+            BOOLEAN remove = TRUE; // FILE_DISPOSITION_INFORMATION.DeleteFile
+            native_.information(workspace_.get(), &remove, sizeof(remove),
+                static_cast<FILE_INFORMATION_CLASS>(13), "remove owned attempt by handle");
         } catch (...) { append_error(errors, current_error()); return errors; }
-        record_.close();
-        temporary_.close(); // Complete delete-pending child removals first.
-        workspace_.close(); // Only our pinned workspace handle blocks rmdir.
-        if (!::RemoveDirectoryW(native_path(workspace_path_).c_str()))
-            append_error(errors, "remove workspace: " + std::error_code(::GetLastError(), std::system_category()).message());
+        for (Handle* handle : {&workspace_, &anchor_, &parent_}) {
+            try { handle->close_checked(); }
+            catch (...) { append_error(errors, current_error()); }
+        }
         return errors;
     }
 
 private:
     Handle optional_destination()
     {
-        const DWORD attributes = ::GetFileAttributesW(native_path(destination_path_).c_str());
-        if (attributes == INVALID_FILE_ATTRIBUTES) {
-            const DWORD error = ::GetLastError();
-            if (error == ERROR_FILE_NOT_FOUND) return Handle();
-            win_error("inspect destination existence", error);
-        }
-        return open_path(destination_path_);
+        bool missing = false;
+        return native_.relative(parent_.get(), name_, false, false,
+            READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_DATA, nullptr, nullptr, &missing);
     }
 
-    bool trusted_sid(PSID sid)
+    void require_private(const Policy& policy)
     {
-        alignas(DWORD) std::array<unsigned char, SECURITY_MAX_SID_SIZE> system {}, administrators {};
-        DWORD system_size = system.size(), admin_size = administrators.size();
-        if (!::CreateWellKnownSid(WinLocalSystemSid, nullptr, system.data(), &system_size)
-            || !::CreateWellKnownSid(WinBuiltinAdministratorsSid, nullptr, administrators.data(), &admin_size))
-            win_error("inspect trusted ancestry identities");
-        return ::EqualSid(sid, owner_.data()) || ::EqualSid(sid, system.data())
-            || ::EqualSid(sid, administrators.data());
-    }
-
-    void pin(const fs::path& path)
-    {
-        auto handle = open_path(path, true);
-        const auto policy = inspect_policy(handle.get());
-        if (!trusted_sid(const_cast<unsigned char*>(policy.owner.data()))) fail("foreign ancestry owner");
-        const auto* acl = reinterpret_cast<const ACL*>(policy.dacl.data());
-        for (DWORD index = 0; index < acl->AceCount; ++index) {
-            void* raw = nullptr;
-            if (!::GetAce(const_cast<PACL>(acl), index, &raw)) win_error("inspect ancestry ACE");
-            auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
-            if (ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || (ace->Header.AceFlags & INHERIT_ONLY_ACE)) continue;
-            // Denying delete sharing pins names, not directory reparse data:
-            // FSCTL_SET_REPARSE_POINT can use a foreign write-data handle even
-            // while our handle remains open. Refuse that authority BEFORE Lua
-            // receives a path or can write bytes. Map generic file rights first;
-            // testing only GENERIC_ALL misses GENERIC_WRITE and its specific bits.
-            GENERIC_MAPPING mapping {FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
-            DWORD granted = ace->Mask;
-            ::MapGenericMask(&granted, &mapping);
-            const DWORD mutation = DELETE | FILE_DELETE_CHILD | WRITE_DAC | WRITE_OWNER | FILE_WRITE_DATA;
-            if ((granted & mutation) && !trusted_sid(&ace->SidStart)) fail("untrusted mutable ancestry DACL");
-        }
-        const auto value = metadata(handle.get(), true);
-        ancestry_.push_back({path, std::move(handle), value, policy});
-    }
-
-    void require_private_file(const Policy& policy)
-    {
-        if (policy.owner != owner_) fail("stage owner changed");
+        if (policy.owner != owner_ || !policy.protected_dacl || policy.dacl != private_acl_)
+            fail("private owner/protected DACL changed");
         const auto* acl = reinterpret_cast<const ACL*>(policy.dacl.data());
         if (acl->AceCount != 1) fail("stage must inherit only the owner ACE");
         void* raw = nullptr;
@@ -840,19 +892,23 @@ private:
 
     void validate_workspace()
     {
-        for (const auto& directory : ancestry_) {
-            // Handles deny ancestor rename/deletion. pin's initial ACL gate
-            // separately excludes foreign reparse writes before any callback;
-            // these later reopens are not a substitute for that privacy gate.
-            auto named = open_path(directory.path, true);
-            if (!identity(metadata(named.get(), true), directory.original)
-                || !same_policy(directory.policy, inspect_policy(directory.handle.get())))
-                fail("ancestry identity/security changed");
-        }
-        auto named = open_path(workspace_path_, true);
+        auto anchor = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
+        if (!anchor_id_ || !identity(metadata(anchor.get(), true), *anchor_id_)
+            || !identity(metadata(anchor_.get(), true), *anchor_id_)) fail("anchor identity changed");
+        require_private(inspect_policy(anchor_.get()));
+        auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
         if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_)
-            || !same_policy(*workspace_policy_, inspect_policy(workspace_.get())))
+            || !identity(metadata(workspace_.get(), true), *workspace_id_))
             fail("workspace identity/security changed");
+        require_private(inspect_policy(workspace_.get()));
+    }
+
+    void validate_record_name()
+    {
+        auto named = native_.relative(workspace_.get(), L"record", false, false, READ_CONTROL | FILE_READ_ATTRIBUTES);
+        const auto value = metadata(record_.get());
+        if (!record_id_ || !identity(value, *record_id_) || !identity(metadata(named.get()), value))
+            fail("private record identity changed");
     }
 
     void verify_bytes(std::string_view bytes)
@@ -872,24 +928,30 @@ private:
         if (offset != bytes.size()) fail("stage byte length differs from expected bytes");
     }
 
-    void cleanup_entry(const fs::path& path, const std::optional<BY_HANDLE_FILE_INFORMATION>& expected,
-                       std::optional<std::string>& errors)
+    void cleanup_entry(std::optional<std::string>& errors)
     {
-        if (::GetFileAttributesW(native_path(path).c_str()) == INVALID_FILE_ATTRIBUTES && ::GetLastError() == ERROR_FILE_NOT_FOUND)
-            return;
         try {
-            auto handle = open_path(path);
-            if (!expected || !identity(metadata(handle.get()), *expected)) fail("unowned/substituted cleanup entry");
-            if (!::DeleteFileW(native_path(path).c_str())) win_error("remove owned entry");
+            bool missing = false;
+            auto handle = native_.relative(workspace_.get(), L"record", false, false,
+                DELETE | READ_CONTROL | FILE_READ_ATTRIBUTES, nullptr, nullptr, &missing);
+            if (missing) return;
+            if (!record_id_ || !identity(metadata(handle.get()), *record_id_)) fail("unowned/substituted cleanup entry");
+            BOOLEAN remove = TRUE;
+            native_.information(handle.get(), &remove, sizeof(remove), static_cast<FILE_INFORMATION_CLASS>(13),
+                "remove owned record by handle");
+            handle.close_checked();
         } catch (...) { append_error(errors, current_error()); }
     }
 
-    fs::path parent_path_, destination_path_, workspace_path_;
-    Blob owner_;
-    std::vector<PinnedDirectory> ancestry_;
-    Handle destination_handle_, workspace_, temporary_, record_;
-    std::optional<BY_HANDLE_FILE_INFORMATION> destination_, workspace_id_, temporary_id_, record_id_, final_;
-    std::optional<Policy> destination_policy_, workspace_policy_, final_policy_;
+    static constexpr ACCESS_MASK directory_access = READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_LIST_DIRECTORY
+        | FILE_TRAVERSE | FILE_ADD_FILE | FILE_ADD_SUBDIRECTORY | SYNCHRONIZE;
+    NativeFiles native_;
+    std::wstring name_, workspace_name_;
+    Blob owner_, private_acl_;
+    Handle parent_, anchor_, workspace_, record_;
+    BY_HANDLE_FILE_INFORMATION parent_id_ {};
+    std::optional<BY_HANDLE_FILE_INFORMATION> destination_, anchor_id_, workspace_id_, record_id_, final_;
+    std::optional<Policy> destination_policy_, final_policy_;
     bool owned_ = false, cleaned_ = false;
 };
 
@@ -897,21 +959,15 @@ private:
 
 } // namespace
 
-Result publish(const fs::path& destination, std::string_view expected_bytes, const Stage& stage, const Hooks& hooks)
+Result publish(const fs::path& destination, std::string_view expected_bytes, const Hooks& hooks)
 {
-    if (!stage) fail("stage callback is required");
     Attempt attempt(destination);
     Result result;
     std::optional<std::string> failure;
     try {
         attempt.prepare();
-        try {
-            stage(attempt.stage_path());
-        } catch (...) {
-            attempt.observe_stage();
-            throw;
-        }
-        attempt.observe_stage();
+        if (hooks.before_write) hooks.before_write();
+        attempt.write(expected_bytes);
         if (hooks.before_security) hooks.before_security();
         attempt.secure(expected_bytes);
         if (hooks.before_commit) hooks.before_commit();

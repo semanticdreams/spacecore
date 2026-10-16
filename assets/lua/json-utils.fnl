@@ -14,15 +14,19 @@
                                       tmp-path
                                       path
                                       err))
-        (error message)))
+        (error message))
+    true)
 
 (fn write-json! [path data opts]
-    (local options (or opts {}))
+    (local options (if (= opts nil) {} opts))
+    (assert (= (type options) :table) "json-utils options must be a table")
+    (each [key value (pairs options)]
+        (assert (= key :publish!) (.. "json-utils unknown option: " (tostring key)))
+        (assert (= (type value) :function) "json-utils publish! must be a function"))
     (local payload (json.dumps data))
-    (if (= options.atomic? false)
-        (fs.write-file path payload)
-        (write-json-atomic! path payload))
-    true)
+    (if options.publish!
+        (options.publish! path payload)
+        (write-json-atomic! path payload)))
 
 (fn array-table? [value]
     (var count 0)

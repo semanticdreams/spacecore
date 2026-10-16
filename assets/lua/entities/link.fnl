@@ -8,8 +8,8 @@
 (fn fail [code message]
   (error {:code code :message message :outcome :not-committed}))
 (fn storage! [f ...]
-  (local (ok result) (pcall f ...))
-  (if ok result
+  (local (ok result cleanup-error) (pcall f ...))
+  (if ok (values result cleanup-error)
       (and (= (type result) :table) result.code) (error result)
       (fail :storage-failed (tostring result))))
 (fn valid-id! [id]
@@ -28,9 +28,14 @@
   (local (ok data) (pcall json.loads content))
   (when (not ok) (fail :corrupt-data "invalid link JSON"))
   (validate-record! data id :corrupt-data))
-(fn notify! [signal entity]
+(fn notify! [signal entity cleanup-error]
   (local result (copy-record entity))
   (local (ok err) (pcall signal.emit signal entity))
+  (when cleanup-error
+    (error {:code :storage-failed :outcome :committed :result result
+            :message (if ok "Record committed; staging cleanup failed."
+                            "Record committed; staging cleanup and notification failed.")
+            :cleanup-error cleanup-error :notification-error (when (not ok) (tostring err))}))
   (when (not ok)
     (error {:code :notification-failed :message (tostring err) :outcome :committed :result result})))
 (fn page-limit [value default maximum]
@@ -81,9 +86,9 @@
                   :created-at (or settings.created-at (os.time)) :metadata (or settings.metadata {})})
     (validate-record! entity id :invalid-arguments)
     (local detached (copy-record entity))
-    (write-record! detached)
+    (local (_written cleanup-error) (write-record! detached))
     (set (. cache id) detached)
-    (notify! link-entity-created detached)
+    (notify! link-entity-created detached cleanup-error)
     detached)
 
   (fn update-entity [_self id updates]
@@ -97,9 +102,9 @@
       (each [k v (pairs changes)] (set (. staged k) v))
       (validate-record! staged id :invalid-arguments)
       (local detached (copy-record staged))
-      (write-record! detached)
+      (local (_written cleanup-error) (write-record! detached))
       (each [k v (pairs detached)] (set (. entity k) v))
-      (notify! link-entity-updated entity))
+      (notify! link-entity-updated entity cleanup-error))
     entity)
 
   (fn delete-entity [_self id]

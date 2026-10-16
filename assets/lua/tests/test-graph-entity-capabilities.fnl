@@ -6,6 +6,8 @@
 (local Links (require :entities/link))
 (local Identities (require :entities/identity))
 (local tempfile (require :tempfile))
+(local process (require :process))
+(local Uuid (require :uuid))
 (local json (require :json))
 (local fs (require :fs))
 (local Shapes (require :graph/capability-shapes))
@@ -17,8 +19,20 @@
   (assert result.ok (json.dumps result))
   result.value)
 
+(fn family-directory []
+  (if (not= (string.sub package.config 1 1) "/")
+      (tempfile.TemporaryDirectory {:prefix "graph-capabilities-"})
+      (do
+        (local path (fs.join-path "/tmp" (.. "graph-capabilities-" (Uuid.v4))))
+        (local made (process.run {:args ["mkdir" "-m" "700" path] :timeout 10}))
+        (assert (= made.exit-code 0) made.stderr)
+        (each [_ child (ipairs ["entities" "entities/string" "entities/link"])]
+          (local created (process.run {:args ["mkdir" "-m" "700" (fs.join-path path child)] :timeout 10}))
+          (assert (= created.exit-code 0) created.stderr))
+        {:path path :drop (fn drop-directory [_self] (fs.remove-all path))})))
+
 (fn with-family [events? f]
-  (local dir (tempfile.TemporaryDirectory {:prefix "graph-capabilities-"}))
+  (local dir (family-directory))
   (local string-files (collect [key value (pairs RecordFiles)] (values key value)))
   (local link-files (collect [key value (pairs RecordFiles)] (values key value)))
   (local strings (Strings.StringEntityStore {:base-dir dir.path :files string-files}))
@@ -297,6 +311,49 @@
 (fn throw-listener [_entity] (error "intentional post-commit listener failure"))
 (fn throw-storage [& _] (error "intentional storage fault"))
 
+(fn committed-cleanup [graph strings links _identities _base-dir string-files link-files]
+  (forbid-visuals! graph)
+  (local collection (provider! graph "collection.create"))
+  (local relations (provider! graph "relationships.create"))
+  (local source (call! graph collection "collection.create" {:text "before"}))
+  (local other (call! graph collection "collection.create" {:text "other"}))
+  (local boundary (RecordFiles.RecordFiles
+    {:publication-hooks {:test-before-cleanup (fn cleanup-fault [] (error "graph cleanup fault"))}}))
+  (set string-files.write-text! boundary.write-text!)
+  (set link-files.write-json! boundary.write-json!)
+  (each [_ notification? (ipairs [false true])]
+    (local observed {:calls 0 :completed false})
+    (fn listener [entity]
+      (set observed.calls (+ observed.calls 1))
+      (assert (= (strings:get-entity entity.id) entity))
+      (assert (= (. (strings:read-text entity.id) :revision) entity.revision))
+      (set observed.completed true)
+      (when notification? (error "graph notification fault")))
+    (local handler (strings.string-entity-created:connect listener))
+    (local created (graph:invoke collection "collection.create" {:text "committed"} {}))
+    (strings.string-entity-created:disconnect handler true)
+    (assert observed.completed "graph listener assertions did not complete")
+    (assert (= observed.calls 1))
+    (local create-error (error! created :storage-failed :committed))
+    (assert (= create-error.cleanup-error nil) "local diagnostics must not extend graph errors")
+    (assert (= create-error.notification-error nil))
+    (assert (= (. (call! graph create-error.result.ref "text.read" {}) :text) "committed"))
+    (local revision (. (call! graph source.ref "text.read" {}) :revision))
+    (local update-handler (when notification? (strings.string-entity-updated:connect throw-listener)))
+    (local replaced (graph:invoke source.ref "text.replace" {:text "replaced"} {:revision revision}))
+    (when update-handler (strings.string-entity-updated:disconnect update-handler true))
+    (local replace-error (error! replaced :storage-failed :committed))
+    (assert (= replace-error.result.ref.key source.ref.key))
+    (assert (= replace-error.result.revision (. (call! graph source.ref "text.read" {}) :revision)))
+    (local link-handler (when notification? (links.link-entity-created:connect throw-listener)))
+    (local linked (graph:invoke relations "relationships.create" {:source source.ref :target other.ref} {}))
+    (when link-handler (links.link-entity-created:disconnect link-handler true))
+    (local link-error (error! linked :storage-failed :committed))
+    (assert (= link-error.result.source.key source.ref.key))
+    (assert (= link-error.result.target.key other.ref.key))
+    (set link-error.result.source.key "detached")
+    (assert (= (. (links:read-link (string.sub link-error.result.ref.key 13)) :source-key) source.ref.key))))
+
 (fn failures [graph strings links _identities base-dir string-files link-files]
   (forbid-visuals! graph)
   (local collection (provider! graph "collection.create"))
@@ -470,6 +527,8 @@
                      :fn (fn direct [] (with-family true direct-links))})
 (table.insert tests {:name "owning faults and committed notifications map to declared detached outcomes"
                      :fn (fn faults [] (with-family true failures))})
+(table.insert tests {:name "committed cleanup diagnostics retain existing graph DTOs without schema changes"
+                     :fn (fn cleanup [] (with-family true committed-cleanup))})
 (table.insert tests {:name "nonvisual workflow leaves sentinel GraphMap interaction and projection state unchanged"
                      :fn map-isolation})
 (table.insert tests {:name "family registrations own access through runtime uninstall rollback and retry"

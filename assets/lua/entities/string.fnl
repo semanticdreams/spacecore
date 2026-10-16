@@ -9,8 +9,8 @@
   (error {:code code :message message :outcome :not-committed}))
 
 (fn storage! [f ...]
-  (local (ok result) (pcall f ...))
-  (if ok result
+  (local (ok result cleanup-error) (pcall f ...))
+  (if ok (values result cleanup-error)
       (and (= (type result) :table) result.code) (error result)
       (fail :storage-failed (tostring result))))
 
@@ -57,8 +57,13 @@
   (when (> n maximum) (fail :limit-exceeded "page limit exceeded"))
   n)
 
-(fn notify! [signal entity result]
+(fn notify! [signal entity result cleanup-error]
   (local (ok err) (pcall signal.emit signal entity))
+  (when cleanup-error
+    (error {:code :storage-failed :outcome :committed :result result
+            :message (if ok "Record committed; staging cleanup failed."
+                            "Record committed; staging cleanup and notification failed.")
+            :cleanup-error cleanup-error :notification-error (when (not ok) (tostring err))}))
   (when (not ok)
     (error {:code :notification-failed :message (tostring err) :outcome :committed :result result})))
 
@@ -131,9 +136,9 @@
     (local entity {:id id :value (or settings.value "") :revision (Uuid.v4)
                   :created-at (or settings.created-at now) :updated-at (or settings.updated-at now)})
     (validate-fields! entity)
-    (write-record! entity false)
+    (local (_written cleanup-error) (write-record! entity false))
     (set (. cache id) entity)
-    (notify! string-entity-created entity (copy-record entity))
+    (notify! string-entity-created entity (copy-record entity) cleanup-error)
     entity)
 
   (fn update! [id updates expected bounded? snapshot-result?]
@@ -151,13 +156,13 @@
       (set staged.updated-at (os.time))
       (set staged.revision (Uuid.v4))
       (validate-fields! staged)
-      (write-record! staged bounded?)
-      ;; Publish only after rename, retaining references held by existing callers.
+      (local (_written cleanup-error) (write-record! staged bounded?))
+      ;; Publish only after native commit, retaining existing callers' references.
       (local entity (or (. cache id) staged))
       (each [k v (pairs staged)] (set (. entity k) v))
       (set (. cache id) entity)
       (local result (if snapshot-result? (snapshot entity) (copy-record entity)))
-      (notify! string-entity-updated entity result)
+      (notify! string-entity-updated entity result cleanup-error)
       (if snapshot-result? result entity)))
 
   (fn update-entity [_self id updates]

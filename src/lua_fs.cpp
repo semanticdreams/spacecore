@@ -873,14 +873,10 @@ void fs_append_file(const std::string& path, const std::string& contents)
 }
 
 sol::table fs_publish_record(sol::this_state ts,
-                             const std::string& path,
-                             const std::string& expected_bytes,
-                             sol::object stage_object,
-                             sol::optional<sol::object> opts)
+                              const std::string& path,
+                              const std::string& expected_bytes,
+                              sol::optional<sol::object> opts)
 {
-    if (stage_object.get_type() != sol::type::function)
-        throw sol::error("fs.publish-record: stage must be a function");
-    sol::protected_function stage = stage_object.as<sol::protected_function>();
     record_publication::Hooks hooks;
     if (opts) {
         if (opts->get_type() != sol::type::table)
@@ -903,27 +899,20 @@ sol::table fs_publish_record(sol::this_state ts,
                     throw std::runtime_error("fs.publish-record: " + name + " must return true");
                 }
             };
-            if (name == "test-before-security") hooks.before_security = hook;
+            if (name == "test-before-write") hooks.before_write = hook;
+            else if (name == "test-before-security") hooks.before_security = hook;
             else if (name == "test-before-commit") hooks.before_commit = hook;
             else if (name == "test-before-cleanup") hooks.before_cleanup = hook;
             else throw sol::error("fs.publish-record: unknown option " + name);
         }
     }
-    if (!stage.valid()) throw sol::error("fs.publish-record: stage must be a function");
     sol::state_view lua(ts);
     // Allocate the ordinary success envelope and its hash slots before the
     // irreversible native operation. There is no postcommit token/stat query.
     sol::table envelope = lua.create_table(0, 2);
     envelope["committed"] = true;
     envelope["cleanup-error"] = std::string();
-    const auto result = record_publication::publish(path, expected_bytes,
-        [&stage](const fs::path& stage_path) {
-            sol::protected_function_result result = stage(stage_path.string());
-            if (!result.valid()) {
-                const sol::error error = result;
-                throw std::runtime_error(error.what());
-            }
-        }, hooks);
+    const auto result = record_publication::publish(path, expected_bytes, hooks);
     if (result.cleanup_error) envelope["cleanup-error"] = *result.cleanup_error;
     else envelope["cleanup-error"] = sol::lua_nil;
     return envelope;

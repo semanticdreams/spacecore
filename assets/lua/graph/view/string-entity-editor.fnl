@@ -52,7 +52,8 @@
             (when (and (= err.outcome :committed) err.result err.result.revision)
               (set baseline err.result))
             (show-status
-              (if (= err.outcome :committed) "Save committed; notification failed."
+              (if (and (= err.outcome :committed) (= err.code :storage-failed)) "Save committed; post-save error."
+                  (= err.outcome :committed) "Save committed; notification failed."
                   (= err.code :conflict) "Changes not saved: stale revision."
                   (= err.outcome :unknown) "Save outcome unknown; input preserved."
                   (.. "Changes not saved: " err.code "."))))))

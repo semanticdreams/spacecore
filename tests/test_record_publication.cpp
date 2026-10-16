@@ -19,6 +19,8 @@
 #include <winioctl.h>
 #else
 #include <cerrno>
+#include <csignal>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -29,14 +31,11 @@
 
 namespace fs = std::filesystem;
 namespace rp = record_publication;
-
 namespace {
 
 void check(bool condition, const std::string& message)
 {
-    if (!condition) {
-        throw std::runtime_error(message);
-    }
+    if (!condition) throw std::runtime_error(message);
 }
 
 void write(const fs::path& path, const std::string& text)
@@ -50,7 +49,7 @@ void write(const fs::path& path, const std::string& text)
 std::string read(const fs::path& path)
 {
 #ifdef _WIN32
-    fs::path absolute = fs::absolute(path);
+    auto absolute = fs::absolute(path);
     absolute.make_preferred();
     std::ifstream input(fs::path(L"\\\\?\\" + absolute.native()), std::ios::binary);
 #else
@@ -63,636 +62,646 @@ std::string read(const fs::path& path)
 template<typename Function>
 std::string rejects(Function action)
 {
-    try {
-        action();
-    } catch (const std::exception& error) {
-        return error.what();
-    }
+    try { action(); }
+    catch (const std::exception& error) { return error.what(); }
     throw std::runtime_error("expected explicit precommit failure");
 }
 
 struct Fixture {
-    fs::path root = fs::temp_directory_path()
-        / ("record-publication-test-" + std::to_string(
-            std::chrono::steady_clock::now().time_since_epoch().count()));
-
+    fs::path root;
     Fixture()
     {
 #ifdef _WIN32
-        check(fs::create_directory(root), "fixture directory creation failed");
+        root = fs::temp_directory_path() / ("record-publication-" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+        check(fs::create_directory(root), "exclusive fixture creation");
 #else
-        // Exclusive private fixture directly under the system temporary parent;
-        // never rely on the runner's umask or chmod shared /tmp/space ancestry.
-        std::string pattern = (fs::temp_directory_path() / "record-publication-XXXXXX").string();
+        auto pattern = (fs::temp_directory_path() / "record-publication-XXXXXX").string();
         std::vector<char> name(pattern.begin(), pattern.end());
         name.push_back('\0');
-        check(::mkdtemp(name.data()) != nullptr, "exclusive private fixture creation failed");
+        check(::mkdtemp(name.data()) != nullptr, "exclusive private fixture creation");
         root = name.data();
 #endif
     }
-
     ~Fixture()
     {
         std::error_code ignored;
-        fs::remove_all(root, ignored); // Test-owned fixture only; production never recurses.
+        fs::remove_all(root, ignored); // Test-owned fixture only; production never sweeps.
     }
 };
+
+fs::path anchor(const fs::path& parent) { return parent / ".space-publication"; }
+
+fs::path only_attempt(const fs::path& parent)
+{
+    std::vector<fs::path> attempts;
+    for (const auto& item : fs::directory_iterator(anchor(parent))) attempts.push_back(item.path());
+    check(attempts.size() == 1 && fs::is_directory(attempts.front()), "exactly one owned attempt");
+    return attempts.front();
+}
+
+void clean_anchor(const fs::path& parent)
+{
+    check(fs::is_directory(anchor(parent)), "persistent anchor intentionally retained");
+    check(fs::is_empty(anchor(parent)), "no attempt residue inside persistent anchor");
+}
 
 #ifndef _WIN32
 mode_t mode(const fs::path& path)
 {
     struct stat info {};
-    check(::lstat(path.c_str(), &info) == 0, "fixture stat failed");
+    check(::lstat(path.c_str(), &info) == 0, "fixture lstat");
     return info.st_mode & 07777;
 }
-
 void chmod_checked(const fs::path& path, mode_t value)
 {
-    check(::chmod(path.c_str(), value) == 0, "fixture chmod failed");
+    check(::chmod(path.c_str(), value) == 0, "fixture chmod");
 }
-#endif
-
-#ifdef _WIN32
-struct SecuritySnapshot {
-    std::vector<unsigned char> owner, group, dacl;
-};
-
-SecuritySnapshot windows_policy(const fs::path& path)
+void private_object(const fs::path& path, bool directory)
+{
+    check(mode(path) == (directory ? 0700 : 0600), "exact private mode before bytes");
+}
+#else
+struct Policy { std::vector<unsigned char> owner, group, dacl; };
+Policy windows_policy(const fs::path& path)
 {
     PSECURITY_DESCRIPTOR descriptor = nullptr;
     PSID owner = nullptr, group = nullptr;
     PACL dacl = nullptr;
-    const DWORD status = ::GetNamedSecurityInfoW(const_cast<wchar_t*>(path.c_str()), SE_FILE_OBJECT,
+    check(::GetNamedSecurityInfoW(const_cast<wchar_t*>(path.c_str()), SE_FILE_OBJECT,
         OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-        &owner, &group, &dacl, nullptr, &descriptor);
-    check(status == ERROR_SUCCESS && owner && group && dacl && ::IsValidAcl(dacl), "inspect native policy fixture");
-    SecuritySnapshot result;
+        &owner, &group, &dacl, nullptr, &descriptor) == ERROR_SUCCESS, "inspect policy fixture");
+    Policy result;
     result.owner.assign(static_cast<unsigned char*>(owner), static_cast<unsigned char*>(owner) + ::GetLengthSid(owner));
     result.group.assign(static_cast<unsigned char*>(group), static_cast<unsigned char*>(group) + ::GetLengthSid(group));
     result.dacl.assign(reinterpret_cast<unsigned char*>(dacl), reinterpret_cast<unsigned char*>(dacl) + dacl->AclSize);
     ::LocalFree(descriptor);
     return result;
 }
-
-void check_windows_private(const fs::path& path)
+void private_object(const fs::path& path, bool)
 {
     const auto policy = windows_policy(path);
     auto* dacl = reinterpret_cast<PACL>(const_cast<unsigned char*>(policy.dacl.data()));
-    check(dacl->AceCount == 1, "private file/directory must have one owner ACE");
+    check(dacl->AceCount == 1, "one owner-only ACE");
     void* raw = nullptr;
     check(::GetAce(dacl, 0, &raw), "inspect private ACE");
-    auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
+    const auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
     check(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && ace->Mask == FILE_ALL_ACCESS
-          && ::EqualSid(&ace->SidStart, const_cast<unsigned char*>(policy.owner.data()))
-          && !(ace->Header.AceFlags & INHERIT_ONLY_ACE), "private contents have an effective owner-only DACL");
+        && ::EqualSid(const_cast<DWORD*>(&ace->SidStart), const_cast<unsigned char*>(policy.owner.data()))
+        && !(ace->Header.AceFlags & INHERIT_ONLY_ACE), "effective owner-only file/directory policy");
 }
+#endif
 
-void windows_ancestor_acl(const fs::path& path, DWORD foreign_rights)
-{
-    auto policy = windows_policy(path);
-    alignas(DWORD) std::array<unsigned char, SECURITY_MAX_SID_SIZE> everyone {};
-    DWORD size = everyone.size();
-    check(::CreateWellKnownSid(WinWorldSid, nullptr, everyone.data(), &size), "ancestor Everyone SID fixture");
-    std::vector<unsigned char> bytes(sizeof(ACL) + 2 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD))
-                                     + size + policy.owner.size());
-    auto* acl = reinterpret_cast<PACL>(bytes.data());
-    check(::InitializeAcl(acl, bytes.size(), ACL_REVISION)
-          && ::AddAccessAllowedAce(acl, ACL_REVISION, FILE_ALL_ACCESS, policy.owner.data())
-          && ::AddAccessAllowedAce(acl, ACL_REVISION, foreign_rights, everyone.data()), "ancestor ACL fixture");
-    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(path.c_str()), SE_FILE_OBJECT,
-          DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-          nullptr, nullptr, acl, nullptr) == ERROR_SUCCESS, "install test-owned ancestor ACL");
-}
-
-void windows_foreign_writable_ancestry()
+void basic_publication()
 {
     Fixture fixture;
-    const auto ancestor = fixture.root / "ancestor";
-    check(fs::create_directory(ancestor), "exclusive ancestor fixture");
-    const std::array<DWORD, 3> unsafe_rights {GENERIC_WRITE, FILE_WRITE_DATA, FILE_GENERIC_WRITE};
-    for (const DWORD rights : unsafe_rights) {
-        windows_ancestor_acl(ancestor, rights);
-        bool callback_ran = false;
-        const auto error = rejects([&] {
-            rp::publish(ancestor / "record", "private", [&](const fs::path& path) {
-                callback_ran = true;
-                write(path, "private");
-            });
-        });
-        check(!callback_ran, "foreign reparse-mutable ancestry must be refused BEFORE callback/private bytes");
-        check(error.find("untrusted mutable ancestry DACL") != std::string::npos,
-              "refusal must come from ancestry permissions, not another unsupported fixture policy");
-        check(fs::is_empty(ancestor), "unsafe ancestry refusal must not create a workspace or destination");
-    }
-    // Preserve supported ordinary read/traverse and directory-creation grants:
-    // FILE_ADD_SUBDIRECTORY is not FILE_WRITE_DATA/FILE_ADD_FILE.
-    windows_ancestor_acl(ancestor, GENERIC_READ | GENERIC_EXECUTE | FILE_ADD_SUBDIRECTORY);
-    bool callback_ran = false;
-    const auto result = rp::publish(ancestor / "record", "private", [&](const fs::path& path) {
-        callback_ran = true;
-        write(path, "private");
-    });
-    check(callback_ran && result.committed && !result.cleanup_error,
-          "ordinary non-mutating foreign ancestry grants remain supported");
-}
-
-struct WindowsTestHandle {
-    HANDLE value = INVALID_HANDLE_VALUE;
-    ~WindowsTestHandle()
-    {
-        if (value != INVALID_HANDLE_VALUE && value != nullptr) ::CloseHandle(value);
-    }
-    WindowsTestHandle() = default;
-    WindowsTestHandle(const WindowsTestHandle&) = delete;
-    WindowsTestHandle& operator=(const WindowsTestHandle&) = delete;
-};
-
-struct RestrictedImpersonation {
-    explicit RestrictedImpersonation(HANDLE token)
-    {
-        check(::ImpersonateLoggedOnUser(token), "impersonate test-only restricted token");
-    }
-    ~RestrictedImpersonation()
-    {
-        // A failure must never allow later tests to proceed under another token.
-        if (!::RevertToSelf()) std::abort();
-    }
-    RestrictedImpersonation(const RestrictedImpersonation&) = delete;
-    RestrictedImpersonation& operator=(const RestrictedImpersonation&) = delete;
-};
-
-std::vector<unsigned char> junction_payload(const fs::path& target)
-{
-    // Documented IO_REPARSE_TAG_MOUNT_POINT layout, with both counted names and
-    // terminating UTF-16 NULs. No SDK-private REPARSE_DATA_BUFFER dependency.
-    struct Header {
-        DWORD tag;
-        WORD length, reserved;
-        WORD substitute_offset, substitute_length, print_offset, print_length;
-    };
-    static_assert(sizeof(Header) == 16, "mount-point reparse header layout");
-    auto absolute = fs::absolute(target);
-    absolute.make_preferred();
-    const std::wstring print = absolute.native();
-    const std::wstring substitute = L"\\??\\" + print;
-    const auto substitute_bytes = substitute.size() * sizeof(wchar_t);
-    const auto print_bytes = print.size() * sizeof(wchar_t);
-    const auto names_bytes = substitute_bytes + print_bytes + 2 * sizeof(wchar_t);
-    check(names_bytes + sizeof(Header) <= 16384, "bounded junction fixture payload");
-    const Header header {IO_REPARSE_TAG_MOUNT_POINT, static_cast<WORD>(8 + names_bytes), 0,
-        0, static_cast<WORD>(substitute_bytes), static_cast<WORD>(substitute_bytes + sizeof(wchar_t)),
-        static_cast<WORD>(print_bytes)};
-    std::vector<unsigned char> payload(sizeof(Header) + names_bytes, 0);
-    std::memcpy(payload.data(), &header, sizeof(header));
-    std::memcpy(payload.data() + sizeof(Header), substitute.c_str(), substitute_bytes);
-    std::memcpy(payload.data() + sizeof(Header) + substitute_bytes + sizeof(wchar_t), print.c_str(), print_bytes);
-    return payload;
-}
-
-void windows_junction_mutation_protection()
-{
-    Fixture fixture;
-    const auto probe = fixture.root / "junction-probe";
-    const auto target = fixture.root / "junction-target";
-    const auto protected_ancestor = fixture.root / "protected-ancestor";
-    check(fs::create_directory(probe) && fs::create_directory(target)
-          && fs::create_directory(protected_ancestor), "exclusive junction test directories");
-    write(target / "marker", "junction target");
-    windows_ancestor_acl(probe, GENERIC_READ | GENERIC_WRITE);
-    windows_ancestor_acl(protected_ancestor, GENERIC_READ | GENERIC_EXECUTE);
-
-    WindowsTestHandle process_token, restricted;
-    check(::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &process_token.value),
-          "open current token for junction fixture");
-    alignas(DWORD) std::array<unsigned char, SECURITY_MAX_SID_SIZE> everyone {};
-    DWORD sid_size = everyone.size();
-    check(::CreateWellKnownSid(WinWorldSid, nullptr, everyone.data(), &sid_size), "junction restricted SID");
-    SID_AND_ATTRIBUTES limiting_sid {everyone.data(), 0};
-    // Access must pass both the ordinary user DACL check and the World-only
-    // restricted-SID check. Owner's full-access ACE cannot mask missing foreign
-    // write access. No credentials, privilege enabling or elevated fallback.
-    check(::CreateRestrictedToken(process_token.value, DISABLE_MAX_PRIVILEGE, 0, nullptr,
-          0, nullptr, 1, &limiting_sid, &restricted.value), "create restricted junction fixture token");
-    const auto payload = junction_payload(target);
-    DWORD status = ERROR_SUCCESS;
-    {
-        WindowsTestHandle pin;
-        pin.value = ::CreateFileW(probe.c_str(), READ_CONTROL | FILE_READ_ATTRIBUTES,
-            FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-        check(pin.value != INVALID_HANDLE_VALUE, "pin probe without delete sharing");
-        RestrictedImpersonation impersonation(restricted.value);
-        WindowsTestHandle writer;
-        writer.value = ::CreateFileW(probe.c_str(), GENERIC_WRITE,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-        check(writer.value != INVALID_HANDLE_VALUE, "foreign-write positive-control handle must open");
-        DWORD returned = 0;
-        if (!::DeviceIoControl(writer.value, FSCTL_SET_REPARSE_POINT,
-                const_cast<unsigned char*>(payload.data()), static_cast<DWORD>(payload.size()),
-                nullptr, 0, &returned, nullptr)) status = ::GetLastError();
-    }
-    if (status == ERROR_PRIVILEGE_NOT_HELD || status == ERROR_NOT_SUPPORTED || status == ERROR_INVALID_FUNCTION) {
-        std::cout << "junction mutation execution NOT APPLICABLE/NOT VERIFIED on this host: native error "
-                  << status << "; mandatory pre-callback ACL-refusal cases still run\n";
-        return;
-    }
-    check(status == ERROR_SUCCESS, "actual junction positive control must succeed, not merely fail to rename");
-    check((::GetFileAttributesW(probe.c_str()) & FILE_ATTRIBUTE_REPARSE_POINT) != 0
-          && read(probe / "marker") == "junction target", "FSCTL positive control actually redirects paths");
-    check(::RemoveDirectoryW(probe.c_str()), "remove test-owned junction without following target");
-    check(read(target / "marker") == "junction target", "junction cleanup preserves its owned target");
-
-    bool checked = false;
-    const auto result = rp::publish(protected_ancestor / "record", "private", [&](const fs::path& stage) {
-        write(stage, "private");
-        RestrictedImpersonation impersonation(restricted.value);
-        WindowsTestHandle writer;
-        writer.value = ::CreateFileW(protected_ancestor.c_str(), GENERIC_WRITE,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-        const DWORD error = ::GetLastError();
-        check(writer.value == INVALID_HANDLE_VALUE && error == ERROR_ACCESS_DENIED,
-              "supported ancestry denies the foreign handle needed for proven junction mutation while bytes exist");
-        checked = true;
-    });
-    check(checked && result.committed && !result.cleanup_error,
-          "foreign junction mutation prevented for the complete private-byte callback");
-}
-#endif
-
-void basic_publication(bool check_umask022_mode = false)
-{
-    Fixture fixture;
-    const fs::path destination = fixture.root / std::string(220, 'r');
-    for (const std::string text : {std::string("before"), std::string("after \xE9\x9B\xAA\0tail", 14)}) {
-        fs::path workspace;
-        const auto result = rp::publish(destination, text, [&](const fs::path& stage) {
-            workspace = stage.parent_path();
-            check(stage.filename() == "record", "fixed callback target");
-            check(!fs::exists(stage), "callback target must start absent");
-            check(fs::is_empty(stage.string() + ".tmp"), "precreated temporary must be empty");
-#ifndef _WIN32
-            check(mode(workspace) == 0700, "workspace private before bytes");
-            check(mode(stage.string() + ".tmp") == 0600, "temporary private before bytes");
-#else
-            check_windows_private(workspace);
-            check_windows_private(stage.string() + ".tmp");
-#endif
-            write(stage.string() + ".tmp", text);
-            write(stage, text);
-            check(read(stage) == text && read(stage.string() + ".tmp") == text,
-                  "both intermediate files contain private bytes");
-#ifndef _WIN32
-            check(mode(workspace) == 0700, "intermediate effective confidentiality");
-            if (check_umask022_mode)
-                check(mode(stage) == 0644, "ordinary writer mode0644 is confidential inside directory0700");
-#else
-            check_windows_private(stage);
-            check_windows_private(stage.string() + ".tmp");
-#endif
-        });
-        check(result.committed && !result.cleanup_error, "successful publication result");
-        check(read(destination) == text, "exact published bytes");
-        check(!fs::exists(workspace), "owned workspace cleaned");
-#ifndef _WIN32
-        check(mode(destination) == 0600, "new and replaced destination private");
-#endif
+    const auto destination = fixture.root / std::string(245, 'r');
+    const std::string binary("after \xE9\x9B\xAA\0tail", 14);
+    for (const auto& payload : {std::string(), std::string("before"), binary, std::string(262145, 'x')}) {
+        rp::Hooks hooks;
+        hooks.before_write = [&] {
+            const auto attempt = only_attempt(fixture.root);
+            private_object(anchor(fixture.root), true);
+            private_object(attempt, true);
+            private_object(attempt / "record", false);
+            check(read(attempt / "record").empty(), "native file is empty before writer starts");
+            check(std::distance(fs::directory_iterator(attempt), fs::directory_iterator()) == 1,
+                "one native record, no inert record.tmp");
+        };
+        hooks.before_security = [&] {
+            const auto attempt = only_attempt(fixture.root);
+            private_object(attempt, true);
+            private_object(attempt / "record", false);
+            check(read(attempt / "record") == payload, "native writer completes and flushes exact bytes before security hook");
+        };
+        const auto result = rp::publish(destination, payload, hooks);
+        check(result.committed && !result.cleanup_error, "new/overwrite result");
+        check(read(destination) == payload, "exact final bytes including empty/binary/multiple write chunks");
+        clean_anchor(fixture.root);
+        check(std::distance(fs::directory_iterator(fixture.root), fs::directory_iterator()) == 2,
+            "exact entries: destination and persistent anchor");
     }
 }
 
-#ifdef _WIN32
-void windows_security()
-{
-    Fixture fixture;
-    const auto destination = fixture.root / "restricted";
-    write(destination, "old");
-    auto original = windows_policy(destination);
-    std::array<unsigned char, SECURITY_MAX_SID_SIZE> everyone {};
-    DWORD sid_size = everyone.size();
-    check(::CreateWellKnownSid(WinWorldSid, nullptr, everyone.data(), &sid_size), "everyone SID fixture");
-    std::vector<unsigned char> acl(sizeof(ACL) + 2 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD))
-                                   + sid_size + original.owner.size());
-    auto* dacl = reinterpret_cast<PACL>(acl.data());
-    check(::InitializeAcl(dacl, acl.size(), ACL_REVISION)
-          && ::AddAccessDeniedAce(dacl, ACL_REVISION, FILE_WRITE_DATA, everyone.data())
-          && ::AddAccessAllowedAce(dacl, ACL_REVISION, FILE_ALL_ACCESS, original.owner.data()),
-          "ordered deny/allow fixture");
-    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
-          DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-          nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS, "set restrictive DACL fixture");
-    original = windows_policy(destination);
-    const rp::Stage stage = [](const fs::path& path) { write(path, "new"); check_windows_private(path); };
-    const auto result = rp::publish(destination, "new", stage);
-    check(result.committed && !result.cleanup_error && read(destination) == "new", "native Windows existing overwrite");
-    const auto replacement = windows_policy(destination);
-    check(original.owner == replacement.owner && original.group == replacement.group
-          && original.dacl == replacement.dacl, "exact Windows owner/group/ordered allow-deny restrictions preserved");
-    bool changed = false;
-    rejects([&] {
-        rp::publish(destination, "new", stage, {{}, [&] {
-            check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
-                  DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-                  nullptr, nullptr, reinterpret_cast<PACL>(windows_policy(fixture.root).dacl.data()), nullptr)
-                  == ERROR_SUCCESS, "inject destination policy change");
-            changed = true;
-        }, {}});
-    });
-    check(changed, "Windows destination policy change fixture actually executed");
-    check(read(destination) == "new", "changed destination policy refusal preserves bytes");
-    fs::path staged;
-    changed = false;
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) { staged = path; stage(path); },
-            {{}, [&] {
-                check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(staged.c_str()), SE_FILE_OBJECT,
-                      DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-                      nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS, "inject stage DACL change");
-                changed = true;
-            }, {}});
-    });
-    check(changed && read(destination) == "new", "stage final DACL change is rejected after hook");
-    const auto pinned = rp::publish(fixture.root / "pinned", "new", [&](const fs::path& path) {
-        staged = path;
-        stage(path);
-    }, {{}, [&] {
-        const auto moved = fixture.root / "moved-workspace";
-        check(!::MoveFileExW(staged.parent_path().c_str(), moved.c_str(), 0), "workspace handle prevents path substitution");
-        const auto error = ::GetLastError();
-        check(error == ERROR_SHARING_VIOLATION || error == ERROR_ACCESS_DENIED,
-              "workspace rename failed due to pinning, not a malformed fixture");
-    }, {}});
-    check(pinned.committed && !pinned.cleanup_error, "blocked Windows workspace substitution leaves usable stage");
-    const auto readonly = fixture.root / "pinned";
-    check(::SetFileAttributesW(readonly.c_str(), FILE_ATTRIBUTE_READONLY), "readonly commit-failure fixture");
-    const auto commit_error = rejects([&] {
-        rp::publish(readonly, "replacement", [](const fs::path& path) { write(path, "replacement"); });
-    });
-    check(commit_error.find("atomic MoveFileExW publication") != std::string::npos
-          && read(readonly) == "new", "native publication FALSE is explicit and preserves old bytes");
-    check(::SetFileAttributesW(readonly.c_str(), FILE_ATTRIBUTE_NORMAL), "restore test-owned readonly fixture");
-    const auto linked = fixture.root / "hardlink";
-    check(::CreateHardLinkW(linked.c_str(), destination.c_str(), nullptr), "hardlink fixture");
-    rejects([&] { rp::publish(destination, "new", stage); });
-    fs::remove(linked);
-    PSECURITY_DESCRIPTOR label = nullptr;
-    check(::ConvertStringSecurityDescriptorToSecurityDescriptorW(L"S:(ML;;NW;;;LW)", SDDL_REVISION_1,
-          &label, nullptr), "explicit label fixture");
-    BOOL present = FALSE, defaulted = FALSE;
-    PACL sacl = nullptr;
-    check(::GetSecurityDescriptorSacl(label, &present, &sacl, &defaulted) && present, "inspect fixture label");
-    const DWORD label_status = ::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
-        LABEL_SECURITY_INFORMATION, nullptr, nullptr, nullptr, sacl);
-    ::LocalFree(label);
-    check(label_status == ERROR_SUCCESS, "install explicit low label without elevated privileges");
-    rejects([&] { rp::publish(destination, "new", stage); });
-    check(read(destination) == "new", "unsupported Windows label does not publish");
-}
-#endif
-
-void failure_and_cleanup_contract()
+void phase_failures_and_cleanup()
 {
     Fixture fixture;
     const auto destination = fixture.root / "destination";
     write(destination, "old");
-    fs::path workspace;
-    const rp::Stage stage = [&](const fs::path& path) {
-        workspace = path.parent_path();
-        write(path, "new");
-    };
-    const auto fault = [] { throw std::runtime_error("injected fault"); };
-    for (int phase = 0; phase < 3; ++phase) {
+    const auto fault = [] { throw std::runtime_error("phase fault"); };
+    for (int phase = 0; phase < 4; ++phase) {
         rp::Hooks hooks;
-        if (phase == 0) hooks.before_security = fault;
-        if (phase == 1) hooks.before_commit = fault;
-        if (phase == 2) hooks.before_cleanup = fault;
-        if (phase < 2) {
-            const auto error = rejects([&] { rp::publish(destination, "new", stage, hooks); });
-            check(error.find("injected fault") != std::string::npos, "original fault retained");
-            check(read(destination) == "old", "precommit failure preserves destination");
+        if (phase == 0) hooks.before_write = fault;
+        if (phase == 1) hooks.before_security = fault;
+        if (phase == 2) hooks.before_commit = fault;
+        if (phase == 3) hooks.before_cleanup = fault;
+        if (phase < 3) {
+            check(rejects([&] { rp::publish(destination, "new", hooks); }).find("phase fault") != std::string::npos,
+                "original phase diagnostic");
+            check(read(destination) == "old", "precommit failure preserves bytes");
         } else {
-            const auto result = rp::publish(destination, "new", stage, hooks);
-            check(result.committed && result.cleanup_error, "cleanup failure is committed diagnostic");
-            check(read(destination) == "new", "cleanup fault cannot roll back");
+            const auto result = rp::publish(destination, "new", hooks);
+            check(result.committed && result.cleanup_error && result.cleanup_error->find("phase fault") != std::string::npos,
+                "postcommit fault is cleanup diagnostic, never rollback");
+            check(read(destination) == "new", "committed bytes survive cleanup fault");
         }
-        check(!fs::exists(workspace), "cleanup still attempted after hook failure");
+        clean_anchor(fixture.root);
     }
-    rejects([&] { rp::publish(destination, "wrong", stage); });
-    check(read(destination) == "new", "byte mismatch does not publish");
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) {
-            stage(path);
-            throw std::runtime_error("writer failed");
-        });
-    });
-    check(!fs::exists(workspace), "throwing stage cleaned synchronously");
-    rejects([&] { rp::publish(fixture.root / "missing" / "record", "new", stage); });
-    rejects([&] { rp::publish(destination, "", {}); });
+    rp::Hooks both;
+    both.before_write = fault;
+    both.before_cleanup = [] { throw std::runtime_error("cleanup fault"); };
+    const auto error = rejects([&] { rp::publish(destination, "bad", both); });
+    check(error.find("phase fault") != std::string::npos && error.find("cleanup fault") != std::string::npos,
+        "precommit and cleanup diagnostics retained together");
+    clean_anchor(fixture.root);
 
-    const auto result = rp::publish(destination, "new", stage,
-        {{}, {}, [&] { write(workspace / "unrelated", "keep"); }});
-    check(result.committed && result.cleanup_error, "unexpected entry gives cleanup diagnostic");
-    check(read(workspace / "unrelated") == "keep", "cleanup never removes unrelated entries");
-    check(!fs::exists(workspace / "record.tmp"), "known temporary still cleaned");
+    rp::Hooks unrelated;
+    fs::path attempt;
+    unrelated.before_cleanup = [&] {
+        attempt = only_attempt(fixture.root);
+        write(attempt / "record", "foreign"); // Original record has already committed.
+        write(attempt / "unrelated", "keep");
+    };
+    const auto result = rp::publish(destination, "published", unrelated);
+    check(result.committed && result.cleanup_error, "substituted cleanup names diagnosed");
+    check(read(attempt / "record") == "foreign" && read(attempt / "unrelated") == "keep",
+        "cleanup never removes foreign names or sweeps attempt");
+    check(read(destination) == "published", "cleanup cannot modify published file");
+    rejects([&] { rp::publish(fixture.root / "missing" / "record", "x"); });
+    rejects([&] { rp::publish(anchor(fixture.root), "x"); });
+}
 
-    const auto combined = rejects([&] {
-        rp::publish(destination, "new", stage, {{}, fault, [] { throw std::runtime_error("cleanup fault"); }});
-    });
-    check(combined.find("injected fault") != std::string::npos
-          && combined.find("cleanup fault") != std::string::npos, "original and cleanup errors both retained");
-    check(!fs::exists(workspace), "combined errors still clean owned entries");
-
-    const auto substituted = rp::publish(destination, "new", stage,
-        {{}, {}, [&] { write(workspace / "record", "foreign"); }});
-    check(substituted.committed && substituted.cleanup_error, "substituted fixed entry diagnosed after commit");
-    check(read(workspace / "record") == "foreign", "postcommit foreign fixed entry never removed");
-    check(read(destination) == "new", "postcommit cleanup substitution cannot change destination");
-
-    const auto empty = fixture.root / "empty";
-    check(rp::publish(empty, "", [](const fs::path& path) { write(path, ""); }).committed,
-          "empty expected bytes are valid");
-    rejects([&] { rp::publish(destination, "new", [](const fs::path&) {}); });
+void final_validation()
+{
+    for (const auto& phase : {0, 1, 2}) {
+        Fixture fixture;
+        const auto destination = fixture.root / "destination";
+        write(destination, "old");
+        rp::Hooks hooks;
+        const auto corrupt = [&] { write(only_attempt(fixture.root) / "record", "bad"); };
+        if (phase == 0) hooks.before_security = corrupt;
+        if (phase == 1) hooks.before_commit = corrupt;
+        if (phase == 2) hooks.before_commit = [&] { write(destination, "external"); };
+        rejects([&] { rp::publish(destination, "new", hooks); });
+        check(read(destination) == (phase == 2 ? "external" : "old"), "final bytes and destination snapshot revalidated after last hook");
+        clean_anchor(fixture.root);
+    }
+    Fixture fixture;
     const auto appeared = fixture.root / "appeared";
-    rejects([&] { rp::publish(appeared, "new", stage, {{}, [&] { write(appeared, "external"); }, {}}); });
-    check(read(appeared) == "external", "new destination appearing before commit is not overwritten");
-    const auto directory = fixture.root / "directory";
-    fs::create_directory(directory);
-    rejects([&] { rp::publish(directory, "new", stage); });
+    rp::Hooks hooks;
+    hooks.before_commit = [&] { write(appeared, "external"); };
+    rejects([&] { rp::publish(appeared, "new", hooks); });
+    check(read(appeared) == "external", "new destination appearing before commit not overwritten");
+    check(fs::create_directory(fixture.root / "directory"), "directory fixture");
+    rejects([&] { rp::publish(fixture.root / "directory", "new"); });
+}
+
+void independent_attempts()
+{
+    Fixture fixture;
+    rp::Hooks hooks;
+    hooks.before_write = [&] {
+        const auto first = only_attempt(fixture.root);
+        const auto nested = rp::publish(fixture.root / "second", "second");
+        check(nested.committed && !nested.cleanup_error, "overlapping independent attempt");
+        check(only_attempt(fixture.root) == first, "second cleanup preserves first attempt");
+        check(read(first / "record").empty(), "first attempt remains unwritten");
+    };
+    const auto first = rp::publish(fixture.root / "first", "first", hooks);
+    check(first.committed && !first.cleanup_error, "anchor reuse ignores volatile directory metadata");
+    clean_anchor(fixture.root);
+    check(read(fixture.root / "first") == "first" && read(fixture.root / "second") == "second", "independent exact bytes");
+}
+
+void namespace_attacks()
+{
+    for (bool before_bytes : {true, false}) {
+        Fixture fixture;
+        const auto moved = fixture.root / "moved-anchor";
+        rp::Hooks hooks;
+        fs::path original_record;
+        bool inspected = false;
+        const auto substitute = [&] {
+            const auto attempt_name = only_attempt(fixture.root).filename();
+            fs::rename(anchor(fixture.root), moved);
+            original_record = moved / attempt_name / "record";
+            check(fs::create_directory(anchor(fixture.root)), "foreign substituted anchor");
+            write(anchor(fixture.root) / "marker", "keep");
+        };
+        if (before_bytes) hooks.before_write = substitute;
+        else hooks.before_commit = substitute;
+        hooks.before_cleanup = [&] {
+            check(read(original_record) == (before_bytes ? "" : "secret"),
+                "namespace attack before writer cannot receive even partial private bytes");
+            inspected = true;
+        };
+        rejects([&] { rp::publish(fixture.root / "destination", "secret", hooks); });
+        check(inspected, "pre-cleanup privacy assertions must complete, not be mistaken for expected failure");
+        check(read(anchor(fixture.root) / "marker") == "keep", "public anchor substitution never receives bytes or cleanup");
+        check(fs::is_empty(moved), "owned attempts cleaned through original pinned anchor");
+        check(!fs::exists(fixture.root / "destination"), "anchor substitution refuses before commit");
+    }
+    Fixture fixture;
+    const auto parent = fixture.root / "parent";
+    const auto moved = fixture.root / "moved-parent";
+    check(fs::create_directory(parent), "parent fixture");
+    rp::Hooks hooks;
+    hooks.before_write = [&] {
+        fs::rename(parent, moved);
+        check(fs::create_directory(parent), "substituted public parent");
+        write(parent / "marker", "keep");
+    };
+    const auto result = rp::publish(parent / "record", "secret", hooks);
+    check(result.committed && !result.cleanup_error && read(moved / "record") == "secret", "write and commit use pinned parent after ancestor rename");
+    check(read(parent / "marker") == "keep" && !fs::exists(parent / "record"), "no bytes or cleanup in substituted ancestry");
+    clean_anchor(moved);
 }
 
 #ifndef _WIN32
-void child_umask022()
+template<typename Function>
+void child_test(const char* description, Function action)
 {
     const pid_t child = ::fork();
-    check(child >= 0, "fork umask fixture");
+    check(child >= 0, "fork fixture");
     if (child == 0) {
-        ::umask(0022); // Child only: neither production nor parent changes umask.
-        try {
-            basic_publication(true);
-            ::_exit(0);
-        } catch (const std::exception& error) {
-            std::cerr << "umask022 child: " << error.what() << '\n';
-            ::_exit(1);
-        }
+        try { action(); ::_exit(0); }
+        catch (const std::exception& error) { std::cerr << description << ": " << error.what() << '\n'; ::_exit(1); }
     }
     int status = 0;
     pid_t waited;
     do { waited = ::waitpid(child, &status, 0); } while (waited < 0 && errno == EINTR);
-    check(waited == child && WIFEXITED(status) && WEXITSTATUS(status) == 0,
-          "private new/existing publication under child umask022");
+    check(waited == child && WIFEXITED(status) && WEXITSTATUS(status) == 0, description);
+}
+
+void ordinary_layouts()
+{
+    for (const mode_t mask : {0022, 0002}) {
+        child_test("ordinary umask/layout child", [=] {
+            ::umask(mask); // Child only. Production never sets umask.
+            Fixture fixture;
+            const auto home = fixture.root / "home";
+            const auto local = home / ".local";
+            check(fs::create_directory(home) && fs::create_directory(local), "ordinary parents");
+            chmod_checked(home, 0750);
+            chmod_checked(local, 0775);
+            check(rp::publish(local / "record", "first").committed, "ordinary writable parent supported");
+            check(rp::publish(local / "record", "second").committed, "ordinary overwrite supported");
+            check(mode(home) == 0750 && mode(local) == 0775, "caller parents untouched");
+            check(mode(local / "record") == 0600 && mode(anchor(local)) == 0700, "private anchor and new file");
+            write(fixture.root / "probe", "umask unchanged");
+            check(mode(fixture.root / "probe") == (0666 & ~mask), "production preserves child process umask");
+            basic_publication();
+        });
+    }
+}
+
+void owned_anchor_groups()
+{
+    const int count = ::getgroups(0, nullptr);
+    check(count >= 0, "inspect supplementary groups for owned private anchor fixture");
+    std::vector<gid_t> groups(static_cast<std::size_t>(count));
+    check(::getgroups(count, groups.data()) == count, "read supplementary groups");
+    groups.push_back(::getegid());
+    for (const gid_t group : groups) {
+        Fixture fixture;
+        const auto destination = fixture.root / "record";
+        check(rp::publish(destination, "first").committed, "initial private anchor");
+        check(::chown(anchor(fixture.root).c_str(), static_cast<uid_t>(-1), group) == 0
+            && ::chown(destination.c_str(), static_cast<uid_t>(-1), group) == 0, "owned supplementary-group fixtures");
+        const auto result = rp::publish(destination, "second");
+        struct stat actual_anchor {}, actual_file {};
+        check(::stat(anchor(fixture.root).c_str(), &actual_anchor) == 0 && ::stat(destination.c_str(), &actual_file) == 0,
+            "inspect supplementary-group publication");
+        check(result.committed && !result.cleanup_error && actual_anchor.st_gid == group && actual_file.st_gid == group,
+            "owner-only anchor reuse accepts nonprimary groups and replacement preserves destination group");
+        check(mode(anchor(fixture.root)) == 0700, "anchor group does not grant effective access");
+        clean_anchor(fixture.root);
+    }
 }
 
 void posix_security()
 {
     Fixture fixture;
     const auto destination = fixture.root / "destination";
-    const rp::Stage stage = [](const fs::path& path) { write(path, "new"); };
     write(destination, "old");
     chmod_checked(destination, 0640);
-    struct stat original {};
-    check(::stat(destination.c_str(), &original) == 0, "destination stat");
-    check(rp::publish(destination, "new", stage).committed, "restricted replacement");
-    struct stat replaced {};
-    check(::stat(destination.c_str(), &replaced) == 0, "replacement stat");
-    check(mode(destination) == 0640 && original.st_uid == replaced.st_uid
-          && original.st_gid == replaced.st_gid, "owner/group/mode preserved");
-    const auto readonly = fixture.root / "readonly";
-    write(readonly, "old");
-    chmod_checked(readonly, 0400);
-    check(rp::publish(readonly, "new", stage).committed && mode(readonly) == 0400,
-          "readonly final restriction is established before publication using retained validation handle");
-
-    rejects([&] {
-        rp::publish(destination, "new", stage,
-            {{}, [&] { chmod_checked(destination, 0600); }, {}});
-    });
-    check(mode(destination) == 0600, "changed destination security not overwritten");
-    rejects([&] {
-        rp::publish(destination, "new", stage,
-            {{}, [&] {
-                fs::rename(destination, fixture.root / "original");
-                write(destination, "foreign");
-            }, {}});
-    });
-    check(read(destination) == "foreign", "changed destination identity preserved");
+    struct stat before {}, after {};
+    check(::stat(destination.c_str(), &before) == 0, "stat original");
+    check(rp::publish(destination, "new").committed, "restricted replacement");
+    check(::stat(destination.c_str(), &after) == 0, "stat replacement");
+    check(mode(destination) == 0640 && before.st_uid == after.st_uid && before.st_gid == after.st_gid, "exact uid/gid/mode preservation");
+    chmod_checked(destination, 0400);
+    check(rp::publish(destination, "readonly").committed && mode(destination) == 0400, "retained validation handle supports readonly policy");
+    rp::Hooks changed;
+    changed.before_commit = [&] { chmod_checked(destination, 0600); };
+    rejects([&] { rp::publish(destination, "new", changed); });
+    check(mode(destination) == 0600, "destination policy change preserved");
     chmod_checked(destination, 04600);
-    rejects([&] { rp::publish(destination, "new", stage); });
+    rejects([&] { rp::publish(destination, "new"); });
     chmod_checked(destination, 0600);
+    fs::create_hard_link(destination, fixture.root / "linked");
+    rejects([&] { rp::publish(destination, "new"); });
+    fs::remove(fixture.root / "linked");
+    fs::create_symlink(destination, fixture.root / "symlink");
+    rejects([&] { rp::publish(fixture.root / "symlink", "new"); });
+    check(::mkfifo((fixture.root / "fifo").c_str(), 0600) == 0, "FIFO fixture");
+    rejects([&] { rp::publish(fixture.root / "fifo", "new"); });
+    fs::create_directory_symlink(fixture.root, fixture.root / "alias");
+    check(rp::publish(fixture.root / "alias" / "alias-record", "alias").committed, "parent aliases resolve once to pinned identity");
+    fs::remove(fixture.root / "alias");
 
-    const auto hardlink = fixture.root / "hardlink";
-    fs::create_hard_link(destination, hardlink);
-    rejects([&] { rp::publish(destination, "new", stage); });
-    fs::remove(hardlink);
-    const auto symlink = fixture.root / "symlink";
-    fs::create_symlink(destination, symlink);
-    rejects([&] { rp::publish(symlink, "new", stage); });
-    fs::path staged;
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) {
-            staged = path;
-            fs::create_symlink(destination, path);
-        });
-    });
-    check(fs::is_symlink(staged), "unsafe substituted entry is not removed");
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) {
-            staged = path;
-            fs::create_hard_link(destination, path);
-        });
-    });
-    fs::remove(staged); // Restore fixture link count so subsequent tests reach their phase hooks.
-
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) { staged = path; stage(path); },
-            {{}, [&] { chmod_checked(staged, 0666); }, {}});
-    });
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) { staged = path; stage(path); },
-            {{}, [&] { write(staged, "bad"); }, {}});
-    });
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) { staged = path; stage(path); },
-            {{}, [&] {
-                fs::rename(staged, staged.parent_path() / "saved");
-                write(staged, "new");
-            }, {}});
-    });
-    check(fs::exists(staged), "foreign replacement not cleaned");
-
-    bool before_security_ran = false;
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) { staged = path; stage(path); },
-            {[&] {
-                before_security_ran = true;
-                fs::rename(staged, staged.parent_path() / "saved");
-                write(staged, "new");
-            }, {}, {}});
-    });
-    check(before_security_ran && read(staged) == "new", "before-security substitution detected and left untouched");
-
-    fs::path workspace, moved;
-    const auto workspace_error = rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) {
-            workspace = path.parent_path();
-            moved = workspace.string() + "-moved";
-            stage(path);
-        }, {{}, [&] {
-            fs::rename(workspace, moved);
-            check(::mkdir(workspace.c_str(), 0700) == 0, "workspace substitute fixture");
-            write(workspace / "foreign", "keep");
-        }, {}});
-    });
-    check(workspace_error.find("cleanup") != std::string::npos, "workspace substitution reports cleanup diagnostic");
-    check(read(workspace / "foreign") == "keep", "substitute directory untouched");
-    check(fs::is_empty(moved), "original pinned workspace cleans only its owned entries");
-
-    rejects([&] {
-        rp::publish(destination, "new", stage,
-            {{}, [&] { chmod_checked(fixture.root, 0750); }, {}});
-    });
-    chmod_checked(fixture.root, 0700);
-    const auto alias = fixture.root / "owned-alias";
-    fs::create_directory_symlink(fixture.root, alias);
-    check(rp::publish(alias / "alias-record", "new", stage).committed, "trusted owner alias resolves to pinned parent");
-    fs::remove(alias); // Test fixture recursion must not encounter this self-alias.
-
-    rejects([&] {
-        rp::publish(destination, "new", [&](const fs::path& path) { staged = path; stage(path); },
-            {{}, [&] { fs::create_hard_link(staged, fixture.root / "stage-link"); }, {}});
-    });
-    check(fs::hard_link_count(staged) == 2, "stage hardlink substitution not removed");
-    fs::remove(staged);
-    fs::remove(fixture.root / "stage-link");
-    const auto fifo = fixture.root / "fifo";
-    check(::mkfifo(fifo.c_str(), 0600) == 0, "FIFO fixture");
-    rejects([&] { rp::publish(fifo, "new", stage); });
-
+    for (int kind = 0; kind < 4; ++kind) {
+        Fixture malicious;
+        const auto path = malicious.root / "record";
+        fs::path staged;
+        rp::Hooks hooks;
+        hooks.before_commit = [&] {
+            staged = only_attempt(malicious.root) / "record";
+            if (kind == 0) chmod_checked(staged, 0666);
+            if (kind == 1) fs::create_hard_link(staged, malicious.root / "link");
+            if (kind == 2) { fs::rename(staged, staged.string() + ".saved"); write(staged, "foreign"); }
+            if (kind == 3) { fs::rename(staged, staged.string() + ".saved"); fs::create_symlink(destination, staged); }
+        };
+        rejects([&] { rp::publish(path, "new", hooks); });
+        check(!fs::exists(path), "unsafe final stage cannot commit");
+        if (kind != 0) check(fs::exists(staged), "foreign/multilink entries left untouched");
+    }
 #ifdef __linux__
-    // A real extended attribute is an unsupported policy, not a mocked failure.
-    const auto metadata = fixture.root / "metadata";
-    write(metadata, "old");
-    check(::setxattr(metadata.c_str(), "user.publication-test", "x", 1, 0) == 0,
-          "xattr fixture requires supported local filesystem");
-    rejects([&] { rp::publish(metadata, "new", stage); });
-    check(read(metadata) == "old", "unsupported destination metadata preserved");
-    rejects([&] {
-        rp::publish(fixture.root / "new", "new", [&](const fs::path& path) {
-            staged = path;
-            stage(path);
-        }, {{}, [&] {
-            check(::setxattr(staged.c_str(), "user.publication-test", "x", 1, 0) == 0,
-                  "stage xattr injection");
-        }, {}});
-    });
-    const auto inherited = fixture.root / "metadata-parent";
-    check(::mkdir(inherited.c_str(), 0700) == 0, "metadata parent fixture");
-    check(::setxattr(inherited.c_str(), "user.publication-test", "x", 1, 0) == 0, "parent metadata injection");
-    rejects([&] { rp::publish(inherited / "record", "new", stage); });
+    check(::setxattr(destination.c_str(), "user.publication-test", "x", 1, 0) == 0, "real unsupported xattr fixture");
+    rejects([&] { rp::publish(destination, "new"); });
+    check(read(destination) == "readonly", "unsupported destination policy preserves bytes");
+    rp::Hooks stage_policy;
+    stage_policy.before_commit = [&] {
+        const auto stage = only_attempt(fixture.root) / "record";
+        check(::setxattr(stage.c_str(), "user.publication-test", "x", 1, 0) == 0, "stage xattr injection");
+    };
+    rejects([&] { rp::publish(fixture.root / "new-policy", "secret", stage_policy); });
+    check(!fs::exists(fixture.root / "new-policy"), "unsupported staged policy never commits");
+    clean_anchor(fixture.root);
+    const auto parent = fixture.root / "metadata-parent";
+    check(fs::create_directory(parent), "metadata parent fixture");
+    check(::setxattr(parent.c_str(), "user.publication-test", "x", 1, 0) == 0, "parent xattr fixture");
+    rejects([&] { rp::publish(parent / "record", "secret"); });
+    check(!fs::exists(anchor(parent)), "unsupported target parent fails before creating namespace");
+    check(::setxattr(anchor(fixture.root).c_str(), "user.publication-test", "x", 1, 0) == 0, "anchor xattr fixture");
+    rejects([&] { rp::publish(fixture.root / "new-policy", "secret"); });
+    check(!fs::exists(fixture.root / "new-policy") && fs::is_empty(anchor(fixture.root)), "unsupported existing anchor not taken over");
 #endif
-    const auto untrusted = fixture.root / "untrusted";
-    fs::create_directory(untrusted);
-    chmod_checked(untrusted, 0777);
-    rejects([&] { rp::publish(untrusted / "record", "new", stage); });
+}
+
+void unsafe_anchors()
+{
+    for (int kind = 0; kind < 4; ++kind) {
+        Fixture fixture;
+        const auto private_anchor = anchor(fixture.root);
+        if (kind == 0) write(private_anchor, "foreign file");
+        if (kind == 1) fs::create_directory_symlink(fixture.root, private_anchor);
+        if (kind >= 2) { check(fs::create_directory(private_anchor), "unsafe directory fixture"); chmod_checked(private_anchor, kind == 2 ? 0770 : 0750); }
+        rejects([&] { rp::publish(fixture.root / "destination", "secret"); });
+        check(fs::exists(private_anchor), "unsafe anchor not taken over or deleted");
+        if (kind >= 2) check(mode(private_anchor) == (kind == 2 ? 0770 : 0750), "unsafe anchor not chmodded");
+        if (kind == 1) fs::remove(private_anchor);
+    }
+    Fixture fixture;
+    fs::path attempt, moved;
+    bool substituted = false;
+    rp::Hooks hooks;
+    hooks.before_write = [&] {
+        attempt = only_attempt(fixture.root);
+        moved = anchor(fixture.root) / "saved-attempt";
+        fs::rename(attempt, moved);
+        check(::mkdir(attempt.c_str(), 0700) == 0, "substituted attempt fixture");
+        write(attempt / "foreign", "keep");
+        substituted = true;
+    };
+    const auto error = rejects([&] { rp::publish(fixture.root / "record", "secret", hooks); });
+    check(substituted && error.find("cleanup") != std::string::npos, "attempt identity change has original and cleanup diagnostics");
+    check(read(attempt / "foreign") == "keep" && fs::is_empty(moved), "substituted attempt untouched, pinned original contents cleaned");
+}
+
+void real_writer_failure()
+{
+    child_test("bounded native writer OS failure", [] {
+        Fixture fixture;
+        const auto path = fixture.root / "record";
+        write(path, "old");
+        check(::signal(SIGXFSZ, SIG_IGN) != SIG_ERR, "ignore size-limit signal only in child");
+        struct rlimit limit {};
+        check(::getrlimit(RLIMIT_FSIZE, &limit) == 0, "get file size limit");
+        limit.rlim_cur = 4096;
+        check(::setrlimit(RLIMIT_FSIZE, &limit) == 0, "set bounded child-only file limit");
+        const auto error = rejects([&] { rp::publish(path, std::string(131072, 'x')); });
+        check(error.find("write private record") != std::string::npos, "real partial write then EFBIG must surface writer completion failure");
+        check(read(path) == "old", "incomplete native write never replaces destination");
+        clean_anchor(fixture.root);
+    });
+}
+#else
+struct WindowsHandle {
+    HANDLE value = INVALID_HANDLE_VALUE;
+    ~WindowsHandle() { if (value != INVALID_HANDLE_VALUE && value != nullptr) ::CloseHandle(value); }
+    WindowsHandle() = default;
+    WindowsHandle(const WindowsHandle&) = delete;
+    WindowsHandle& operator=(const WindowsHandle&) = delete;
+};
+
+struct Impersonation {
+    explicit Impersonation(HANDLE token) { check(::ImpersonateLoggedOnUser(token), "restricted impersonation fixture"); }
+    ~Impersonation() { if (!::RevertToSelf()) std::abort(); }
+};
+
+void windows_foreign_parent_and_private_children()
+{
+    Fixture fixture;
+    const auto policy = windows_policy(fixture.root);
+    alignas(DWORD) std::array<unsigned char, SECURITY_MAX_SID_SIZE> everyone {};
+    DWORD size = everyone.size();
+    check(::CreateWellKnownSid(WinWorldSid, nullptr, everyone.data(), &size), "foreign parent Everyone SID");
+    std::vector<unsigned char> bytes(sizeof(ACL) + 2 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) + size + policy.owner.size());
+    auto* dacl = reinterpret_cast<PACL>(bytes.data());
+    check(::InitializeAcl(dacl, bytes.size(), ACL_REVISION)
+        && ::AddAccessAllowedAce(dacl, ACL_REVISION, FILE_ALL_ACCESS, const_cast<unsigned char*>(policy.owner.data()))
+        && ::AddAccessAllowedAce(dacl, ACL_REVISION, FILE_ALL_ACCESS, everyone.data()), "foreign mutable parent DACL fixture");
+    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(fixture.root.c_str()), SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS,
+        "install foreign mutable test-owned parent policy");
+    const auto original_parent = windows_policy(fixture.root);
+    WindowsHandle process, restricted;
+    check(::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &process.value), "open token fixture");
+    SID_AND_ATTRIBUTES limiting {everyone.data(), 0};
+    check(::CreateRestrictedToken(process.value, DISABLE_MAX_PRIVILEGE, 0, nullptr, 0, nullptr, 1, &limiting, &restricted.value),
+        "World-limited access-check fixture token");
+    for (bool before_bytes : {true, false}) {
+        rp::Hooks hooks;
+        bool inspected = false;
+        const auto inspect = [&] {
+            const auto stage = only_attempt(fixture.root) / "record";
+            private_object(stage, false);
+            {
+                Impersonation impersonation(restricted.value);
+                WindowsHandle parent;
+                parent.value = ::CreateFileW(fixture.root.c_str(), GENERIC_WRITE,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+                check(parent.value != INVALID_HANDLE_VALUE, "foreign mutable parent positive control must actually open");
+                WindowsHandle file;
+                file.value = ::CreateFileW(stage.c_str(), GENERIC_READ,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                    FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+                const DWORD error = ::GetLastError();
+                check(file.value == INVALID_HANDLE_VALUE && error == ERROR_ACCESS_DENIED,
+                    "foreign principal cannot read native file before or after payload bytes");
+            }
+            inspected = true;
+        };
+        if (before_bytes) hooks.before_write = inspect;
+        else hooks.before_security = inspect;
+        const auto result = rp::publish(fixture.root / "record", "secret", hooks);
+        check(inspected && result.committed && !result.cleanup_error, "foreign writable parent is supported without byte disclosure");
+        clean_anchor(fixture.root);
+    }
+    check(windows_policy(fixture.root).dacl == original_parent.dacl, "caller parent DACL is never repaired or replaced");
+    // An unsafe preexisting anchor is never adopted, chmodded, or taken over.
+    const auto unsafe = fixture.root / "unsafe";
+    check(fs::create_directory(unsafe) && fs::create_directory(anchor(unsafe)), "unsafe anchor fixture");
+    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(anchor(unsafe).c_str()), SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS,
+        "explicit foreign-readable/writable preexisting anchor fixture");
+    const auto before = windows_policy(anchor(unsafe));
+    rejects([&] { rp::publish(unsafe / "record", "secret"); });
+    check(windows_policy(anchor(unsafe)).dacl == before.dacl && !fs::exists(unsafe / "record"), "unsafe existing anchor policy untouched");
+}
+
+void windows_junction_anchor_attack()
+{
+    Fixture fixture;
+    const auto foreign = fixture.root / "foreign";
+    const auto moved = fixture.root / "original-anchor";
+    check(fs::create_directory(foreign), "foreign junction target fixture");
+    write(foreign / "marker", "keep");
+    // Documented IO_REPARSE_TAG_MOUNT_POINT layout, two byte-counted UTF-16
+    // names and terminating NULs. No SDK-private structure or shell utility.
+    struct JunctionHeader { DWORD tag; WORD length, reserved, substitute_offset, substitute_length, print_offset, print_length; };
+    static_assert(sizeof(JunctionHeader) == 16);
+    auto target = fs::absolute(foreign);
+    target.make_preferred();
+    const auto print = target.native();
+    const std::wstring substitute = L"\\??\\" + print;
+    const auto substitute_bytes = substitute.size() * sizeof(wchar_t);
+    const auto print_bytes = print.size() * sizeof(wchar_t);
+    const auto names_bytes = substitute_bytes + print_bytes + 2 * sizeof(wchar_t);
+    check(sizeof(JunctionHeader) + names_bytes <= 16384, "bounded junction fixture");
+    const JunctionHeader header {IO_REPARSE_TAG_MOUNT_POINT, static_cast<WORD>(8 + names_bytes), 0,
+        0, static_cast<WORD>(substitute_bytes), static_cast<WORD>(substitute_bytes + sizeof(wchar_t)), static_cast<WORD>(print_bytes)};
+    std::vector<unsigned char> payload(sizeof(header) + names_bytes, 0);
+    std::memcpy(payload.data(), &header, sizeof(header));
+    std::memcpy(payload.data() + sizeof(header), substitute.c_str(), substitute_bytes);
+    std::memcpy(payload.data() + sizeof(header) + substitute_bytes + sizeof(wchar_t), print.c_str(), print_bytes);
+    bool installed = false, inspected = false;
+    fs::path original_record;
+    rp::Hooks hooks;
+    hooks.before_write = [&] {
+        const auto attempt = only_attempt(fixture.root).filename();
+        fs::rename(anchor(fixture.root), moved);
+        original_record = moved / attempt / "record";
+        check(fs::create_directory(anchor(fixture.root)), "empty public junction replacement");
+        WindowsHandle writer;
+        writer.value = ::CreateFileW(anchor(fixture.root).c_str(), GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+        check(writer.value != INVALID_HANDLE_VALUE, "open junction fixture writer");
+        DWORD returned = 0;
+        check(::DeviceIoControl(writer.value, FSCTL_SET_REPARSE_POINT, payload.data(), static_cast<DWORD>(payload.size()),
+            nullptr, 0, &returned, nullptr), "actual public anchor junction installation must succeed");
+        installed = true;
+        check(read(anchor(fixture.root) / "marker") == "keep", "junction positive control really redirects path lookup");
+    };
+    hooks.before_cleanup = [&] {
+        check(read(original_record).empty(), "junction attack before writer never receives bytes");
+        inspected = true;
+    };
+    const auto error = rejects([&] { rp::publish(fixture.root / "record", "secret", hooks); });
+    check(installed && inspected && error.find("unsupported reparse") != std::string::npos, "Native anchor reparse rejection executes before writer");
+    check(read(foreign / "marker") == "keep" && fs::is_empty(moved), "foreign junction target untouched, original owned attempt cleaned");
+    check(::RemoveDirectoryW(anchor(fixture.root).c_str()), "remove test-owned junction without following target");
+}
+
+void windows_security()
+{
+    Fixture fixture;
+    const auto destination = fixture.root / "record";
+    write(destination, "old");
+    auto original = windows_policy(destination);
+    alignas(DWORD) std::array<unsigned char, SECURITY_MAX_SID_SIZE> everyone {};
+    DWORD size = everyone.size();
+    check(::CreateWellKnownSid(WinWorldSid, nullptr, everyone.data(), &size), "Everyone fixture SID");
+    std::vector<unsigned char> acl(sizeof(ACL) + 2 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) + size + original.owner.size());
+    auto* dacl = reinterpret_cast<PACL>(acl.data());
+    check(::InitializeAcl(dacl, acl.size(), ACL_REVISION)
+        && ::AddAccessDeniedAce(dacl, ACL_REVISION, FILE_WRITE_DATA, everyone.data())
+        && ::AddAccessAllowedAce(dacl, ACL_REVISION, FILE_ALL_ACCESS, original.owner.data()), "ordered allow/deny fixture");
+    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS,
+        "install ordinary destination restriction");
+    original = windows_policy(destination);
+    const auto result = rp::publish(destination, "new");
+    check(result.committed && !result.cleanup_error && read(destination) == "new", "Native overwrite succeeds with inspection delete sharing");
+    const auto replacement = windows_policy(destination);
+    check(original.owner == replacement.owner && original.group == replacement.group && original.dacl == replacement.dacl,
+        "exact owner/group/ordered DACL reproduction");
+    const auto parent_policy = windows_policy(fixture.root);
+    bool changed = false;
+    rp::Hooks changed_policy;
+    changed_policy.before_commit = [&] {
+        check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
+            DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr,
+            reinterpret_cast<PACL>(const_cast<unsigned char*>(parent_policy.dacl.data())), nullptr) == ERROR_SUCCESS,
+            "inject destination policy change");
+        changed = true;
+    };
+    rejects([&] { rp::publish(destination, "blocked", changed_policy); });
+    check(changed && read(destination) == "new", "final destination DACL change preserves original bytes");
+    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS,
+        "restore test-owned destination policy");
+    changed = false;
+    changed_policy.before_commit = [&] {
+        const auto stage = only_attempt(fixture.root) / "record";
+        check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(stage.c_str()), SE_FILE_OBJECT,
+            DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr,
+            reinterpret_cast<PACL>(const_cast<unsigned char*>(parent_policy.dacl.data())), nullptr) == ERROR_SUCCESS,
+            "inject native stage DACL change");
+        changed = true;
+    };
+    rejects([&] { rp::publish(destination, "blocked", changed_policy); });
+    check(changed && read(destination) == "new", "final native file DACL change rejected after hook");
+    clean_anchor(fixture.root);
+    const HANDLE blocker = ::CreateFileW(destination.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE,
+        nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    check(blocker != INVALID_HANDLE_VALUE, "open external missing-SHARE_DELETE fixture");
+    const auto failure = rejects([&] { rp::publish(destination, "blocked"); });
+    check(::CloseHandle(blocker), "close external sharing blocker");
+    check(failure.find("atomic NtSetInformationFile rename") != std::string::npos && read(destination) == "new",
+        "Native sharing failure is not latched as commit");
+    clean_anchor(fixture.root);
+    check(::SetFileAttributesW(destination.c_str(), FILE_ATTRIBUTE_READONLY), "readonly destination fixture");
+    rejects([&] { rp::publish(destination, "blocked"); });
+    check(read(destination) == "new", "readonly replacement failure preserves destination");
+    check(::SetFileAttributesW(destination.c_str(), FILE_ATTRIBUTE_NORMAL), "restore readonly fixture");
+    check(::CreateHardLinkW((fixture.root / "link").c_str(), destination.c_str(), nullptr), "hardlink fixture");
+    rejects([&] { rp::publish(destination, "blocked"); });
+    fs::remove(fixture.root / "link");
+    PSECURITY_DESCRIPTOR label = nullptr;
+    check(::ConvertStringSecurityDescriptorToSecurityDescriptorW(L"S:(ML;;NW;;;LW)", SDDL_REVISION_1, &label, nullptr), "label fixture");
+    BOOL present = FALSE, defaulted = FALSE;
+    PACL sacl = nullptr;
+    check(::GetSecurityDescriptorSacl(label, &present, &sacl, &defaulted) && present, "inspect label fixture");
+    const auto status = ::SetNamedSecurityInfoW(const_cast<wchar_t*>(destination.c_str()), SE_FILE_OBJECT,
+        LABEL_SECURITY_INFORMATION, nullptr, nullptr, nullptr, sacl);
+    ::LocalFree(label);
+    check(status == ERROR_SUCCESS, "install explicit low label fixture");
+    rejects([&] { rp::publish(destination, "blocked"); });
+    check(read(destination) == "new", "unsupported label remains explicit refusal");
 }
 #endif
 
@@ -702,13 +711,19 @@ int main()
 {
     try {
         basic_publication();
-        failure_and_cleanup_contract();
+        phase_failures_and_cleanup();
+        final_validation();
+        independent_attempts();
+        namespace_attacks();
 #ifndef _WIN32
-        child_umask022();
+        ordinary_layouts();
+        owned_anchor_groups();
         posix_security();
+        unsafe_anchors();
+        real_writer_failure();
 #else
-        windows_foreign_writable_ancestry();
-        windows_junction_mutation_protection();
+        windows_foreign_parent_and_private_children();
+        windows_junction_anchor_attack();
         windows_security();
 #endif
         std::cout << "record publication tests passed\n";

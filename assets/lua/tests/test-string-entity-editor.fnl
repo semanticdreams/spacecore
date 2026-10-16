@@ -7,6 +7,9 @@
 (local Full (require :graph/view/views/string-entity))
 (local Preview (require :graph/view/previews/string-entity))
 (local tempfile (require :tempfile))
+(local process (require :process))
+(local fs (require :fs))
+(local Uuid (require :uuid))
 (local json (require :json))
 (local glm (require :glm))
 (local tests [])
@@ -23,8 +26,20 @@
   (local batcher (ctx:get-text-ssbo-batcher))
   (length (batcher:get-draw-list)))
 
+(fn editor-directory []
+  (if (not= (string.sub package.config 1 1) "/")
+      (tempfile.TemporaryDirectory {:prefix "string-editor-"})
+      (do
+        (local path (fs.join-path "/tmp" (.. "string-editor-" (Uuid.v4))))
+        (local made (process.run {:args ["mkdir" "-m" "700" path] :timeout 10}))
+        (assert (= made.exit-code 0) made.stderr)
+        (each [_ child (ipairs ["entities" "entities/string" "entities/link"])]
+          (local created (process.run {:args ["mkdir" "-m" "700" (fs.join-path path child)] :timeout 10}))
+          (assert (= created.exit-code 0) created.stderr))
+        {:path path :drop (fn drop-directory [_self] (fs.remove-all path))})))
+
 (fn with-editor [surface f]
-  (local dir (tempfile.TemporaryDirectory {:prefix "string-editor-"}))
+  (local dir (editor-directory))
   (local files (collect [k v (pairs RecordFiles)] (values k v)))
   (local store (Strings.StringEntityStore {:base-dir dir.path :files files}))
   (local links (Links.LinkEntityStore {:base-dir dir.path}))
@@ -197,10 +212,43 @@
   (assert (= c.view.editor.last-error.outcome :committed))
   (assert (= (c.view.input:get-text) "committed"))
   (assert (= (. (c.node:read-text) :value) "committed"))
-  (assert (string.find (status c.view.editor) "Save committed" 1 true))
+  (assert (= (status c.view.editor) "Save committed; notification failed."))
   (c.store.string-entity-updated:disconnect handler)
   (c.view.input:set-text "next save")
   (assert (= (. (c.node:read-text) :value) "next save") "committed notification error must advance baseline"))
+
+(fn committed-storage-failure [c notification?]
+  (local original c.files.write-text!)
+  (local boundary (RecordFiles.RecordFiles
+    {:publication-hooks {:test-before-cleanup (fn cleanup-fault [] (error "editor cleanup fault"))}}))
+  (set c.files.write-text! boundary.write-text!)
+  (local observed {:calls 0 :completed false})
+  (fn listener [entity]
+    (set observed.calls (+ observed.calls 1))
+    (local saved (c.node:read-text))
+    (assert (= saved.value entity.value "committed"))
+    (assert (= saved.revision entity.revision))
+    (set observed.completed true)
+    (when notification? (error "editor notification fault")))
+  (local handler (c.store.string-entity-updated:connect listener))
+  (c.view.input:set-text "committed")
+  (c.store.string-entity-updated:disconnect handler true)
+  (set c.files.write-text! original)
+  (assert observed.completed "editor listener assertions must complete")
+  (assert (= observed.calls 1))
+  (local err c.view.editor.last-error)
+  (assert err "cleanup failure must be visible")
+  (assert (= err.code :storage-failed))
+  (assert (= err.outcome :committed))
+  (assert (string.find err.cleanup-error "editor cleanup fault" 1 true))
+  (assert (= (not= err.notification-error nil) (not= notification? nil)))
+  (assert (= (status c.view.editor) "Save committed; post-save error."))
+  (assert (= (c.view.input:get-text) "committed"))
+  (assert (= err.result.revision (. (c.node:read-text) :revision)))
+  (c.view.input:set-text "next save")
+  (assert (= (. (c.node:read-text) :value) "next save") "committed cleanup error must advance baseline")
+  (assert (= c.view.editor.last-error nil))
+  (assert (= (status c.view.editor) "")))
 
 (each [_ surface (ipairs [{:name "full" :build Full :max-lines 20} {:name "preview" :build Preview :max-lines 3}])]
   (each [_ scenario (ipairs [{:name "opening is read-only" :run opening}
@@ -212,7 +260,10 @@
                          {:name "simultaneous editors have independent baselines" :run simultaneous}
                          {:name "rendered children and registrations are dropped" :run render-and-drop}
                          {:name "storage failure preserves input and baseline" :run storage-failure}
-                         {:name "notification failure advances committed baseline" :run notification-failure}])]
+                          {:name "notification failure advances committed baseline" :run notification-failure}
+                          {:name "cleanup failure advances committed baseline" :run committed-storage-failure}
+                          {:name "cleanup and notification failure advance committed baseline"
+                           :run (fn both-failures [c] (committed-storage-failure c true))}])]
     (table.insert tests {:name (.. surface.name " " scenario.name)
                          :fn (fn run-scenario [] (with-editor surface.build
                                       (fn check-surface [c]

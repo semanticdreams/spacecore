@@ -1,9 +1,7 @@
 ;; Checked publication local to the string/link owning stores. No power-loss or
-;; external-writer coordination guarantee; rename is the commit point.
+;; external-writer coordination guarantee; native replacement is the commit point.
 (local fs (require :fs))
-(local json (require :json))
 (local JsonUtils (require :json-utils))
-(local Uuid (require :uuid))
 
 (fn fail [message]
   (error {:code :storage-failed :message (tostring message) :outcome :not-committed}))
@@ -14,11 +12,12 @@
   value)
 
 (fn RecordFiles [opts]
-  (local options (or opts {}))
+  (local options (if (= opts nil) {} opts))
   (assert (= (type options) :table) "RecordFiles options must be a table")
-  (local open (or options.open io.open))
-  (local rename (or options.rename os.rename))
-  (local stage-json! (or options.stage-json! JsonUtils.write-json!))
+  (each [key _ (pairs options)]
+    (assert (or (= key :open) (= key :publication-hooks)) (.. "RecordFiles unknown option: " (tostring key))))
+  (local open (if (= options.open nil) io.open options.open))
+  (assert (= (type open) :function) "RecordFiles open must be a read function")
 
   (fn read! [path max-bytes]
     (local handle (checked (open path "rb")))
@@ -33,44 +32,22 @@
       (error {:code :limit-exceeded :message "record exceeds stored-byte limit" :outcome :not-committed}))
     text)
 
-  (fn stage-text! [path text]
-    (local handle (checked (open path "wb")))
-    (fn write-and-flush []
-      (checked (handle:write text))
-      (checked (handle:flush)))
-    (local (ok err) (pcall write-and-flush))
-    (local (close-ok closed close-err) (pcall handle.close handle))
-    (when (not ok) (error err))
-    (when (not close-ok) (fail closed))
-    (checked closed close-err))
-
-  (fn publish! [path payload stage!]
-    ;; Keep staging a same-directory sibling, independent of destination length.
-    (local staging (fs.join-path (fs.parent path) (.. "record-stage-" (Uuid.v4))))
-    (fn attempt []
-      (stage! staging)
-      (when (not= (read! staging (+ (length payload) 1)) payload)
-        (fail "staged record verification failed"))
-      (checked (rename staging path)))
-    (local (ok err) (pcall attempt))
+  (fn publish! [path payload]
+    ;; The native boundary owns every payload write, validation and replacement.
+    ;; The injected open above is used only by read!, never for publication.
+    (fn attempt [] (fs.publish-record path payload options.publication-hooks))
+    (local (ok result) (pcall attempt))
     (when (not ok)
-      ;; Both names belong exclusively to this attempt, including json-utils'
-      ;; private atomic-write temporary. Never remove the destination.
-      (os.remove staging)
-      (os.remove (.. staging ".tmp"))
-      (if (and (= (type err) :table) (= err.code :storage-failed))
-          (error err)
-          (fail err)))
-    true)
+      (if (and (= (type result) :table) (= result.code :storage-failed))
+          (error result)
+          (fail result)))
+    (values true result.cleanup-error))
 
   (fn write-text! [path text]
-    (fn stage [staging] (stage-text! staging text))
-    (publish! path text stage))
+    (publish! path text))
 
   (fn write-json! [path data]
-    (local payload (json.dumps data))
-    (fn stage [staging] (stage-json! staging data))
-    (publish! path payload stage))
+    (JsonUtils.write-json! path data {:publish! publish!}))
 
   (fn list-ids [dir suffix]
     (local (ok entries) (pcall fs.list-dir dir false))
