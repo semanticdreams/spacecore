@@ -158,6 +158,21 @@ fragile:
 
 So the helper is a practical containment layer, not a fundamental redesign.
 
+## Per-Test Timeout Budgets
+
+A runner test descriptor may declare `:timeout-seconds` alongside `:name` and
+`:fn`. When present it must be a positive finite number; false, strings, zero,
+negative values, NaN and infinities are errors, not requests to inherit or disable
+the deadline. An absent field inherits `SPACE_TEST_CASE_TIMEOUT_SECONDS`, whose
+existing default is 120 seconds and whose global value 0 still disables deadlines
+for tests without an override. An explicit descriptor budget applies even when
+that inherited global value is 0. Test filtering is unchanged.
+
+The `full app root reload roundtrips active world` integration case explicitly
+uses 240 seconds for its three actual app-root reloads. Other integration cases
+retain their inherited budgets. Expiry remains one-shot, permits protected
+cleanup/rollback, and still fails a case that catches the timeout exception.
+
 ## What To Watch Out For
 
 When writing or refactoring tests in this codebase:

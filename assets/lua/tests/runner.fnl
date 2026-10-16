@@ -39,7 +39,17 @@
       sysinfo.now-ms
       (fn [] (* (os.clock) 1000))))
 
-(fn protected-call-with-timeout [traceback test timeout-seconds]
+(fn test-timeout-seconds [test configured-timeout]
+  (local timeout test.timeout-seconds)
+  (if (= timeout nil)
+      configured-timeout
+      (do
+        (assert (and (= (type timeout) :number) (> timeout 0) (< timeout math.huge))
+                (.. "test " test.name " :timeout-seconds must be a positive finite number"))
+        timeout)))
+
+(fn protected-call-with-timeout [traceback test configured-timeout]
+  (local timeout-seconds (test-timeout-seconds test configured-timeout))
   (local debug-lib _G.debug)
   (if (or (= timeout-seconds 0)
           (not debug-lib)
@@ -54,9 +64,12 @@
         (var timeout-message nil)
         (local (old-hook old-mask old-count) (debug-lib.gethook))
         (fn timeout-hook []
-          (when (>= (- (now-ms) started-at) timeout-ms)
+          (when (and (not timed-out?) (>= (- (now-ms) started-at) timeout-ms))
             (set timed-out? true)
             (set timeout-message (.. "test timed out after " timeout-seconds "s: " test.name))
+            ;; Deliver once, then allow protected cleanup/rollback to finish.
+            ;; The latch below still fails cases that catch this exception.
+            (debug-lib.sethook nil "" 0)
             (error timeout-message 2)))
         (debug-lib.sethook timeout-hook "" 10000)
         (local (ok err) (protected-call traceback test.fn))
@@ -323,8 +336,16 @@
 
   (log-line (.. "Executed " executed " Lua tests"))
 
-  (app.engine:shutdown)
   suite)
+
+(fn with-engine-shutdown [engine f]
+  (local (ok result) (pcall f))
+  (local (shutdown-ok shutdown-err) (pcall engine.shutdown engine))
+  (if (and (not ok) (not shutdown-ok))
+      (error (.. (tostring result) "\nengine shutdown also failed: " (tostring shutdown-err)) 0)
+      (not ok) (error result 0)
+      (not shutdown-ok) (error shutdown-err 0)
+      result))
 
 (fn run-tests [suite]
   (assert (and suite suite.tests) "tests.runner: suite missing tests")
@@ -334,18 +355,10 @@
   (local timeout-seconds (configured-test-timeout-seconds))
   (setup-test-env test-verbose)
 
-  (execute-tests suite test-verbose test-filter traceback timeout-seconds))
+  (with-engine-shutdown app.engine
+    (fn [] (execute-tests suite test-verbose test-filter traceback timeout-seconds))))
 
-(fn run-modules [suite]
-  (assert (and suite suite.modules) "tests.runner: suite missing modules")
-  (local test-verbose (os.getenv "TEST_VERBOSE"))
-  (local test-filter (os.getenv "TEST_FILTER"))
-  (local traceback (and _G.debug _G.debug.traceback))
-  (local timeout-seconds (configured-test-timeout-seconds))
-  (local print-timings (or (os.getenv "SPACE_TEST_TIMINGS")
-                           (os.getenv "TEST_VERBOSE")))
-  (setup-test-env test-verbose)
-
+(fn execute-modules [suite test-verbose test-filter traceback timeout-seconds print-timings]
   (local modules (apply-module-overrides suite.modules))
   (local now-ms (make-now-ms))
   (var failures 0)
@@ -398,8 +411,19 @@
 
   (log-line (.. "Executed " executed " Lua tests"))
 
-  (app.engine:shutdown)
   suite)
+
+(fn run-modules [suite]
+  (assert (and suite suite.modules) "tests.runner: suite missing modules")
+  (local test-verbose (os.getenv "TEST_VERBOSE"))
+  (local test-filter (os.getenv "TEST_FILTER"))
+  (local traceback (and _G.debug _G.debug.traceback))
+  (local timeout-seconds (configured-test-timeout-seconds))
+  (local print-timings (or (os.getenv "SPACE_TEST_TIMINGS")
+                          (os.getenv "TEST_VERBOSE")))
+  (setup-test-env test-verbose)
+  (with-engine-shutdown app.engine
+    (fn [] (execute-modules suite test-verbose test-filter traceback timeout-seconds print-timings))))
 
 (fn shutdown-test-env []
   "Shut down the test environment: drop the app and reset it to an empty table."

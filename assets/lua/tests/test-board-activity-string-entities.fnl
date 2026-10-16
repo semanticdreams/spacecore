@@ -38,52 +38,69 @@
            (focus-manager:drop)
            (camera:drop))})
 
+(local policy-and-hook-fields
+  [:active-interaction-surface :preferred-interaction-surface :active-pointer-controls
+   :scene-interactive? :canvas-interactive? :canvas-visible? :canvas-surface-interactive?
+   :activity-root-actions :activity-selection-actions :activity-left-dock-builder
+   :activity-command-hints-provider :activity-leader-command-providers
+   :activity-delete-selection :activity-activate-focused :activity-drawing-enabled?
+   :activity-context-enricher :activity-input-handlers :activity-target-enabled?
+   :activity-update :activity-preferred-interaction-surface :activity-surface-state
+   :activity-top-toolbar-builder :activity-object-drag-mode-provider])
+
+(fn snapshot-app-fields [keys]
+  ;; Keep a record for absent fields too: pairs over a value map loses nils.
+  (icollect [_ key (ipairs keys)] {:key key :value (. app key)}))
+
+(fn restore-app-fields! [snapshot]
+  (each [_ entry (ipairs snapshot)] (set (. app entry.key) entry.value)))
+
+(fn board-test-theme []
+  {:font app.text-style.font
+   :text {:scale 1.0 :foreground (glm.vec4 1 1 1 1)}})
+
 (fn with-board-runtime [body board-state]
-  (local previous-canvas app.canvas)
-  (local previous-active-world-runtime app.active-world-runtime)
-  (local previous-active-interaction-surface app.active-interaction-surface)
-  (local previous-active-activity-id app.active-activity-id)
-  (local previous-activity-registry app.activity-registry)
-  (local previous-activities-changed app.activities-changed)
-  (local previous-board app.board)
-  (local previous-board-view app.board-view)
-  (local previous-text-style app.text-style)
-  (local previous-themes app.themes)
+  (local previous-policy (snapshot-app-fields policy-and-hook-fields))
+  (local previous-runtime
+    (snapshot-app-fields [:canvas :active-world-runtime :active-activity-id
+                      :activity-registry :activities-changed :board :board-view
+                      :text-style :themes :hud :workspace-shell-changed :activity-dock-changed]))
+  (var fixture nil)
   (set app.activity-registry nil)
   (set app.activities-changed nil)
-  (local fixture (make-canvas-fixture))
-  (set app.canvas fixture.canvas)
-  (set app.text-style {:font (make-test-font)
-                       :scale 1.0
-                       :color (glm.vec4 1 1 1 1)})
-  (set app.themes {:get-active-theme (fn [] {:font app.text-style.font
-                                             :text {:scale 1.0
-                                                    :foreground (glm.vec4 1 1 1 1)}})})
-  (set app.active-interaction-surface :canvas)
-  (set app.active-world-runtime {:canvas fixture.canvas
-                                 :activity-cameras {:canvas {} :scene {}}
-                                 :activity-controls {:canvas {} :scene {}}
-                                 :scene (make-scene-stub)
-                                 :board-state board-state})
+  ;; The fixture owns these presentations, not observers on the surrounding app.
+  (set app.hud nil)
+  (set app.workspace-shell-changed nil)
+  (set app.activity-dock-changed nil)
   (local (ok err)
     (pcall
       (fn []
+        (set fixture (make-canvas-fixture))
+        (set app.canvas fixture.canvas)
+        (set app.text-style {:font (make-test-font)
+                             :scale 1.0
+                             :color (glm.vec4 1 1 1 1)})
+        (set app.themes {:get-active-theme board-test-theme})
+        (set app.active-interaction-surface :canvas)
+        (set app.active-world-runtime {:canvas fixture.canvas
+                                       :activity-cameras {:canvas {} :scene {}}
+                                       :activity-controls {:canvas {} :scene {}}
+                                       :scene (make-scene-stub)
+                                       :board-state board-state})
         (BoardActivityUnit.load-board-activity!)
         (Activities.activate-activity "board")
         (body))))
-  (pcall BoardActivityUnit.unload-board-activity!)
-  (fixture:drop)
-  (set app.canvas previous-canvas)
-  (set app.active-world-runtime previous-active-world-runtime)
-  (set app.active-interaction-surface previous-active-interaction-surface)
-  (set app.active-activity-id previous-active-activity-id)
-  (set app.activity-registry previous-activity-registry)
-  (set app.activities-changed previous-activities-changed)
-  (set app.board previous-board)
-  (set app.board-view previous-board-view)
-  (set app.text-style previous-text-style)
-  (set app.themes previous-themes)
-  (if ok true (error err)))
+  (local (unload-ok unload-err) (pcall BoardActivityUnit.unload-board-activity!))
+  (local (drop-ok drop-err) (pcall (fn [] (when fixture (fixture:drop)))))
+  (restore-app-fields! previous-runtime)
+  ;; Restore inputs AND derived fields verbatim, including nil and pointer controls.
+  ;; Re-running a setter here would normalize nils or mutate the restored runtime.
+  (restore-app-fields! previous-policy)
+  (local errors [])
+  (when (not ok) (table.insert errors (tostring err)))
+  (when (not unload-ok) (table.insert errors (.. "Board unload failed: " (tostring unload-err))))
+  (when (not drop-ok) (table.insert errors (.. "Board fixture drop failed: " (tostring drop-err))))
+  (if (= (length errors) 0) true (error (table.concat errors "\n"))))
 
 (local valid-entity-id "board-prune-valid-string-entity")
 (local missing-entity-id "board-prune-missing-string-entity")
@@ -143,10 +160,44 @@
 (fn active-restore-prunes-stale-string-entity-item []
   (with-valid-string-entity active-restore-runtime))
 
+(fn assert-board-fixture-restores [expected fail?]
+  (fn body [] (when fail? (error "board fixture assertion sentinel")))
+  (local (body-ok body-err)
+    (pcall with-board-runtime body {:items [] :connectors []}))
+  (assert (= body-ok (not fail?)) "Board fixture must preserve body outcome")
+  (when fail?
+    (assert (string.find (tostring body-err) "board fixture assertion sentinel" 1 true)))
+  (each [_ entry (ipairs expected)]
+    (assert (= (. app entry.key) entry.value)
+            (.. "Board fixture leaked " entry.key))))
+
+(fn check-board-fixture-restoration []
+  (local marker (fn [] true))
+  ;; Non-nil hooks must survive activation/unload, not just the initial nils.
+  (each [i key (ipairs policy-and-hook-fields)]
+    (when (string.find key "activity-" 1 true)
+      (set (. app key) (if (= (% i 3) 0) nil (= (% i 3) 1) false marker))))
+  (local expected (snapshot-app-fields policy-and-hook-fields))
+  (assert-board-fixture-restores expected false)
+  (assert-board-fixture-restores expected true)
+  ;; An absent policy is also owned state; setters must not normalize it on exit.
+  (each [_ key (ipairs policy-and-hook-fields)] (set (. app key) nil))
+  (local absent (snapshot-app-fields policy-and-hook-fields))
+  (assert-board-fixture-restores absent false)
+  (assert-board-fixture-restores absent true))
+
+(fn board-fixture-restores-policy-and-hooks []
+  (local original (snapshot-app-fields policy-and-hook-fields))
+  (local (ok err) (pcall check-board-fixture-restoration))
+  (restore-app-fields! original)
+  (if ok true (error err)))
+
 (table.insert tests {:name "Board activity activation restore prunes stale string entity item"
                      :fn activation-restore-prunes-stale-string-entity-item})
 (table.insert tests {:name "Board activity active restore prunes stale string entity item"
                      :fn active-restore-prunes-stale-string-entity-item})
+(table.insert tests {:name "Board fixture restores interaction policy and activity hooks on success and assertion"
+                     :fn board-fixture-restores-policy-and-hooks})
 
 (fn main []
   (runner.run-tests {:name "board-activity-string-entities"

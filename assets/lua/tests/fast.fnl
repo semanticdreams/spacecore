@@ -13,6 +13,7 @@
     :tests.test-runtime-timers
     :tests.test-runtime-scheduler
     :tests.test-runtime-updates
+    :tests.test-runner
     :tests.test-layout-stats-view
     :tests.test-clickables
     :tests.test-clipboard

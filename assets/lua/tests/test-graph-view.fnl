@@ -2346,27 +2346,71 @@
             (set app.terrain-rect-pick-session original-terrain-rect-pick-session))))
 
 
-(fn graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick [] (assert app.clickables "heightfield clickables test requires app.clickables") (assert app.hoverables "heightfield clickables test requires app.hoverables")
-    (with-temp-data-dir
-        (fn [_root]
+(local (graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick
+        graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick)
+  (do
+    ;; Keep this fixture local to the two terrain cases: the module is at Lua's
+    ;; top-level local-variable ceiling. Cleanup must also run on failed assertions.
+    (fn with-terrain-pick-fixture [engine-events? body]
+      (assert app.clickables "terrain pick fixture requires app.clickables")
+      (assert app.hoverables "terrain pick fixture requires app.hoverables")
+      (local saved
+        (icollect [_ key (ipairs [:hud :scene :clickables :hoverables :intersectables
+                                  :screen-pos-ray :movables :resizables :first-person-controls
+                                  :states :terrain-rect-pick-session])]
+          {:key key :value (. app key)}))
+      (local original-states app.states)
+      (var suspended-state nil)
+      (local cleanup [])
+      (local errors [])
+      (fn defer! [f] (table.insert cleanup f))
+      (fn attempt [f]
+        (local (ok err) (pcall f))
+        (when (not ok) (table.insert errors (tostring err))))
+      (fn install-states! []
+        (local states ((require :states)))
+        (defer! (fn [] (states:drop)))
+        (states:add-state :normal (if engine-events? ((require :normal-state)) {}))
+        (states:add-state :terrain-rect-pick ((require :terrain-rect-pick-state)))
+        (set-app-states! states)
+        (states:set-state :normal))
+      (fn run []
+        ;; Leave the old state while its original services are still installed.
+        (set suspended-state (TestSupport.suspend-active-state original-states))
+        (set app.intersectables (Intersectables))
+        (set app.clickables ((require :clickables) {:intersectables app.intersectables}))
+        (set app.hoverables ((require :hoverables) {:intersectables app.intersectables}))
+        (assert app.clickables "terrain pick fixture must install clickables")
+        (assert app.hoverables "terrain pick fixture must install hoverables")
+        (set app.screen-pos-ray
+             (fn [pointer]
+               {:origin (glm.vec3 (or pointer.x 0) (or pointer.y 0) 10)
+                :direction (glm.vec3 0 0 -1)}))
+        (set app.movables {:on-mouse-button-down (fn [_self _payload] nil)
+                           :on-mouse-button-up (fn [_self _payload] nil)
+                           :on-mouse-motion (fn [_self _payload] nil)
+                           :drag-active? (fn [_self] false)})
+        (set app.resizables {:on-mouse-button-down (fn [_self _payload] false)
+                             :on-mouse-button-up (fn [_self _payload] nil)
+                             :on-mouse-motion (fn [_self _payload] nil)
+                             :drag-active? (fn [_self] false)})
+        (set app.first-person-controls {:on-mouse-button-down (fn [_self _payload] nil)
+                                        :on-mouse-button-up (fn [_self _payload] nil)
+                                        :on-mouse-motion (fn [_self _payload] nil)
+                                        :drag-active? (fn [_self] false)})
+        (body {:defer! defer! :install-states! install-states!}))
+      (attempt run)
+      (for [i (length cleanup) 1 -1] (attempt (. cleanup i)))
+      ;; Restore nil slots, the manager host, and services before re-entering the
+      ;; original state. A cleanup error must not strand the surrounding app.
+      (each [_ entry (ipairs saved)] (set (. app entry.key) entry.value))
+      (StateSystemBindings.bind-states-host original-states)
+      (attempt (fn [] (TestSupport.resume-active-state suspended-state)))
+      (when (> (length errors) 0) (error (table.concat errors "\n"))))
+
+    (fn clickables-pick-body [fixture]
             (local {:HeightfieldPerlinToolNode HeightfieldPerlinToolNode}
                    (require :graph/nodes/heightfield-perlin-tool))
-            (local States (require :states))
-            (local TerrainRectPickState (require :terrain-rect-pick-state))
-            (local Clickables (require :clickables))
-            (local Hoverables (require :hoverables))
-            (local original-hud app.hud)
-            (local original-scene app.scene)
-            (local original-clickables (assert app.clickables "heightfield clickables test requires app.clickables"))
-            (local original-hoverables (assert app.hoverables "heightfield clickables test requires app.hoverables"))
-            (local original-intersectables app.intersectables)
-            (local original-screen-pos-ray app.screen-pos-ray)
-            (local original-movables app.movables)
-            (local original-resizables app.resizables)
-            (local original-fpc app.first-person-controls)
-            (local original-terrain-rect-pick-session app.terrain-rect-pick-session)
-            (local original-states app.states)
-            (var suspended-state nil)
             (local terrain-record (make-heightfield-terrain-record))
             (local scene
               {:screen-pos-terrain-domain-hit
@@ -2398,25 +2442,6 @@
                                                             :terrains [terrain-record]}
                                                     :hud {:panels []}}}))
             (local manager (make-world-manager {:entry entry}))
-            (set app.intersectables (Intersectables))
-            (set app.clickables (Clickables {:intersectables app.intersectables}))
-            (set app.hoverables (Hoverables {:intersectables app.intersectables}))
-            (set app.screen-pos-ray
-                 (fn [pointer]
-                     {:origin (glm.vec3 (or pointer.x 0) (or pointer.y 0) 10)
-                      :direction (glm.vec3 0 0 -1)}))
-            (set app.movables {:on-mouse-button-down (fn [_self _payload] nil)
-                               :on-mouse-button-up (fn [_self _payload] nil)
-                               :on-mouse-motion (fn [_self _payload] nil)
-                               :drag-active? (fn [_self] false)})
-            (set app.resizables {:on-mouse-button-down (fn [_self _payload] false)
-                                 :on-mouse-button-up (fn [_self _payload] nil)
-                                 :on-mouse-motion (fn [_self _payload] nil)
-                                 :drag-active? (fn [_self] false)})
-            (set app.first-person-controls {:on-mouse-button-down (fn [_self _payload] nil)
-                                            :on-mouse-button-up (fn [_self _payload] nil)
-                                            :on-mouse-motion (fn [_self _payload] nil)
-                                            :drag-active? (fn [_self] false)})
             (local ctx (make-ctx))
             (local target {:build-context ctx
                            :world-units-per-pixel 1
@@ -2433,13 +2458,9 @@
                                                          (table.remove self.children i))))})
             (set app.hud target)
             (set app.scene scene)
-            (local states (States))
-            (states:add-state :normal {})
-            (states:add-state :terrain-rect-pick (TerrainRectPickState))
-            (states:set-state :normal)
-            (set suspended-state (TestSupport.suspend-active-state original-states))
-            (set-app-states! states)
+            (fixture.install-states!)
             (local graph (make-test-graph-map))
+            (fixture.defer! (fn [] (graph:drop)))
             (local node (HeightfieldPerlinToolNode {:world-id "world-a"
                                                     :activity-id "sandbox"
                                                     :world-manager manager
@@ -2448,6 +2469,7 @@
             (local views (GraphViewNodeViews {:graph-map graph
                                               :ctx ctx
                                               :view-target target}))
+            (fixture.defer! (fn [] (views:drop-all)))
             (views:open node)
             (local dialog (. target.children 1))
             (local body-card (unwrap-element (. dialog.children 2)))
@@ -2456,6 +2478,7 @@
             (local button tool-view.pick-button)
             (assert button "Expected terrain tool pick button")
             (local original-intersect button.intersect)
+            (fixture.defer! (fn [] (set button.intersect original-intersect)))
             (set button.intersect
                  (fn [_self _ray]
                      (values true (glm.vec3 0 0 0) 0.0)))
@@ -2476,46 +2499,18 @@
             (assert (= picked-target.x1 3))
             (assert (= picked-target.z1 4))
             (assert-codepoints-eq (tool-view.selection-label:get-codepoints)
-                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]"))
-            (set button.intersect original-intersect)
-            (views:drop-all)
-            (graph:drop)
-            (set app.hud original-hud)
-            (set app.scene original-scene)
-            (set app.clickables original-clickables)
-            (set app.hoverables original-hoverables)
-            (set app.intersectables original-intersectables)
-            (set app.screen-pos-ray original-screen-pos-ray)
-            (set app.movables original-movables)
-            (set app.resizables original-resizables)
-            (set app.first-person-controls original-fpc)
-            (set-app-states! original-states)
-            (TestSupport.resume-active-state suspended-state)
-            (set app.terrain-rect-pick-session original-terrain-rect-pick-session))))
+                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]")))
 
-
-(fn graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick [] (assert app.clickables "heightfield engine-events test requires app.clickables") (assert app.hoverables "heightfield engine-events test requires app.hoverables")
-    (with-temp-data-dir
+    (fn graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick []
+      (with-temp-data-dir
         (fn [_root]
+          (assert app.clickables "heightfield clickables test requires app.clickables")
+          (assert app.hoverables "heightfield clickables test requires app.hoverables")
+          (with-terrain-pick-fixture false clickables-pick-body))))
+
+    (fn engine-events-pick-body [fixture]
             (local {:HeightfieldPerlinToolNode HeightfieldPerlinToolNode}
                    (require :graph/nodes/heightfield-perlin-tool))
-            (local States (require :states))
-            (local TerrainRectPickState (require :terrain-rect-pick-state))
-            (local NormalState (require :normal-state))
-            (local Clickables (require :clickables))
-            (local Hoverables (require :hoverables))
-            (local original-hud app.hud)
-            (local original-scene app.scene)
-            (local original-clickables (assert app.clickables "heightfield engine-events test requires app.clickables"))
-            (local original-hoverables (assert app.hoverables "heightfield engine-events test requires app.hoverables"))
-            (local original-intersectables app.intersectables)
-            (local original-screen-pos-ray app.screen-pos-ray)
-            (local original-movables app.movables)
-            (local original-resizables app.resizables)
-            (local original-fpc app.first-person-controls)
-            (local original-terrain-rect-pick-session app.terrain-rect-pick-session)
-            (local original-states app.states)
-            (var suspended-state nil)
             (local terrain-record (make-heightfield-terrain-record))
             (local scene
               {:screen-pos-terrain-domain-hit
@@ -2547,25 +2542,6 @@
                                                             :terrains [terrain-record]}
                                                     :hud {:panels []}}}))
             (local manager (make-world-manager {:entry entry}))
-            (set app.intersectables (Intersectables))
-            (set app.clickables (Clickables {:intersectables app.intersectables}))
-            (set app.hoverables (Hoverables {:intersectables app.intersectables}))
-            (set app.screen-pos-ray
-                 (fn [pointer]
-                     {:origin (glm.vec3 (or pointer.x 0) (or pointer.y 0) 10)
-                      :direction (glm.vec3 0 0 -1)}))
-            (set app.movables {:on-mouse-button-down (fn [_self _payload] nil)
-                               :on-mouse-button-up (fn [_self _payload] nil)
-                               :on-mouse-motion (fn [_self _payload] nil)
-                               :drag-active? (fn [_self] false)})
-            (set app.resizables {:on-mouse-button-down (fn [_self _payload] false)
-                                 :on-mouse-button-up (fn [_self _payload] nil)
-                                 :on-mouse-motion (fn [_self _payload] nil)
-                                 :drag-active? (fn [_self] false)})
-            (set app.first-person-controls {:on-mouse-button-down (fn [_self _payload] nil)
-                                            :on-mouse-button-up (fn [_self _payload] nil)
-                                            :on-mouse-motion (fn [_self _payload] nil)
-                                            :drag-active? (fn [_self] false)})
             (local ctx (make-ctx))
             (local target {:build-context ctx
                            :world-units-per-pixel 1
@@ -2582,13 +2558,9 @@
                                                          (table.remove self.children i))))})
             (set app.hud target)
             (set app.scene scene)
-            (local states (States))
-            (states:add-state :normal (NormalState))
-            (states:add-state :terrain-rect-pick (TerrainRectPickState))
-            (states:set-state :normal)
-            (set suspended-state (TestSupport.suspend-active-state original-states))
-            (set-app-states! states)
+            (fixture.install-states!)
             (local graph (make-test-graph-map))
+            (fixture.defer! (fn [] (graph:drop)))
             (local node (HeightfieldPerlinToolNode {:world-id "world-a"
                                                     :activity-id "sandbox"
                                                     :world-manager manager
@@ -2597,6 +2569,7 @@
             (local views (GraphViewNodeViews {:graph-map graph
                                               :ctx ctx
                                               :view-target target}))
+            (fixture.defer! (fn [] (views:drop-all)))
             (views:open node)
             (local dialog (. target.children 1))
             (local body-card (unwrap-element (. dialog.children 2)))
@@ -2605,6 +2578,7 @@
             (local button tool-view.pick-button)
             (assert button "Expected terrain tool pick button")
             (local original-intersect button.intersect)
+            (fixture.defer! (fn [] (set button.intersect original-intersect)))
             (set button.intersect
                  (fn [_self _ray]
                      (values true (glm.vec3 0 0 0) 0.0)))
@@ -2625,22 +2599,44 @@
             (assert (= picked-target.x1 3))
             (assert (= picked-target.z1 4))
             (assert-codepoints-eq (tool-view.selection-label:get-codepoints)
-                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]"))
-            (set button.intersect original-intersect)
-            (views:drop-all)
-            (graph:drop)
-            (set app.hud original-hud)
-            (set app.scene original-scene)
-            (set app.clickables original-clickables)
-            (set app.hoverables original-hoverables)
-            (set app.intersectables original-intersectables)
-            (set app.screen-pos-ray original-screen-pos-ray)
-            (set app.movables original-movables)
-            (set app.resizables original-resizables)
-            (set app.first-person-controls original-fpc)
-            (set-app-states! original-states)
-            (TestSupport.resume-active-state suspended-state)
-            (set app.terrain-rect-pick-session original-terrain-rect-pick-session))))
+                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]")))
+
+    (fn graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick []
+      (with-temp-data-dir
+        (fn [_root]
+          (assert app.clickables "heightfield engine-events test requires app.clickables")
+          (assert app.hoverables "heightfield engine-events test requires app.hoverables")
+          (with-terrain-pick-fixture true engine-events-pick-body))))
+
+    (fn assert-terrain-fixture-cleanup [engine-events?]
+      (local saved
+        (icollect [_ key (ipairs [:hud :scene :clickables :hoverables :intersectables
+                                  :screen-pos-ray :movables :resizables :first-person-controls
+                                  :states :terrain-rect-pick-session])]
+          {:key key :value (. app key)}))
+      (var cleanup-ran? false)
+      (fn fail-body [fixture]
+        (fixture.install-states!)
+        (fixture.defer! (fn [] (set cleanup-ran? true)))
+        (fixture.defer! (fn [] (error "terrain fixture cleanup sentinel")))
+        (assert false "terrain fixture assertion sentinel"))
+      (local (ok err) (pcall with-terrain-pick-fixture engine-events? fail-body))
+      (assert (not ok) "Fixture must rethrow assertion failures")
+      (assert (string.find (tostring err) "terrain fixture assertion sentinel" 1 true))
+      (assert (string.find (tostring err) "terrain fixture cleanup sentinel" 1 true)
+              "Cleanup errors must remain visible alongside the assertion")
+      (assert cleanup-ran? "A failing cleanup must not prevent remaining cleanup")
+      (each [_ entry (ipairs saved)]
+        (assert (= (. app entry.key) entry.value) (.. "Terrain fixture leaked " entry.key))))
+
+    (table.insert tests
+      {:name "GraphView terrain pick fixtures restore services and states after assertion and cleanup failures"
+       :fn (fn []
+             (assert-terrain-fixture-cleanup false)
+             (assert-terrain-fixture-cleanup true))})
+
+    (values graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick
+            graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick)))
 
 (fn graph-layout-module-updates-lines-and-labels []
     (with-temp-data-dir
