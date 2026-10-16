@@ -141,6 +141,12 @@ write has committed, disclose the committed outcome rather than claiming that
 the operation rolled back. Failure handling must not silently compensate an
 already committed operation or erase unrelated state.
 
+The approved follow-up `2026-10-16-secure-record-publication-design.md` refines
+this write boundary. Its native payload publisher and small canonical JSON
+publisher hook may replace the fresh draft interfaces, with all repository
+callers/tests migrated. No external API stability or compatibility shim is
+required; ordinary editing, privacy and truthful outcomes remain requirements.
+
 Authorized filesystem prerequisite: the existing `fs.list-dir` binding must
 always report enumeration errors, including permission denial. Remove its
 permission-denied suppression for all callers; strictness is not opt-in. Preserve

@@ -36,7 +36,8 @@ new runtime, production subprocess, global umask mutation, or parent chmod.
 `fs.publish-record(destination, payload, opts?)` returns
 `{committed: true, cleanup-error?: string}`. Remove the staging callback and its
 native type entirely. No overloaded legacy signature or writable-path callback
-escapes. Retain the three explicit test phase hooks; they are not payload writers.
+escapes. Explicit test hooks may observe before-write, before-security,
+before-commit and before-cleanup phases; they are not payload writers.
 
 Pin the target directory, exclusively allocate a private workspace and record,
 establish confidentiality before bytes, and write the payload through retained
