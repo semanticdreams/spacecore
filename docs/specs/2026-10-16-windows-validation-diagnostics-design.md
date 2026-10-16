@@ -62,6 +62,13 @@ evidence-driven change if necessary, not implied permission to bypass the agent.
   Wine backend implementation limitations remain documented; native Windows is
   authoritative. Never infer native ACL correctness from a Wine probe.
 
+Public contract references: Microsoft [ProcessPrng](https://learn.microsoft.com/en-us/windows/win32/seccng/processprng)
+and [RtlGenRandom/SystemFunction036](https://learn.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-rtlgenrandom).
+Wine's examined backend can hide host short-read failures; checking its reported
+status and output probes does not prove every future call or entropy quality.
+The bridge must never itself fabricate success, and must stop on observable
+backend failure. No new RNG algorithm is introduced.
+
 Migrate all callers of the old mock/preparation script, including workflow smoke
 steps, so none can reintroduce build/package contamination. Do not keep a legacy
 script alias. The native package is immutable input to Wine preparation.
