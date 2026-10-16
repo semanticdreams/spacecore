@@ -38,8 +38,11 @@ as a rolled-back mutation.
 
 The operation owns short, exclusive same-directory staging independent of the
 destination basename. Create restrictions before invoking any writer or storing
-private bytes. The only expected staging entries are the fixed record and JSON
-temporary. Keep cleanup attempt-local, identity checked, and nonrecursive; never
+private bytes. The callback's record path starts absent; only the JSON temporary
+is privately precreated. Thus the unchanged JSON helper renames to a new record,
+without depending on inner overwrite behavior. The only expected entries are
+the fixed record and JSON temporary. Keep cleanup attempt-local, identity checked,
+and nonrecursive; never
 remove the destination to make publication work. Do not expose an independently
 owned stage to Lua GC or retain callbacks after the synchronous call.
 
@@ -50,8 +53,10 @@ at the new owning boundary, migrating tests instead of keeping a bypass alias.
 
 ## Access restrictions and platform behavior
 
-- POSIX staging directory is private (0700), with private record/temporary files
-  effective before content. Newly created records publish privately (0600).
+- POSIX staging directory is private (0700). It protects effective access to
+  intermediate files even if the unchanged writer's creation mode inside it is
+  broader; no private content is publicly reachable. Newly created records must
+  have verified private mode0600 before publication outside that directory.
 - Existing destinations retain their owner/group/mode restrictions. Inspect
   additional ACL/security policy rather than assuming mode bits describe it all;
   preserve supported restrictions or fail closed before publication. Do not
