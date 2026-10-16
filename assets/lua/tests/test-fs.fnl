@@ -2,6 +2,8 @@
 (local fs (require :fs))
 (local process (require :process))
 (local RuntimeBin (require :tests.runtime-bin))
+(local JsonUtils (require :json-utils))
+(local json (require :json))
 
 (var temp-counter 0)
 (local fs-temp-root (fs.join-path "/tmp/space/tests" "fs-test-tmp"))
@@ -397,6 +399,173 @@
     (assert-atomic-replace-segment-error "sparse segment table should fail" replace-with-sparse-segment-table file token)
     (assert (= (fs.read-file file) "abcdef")))))
 
+(fn with-publication-dir [f]
+  (if (not= (string.sub package.config 1 1) "/")
+      (with-temp-dir f)
+      (do
+        (set temp-counter (+ temp-counter 1))
+        (local dir (fs.join-path "/tmp" (.. "space-publication-" (os.time) "-" temp-counter)))
+        (assert (fs.create-dir dir) "publication fixture must be exclusive")
+        (local (ok result)
+          (pcall (fn run-private-fixture []
+                   (chmod! dir "700")
+                   (f dir))))
+        (fs.remove-all dir)
+        (if ok result (error result)))))
+
+(fn publish-json-value [path value]
+  (local data {:value value})
+  (var workspace nil)
+  (fn write-json-stage! [stage]
+    (set workspace (fs.parent stage))
+    (assert (not (fs.exists stage)) "callback target starts absent")
+    (assert (= (fs.read-file (.. stage ".tmp")) "") "temporary precreated empty")
+    (collectgarbage :collect)
+    (JsonUtils.write-json! stage data))
+  (local result (fs.publish-record path (json.dumps data) write-json-stage!))
+  (assert result.committed)
+  (assert (= result.cleanup-error nil))
+  (assert (= (fs.read-file path) (json.dumps data)))
+  (assert (not (fs.exists workspace))))
+
+(fn publish-json-fixture [root]
+  (local path (fs.join-path root (string.rep "r" 220)))
+  (each [_ value (ipairs ["before" "after 雪"])]
+    (publish-json-value path value)))
+
+(fn fs-publish-record-json []
+  (assert (= (type fs.publish-record) :function) "fs.publish-record native API must exist")
+  (with-publication-dir publish-json-fixture))
+
+(fn publish-failures-fixture [root]
+  (local path (fs.join-path root "record"))
+  (fs.write-file path "old")
+  (var workspace nil)
+  (fn stage! [stage]
+    (set workspace (fs.parent stage))
+    (fs.write-file stage "new"))
+  (fn must-fail! [callback opts]
+    (local (ok err) (pcall fs.publish-record path "new" callback opts))
+    (assert (not ok) "precommit failure must raise")
+    (assert err)
+    (assert (= (fs.read-file path) "old"))
+    (when workspace (assert (not (fs.exists workspace)) "synchronous cleanup")))
+  (fn throwing-stage! [stage] (stage! stage) (collectgarbage :collect) (error "stage fault"))
+  (fn false-hook [] false)
+  (fn nil-hook [] nil)
+  (fn throwing-hook [] (error "hook fault"))
+  (fn true-hook [] true)
+  (fn cleanup-hook [] (error "cleanup fault"))
+  (fn wrong-stage! [stage] (stage! stage) (fs.write-file stage "wrong"))
+  (must-fail! throwing-stage!)
+  (each [_ key (ipairs [:test-before-security :test-before-commit])]
+    (each [_ hook (ipairs [false-hook nil-hook throwing-hook])]
+      (local opts {})
+      (tset opts key hook)
+      (must-fail! stage! opts)))
+  (must-fail! stage! {:unknown true-hook})
+  (must-fail! stage! {:test-before-security true})
+  (must-fail! wrong-stage!)
+  (local result (fs.publish-record path "new" stage!
+                  {:test-before-cleanup cleanup-hook}))
+  (assert result.committed)
+  (assert (string-contains? result.cleanup-error "cleanup fault"))
+  (assert (= (fs.read-file path) "new"))
+  (assert (not (fs.exists workspace))))
+
+(fn fs-publish-record-failures []
+  (with-publication-dir publish-failures-fixture))
+
+(fn publish-privacy-fixture [root]
+  (local path (fs.join-path root "private"))
+  (local bytes (json.dumps {:secret "private 雪"}))
+  (fn private-stage! [stage]
+    (fs.write-file stage bytes)
+    (fs.write-file (.. stage ".tmp") bytes)
+    (assert (= (fs.read-file stage) bytes))
+    (assert (= (fs.read-file (.. stage ".tmp")) bytes))
+    (when (= (string.sub package.config 1 1) "/")
+      (assert (= (permission-mode (fs.parent stage)) "700"))))
+  (fs.publish-record path bytes private-stage!)
+  (when (= (string.sub package.config 1 1) "/")
+    (assert (= (permission-mode path) "600"))))
+
+(fn fs-publish-record-intermediate-privacy []
+  (with-publication-dir publish-privacy-fixture))
+
+(fn publish-final-validation-fixture [root]
+  (local path (fs.join-path root "record"))
+  (fs.write-file path "old")
+  (var staged nil)
+  (var hook-ran false)
+  (fn stage! [stage]
+    (set staged stage)
+    (fs.write-file stage "new"))
+  (fn alter-bytes! []
+    (set hook-ran true)
+    (fs.write-file staged "bad")
+    true)
+  (local (ok err) (pcall fs.publish-record path "new" stage! {:test-before-commit alter-bytes!}))
+  (assert hook-ran "final fault callback must actually execute")
+  (assert (not ok) "validation must run after the final arbitrary callback")
+  (assert err)
+  (assert (= (fs.read-file path) "old"))
+  (assert (not (fs.exists (fs.parent staged)))))
+
+(fn fs-publish-record-final-validation []
+  (with-publication-dir publish-final-validation-fixture))
+
+(fn publish-options-fixture [root]
+  (local path (fs.join-path root "record"))
+  (fs.write-file path "old")
+  (fn stage! [stage] (fs.write-file stage "new"))
+  (each [_ opts (ipairs [false 42 "not-options"])]
+    (local (ok err) (pcall fs.publish-record path "new" stage! opts))
+    (assert (not ok) "non-table options must not be silently ignored")
+    (assert err)
+    (assert (= (fs.read-file path) "old")))
+  (each [_ callback (ipairs [false 42 "not-a-function"])]
+    (local (ok err) (pcall fs.publish-record path "new" callback))
+    (assert (not ok) "stage callback must be a function")
+    (assert err)
+    (assert (= (fs.read-file path) "old"))))
+
+(fn fs-publish-record-options []
+  (with-publication-dir publish-options-fixture))
+
+(fn publish-gc-fixture [root]
+  (local weak (setmetatable {} {:__mode :v}))
+  (local path (fs.join-path root "record"))
+  (fn publish-with-marker! []
+    (local marker {})
+    (tset weak 1 marker)
+    (fn marker-stage! [stage]
+      (collectgarbage :collect)
+      (assert (= (. weak 1) marker) "callback references remain live during native operation")
+      (fs.write-file stage "new"))
+    (fn marker-hook! []
+      (collectgarbage :collect)
+      (assert (= (. weak 1) marker) "hook references remain live during native operation")
+      true)
+    (local opts {:test-before-security marker-hook!
+                 :test-before-commit marker-hook!
+                 :test-before-cleanup marker-hook!})
+    (assert (. (fs.publish-record path "new" marker-stage! opts) :committed)))
+  (publish-with-marker!)
+  (collectgarbage :collect)
+  (assert (= (. weak 1) nil) "native operation must not retain callbacks after return")
+  (assert (= (length (fs.list-dir root)) 1) "native workspace cleaned before Lua GC")
+  (assert (= (fs.read-file path) "new")))
+
+(fn fs-publish-record-gc []
+  (with-publication-dir publish-gc-fixture))
+
+(table.insert tests {:name "fs publish-record real JSONUtils new and overwrite" :fn fs-publish-record-json})
+(table.insert tests {:name "fs publish-record protected callbacks and outcomes" :fn fs-publish-record-failures})
+(table.insert tests {:name "fs publish-record effective intermediate privacy" :fn fs-publish-record-intermediate-privacy})
+(table.insert tests {:name "fs publish-record validates after final fault callback" :fn fs-publish-record-final-validation})
+(table.insert tests {:name "fs publish-record rejects non-table options" :fn fs-publish-record-options})
+(table.insert tests {:name "fs publish-record owns callbacks synchronously without retention" :fn fs-publish-record-gc})
 (table.insert tests {:name "fs write/read/stat" :fn fs-write-read-stat})
 (table.insert tests {:name "fs list_dir filters hidden files" :fn fs-list-dir-hidden-filter})
 (table.insert tests {:name "fs list_dir always reports enumeration errors" :fn fs-list-dir-errors})

@@ -869,6 +869,16 @@ set_tests_properties(${PROJECT_NAME}_runtime_fennel_paths PROPERTIES
     ENVIRONMENT "SKIP_KEYRING_TESTS=1;XDG_DATA_HOME=/tmp/space/tests/xdg-data;SPACE_DISABLE_AUDIO=1;SPACE_LOG_DIR=/tmp/space/tests/log;SPACE_ASSETS_PATH=${CMAKE_SOURCE_DIR}/assets"
 )
 
+add_executable(test_record_publication
+    tests/test_record_publication.cpp
+    src/record_publication.cpp
+)
+target_include_directories(test_record_publication PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(WIN32)
+    target_link_libraries(test_record_publication advapi32)
+endif()
+add_test(NAME test_record_publication COMMAND test_record_publication)
+
 add_executable(test_vector_buffer
     tests/test_vector_buffer.cpp
 )
