@@ -5,6 +5,4 @@ if [ "$#" -ne 0 ]; then
     echo "Usage: prepare-windows-wine-runtime.sh (no arguments)" >&2
     exit 1
 fi
-source "${ROOT_DIR}/scripts/wine/runtime.sh"
-WINE_CMD="$(resolve_wine_cmd)"
-exec python3 "${ROOT_DIR}/scripts/wine/artifacts.py" prepare "${WINE_CMD}"
+exec python3 "${ROOT_DIR}/scripts/wine/artifacts.py" prepare

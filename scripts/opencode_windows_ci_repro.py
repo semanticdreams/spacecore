@@ -38,7 +38,7 @@ REQUIRED_SCRIPTS = (
     "scripts/package-windows-runtime.sh",
     "scripts/prepare-windows-wine-runtime.sh",
     "scripts/build-wine-bcryptprimitives-compat.sh",
-    "scripts/wine/runtime.sh",
+    "scripts/wine/prefix.py",
     "scripts/wine/artifacts.py",
     "scripts/wine/probe.c",
     "scripts/wine/process_prng_compat.c",

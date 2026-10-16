@@ -745,11 +745,43 @@ def test_admission_metadata_read_is_allowlisted_readonly_and_preserves_receipt(t
     assert receipt.read_bytes() == before
 
 
-def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker():
+def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_path):
+    import ast
+    from test_windows_wine_runtime import Fixture
+
     text = (SCRIPT_ROOT / "test-windows-under-wine.sh").read_text()
-    assert "TEST_VERBOSE=1" in text and "SPACE_TEST_TIMINGS=1" in text
-    assert "timeout 180s" in text and "tests.fast:main" in text
-    assert "[LAUNCH]" in text
+    assert text.splitlines()[-1] == 'exec python3 "${ROOT_DIR}/scripts/wine/artifacts.py" fast1800'
+    tree = ast.parse((SCRIPT_ROOT / "wine/prefix.py").read_text())
+    bounds = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
+                  and any(isinstance(target, ast.Name) and target.id == "BOUNDS" for target in node.targets))
+    assert bounds == {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
+                      "stop": 10, "wait": 15, "kill_after": 5}
+
+    runtime = Fixture(tmp_path)
+    dispatcher = runtime.bin / "wine"
+    dispatcher.write_text(dispatcher.read_text().replace(
+        "'WINEDLLOVERRIDES','WINEPREFIX'",
+        "'TEST_VERBOSE','SPACE_TEST_TIMINGS','SPACE_TEST_CASE_TIMEOUT_SECONDS','WINEDLLOVERRIDES','WINEPREFIX'"))
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    result = runtime.run("test-windows-under-wine.sh")
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "[LAUNCH] Wine full fast module=tests.fast:main deadline=1800s TEST_VERBOSE=1 SPACE_TEST_TIMINGS=1"]
+    app = [call for call in runtime.calls() if "wine" in call][-1]
+    assert app["wine"] == [str(runtime.overlay / "space-cli.exe"), "-m", "tests.fast:main"]
+    assert app["env"]["TEST_VERBOSE"] == app["env"]["SPACE_TEST_TIMINGS"] == "1"
+    assert app["env"]["SPACE_TEST_CASE_TIMEOUT_SECONDS"] is None
+    timeout = [call for call in runtime.calls() if "timeout" in call][-3]
+    assert timeout == {"timeout": "1800s", "kill_after": "--kill-after=5s"}
+
+    cases = SCRIPT_ROOT.parent / "assets/lua/tests"
+    runner = (cases / "runner.fnl").read_text()
+    assert "        parsed)\n      120))" in runner
+    assert "(local timeout test.timeout-seconds)" in runner
+    assert ":override 240" in (cases / "runner-regression-cases.fnl").read_text()
+    assert ":timeout-seconds 240" in (cases / "test-hot-reload-integration.fnl").read_text()
+    assert (cases / "test-runner.fnl").read_text().count(":timeout 120}") == 2
 
 
 def test_cli_keeps_exactly_four_commands_and_no_execution_passthrough():
@@ -812,7 +844,7 @@ def test_real_gnu_timeout_124_is_failure_with_retained_progress(tmp_path, monkey
 def test_shell_diagnostics_do_not_change_admission_conditions_and_reject_filter(tmp_path):
     from test_windows_wine_runtime import Fixture
     runtime = Fixture(tmp_path)
-    dispatcher = runtime.bin / "fake-wine"
+    dispatcher = runtime.bin / "wine"
     dispatcher.write_text(dispatcher.read_text().replace("'WINEDLLOVERRIDES','WINEPREFIX'", "'TEST_VERBOSE','SPACE_TEST_TIMINGS','WINEDLLOVERRIDES','WINEPREFIX'"))
     runtime.package()
     assert runtime.prepare([10, 0]).returncode == 0
@@ -822,11 +854,21 @@ def test_shell_diagnostics_do_not_change_admission_conditions_and_reject_filter(
     app = [c for c in runtime.calls() if "wine" in c][-1]
     assert app["env"]["TEST_VERBOSE"] == "1" and app["env"]["SPACE_TEST_TIMINGS"] == "1"
     assert receipt.read_bytes() == before
+    assert runtime.prepare([0]).returncode == 0
+    identifier = json.loads(receipt.read_text())["ownedSession"]["id"]
+    assert identifier != json.loads(before)["ownedSession"]["id"]
+    state_file = runtime.root / "build/wine/sessions" / identifier / "state.json"
+    state = json.loads(state_file.read_text())
+    assert state["authorized"] and not state["ended"]
+    assert state["stopped_generation"] == state["generation"]
     runtime.env["TEST_FILTER"] = "unknown-selection"
     count = len(runtime.calls())
     result = runtime.run("test-windows-under-wine.sh")
     assert result.returncode != 0
+    assert "Conflicting inherited full-fast setting: TEST_FILTER" in result.stderr
     assert len(runtime.calls()) == count
+    state = json.loads(state_file.read_text())
+    assert state["ended"] and not state["authorized"]
 
 
 def test_admission_builtin_compat_phases_stay_separate_from_full_tests(tmp_path, monkeypatch):

@@ -47,7 +47,7 @@ class Fixture:
         self.codes = path / "codes.json"
         self.env = dict(os.environ, PATH=f"{self.bin}:{os.environ['PATH']}",
                         FIXTURE_LOG=str(self.log), FIXTURE_CODES=str(self.codes),
-                        WINE_CMD=str(self.bin / "fake-wine"), WINEPREFIX=str(path / "unchanged-prefix"),
+                        WINE_CMD=str(self.bin / "wine"), WINEPREFIX=str(path / "unchanged-prefix"),
                         DISPLAY=":fixture", CC="x86_64-w64-mingw32-gcc-posix")
         self.write_executable("x86_64-w64-mingw32-objdump", "#!/bin/sh\nexit 0\n")
         self.write_executable("x86_64-w64-mingw32-gcc-posix", '''#!/usr/bin/python3
@@ -58,17 +58,26 @@ if args[0].startswith('-print-file-name='):
 with open(os.environ['FIXTURE_LOG'], 'a') as f: f.write(json.dumps({'cc':args})+'\\n')
 pathlib.Path(args[args.index('-o')+1]).write_text('fixture PE, not executable')
 ''')
-        self.write_executable("fake-wine", '''#!/usr/bin/python3
+        self.write_executable("wineserver", '''#!/usr/bin/python3
+import json, os, sys
+if sys.argv[1:] == ['--version']:
+    print('Wine 9.0 (fixture)'); sys.exit(0)
+with open(os.environ['FIXTURE_LOG'], 'a') as f:
+    f.write(json.dumps({'server':sys.argv[1:], 'env':{k:os.environ.get(k) for k in
+        ['WINEPREFIX','WINEARCH','WINESERVER']}})+'\\n')
+sys.exit(int(os.environ.get('FIXTURE_STOP_CODE', '0')) if sys.argv[1:] == ['-k'] else 0)
+''')
+        self.write_executable("wine", '''#!/usr/bin/python3
 import json, os, pathlib, sys
 if sys.argv[1:] == ['--version']:
-    print('fixture-only Wine dispatcher'); sys.exit(0)
+    print('wine-9.0 (fixture)'); sys.exit(0)
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'wine':sys.argv[1:], 'env':{k:os.environ.get(k) for k in
-        ['WINEDLLOVERRIDES','WINEPREFIX','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH']}})+'\\n')
+        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH']}})+'\\n')
 if pathlib.Path(sys.argv[1]).name == 'process-prng-probe.exe':
     p = pathlib.Path(os.environ['FIXTURE_CODES']); codes = json.loads(p.read_text())
     code = codes.pop(0); p.write_text(json.dumps(codes)); sys.exit(code)
-sys.exit(0)
+sys.exit(int(os.environ.get('FIXTURE_INIT_CODE', '0')) if sys.argv[1] == 'wineboot.exe' else int(os.environ.get('FIXTURE_APP_CODE', '0')))
 ''')
         self.write_executable("timeout", '''#!/usr/bin/python3
 import json, os, sys
@@ -157,7 +166,7 @@ def test_absence_retries_once_and_second_failure_never_admits(runtime, second):
     runtime.package()
     result = runtime.prepare([10, second])
     assert result.returncode != 0
-    assert len([c for c in runtime.calls() if "wine" in c]) == 2
+    assert len([c for c in runtime.calls() if "wine" in c and c['wine'][0].endswith('process-prng-probe.exe')]) == 2
     assert not (runtime.overlay / "admission.json").exists()
 
 
@@ -167,7 +176,7 @@ def test_builtin_success_never_builds_bridge_and_app_uses_receipt(runtime):
     result = runtime.run("test-windows-under-wine.sh")
     assert result.returncode == 0, result.stderr
     calls = runtime.calls()
-    probes, app = [c for c in calls if "wine" in c]
+    boot, probes, app = [c for c in calls if "wine" in c]
     assert probes["env"]["WINEDLLOVERRIDES"] == "bcryptprimitives=b;advapi32,cryptbase=b"
     assert app["env"]["WINEDLLOVERRIDES"] == probes["env"]["WINEDLLOVERRIDES"]
     assert app["env"]["WINEPREFIX"] == probes["env"]["WINEPREFIX"]
@@ -177,8 +186,8 @@ def test_builtin_success_never_builds_bridge_and_app_uses_receipt(runtime):
     assert app["env"]["SPACE_BIN"] == str(runtime.overlay / "space-cli.exe")
     assert str(runtime.overlay / "assets/lua") in app["env"]["FENNEL_PATH"]
     assert app["env"]["FENNEL_PATH"] == app["env"]["FENNEL_MACRO_PATH"]
-    assert [c["timeout"] for c in calls if "timeout" in c] == ["60s", "180s"]
-    assert [c["kill_after"] for c in calls if "timeout" in c] == ["--kill-after=5s", None]
+    assert [c["timeout"] for c in calls if "timeout" in c] == ["60s", "60s", "90s", "60s", "10s", "15s", "1800s", "10s", "15s"]
+    assert all(c["kill_after"] == "--kill-after=5s" for c in calls if "timeout" in c)
     assert not (runtime.overlay / "bcryptprimitives.dll").exists()
 
 
@@ -187,7 +196,7 @@ def test_compat_selection_is_fixed_and_receipt_is_not_shell(runtime):
     assert runtime.prepare([10, 0]).returncode == 0
     runtime.env["WINEDLLOVERRIDES"] = "malicious=inherited"
     assert runtime.run("test-windows-under-wine.sh").returncode == 0
-    wine = [c for c in runtime.calls() if "wine" in c]
+    wine = [c for c in runtime.calls() if "wine" in c and c['wine'][0] != 'wineboot.exe']
     assert [c["env"]["WINEDLLOVERRIDES"] for c in wine] == [
         "bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b",
         "bcryptprimitives=n;advapi32,cryptbase=b"]
@@ -255,10 +264,11 @@ def test_overlay_unknown_entry_and_package_tampering_are_not_overwritten(runtime
 
 def test_probe_cannot_silently_claim_new_or_modified_overlay_files(runtime):
     runtime.package()
-    runtime.write_executable("fake-wine", f'''#!/usr/bin/python3
+    runtime.write_executable("wine", f'''#!/usr/bin/python3
 import pathlib, sys
 if sys.argv[1:] == ['--version']:
-    print('fixture-only'); sys.exit(0)
+    print('wine-9.0 (fixture)'); sys.exit(0)
+if sys.argv[1:] == ['wineboot.exe', '--init']: sys.exit(0)
 pathlib.Path({str(runtime.overlay / 'unrelated-sentinel')!r}).write_text('preserve')
 sys.exit(0)
 ''')
@@ -372,12 +382,15 @@ def test_probe_compat_identity_uses_own_overlay_directory(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("change", ["prefix", "display", "wine", "app", "helper", "package"])
+@pytest.mark.parametrize("change", ["owned-prefix", "display", "wine", "app", "helper", "package"])
 def test_receipt_rejects_changed_runtime_conditions_and_payload(runtime, change):
     runtime.package()
     assert runtime.prepare([10, 0]).returncode == 0
-    if change == "prefix":
-        runtime.env["WINEPREFIX"] += "-other"
+    if change == "owned-prefix":
+        receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+        path = Path(receipt['ownedSession']['prefix'])
+        path.rename(path.with_name('preserved-prefix'))
+        path.mkdir(mode=0o700)
     elif change == "display":
         runtime.env["DISPLAY"] = ":other"
     elif change == "wine":
@@ -404,28 +417,24 @@ def test_receipt_binds_effective_prefix_without_reading_home(runtime, explicit_p
     before = len([c for c in runtime.calls() if "wine" in c])
     runtime.env["HOME"] = str(home_b)
     result = runtime.run("test-windows-under-wine.sh")
-    if explicit_prefix:
-        assert result.returncode == 0, result.stderr
-    else:
-        assert result.returncode != 0
-        assert len([c for c in runtime.calls() if "wine" in c]) == before
+    assert result.returncode == 0, result.stderr
     receipt = json.loads((runtime.overlay / "admission.json").read_text())
-    assert receipt["conditions"]["effective_prefix"] == (
-        runtime.env["WINEPREFIX"] if explicit_prefix else str(home_a / ".wine"))
+    assert Path(receipt['ownedSession']['prefix']).parent.parent == runtime.root / 'build/wine/sessions'
     assert not home_a.exists() and not home_b.exists()
 
 
 def test_relative_selected_wine_is_same_identity_at_admission_and_consumption(runtime):
     tools = runtime.root / "tools"
     tools.mkdir()
-    shutil.copy2(runtime.bin / "fake-wine", tools / "wine")
+    shutil.copy2(runtime.bin / "wine", tools / "wine")
+    shutil.copy2(runtime.bin / "wineserver", tools / "wineserver")
     runtime.env["WINE_CMD"] = "./tools/wine"
     runtime.package()
     assert runtime.prepare([0]).returncode == 0
     result = runtime.run("test-windows-under-wine.sh")
     assert result.returncode == 0, result.stderr
     receipt = json.loads((runtime.overlay / "admission.json").read_text())
-    assert receipt["wine"]["executable"] == str(tools / "wine")
+    assert receipt["tools"]["wine"]["executable"] == str(tools / "wine")
     # Same name/version is not enough: a changed binary must still invalidate it.
     with (tools / "wine").open("a") as executable:
         executable.write("\n# changed fixture executable\n")
@@ -440,18 +449,19 @@ def test_selected_wine_resolves_symlink_before_parent_directory(runtime):
     tools.mkdir()
     (versions / "active").mkdir(parents=True)
     (tools / "alias").symlink_to(versions / "active", target_is_directory=True)
-    dispatcher = (runtime.bin / "fake-wine").read_text()
+    dispatcher = (runtime.bin / "wine").read_text()
     for directory, identity in ((versions, "filesystem-selected"), (tools, "lexical-decoy")):
         executable = directory / "wine"
-        executable.write_text(dispatcher.replace("fixture-only Wine dispatcher", f"fixture-only {identity}")
+        executable.write_text(dispatcher
                               .replace("'wine':sys.argv[1:]", f"'selected':{identity!r}, 'wine':sys.argv[1:]"))
         executable.chmod(0o755)
+        shutil.copy2(runtime.bin / 'wineserver', directory / 'wineserver')
     # Kernel lookup follows alias -> versions/active, THEN '..' -> versions.
     # Both targets exist, so lexical abspath would silently select the decoy.
     runtime.env["WINE_CMD"] = str(tools / "alias" / ".." / "wine")
     before_executables = hashes(versions), hashes(tools)
     expected = {"executable": str(versions / "wine"),
-                "version": "fixture-only filesystem-selected",
+                 "version": "wine-9.0 (fixture)",
                 "sha256": hashlib.sha256((versions / "wine").read_bytes()).hexdigest()}
     assert expected["sha256"] != hashlib.sha256((tools / "wine").read_bytes()).hexdigest()
     runtime.package()
@@ -459,11 +469,11 @@ def test_selected_wine_resolves_symlink_before_parent_directory(runtime):
     result = runtime.prepare([0])
     assert result.returncode == 0, result.stderr
     receipt = (runtime.overlay / "admission.json").read_bytes()
-    assert json.loads(receipt)["wine"] == expected
+    assert json.loads(receipt)["tools"]["wine"] == expected
     result = runtime.run("test-windows-under-wine.sh")
     assert result.returncode == 0, result.stderr
     assert [c["selected"] for c in runtime.calls() if "wine" in c] == [
-        "filesystem-selected", "filesystem-selected"]
+        "filesystem-selected", "filesystem-selected", "filesystem-selected"]
     assert (runtime.overlay / "admission.json").read_bytes() == receipt
     assert before_executables == (hashes(versions), hashes(tools))
     assert before_native == (hashes(runtime.build), hashes(runtime.dist))
@@ -481,15 +491,15 @@ def test_term_ignoring_host_probe_is_killed_and_never_admitted(runtime):
     runtime.write_executable("timeout", f'''#!/usr/bin/python3
 import os, pathlib, sys
 args = sys.argv[1:]
-assert '60s' in args
 args = ['0.2s' if a == '60s' else '--kill-after=0.2s' if a == '--kill-after=5s' else a for a in args]
 pathlib.Path({str(timeout_pid)!r}).write_text(str(os.getpid()))
 os.execv({real_timeout!r}, [{real_timeout!r}, *args])
 ''')
-    runtime.write_executable("fake-wine", f'''#!/usr/bin/python3
+    runtime.write_executable("wine", f'''#!/usr/bin/python3
 import pathlib, signal, sys, time
 if sys.argv[1:] == ['--version']:
-    print('fixture-only TERM-ignoring host'); sys.exit(0)
+    print('wine-9.0 (fixture)'); sys.exit(0)
+if sys.argv[1:] == ['wineboot.exe', '--init']: sys.exit(0)
 def ignore_term(signum, frame):
     pathlib.Path({str(term_received)!r}).write_text('TERM ignored')
 signal.signal(signal.SIGTERM, ignore_term)
@@ -575,9 +585,9 @@ def test_workflow_smoke_executes_admitted_overlay_under_same_configuration(runti
         app = [c for c in runtime.calls() if "wine" in c][-1]
         assert app["wine"] == [str(runtime.overlay / "space-cli.exe"), "--help"]
         assert app["env"]["WINEDLLOVERRIDES"] == "bcryptprimitives=n;advapi32,cryptbase=b"
-        assert app["env"]["WINEPREFIX"] == runtime.env["WINEPREFIX"]
+        assert Path(app["env"]["WINEPREFIX"]).parent.parent == runtime.root / 'build/wine/sessions'
         assert app["env"]["SPACE_ASSETS_PATH"] == str(runtime.overlay / "assets")
-        assert [c for c in runtime.calls() if "timeout" in c][-1]["timeout"] == "60s"
+        assert [c for c in runtime.calls() if "timeout" in c][-3]["timeout"] == "60s"
 
 
 def test_prepare_and_app_consumption_serialize_with_artifact_writers(runtime):
@@ -586,10 +596,10 @@ def test_prepare_and_app_consumption_serialize_with_artifact_writers(runtime):
     assert runtime.prepare([0]).returncode == 0
     # Block the fixture application after configuration and prove a second
     # package writer cannot enter while the consumer holds build/'s inode lock.
-    runtime.write_executable("fake-wine", '''#!/usr/bin/python3
+    runtime.write_executable("wine", '''#!/usr/bin/python3
 import fcntl, os, pathlib, sys
 if sys.argv[1:] == ['--version']:
-    print('fixture-only Wine dispatcher'); sys.exit(0)
+    print('wine-9.0 (fixture)'); sys.exit(0)
 root = pathlib.Path(os.environ['FIXTURE_ROOT'])
 fd = os.open(root/'build', os.O_RDONLY | os.O_DIRECTORY)
 try:

@@ -83,9 +83,7 @@ jobs:
           x86_64-w64-mingw32-objdump -p build/windows/space.exe | rg "Subsystem.*Windows GUI"
           x86_64-w64-mingw32-objdump -p build/windows/space-cli.exe | rg "Subsystem.*Windows CUI"
           ROOT_DIR="${GITHUB_WORKSPACE}"
-          source scripts/wine/runtime.sh
-          configure_admitted_wine_runtime
-          timeout 60s "${WINE_CMD}" "${CLI_EXE}" --help >/dev/null
+          python3 "${ROOT_DIR}/scripts/wine/artifacts.py" smoke60
 
       - name: ccache stats
         run: ccache -s

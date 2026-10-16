@@ -105,16 +105,16 @@ def test_windows_build_from_linux_preflights_vcpkg_host_tools() -> None:
 
 def test_windows_under_wine_resolves_wine_command_with_fallbacks() -> None:
     wine_script = read_repo_text("scripts/test-windows-under-wine.sh")
-    runtime_script = read_repo_text("scripts/wine/runtime.sh")
+    runtime_script = read_repo_text("scripts/wine/prefix.py")
 
-    assert "resolve_wine_cmd()" in runtime_script
-    assert "${WINE_CMD:-}" in runtime_script
-    assert "command -v wine64" in runtime_script
-    assert "command -v wine" in runtime_script
+    assert "def resolve_wine():" in runtime_script
+    assert "os.environ.get('WINE_CMD')" in runtime_script
+    assert "shutil.which('wine64')" in runtime_script
+    assert "shutil.which('wine')" in runtime_script
     assert "Missing required command: wine64 or wine" in runtime_script
-    assert 'WINE_CMD="$(resolve_wine_cmd)"' in read_repo_text("scripts/prepare-windows-wine-runtime.sh")
-    assert "configure_admitted_wine_runtime" in wine_script
-    assert '"${WINE_CMD}" "${CLI_EXE}" -m tests.fast:main' in wine_script
+    assert 'scripts/wine/artifacts.py" prepare' in read_repo_text("scripts/prepare-windows-wine-runtime.sh")
+    assert 'scripts/wine/artifacts.py" fast1800' in wine_script
+    assert not (REPO_ROOT / 'scripts/wine/runtime.sh').exists()
     assert "wine64 \"${CLI_EXE}\"" not in wine_script
 
 
@@ -126,10 +126,10 @@ def test_workflow_windows_smoke_uses_wine_fallback() -> None:
 
     for workflow_path in workflow_paths:
         workflow = read_repo_text(workflow_path)
-        assert "source scripts/wine/runtime.sh" in workflow
-        assert "configure_admitted_wine_runtime" in workflow
+        assert "source scripts/wine/runtime.sh" not in workflow
+        assert "configure_admitted_wine_runtime" not in workflow
         assert 'scripts/prepare-windows-wine-runtime.sh\n' in workflow
-        assert 'timeout 60s "${WINE_CMD}" "${CLI_EXE}" --help >/dev/null' in workflow
+        assert 'python3 "${ROOT_DIR}/scripts/wine/artifacts.py" smoke60' in workflow
         assert "timeout 60s wine64 build/windows/space-cli.exe --help >/dev/null" not in workflow
 
 

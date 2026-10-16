@@ -14,6 +14,9 @@ import stat
 import subprocess
 import sys
 import tempfile
+import signal
+
+import prefix
 
 ROOT = Path(__file__).absolute().parents[2]
 BUILD = ROOT / "build"
@@ -214,55 +217,35 @@ def owned_file_write(path, name):
 
 
 def launch_conditions():
-    # Resolve selection as strings only: never inspect HOME/prefix contents or
-    # change the inherited environment. HOME matters only for Wine's default.
-    conditions = {key: os.environ.get(key) for key in ("WINEPREFIX", "DISPLAY", "WAYLAND_DISPLAY")}
-    prefix = conditions["WINEPREFIX"]
-    if prefix is None:
-        home = os.environ.get("HOME")
-        if not home:
-            raise ValueError("HOME is required to identify Wine's default prefix")
-        prefix = os.path.join(home, ".wine")
-    conditions["effective_prefix"] = os.path.abspath(prefix)
-    return conditions
+    return {key: os.environ.get(key) for key in ("DISPLAY", "WAYLAND_DISPLAY")}
 
 
-def resolve_wine_executable(wine):
-    executable = shutil.which(wine)
-    if not executable:
-        raise ValueError(f"Missing selected Wine executable: {wine}")
-    # Preserve lookup semantics: follow symlinks before interpreting '..'.
-    return str(Path(executable).resolve(strict=True))
+def session_binding(session):
+    return {"id": session.id, "nonce": session.nonce, "prefix": str(session.prefix),
+            "identity": session.owner["roots"]["prefix"], "arch": "win64"}
 
 
-def wine_identity(wine):
-    executable = resolve_wine_executable(wine)
-    version = subprocess.run([executable, "--version"], check=True, capture_output=True,
-                             text=True, timeout=60).stdout.strip()
-    return {"executable": executable, "version": version,
-            "sha256": hashlib.sha256(Path(executable).read_bytes()).hexdigest()}
-
-
-def probe(wine, backend):
+def probe(session, backend):
     before = verify(OVERLAY, "wine-overlay")
-    env = dict(os.environ, WINEDLLOVERRIDES=backend)
     print(f"Wine admission: probe backend={backend} deadline=60s kill-after=5s", flush=True)
-    result = subprocess.run(["timeout", "--kill-after=5s", "60s", wine, str(OVERLAY / "process-prng-probe.exe")],
-                             env=env, cwd=ROOT)
-    detail = (" (admission timeout, not crypto absence)" if result.returncode == 124 else
-              " (SIGKILL/forced admission timeout, not crypto absence)" if result.returncode in (137, -9) else "")
-    print(f"Wine admission: probe exit={result.returncode}" +
+    code = session.launch([session.owner['tools']['wine']['executable'],
+                           str(OVERLAY / "process-prng-probe.exe")], 'probe', {"WINEDLLOVERRIDES": backend})
+    detail = (" (admission timeout, not crypto absence)" if code == 124 else
+              " (SIGKILL/forced admission timeout, not crypto absence)" if code in (137, -9) else "")
+    print(f"Wine admission: probe exit={code}" +
           detail, flush=True)
     if inventory(OVERLAY) != before:
         raise ValueError("Probe modified the overlay; refusing to claim unknown output")
-    return result.returncode
+    return code
 
 
-def prepare(wine):
+def _prepare_payload(session):
     package_before = clean_native(PACKAGE)
     check_replace(OVERLAY, "wine-overlay")
     conditions = launch_conditions()
-    identity = wine_identity(wine)
+    code = prefix.initialize(session)
+    if code:
+        raise ValueError(f"Wine initialization failed: exit={code}")
     with private_stage(OVERLAY.parent) as stage:
         # Copy only the immutable, verified native package, never build leftovers.
         for item in PACKAGE.iterdir():
@@ -273,72 +256,165 @@ def prepare(wine):
         seal(stage, "wine-overlay")
         install(stage, OVERLAY, "wine-overlay")
     backend = BUILTIN
-    code = probe(identity["executable"], backend)
+    code = probe(session, backend)
     if code == 10:
         print("Wine admission: confirmed absence; building Wine-only bridge", flush=True)
         with owned_file_write(OVERLAY, FORBIDDEN):
             build_compat(OVERLAY)
         backend = COMPAT
-        code = probe(identity["executable"], backend)
+        code = probe(session, backend)
     if code != 0:
         raise ValueError(f"Wine API admission failed: probe exit={code}; no fallback/retry authorized")
     if clean_native(PACKAGE) != package_before:
         raise ValueError("Native package changed during Wine admission")
-    receipt = {"version": 1, "wine": identity, "conditions": conditions,
+    cleanup = prefix.stop_session(session, end=False)
+    require_cleanup(cleanup)
+    receipt = {"version": 2, "ownedSession": session_binding(session),
+               "tools": session.owner["tools"], "conditions": conditions,
                "backend": backend, "package": package_before,
                "payload": verify(OVERLAY, "wine-overlay")}
     with owned_file_write(OVERLAY, "admission.json"):
         (OVERLAY / "admission.json").write_text(json.dumps(receipt, sort_keys=True) + "\n")
     print("Wine admission: API contract admitted (not entropy certification)", flush=True)
+    state = session.state()
+    state['authorized'] = True
+    session.save(state)
+    return 0
 
 
-def configuration():
+def configuration(session):
+    session.validate()
+    state = session.state()
+    if (state['ended'] or not state['authorized']
+            or state['stopped_generation'] != state['generation']):
+        raise ValueError('Wine session authorization ended/consumed or not quiescent')
     entries = verify(OVERLAY, "wine-overlay")
     native = clean_native(PACKAGE)
     receipt = json.loads((OVERLAY / "admission.json").read_text())
     backend = receipt.get("backend")
     payload = {k: v for k, v in entries.items() if k != "admission.json"}
-    if (receipt.get("version") != 1 or backend not in (BUILTIN, COMPAT)
+    if (receipt.get("version") != 2 or backend not in (BUILTIN, COMPAT)
+            or receipt.get("ownedSession") != session_binding(session)
+            or receipt.get("tools") != session.owner['tools']
             or receipt.get("payload") != payload or receipt.get("package") != native
             or receipt.get("conditions") != launch_conditions()):
         raise ValueError("Wine admission receipt does not match payload/package/launch conditions")
-    identity = receipt["wine"]
-    if wine_identity(identity["executable"]) != identity:
-        raise ValueError("Selected Wine changed after admission")
-    if os.environ.get("WINE_CMD") and resolve_wine_executable(os.environ["WINE_CMD"]) != identity["executable"]:
+    identity = session.owner['tools']['wine']
+    if os.environ.get("WINE_CMD") and str(prefix.resolve_wine()) != identity["executable"]:
         raise ValueError("WINE_CMD differs from admitted Wine")
     if (backend == COMPAT) != (FORBIDDEN in payload):
         raise ValueError("Backend does not match overlay helper inventory")
-    print(identity["executable"])
-    print(backend)
+    return {'wine': identity['executable'], 'backend': backend}
+
+
+def require_cleanup(result):
+    if not result.ok:
+        raise ValueError('Owned Wine cleanup failed: ' + '; '.join(result.errors))
+
+
+def owning_operation(session, operation):
+    primary = None
+    code = 1
+    try:
+        code = operation()
+    except BaseException as error:
+        primary = error
+    finally:
+        result = prefix.stop_session(session, end=True)
+        if not result.ok:
+            print('Owned Wine cleanup failed: ' + '; '.join(result.errors), file=sys.stderr, flush=True)
+    if primary is not None:
+        raise primary
+    return code if code else (0 if result.ok else 1)
+
+
+def prepare(session):
+    try:
+        return _prepare_payload(session)
+    except BaseException:
+        result = prefix.stop_session(session, end=True)
+        if not result.ok:
+            print('Owned Wine cleanup failed: ' + '; '.join(result.errors), file=sys.stderr, flush=True)
+        raise
+
+
+def execute_admitted(session, mode):
+    def execute():
+        if mode not in ('smoke60', 'fast1800'):
+            raise ValueError('Invalid private execution mode')
+        config = configuration(session)
+        if mode == 'fast1800':
+            for key in ('TEST_FILTER', 'SPACE_TEST_CASE_TIMEOUT_SECONDS', 'TEST_SUITE',
+                        'SPACE_TEST_SUITE', 'TEST_MODULES', 'SPACE_TEST_MODULES'):
+                if os.environ.get(key):
+                    raise ValueError(f'Conflicting inherited full-fast setting: {key}')
+            for key in ('SPACE_MATRIX_TEST', 'SPACE_REALTIME_TEST'):
+                if os.environ.get(key) == '1':
+                    raise ValueError(f'Conflicting inherited full-fast setting: {key}')
+        # One authorization, durably revoked BEFORE any application launch.
+        state = session.state()
+        state['authorized'] = False
+        session.save(state)
+        assets = str(OVERLAY / 'assets')
+        fennel = f'{assets}/lua/?.fnl;{assets}/lua/?/init.fnl'
+        env = {'WINEDLLOVERRIDES': config['backend'], 'SPACE_BIN': str(OVERLAY / 'space-cli.exe'),
+               'SPACE_ASSETS_PATH': assets, 'FENNEL_PATH': fennel, 'FENNEL_MACRO_PATH': fennel}
+        args = ['--help']
+        if mode == 'fast1800':
+            args = ['-m', 'tests.fast:main']
+            env.update(TEST_VERBOSE='1', SPACE_TEST_TIMINGS='1', SKIP_KEYRING_TESTS='1',
+                       XDG_DATA_HOME='/tmp/space/tests/xdg-data', PWD=str(ROOT), SPACE_DISABLE_AUDIO='1')
+            print('[LAUNCH] Wine full fast module=tests.fast:main deadline=1800s TEST_VERBOSE=1 SPACE_TEST_TIMINGS=1', flush=True)
+        return session.launch([config['wine'], str(OVERLAY / 'space-cli.exe'), *args], mode, env)
+    return owning_operation(session, execute)
+
+
+def selected_session():
+    # Establish immutable cleanup authority only. All remaining receipt/binding
+    # checks belong inside the consumer's owning operation, even on failure.
+    identifier = os.environ.get('SPACE_WINE_SESSION_ID')
+    if identifier:
+        return prefix.load_session(ROOT, identifier)
+    # Without a private handoff, only a schema-2 receipt can identify a session.
+    # Old receipts are evidence only. Never reinterpret their default prefix.
+    safe_path(OVERLAY / 'admission.json')
+    receipt = json.loads((OVERLAY / 'admission.json').read_text())
+    if receipt.get('version') != 2:
+        raise ValueError('Unsupported Wine admission receipt (owned session schema 2 required)')
+    return prefix.load_session(ROOT, receipt['ownedSession']['id'])
 
 
 def main():
     action, *args = sys.argv[1:]
-    if action == "check-build" and not args:
-        safe_path(BUILD)
-        BUILD.mkdir(exist_ok=True)
-    elif action == "configuration" and not args:
-        configuration()  # Caller holds build/ flock for the whole app invocation.
-    else:
-        with locked_build():
-            if action == "package" and len(args) <= 1:
-                package(Path(args[0]).absolute() if args else PACKAGE)
-            elif action == "prepare" and len(args) == 1:
-                prepare(args[0])
-            elif action == "compat" and not args:
-                verify(OVERLAY, "wine-overlay")
-                if (OVERLAY / "admission.json").exists():
-                    raise ValueError("Cannot replace a helper in an admitted runtime; prepare a fresh overlay")
-                with owned_file_write(OVERLAY, FORBIDDEN):
-                    build_compat(OVERLAY)
-            else:
-                raise ValueError("Invalid private artifact operation")
+    with locked_build():
+        if action == "package" and len(args) <= 1:
+            package(Path(args[0]).absolute() if args else PACKAGE)
+        elif action == "prepare" and not args:
+            session = (prefix.load_session(ROOT, os.environ['SPACE_WINE_SESSION_ID'])
+                       if os.environ.get('SPACE_WINE_SESSION_ID') else prefix.create_session(ROOT))
+            return prepare(session)
+        elif action in ('smoke60', 'fast1800') and not args:
+            return execute_admitted(selected_session(), action)
+        elif action == 'terminal-stop' and not args:
+            require_cleanup(prefix.stop_session(selected_session(), end=True))
+        elif action == "compat" and not args:
+            verify(OVERLAY, "wine-overlay")
+            if (OVERLAY / "admission.json").exists():
+                raise ValueError("Cannot replace a helper in an admitted runtime; prepare a fresh overlay")
+            with owned_file_write(OVERLAY, FORBIDDEN):
+                build_compat(OVERLAY)
+        else:
+            raise ValueError("Invalid private artifact operation")
 
 
 if __name__ == "__main__":
+    def interrupted(signum, frame):
+        raise InterruptedError(f'Wine operation interrupted by signal {signum}')
+    signal.signal(signal.SIGINT, interrupted)
+    signal.signal(signal.SIGTERM, interrupted)
     try:
-        main()
+        code = main() or 0
+        sys.exit(128 - code if code < 0 else code)
     except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print(f"Windows runtime: {error}", file=sys.stderr, flush=True)
         sys.exit(1)
