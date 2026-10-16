@@ -26,6 +26,7 @@ def install_required_scripts(repo: Path) -> None:
     scripts.mkdir(exist_ok=True)
     for relative in windows_ci_repro.REQUIRED_SCRIPTS:
         path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
 
 
@@ -420,6 +421,7 @@ def test_reproduce_runs_build_package_verify_and_wine_steps_in_order(tmp_path, m
     assert calls == [
         ["scripts/build-windows-from-linux.sh"],
         ["scripts/package-windows-runtime.sh"],
+        ["scripts/prepare-windows-wine-runtime.sh"],
         ["scripts/test-windows-under-wine.sh"],
     ]
 
@@ -437,6 +439,24 @@ def test_reproduce_reports_first_failing_step_with_bounded_output(tmp_path, monk
     assert result["evidence"]["args"] == ["scripts/package-windows-runtime.sh"]
     assert "stdout_tail" in result["evidence"]
     assert "stderr_tail" in result["evidence"]
+
+
+def test_admission_failure_stops_before_full_suite(tmp_path, monkeypatch):
+    repo = make_space_repo(tmp_path)
+    install_required_scripts(repo)
+    install_fake_windows_outputs(repo)
+    monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
+    calls = []
+
+    def fake_run(args, cwd, check=False):
+        calls.append(list(args))
+        return command_result(list(args), returncode=20 if "prepare-windows-wine-runtime.sh" in args[0] else 0)
+
+    monkeypatch.setattr(windows_ci_repro, "run_command", fake_run)
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "fail"
+    assert result["evidence"]["failing_step"] == "wine-admission"
+    assert ["scripts/test-windows-under-wine.sh"] not in calls
 
 
 def test_cli_invalid_repo_returns_structured_fail_json_without_traceback(tmp_path):

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import shutil
@@ -32,6 +33,12 @@ REQUIRED_SCRIPTS = (
     "scripts/setup-windows-build-host.sh",
     "scripts/build-windows-from-linux.sh",
     "scripts/package-windows-runtime.sh",
+    "scripts/prepare-windows-wine-runtime.sh",
+    "scripts/build-wine-bcryptprimitives-compat.sh",
+    "scripts/wine/runtime.sh",
+    "scripts/wine/artifacts.py",
+    "scripts/wine/probe.c",
+    "scripts/wine/process_prng_compat.c",
     "scripts/test-windows-under-wine.sh",
 )
 WINDOWS_RUST_TARGET = "x86_64-pc-windows-gnu"
@@ -305,6 +312,17 @@ def reproduce(repo_root: Path) -> dict[str, object]:
         repo = ensure_space_repo(repo_root)
     except CapabilityError as error:
         return _failure_for_exception("reproduce", error)
+    # Serialize the complete fixed operation without a replaceable lockfile.
+    # Artifact preparation/consumption independently locks build/ as well.
+    fd = os.open(repo, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        return _reproduce_steps(repo)
+    finally:
+        os.close(fd)
+
+
+def _reproduce_steps(repo: Path) -> dict[str, object]:
     steps: tuple[tuple[str, list[str]], ...] = (
         ("build-windows-from-linux", ["scripts/build-windows-from-linux.sh"]),
         ("package-windows-runtime", ["scripts/package-windows-runtime.sh"]),
@@ -329,6 +347,10 @@ def reproduce(repo_root: Path) -> dict[str, object]:
                 "missing": missing_outputs,
             },
         )
+
+    admission_result = run_command(["scripts/prepare-windows-wine-runtime.sh"], repo, check=False)
+    if admission_result.returncode != 0:
+        return _fail_for_command("reproduce", "wine-admission", admission_result)
 
     wine_result = run_command(["scripts/test-windows-under-wine.sh"], repo, check=False)
     if wine_result.returncode != 0:

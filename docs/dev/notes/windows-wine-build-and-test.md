@@ -32,7 +32,8 @@ Added/updated scripts:
 - `scripts/prepare-windows-runtime.sh`
 - `scripts/prepare-windows-wine-runtime.sh`
 - `scripts/test-windows-under-wine.sh`
-- `scripts/build-wine-bcryptprimitives-mock.sh`
+- `scripts/build-wine-bcryptprimitives-compat.sh`
+- `scripts/wine/{runtime.sh,artifacts.py,probe.c,process_prng_compat.c}`
 - `scripts/vcpkg-triplets/*`
 - `scripts/vcpkg-ports/openal-soft/portfile.cmake`
 
@@ -40,7 +41,7 @@ Result:
 
 - one-time host setup is isolated
 - build and test steps are repeatable across machines
-- Wine runtime prep resolves/copies dependent DLLs automatically and stages `matrix.dll` when present
+- Native runtime prep resolves/copies dependent DLLs automatically and stages `matrix.dll` when present; Wine preparation copies only the clean native package
 - local and CI Windows builds now share the same core build entrypoint (`scripts/build-windows.sh`)
 - `scripts/build-windows.sh` uses `vcpkg install --recurse` so local cross-builds also work on non-pristine machines
 
@@ -92,7 +93,7 @@ Notes:
 
 - implemented Windows process backend in `src/lua_process_windows.cpp` (instead of unsupported stubs)
 - added Windows shell/process support (`src/lua_shell_windows.cpp` and runtime wiring)
-- added Wine `bcryptprimitives.dll` workaround path for environments missing it
+- historical workaround: a Wine `bcryptprimitives.dll` mock was used for environments missing it. That no-op implementation was unsafe and has been removed; see current admission below.
 - fixed OpenAL driver defaults in `src/audio.cpp`:
   - Windows default drivers: `dsound,wave`
   - Linux default drivers: `pipewire,pulse,alsa`
@@ -169,8 +170,8 @@ Additional cleanup:
 
 5. Wine-specific compatibility shim (`bcryptprimitives.dll`)
 
-- decision: include mock-path support for Wine where needed
-- trade-off: additional moving part only for Wine validation; native Windows remains the source of truth for actual platform behavior
+- current decision: prefer a probed builtin, using a Wine-only OS-crypto compatibility bridge only on confirmed missing library/export
+- trade-off: API admission checks writes/guards and observable failures, not entropy quality; native Windows remains authoritative
 
 ## Problems Encountered and Resolutions
 
@@ -228,7 +229,7 @@ Additional cleanup:
 - Wine is validation support, not a complete substitute for native Windows verification.
 - Windows cross-build CI uses `ccache`, `sccache`, GitHub Actions `vcpkg binary caching`, and Ninja parallel builds. The remaining bottlenecks are dependency cache misses, hosted-runner variance, and native Windows runner startup/installer work in the release/manual packaging path.
 
-## Validation Snapshot
+## Historical Validation Snapshot (not current admission evidence)
 
 Validated in this cycle:
 
@@ -318,17 +319,75 @@ Prepare native Windows runtime payload (for packaging):
 scripts/package-windows-runtime.sh
 ```
 
-Run Windows fast suite under Wine:
+Prepare/admit the isolated Wine overlay, then run the full Windows fast suite:
 
 ```bash
+scripts/prepare-windows-wine-runtime.sh
 scripts/test-windows-under-wine.sh
 ```
 
-Run a specific module under Wine:
+### Artifact ownership and ProcessPrng admission
 
-```bash
-SPACE_TEST_MODULE=tests.test-input:main scripts/test-windows-under-wine.sh
-```
+`build/windows` is native build output; `build/dist/windows` is the native package.
+Packaging excludes `bcryptprimitives.dll` case-insensitively, including stale
+helpers left in the build tree, and verifies the final payload. It does not
+silently remove the stale build helper. The old standard unmarked package is
+preserved intact at `build/dist/windows.pre-diagnostics` if recognizable; a
+collision or ambiguous ownership fails. New output has a versioned ownership and
+SHA-256 inventory manifest. Only verified owned output is replaced. Symlinked
+paths/entries and unrecognized additions are rejected, not recursively deleted.
+
+`prepare-windows-wine-runtime.sh` takes no arguments. It creates a fresh owned
+`build/wine/windows` from the clean immutable native package and packaged assets,
+never native build DLL leftovers. Cooperative artifact writers and consumers
+serialize on the build directory; the guarded wrapper also serializes complete
+reproductions. No Wine helper is written into native build/package inputs.
+`make test-windows-wine` first repackages the current built executables/assets,
+then prepares/admit-tests the overlay; it does not implicitly cross-build.
+
+The no-argument PE probe first runs with
+`bcryptprimitives=b;advapi32,cryptbase=b`. Only confirmed missing library/export
+(exit10) permits compiling the bridge in the overlay and one retry with
+`bcryptprimitives=n;advapi32,cryptbase=b`. No-op output, bad identity, guard damage
+and other contract failures (exit20), crashes and the60-second admission timeout
+never authorize fallback. Admission uses a further5-second kill escalation if
+TERM is ignored; SIGKILL/forced timeout fails without fallback or a receipt.
+The application's180-second bound is unchanged. Load errors other than module absence are diagnosed
+as failures. Probe phases/results are flushed. Successful admission records a
+JSON receipt tying the payload/package inventory, selected Wine executable,
+version/hash, inherited/default prefix selection, and display conditions to the
+fixed backend. Default-prefix identity is derived from `HOME/.wine` without
+reading home/prefix contents; changing HOME invalidates default-prefix admission,
+but does not change an explicitly selected prefix. Wine selection uses the same
+absolute-path resolver at admission and consumption, including relative custom
+commands, while retaining executable hash/version checks.
+Consumers validate the receipt as data, never shell code. Prefix/display
+are not reset; no Xvfb is added. Workflow smoke uses the admitted overlay with
+the existing60-second `--help`; full fast validation retains180 seconds,
+`tests.fast:main`, existing skips, and test-data/working-directory behavior.
+Assets, Fennel macro paths and `SPACE_BIN` all refer to the overlay.
+
+The bridge exports `BOOL WINAPI ProcessPrng(PBYTE,SIZE_T)` and statically imports
+`BOOLEAN WINAPI SystemFunction036(PVOID,ULONG)` from builtin advapi32. There is
+no loader-lock `LoadLibrary`, ProcessPrng recursion, timestamp/random seed or
+zero-fill fallback. It fills checked ULONG-sized chunks. Zero length (including
+NULL/zero) succeeds without calling the backend; NULL/nonzero and observable
+backend failure diagnose and hard-terminate the current process nonzero via
+`TerminateProcess`, not `ExitProcess`/DLL detach callbacks. A nonreturning trap
+guards against an unexpected return; failure never returns FALSE to callers
+that may ignore it. An unresolved static import fails loading, never
+claims success. Host fixtures exercise the actual loop with chunk7/request16
+(`7,7,2`), second-call failure, null/zero policy and canaries; tiny real MinGW
+fixtures check ABI compilation without running PE/Wine.
+
+These are **API-contract admission checks, not entropy certification** or native
+Windows security/ACL certification. Wine's underlying host RNG can hide upstream
+short reads; even passing output probes cannot guarantee future backend failures
+will be observable. Native Windows remains authoritative. Real admission and the
+full guarded reproduction remain required separately; this tooling does not
+establish that the earlier180-second Wine timeout is fixed, nor close the
+historical Linux native SIG investigation. Agents must use the existing guarded
+capability, not the manual shell examples above, for real reproduction.
 
 
 ## See also

@@ -107,6 +107,8 @@ test-live-hot-reload:
 	$(SPACE_RUNTIME_ENV) ./scripts/test-live-hot-reload.sh
 
 test-windows-wine:
+	./scripts/package-windows-runtime.sh
+	./scripts/prepare-windows-wine-runtime.sh
 	./scripts/test-windows-under-wine.sh
 
 prof:

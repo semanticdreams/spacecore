@@ -133,5 +133,8 @@ fi
 cat <<'EOF'
 Windows build host setup complete.
 Next step (no sudo): scripts/build-windows-from-linux.sh
-Then run Windows tests under Wine: scripts/test-windows-under-wine.sh
+Then package and admit the Wine overlay before testing:
+  scripts/package-windows-runtime.sh
+  scripts/prepare-windows-wine-runtime.sh
+  scripts/test-windows-under-wine.sh
 EOF
