@@ -5,13 +5,16 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 import shutil
 import sys
+import time
 from pathlib import Path
 from typing import Sequence
 
+import _windows_repro_evidence as _evidence
 from opencode_capabilities import CapabilityError, CommandResult, ensure_space_repo, failure, human_decision, run_command, success
 
 
@@ -134,12 +137,6 @@ def _rust_target_installed(repo: Path) -> bool:
     if result.returncode != 0:
         return False
     return WINDOWS_RUST_TARGET in {line.strip() for line in result.stdout.splitlines()}
-
-
-def _response(action: str, result: dict[str, object]) -> dict[str, object]:
-    adjusted = dict(result)
-    adjusted["action"] = action
-    return adjusted
 
 
 def _is_ubuntu_host() -> bool:
@@ -293,74 +290,193 @@ def bootstrap_vcpkg(repo_root: Path) -> dict[str, object]:
     )
 
 
-def _fail_for_command(action: str, step: str, result: CommandResult) -> dict[str, object]:
-    evidence = _command_evidence(result)
-    evidence["failing_step"] = step
-    return failure(action, "Windows CI reproduction step failed", evidence)
-
-
 def _verify_windows_outputs(repo: Path) -> list[str]:
     return [relative for relative in _WINDOWS_OUTPUTS if not (repo / relative).is_file()]
 
 
 def reproduce(repo_root: Path) -> dict[str, object]:
-    preflight_result = preflight(repo_root)
-    if preflight_result["status"] != "pass":
-        return _response("reproduce", preflight_result)
-
     try:
         repo = ensure_space_repo(repo_root)
     except CapabilityError as error:
-        return _failure_for_exception("reproduce", error)
+        return _evidence._bounded_response(_failure_for_exception("reproduce", error))
     # Serialize the complete fixed operation without a replaceable lockfile.
     # Artifact preparation/consumption independently locks build/ as well.
     fd = os.open(repo, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         return _reproduce_steps(repo)
+    except (OSError, ValueError) as error:
+        return _evidence._bounded_response(_failure_for_exception("reproduce", error))
     finally:
         os.close(fd)
 
 
+_REPRO_STEPS = (
+    ("preflight", ()),
+    ("build-windows-from-linux", ("scripts/build-windows-from-linux.sh",)),
+    ("package-windows-runtime", ("scripts/package-windows-runtime.sh",)),
+    ("verify-windows-outputs", ()),
+    ("wine-admission", ("scripts/prepare-windows-wine-runtime.sh",)),
+    ("wine-fast", ("scripts/test-windows-under-wine.sh",)),
+)
+
+
+def _selection_conflicts() -> list[str]:
+    # Runner's actual overrides, plus reject inherited suite/module selectors
+    # rather than silently accepting an unknown selection contract.
+    forbidden = ("TEST_FILTER", "SPACE_TEST_CASE_TIMEOUT_SECONDS", "TEST_SUITE", "SPACE_TEST_SUITE",
+                 "TEST_MODULES", "SPACE_TEST_MODULES")
+    conflicts = [key for key in forbidden if os.environ.get(key)]
+    conflicts.extend(key for key in ("SPACE_MATRIX_TEST", "SPACE_REALTIME_TEST") if os.environ.get(key) == "1")
+    return sorted(conflicts)
+
+
+def _launch_metadata(repo: Path) -> dict[str, object]:
+    prefix = os.environ.get("WINEPREFIX")
+    home = os.environ.get("HOME")
+    effective = prefix if prefix is not None else os.path.join(home, ".wine") if home else None
+    return {"module": "tests.fast:main", "deadline_seconds": 180, "admission_deadline_seconds": 60,
+            "case_deadline_seconds": 120, "case_deadline_policy": "existing per-case overrides unchanged",
+            "diagnostics": {"TEST_VERBOSE": "1", "SPACE_TEST_TIMINGS": "1"}, "skip_keyring_tests": True,
+            "prefix_selection": "inherited" if prefix is not None else "default",
+            "effective_prefix": os.path.abspath(repo / effective) if effective is not None else None,
+            "display_present": bool(os.environ.get("DISPLAY")),
+            "wayland_display_present": bool(os.environ.get("WAYLAND_DISPLAY")),
+            "effective_uid": os.geteuid(), "effective_gid": os.getegid()}
+
+
+def _admitted_metadata(repo: Path) -> dict[str, object]:
+    # Read the existing receipt only. Do not call configuration(), run --version,
+    # reseal the overlay, or copy receipt conditions/private prefix contents.
+    build = _evidence._safe_path(repo / "build")
+    fd = os.open(build, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        receipt = _evidence._read_json(repo / "build/wine/windows/admission.json", 16 * 1024 * 1024)
+        wine = receipt["wine"]
+        payload = receipt["payload"]
+        if (receipt["version"] != 1 or not isinstance(wine, dict) or not isinstance(payload, dict)
+                or not all(isinstance(wine[key], str) and len(wine[key]) <= 4096
+                           for key in ("executable", "version", "sha256"))
+                or receipt["backend"] not in ("bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b")):
+            raise ValueError("Invalid admission metadata")
+        return {"wine": {key: wine[key] for key in ("executable", "version", "sha256")},
+                "backend": receipt["backend"],
+                "payload": {name: payload[name] for name in ("space.exe", "space-cli.exe") if name in payload},
+                "payload_inventory_sha256": hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()}
+    finally:
+        os.close(fd)
+
+
+def _new_repro_run(repo: Path) -> Path:
+    return _evidence._new_run(repo)
+
+
+def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str]) -> dict:
+    # No arbitrary commands even via this private interface: only the fixed
+    # internal stage table can supply argv; CLI accepts no command/env/profile.
+    if (step, tuple(args)) not in _REPRO_STEPS:
+        raise ValueError("Not a fixed Windows reproduction command")
+    ledger, record, logs = _evidence._start(repo, run_dir, step, args)
+    if args:
+        return _evidence._capture(repo, run_dir, ledger, record, logs, list(args))
+    outcome, code, complete = "pass", 0, True
+    try:
+        if step == "preflight":
+            conflicts = _selection_conflicts()
+            result = (failure("preflight", "Conflicting inherited test selection/deadline settings",
+                              {"code": "conflicting_test_settings", "conflicting_keys": conflicts})
+                      if conflicts else preflight(repo))
+            record["details"] = result
+            if result["status"] != "pass":
+                outcome, code = "nonzero_exit", 1
+        else:
+            missing = _verify_windows_outputs(repo)
+            record["missing"] = missing
+            if missing:
+                outcome, code = "nonzero_exit", 1
+    except KeyboardInterrupt:
+        outcome, code, complete = "interrupted", None, False
+        record["capture_errors"].append("KeyboardInterrupt during in-process stage")
+    except Exception as error:
+        outcome, code, complete = "capture_error", None, False
+        record["capture_errors"].append(f"{type(error).__name__}: {str(error)[:500]}")
+    finally:
+        for stream, output in logs.items():
+            output.close()
+            record[stream]["eof"] = True
+    return _evidence._finish(repo, run_dir, ledger, record, outcome, code, complete)
+
+
 def _reproduce_steps(repo: Path) -> dict[str, object]:
-    steps: tuple[tuple[str, list[str]], ...] = (
-        ("build-windows-from-linux", ["scripts/build-windows-from-linux.sh"]),
-        ("package-windows-runtime", ["scripts/package-windows-runtime.sh"]),
-    )
-    for step, args in steps:
-        result = run_command(args, repo, check=False)
-        if result.returncode != 0:
-            return _fail_for_command("reproduce", step, result)
-
-    missing_outputs = _verify_windows_outputs(repo)
-    if missing_outputs:
-        return failure(
-            "reproduce",
-            "Windows CI reproduction outputs are missing after packaging",
-            {
-                "code": "missing_windows_ci_repro_outputs",
-                "failing_step": "verify-windows-outputs",
-                "args": [],
-                "returncode": 1,
-                "stdout_tail": "",
-                "stderr_tail": "",
-                "missing": missing_outputs,
-            },
-        )
-
-    admission_result = run_command(["scripts/prepare-windows-wine-runtime.sh"], repo, check=False)
-    if admission_result.returncode != 0:
-        return _fail_for_command("reproduce", "wine-admission", admission_result)
-
-    wine_result = run_command(["scripts/test-windows-under-wine.sh"], repo, check=False)
-    if wine_result.returncode != 0:
-        return _fail_for_command("reproduce", "test-windows-under-wine", wine_result)
-
-    return success(
-        "reproduce",
-        "Windows CI reproduction completed successfully",
-        {"repo_root": str(repo), "checked_outputs": list(_WINDOWS_OUTPUTS)},
-    )
+    run_dir = _new_repro_run(repo)
+    ledger = _evidence._read_json(run_dir / "ledger.json")
+    ledger["metadata"] = _launch_metadata(repo)
+    failed = None
+    step = "preflight"
+    try:
+        _evidence._save(repo, run_dir, ledger)
+        for step, args in _REPRO_STEPS:
+            record = _run_repro_step(repo, run_dir, step, args)
+            # Keep the known history in memory, including the current record.
+            # A stale disk checkpoint is never the recovery source of truth.
+            ledger["stages"].append(record)
+            if record["outcome"] != "pass":
+                failed = step
+                break
+            if step == "wine-admission":
+                ledger["metadata"].update(_admitted_metadata(repo))
+                _evidence._save(repo, run_dir, ledger)
+    except _evidence._PersistenceError as error:
+        ledger = error.ledger
+        failed = step
+        if ledger["stages"] and ledger["stages"][-1]["step"] == step:
+            partial = ledger["stages"][-1]
+            partial["capture_complete"] = False
+            if partial["outcome"] in ("started", "pass"):
+                partial["outcome"] = "evidence_error"
+            if partial["finished_utc"] is None:
+                end = time.monotonic()
+                partial.update(finished_utc=_evidence._utc(), finished_monotonic=end,
+                               elapsed_seconds=end - partial["started_monotonic"])
+    except (Exception, KeyboardInterrupt) as error:
+        # Even a storage/metadata failure retains previous successful evidence.
+        failed = step
+        ledger["errors"] = [f"{type(error).__name__}: {str(error)[:500]}"]
+        ledger["complete"] = False
+        if ledger["stages"] and ledger["stages"][-1]["step"] == step:
+            partial = ledger["stages"][-1]
+            partial["outcome"] = "interrupted" if isinstance(error, KeyboardInterrupt) else "evidence_error"
+            partial["capture_complete"] = False
+            partial["capture_errors"].extend(ledger["errors"])
+    ledger.update(outcome="fail" if failed else "pass", finished_utc=_evidence._utc(),
+                  complete=not failed and all(s["capture_complete"] for s in ledger["stages"]))
+    sealed = False
+    if not ledger.get("persistence_errors"):
+        try:
+            _evidence._save(repo, run_dir, ledger)
+            _evidence._seal(repo, run_dir)
+            sealed = True
+        except _evidence._PersistenceError as error:
+            ledger = error.ledger
+        except (Exception, KeyboardInterrupt) as error:
+            _evidence._persistence_failure(ledger, "seal/finalization", error)
+    if ledger.get("persistence_errors"):
+        failed = failed or "finalize-evidence"
+        ledger.update(outcome="fail", complete=False)
+    evidence = {"ledger_path": (run_dir / "ledger.json").relative_to(repo).as_posix(),
+                "metadata": ledger["metadata"], "stages": ledger["stages"], "complete": ledger["complete"], "sealed": sealed}
+    if "persistence_errors" in ledger:
+        evidence["persistence_errors"] = ledger["persistence_errors"]
+    if "errors" in ledger:
+        evidence["errors"] = ledger["errors"]
+    if failed:
+        evidence["failing_step"] = failed
+        result = failure("reproduce", "Windows CI reproduction step failed", evidence)
+    else:
+        evidence["checked_outputs"] = list(_WINDOWS_OUTPUTS)
+        result = success("reproduce", "Windows CI reproduction completed successfully", evidence)
+    return _evidence._bounded_response(result)
 
 
 def _parse_args(argv: Sequence[str]) -> argparse.Namespace:

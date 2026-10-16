@@ -55,7 +55,9 @@ The original attempt used a native Windows-host MinGW build in GitHub Actions. T
 
 Final CI shape:
 
-- `test.yml` PR/merge-queue validation path
+- `test.yml` Linux PR/merge-queue validation path
+  - Linux validation is the PR and merge-queue gate; this workflow does not contain Windows build or native Windows test jobs
+- `windows.yml` Windows main-push/manual validation path
   - Linux job builds the Windows artifact with `scripts/setup-windows-build-host.sh` + `scripts/build-windows-from-linux.sh`
   - Linux job prepares and uploads only the runtime bundle needed by tests
   - native Windows job downloads that runtime bundle and runs the native Windows fast suite
@@ -66,6 +68,17 @@ Final CI shape:
   - Linux job creates the Windows release ZIP
   - native Windows job builds and smoke-tests the installer
   - existing `workflow_dispatch` behavior remains available
+
+Windows validation is post-merge, not a PR or merge-queue gate.
+`windows.yml` runs on pushes to `main` plus `workflow_dispatch`, not on PRs, merge groups or a schedule.
+Manual dispatch remains applicable to Windows validation and release packaging;
+`build.yml` also runs on `v*` tag pushes. Wine support does not replace the native
+Windows fast suite or its authority.
+
+This routing intentionally superseded the earlier Windows PR-gate arrangement:
+`2f94237a` moved the existing Windows jobs to keep PR feedback fast while retaining
+post-merge coverage, and `ae16caee` added the routing guard and matching policy.
+See [GitHub Actions Hygiene](github-actions-hygiene.md#pr-and-windows-validation-routing).
 
 Why this architecture was chosen:
 
@@ -388,6 +401,91 @@ full guarded reproduction remain required separately; this tooling does not
 establish that the earlier180-second Wine timeout is fixed, nor close the
 historical Linux native SIG investigation. Agents must use the existing guarded
 capability, not the manual shell examples above, for real reproduction.
+
+### Bounded reproduction evidence
+
+The same `reproduce --repo-root .` action records these ordered stages:
+`preflight`, `build-windows-from-linux`, `package-windows-runtime`,
+`verify-windows-outputs`, `wine-admission`, then `wine-fast`. API admission must
+succeed before the full application launches. Builtin/compat probe phases and
+their observed exit codes are separate from full-suite progress. The four public
+commands and their status/CLI exit conventions are unchanged; there is no command,
+environment, timeout, module, or profile passthrough.
+
+Each generated private run lives under `build/windows-ci-repro/<generated-id>/`:
+
+- `ledger.json` is atomically replaced before and after every stage (and during
+  capture). It retains earlier successes after a later failure, with UTC and
+  monotonic timestamps, elapsed seconds, return code, outcome, capture errors,
+  stream counters, paths, and last observed flushed markers.
+- `<stage>.stdout.log` and `<stage>.stderr.log` are exclusive regular files, each
+  capped at **16 MiB**. Both binary streams are drained concurrently even after
+  their disk caps. Per-stream `observed_bytes` and `stored_bytes`, `eof`,
+  `log_truncated`, and `errors` distinguish a cap or write error from full capture.
+- Incremental UTF-8 tails are at most **4000 characters** per stream;
+  `excerpt_truncated` is independent of `log_truncated`. Marker parsing retains
+  no more than **4 KiB** of a line, discarding oversized lines until newline and
+  counting them. Flushed `[LAUNCH]`, `[BOOT]`, `[LOAD]`, `[RUN]`, `[PASS]`, `[FAIL]`,
+  `[TIME]`/`[TIMINGS]` and Wine-admission lines update counts, latest observation
+  timestamps and last markers even after the log caps.
+- Returned **whole encoded JSON is at most 48 KiB**, including control-character
+  and Unicode escaping. Log/ledger pointers are repo-relative. Successful
+  excerpts are compacted first, then allowlisted metadata and, if needed,
+  failure excerpts (keeping bounded failure context). `response_truncated`,
+  `response_excerpt_truncated` and `response_text_truncated` explicitly mark
+  response-only compaction; the owned ledger and capped logs remain richer.
+
+Atomic JSON writes check every short-write count and replace the previous ledger
+or ownership marker only after the entire new JSON is written and fsynced. If
+checkpoint/final-save/sealing storage fails, the response retains the live
+in-memory history, current progress, actual exit codes and named log/ledger
+pointers, with `persistence_errors`, `complete: false` and `sealed: false`.
+Capture continues draining and waiting for the actual child status after a
+checkpoint failure; broken storage is not retried indefinitely. The named ledger
+then denotes the last valid durable checkpoint, which can predate the returned
+failure/progress (including a sealing failure). Its earlier completeness field
+does not establish that the run was successfully sealed.
+
+Run directories are `0700`, files `0600`; existing parents are not chmodded.
+A versioned ownership marker binds repo/build inode identity and the finalized
+file inventory/hashes. Reproductions retain the repo-directory lock, and artifact
+preparation/consumption retain their build-directory locks. Retention always
+protects the current run plus two timestamp-selected verified historical runs,
+even after a wall-clock rollback. Unowned, symlinked, changed, interrupted/unsealed
+or otherwise quarantined paths are never pruned. No arbitrary recursive cleanup
+argument is accepted. Supervisors can inspect the named artifacts without giving
+the restricted reproducer a raw log-reading or arbitrary execution capability.
+
+If pipes reach EOF first, capture checkpoints the observed markers/EOF flags
+before blocking for the leader's real exit status, without status spinning.
+After leader exit, pipes have a two-second EOF
+grace; if descendants hold them open, only that newly owned process group gets
+TERM, then two seconds later KILL if still present. Capture then closes its pipes
+and records incomplete evidence, never a complete PASS. Launch errors, capture
+errors, interruption, nonzero exits and GNU timeout exit **124** remain distinct
+outcomes. A recognized `[FAIL]` from `wine-fast` with exit zero is an
+`inconsistent_result`, not PASS; the real zero status is retained. This runner
+failure rule does not reinterpret arbitrary successful build output. There is no global
+`wineserver` kill, prefix cleanup/reset or guessed display/Xvfb change.
+
+The fixed operation enables `TEST_VERBOSE=1` and `SPACE_TEST_TIMINGS=1` internally.
+Nonempty inherited `TEST_FILTER`, `SPACE_TEST_CASE_TIMEOUT_SECONDS`, `TEST_SUITE`,
+`SPACE_TEST_SUITE`, `TEST_MODULES` or `SPACE_TEST_MODULES`, and enabled
+`SPACE_MATRIX_TEST=1`/`SPACE_REALTIME_TEST=1`, are rejected rather than running an
+unknown selection. The full `tests.fast:main` invocation still uses **180 seconds**;
+admission still uses **60 seconds** (with its existing kill escalation). Case
+deadlines, assertions, Windows skips and module lists are not changed.
+
+Metadata is allowlisted: module/deadline/diagnostic settings, effective uid/gid,
+inherited/default prefix selection and effective prefix identity, display-presence
+booleans, and admitted Wine executable/version/hash, backend and payload identity.
+Wine facts are read from the existing admission receipt under the build lock;
+collection does not execute Wine again or modify/reseal the receipt/overlay.
+No environment dump, credentials, registry or private-prefix contents are read.
+Tooling regression tests use temporary repositories and host fixture processes;
+they are not actual Wine admission, a PE runtime pass, or proof that the underlying
+180-second Wine failure is fixed. A real guarded reproduction remains a separate
+post-review step.
 
 
 ## See also

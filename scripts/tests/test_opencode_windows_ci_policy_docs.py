@@ -54,3 +54,17 @@ def test_github_workflow_debug_reruns_reproducer_after_fix_before_push():
     assert "rerun `windows-ci-reproducer` before pushing" in text
     assert "Only push when reproduction passes" in text
     assert "HUMAN_DECISION_REQUIRED with wrapper evidence" in text
+
+
+def test_windows_notes_match_post_merge_manual_policy_and_keep_native_authority():
+    text = read("docs/dev/notes/windows-wine-build-and-test.md")
+    policy = read("docs/dev/notes/github-actions-hygiene.md")
+    assert "Windows validation lives in the `windows` workflow and runs on pushes to\n`main` plus manual dispatch" in policy
+    assert "`test.yml` Linux PR/merge-queue validation path" in text
+    assert "`windows.yml` Windows main-push/manual validation path" in text
+    assert "Windows validation is post-merge, not a PR or merge-queue gate" in text
+    assert "`windows.yml` runs on pushes to `main` plus `workflow_dispatch`, not on PRs, merge groups or a schedule" in text
+    assert "- `test.yml` PR/merge-queue validation path" not in text
+    assert "Manual dispatch remains applicable to Windows validation and release packaging" in text
+    assert "native Windows CI remains authoritative" in text
+    assert "not a substitute for native Windows CI" in " ".join(text.split())

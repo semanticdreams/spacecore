@@ -1,7 +1,13 @@
+import hashlib
+import errno
 import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_ROOT))
@@ -13,7 +19,7 @@ import opencode_windows_ci_repro as windows_ci_repro
 def make_space_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "space"
     repo.mkdir()
-    subprocess.run(["git", "init"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["git", "init", "--initial-branch=main"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(["git", "remote", "add", "origin", "git@github.com:semanticdreams/spacecore.git"], cwd=repo, check=True)
     (repo / "AGENTS.md").write_text("# Repository Guidelines\n", encoding="utf-8")
     (repo / ".opencode").mkdir()
@@ -101,17 +107,6 @@ def capture_run_command_calls(monkeypatch, module):
 
 def monkeypatch_preflight_pass(monkeypatch, module) -> None:
     monkeypatch.setattr(module, "preflight", lambda repo_root: capabilities.success("preflight", "ok", {"missing": []}))
-
-
-def monkeypatch_run_command_failure(monkeypatch, module, *, failing_args: list[str]) -> None:
-    def fake_run_command(args, cwd: Path, check: bool = True):
-        del cwd, check
-        args = list(args)
-        if args == failing_args:
-            return command_result(args, stdout="line1\nline2\n", stderr="error1\nerror2\n", returncode=17)
-        return command_result(args)
-
-    monkeypatch.setattr(module, "run_command", fake_run_command)
 
 
 def test_preflight_passes_when_windows_ci_repro_prerequisites_exist(tmp_path, monkeypatch):
@@ -409,54 +404,49 @@ def test_setup_host_runs_existing_setup_script_on_supported_host(tmp_path, monke
 
 
 def test_reproduce_runs_build_package_verify_and_wine_steps_in_order(tmp_path, monkeypatch):
-    repo = make_space_repo(tmp_path)
-    install_required_scripts(repo)
-    install_fake_windows_outputs(repo)
-    monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
-    calls = capture_run_command_calls(monkeypatch, windows_ci_repro)
-
+    repo = reproduction_fixture(tmp_path, monkeypatch)
     result = windows_ci_repro.reproduce(repo)
-
     assert result["status"] == "pass"
-    assert calls == [
-        ["scripts/build-windows-from-linux.sh"],
-        ["scripts/package-windows-runtime.sh"],
-        ["scripts/prepare-windows-wine-runtime.sh"],
-        ["scripts/test-windows-under-wine.sh"],
-    ]
+    stages = result["evidence"]["stages"]
+    assert [s["step"] for s in stages] == ["preflight", "build-windows-from-linux", "package-windows-runtime",
+                                                "verify-windows-outputs", "wine-admission", "wine-fast"]
+    assert [s["outcome"] for s in stages] == ["pass"] * 6
+    assert (repo / "dispatch").read_text().splitlines() == ["build", "package", "admission", "fast"]
+    ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
+    assert ledger["stages"] == stages
+    assert ledger["complete"] is True
+    assert ledger["metadata"]["module"] == "tests.fast:main"
+    assert ledger["metadata"]["deadline_seconds"] == 180
+    assert ledger["metadata"]["diagnostics"] == {"TEST_VERBOSE": "1", "SPACE_TEST_TIMINGS": "1"}
 
 
-def test_reproduce_reports_first_failing_step_with_bounded_output(tmp_path, monkeypatch):
-    repo = make_space_repo(tmp_path)
-    install_required_scripts(repo)
-    monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
-    monkeypatch_run_command_failure(monkeypatch, windows_ci_repro, failing_args=["scripts/package-windows-runtime.sh"])
-
+@pytest.mark.parametrize("code,outcome", [(17, "nonzero_exit"), (124, "timeout")])
+def test_reproduce_reports_first_failing_step_with_bounded_output(tmp_path, monkeypatch, code, outcome):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, "package-windows-runtime.sh", f"print('[FAIL] case deadline', file=sys.stderr)\nsys.exit({code})")
     result = windows_ci_repro.reproduce(repo)
-
     assert result["status"] == "fail"
     assert result["evidence"]["failing_step"] == "package-windows-runtime"
-    assert result["evidence"]["args"] == ["scripts/package-windows-runtime.sh"]
-    assert "stdout_tail" in result["evidence"]
-    assert "stderr_tail" in result["evidence"]
+    stages = result["evidence"]["stages"]
+    assert stages[1]["stdout"]["tail"] == "successful build\n"
+    assert (repo / stages[1]["stdout"]["path"]).read_text() == "successful build\n"
+    assert stages[-1]["outcome"] == outcome
+    assert stages[-1]["returncode"] == code
+    assert stages[-1]["progress"]["counts"]["fail"] == 1
+    assert "case deadline" in stages[-1]["stderr"]["tail"]
+    assert stages[-1]["capture_complete"] is True
+    assert all(s["finished_utc"] and s["elapsed_seconds"] >= 0 for s in stages)
 
 
 def test_admission_failure_stops_before_full_suite(tmp_path, monkeypatch):
-    repo = make_space_repo(tmp_path)
-    install_required_scripts(repo)
-    install_fake_windows_outputs(repo)
-    monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
-    calls = []
-
-    def fake_run(args, cwd, check=False):
-        calls.append(list(args))
-        return command_result(list(args), returncode=20 if "prepare-windows-wine-runtime.sh" in args[0] else 0)
-
-    monkeypatch.setattr(windows_ci_repro, "run_command", fake_run)
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, "prepare-windows-wine-runtime.sh", "print('Wine admission: probe backend=bcryptprimitives=b;advapi32,cryptbase=b deadline=60s kill-after=5s', flush=True)\nprint('Wine admission: probe exit=20', flush=True)\nsys.exit(20)")
     result = windows_ci_repro.reproduce(repo)
     assert result["status"] == "fail"
     assert result["evidence"]["failing_step"] == "wine-admission"
-    assert ["scripts/test-windows-under-wine.sh"] not in calls
+    assert "fast" not in (repo / "dispatch").read_text()
+    assert result["evidence"]["stages"][-1]["progress"]["admission_phases"] == [
+        {"backend": "builtin", "returncode": 20}]
 
 
 def test_cli_invalid_repo_returns_structured_fail_json_without_traceback(tmp_path):
@@ -507,3 +497,649 @@ def test_direct_operations_return_structured_failures_for_invalid_repo(monkeypat
         assert result["action"] == action
         assert set(result) == {"status", "action", "message", "evidence"}
         assert result["evidence"]["code"] == "invalid_repo"
+
+
+# These fixtures launch only Python children in a temporary fake repository.
+# Never replace the fixed production argv table with a public command option.
+def fixture_script(repo, name, body):
+    path = repo / "scripts" / name
+    path.write_text(f"#!{sys.executable}\nimport os, sys, time, pathlib, json\n" + body + "\n")
+    path.chmod(0o755)
+
+
+def reproduction_fixture(tmp_path, monkeypatch):
+    repo = make_space_repo(tmp_path)
+    install_required_scripts(repo)
+    install_fake_windows_outputs(repo)
+    monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
+    for key in ("TEST_FILTER", "SPACE_TEST_CASE_TIMEOUT_SECONDS", "SPACE_MATRIX_TEST", "SPACE_REALTIME_TEST",
+                "TEST_SUITE", "SPACE_TEST_SUITE", "TEST_MODULES", "SPACE_TEST_MODULES"):
+        monkeypatch.delenv(key, raising=False)
+    for script, label in [("build-windows-from-linux.sh", "build"), ("package-windows-runtime.sh", "package"),
+                          ("prepare-windows-wine-runtime.sh", "admission"), ("test-windows-under-wine.sh", "fast")]:
+        fixture_script(repo, script, f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)")
+    receipt = repo / "build/wine/windows/admission.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text(json.dumps({"version": 1, "wine": {"executable": "/fixture/wine", "version": "fixture", "sha256": "a"*64},
+                                  "backend": "bcryptprimitives=b;advapi32,cryptbase=b",
+                                  "payload": {"space-cli.exe": "b"*64}, "package": {"space-cli.exe": "b"*64},
+                                  "conditions": {"DISPLAY": "do-not-copy", "secret": "do-not-copy"}, "secret": "do-not-copy"}))
+    return repo
+
+
+def run_build_fixture(repo, body):
+    fixture_script(repo, "build-windows-from-linux.sh", body)
+    run_dir = windows_ci_repro._new_repro_run(repo)
+    record = windows_ci_repro._run_repro_step(repo, run_dir, "build-windows-from-linux", ["scripts/build-windows-from-linux.sh"])
+    ledger = json.loads((run_dir / "ledger.json").read_text())
+    assert ledger["stages"][-1] == record
+    return record, run_dir
+
+
+def test_streams_drain_concurrently_after_real_16mib_caps_and_keep_last_markers(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    size = 16 * 1024 * 1024 + 2 * 1024 * 1024
+    body = rf'''
+import threading
+def emit(fd):
+    for _ in range({size} // 65536): os.write(fd, b'x' * 65536)
+    os.write(fd, b'\n[LOAD] tests.final\n[RUN] final\n[PASS] final\n[TIME] tests.final 1.000ms\n')
+threads = [threading.Thread(target=emit, args=(fd,)) for fd in (1, 2)]
+for t in threads: t.start()
+for t in threads: t.join()
+'''
+    record, _ = run_build_fixture(repo, body)
+    suffix = b'\n[LOAD] tests.final\n[RUN] final\n[PASS] final\n[TIME] tests.final 1.000ms\n'
+    assert record["outcome"] == "pass"
+    for name in ("stdout", "stderr"):
+        stream = record[name]
+        assert stream["observed_bytes"] == size + len(suffix)
+        assert stream["stored_bytes"] == 16 * 1024 * 1024
+        assert (repo / stream["path"]).stat().st_size == 16 * 1024 * 1024
+        assert stream["log_truncated"] is True and stream["excerpt_truncated"] is True
+        assert len(stream["tail"]) <= 4000
+        assert stream["oversized_lines"] == 1
+        assert stream["max_pending_line_bytes"] <= 4096
+    assert record["progress"]["counts"]["pass"] == 2
+    assert record["progress"]["counts"]["load"] == 2
+    assert record["progress"]["counts"]["run"] == 2
+    assert record["progress"]["counts"]["timing"] == 2
+    assert record["progress"]["latest"]["text"] == "[TIME] tests.final 1.000ms"
+    assert record["progress"]["latest"]["observed_utc"]
+
+
+def test_incremental_utf8_and_oversized_unterminated_line(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    record, _ = run_build_fixture(repo, "os.write(1, b'\\xe2'); time.sleep(.05); os.write(1, b'\\x82\\xac\\n'); os.write(2, b'z'*3000000 + b'\\xf0\\x9f')")
+    assert record["stdout"]["tail"] == "€\n"
+    assert record["stderr"]["observed_bytes"] == 3000002
+    assert record["stderr"]["tail"].endswith("�")
+    assert record["stderr"]["oversized_lines"] == 1
+    assert record["stderr"]["max_pending_line_bytes"] <= 4096
+    assert record["capture_complete"] is True
+
+
+def test_eof_before_leader_exit_waits_without_poll_spin(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    start = time.monotonic()
+    cpu = time.process_time()
+    record, _ = run_build_fixture(repo, "os.close(1); os.close(2); time.sleep(.6); sys.exit(17)")
+    assert record["returncode"] == 17
+    assert time.monotonic() - start >= .6
+    assert time.process_time() - cpu < .25
+
+
+def test_descendant_held_pipes_have_bounded_owned_group_cleanup(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    start = time.monotonic()
+    record, _ = run_build_fixture(repo, "import signal\npid=os.fork()\nif pid == 0:\n signal.signal(signal.SIGTERM, signal.SIG_IGN)\n print('[RUN] descendant', flush=True)\n time.sleep(30)\nelse:\n time.sleep(.1)")
+    assert 4 <= time.monotonic() - start < 7
+    assert record["returncode"] == 0
+    assert record["outcome"] == "capture_error"
+    assert record["capture_complete"] is False
+    assert record["progress"]["latest"]["text"] == "[RUN] descendant"
+    assert "pipe" in " ".join(record["capture_errors"])
+    assert record["cleanup_signals"] == ["SIGTERM", "SIGKILL"]
+
+
+@pytest.mark.parametrize("fault,outcome", [("launch", "launch_error"), ("interrupt", "interrupted"), ("capture", "capture_error")])
+def test_partial_evidence_finalized_on_capture_lifecycle_errors(tmp_path, monkeypatch, fault, outcome):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    # Faults are injected at OS boundaries; the child/output are real.
+    import _windows_repro_evidence as evidence
+    if fault == "launch":
+        def fail_launch(*args, **kwargs):
+            raise OSError("fixture launch denied")
+        monkeypatch.setattr(evidence.subprocess, "Popen", fail_launch)
+    else:
+        original = evidence._read_pipe
+        fired = False
+        def read_once(fd):
+            nonlocal fired
+            if fired:
+                raise KeyboardInterrupt() if fault == "interrupt" else OSError("fixture read failed")
+            fired = True
+            return original(fd)
+        monkeypatch.setattr(evidence, "_read_pipe", read_once)
+    record, _ = run_build_fixture(repo, "print('[RUN] partial', flush=True)\ntime.sleep(.2)\nprint('later', flush=True)\ntime.sleep(30)")
+    assert record["outcome"] == outcome
+    assert record["capture_complete"] is False
+    assert record["finished_utc"]
+    assert record["capture_errors"]
+    if fault != "launch":
+        assert record["stdout"]["observed_bytes"] >= len('[RUN] partial\n')
+        assert record["progress"]["counts"]["run"] == 1
+
+
+def test_started_ledger_is_visible_to_child(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    record, _ = run_build_fixture(repo, "p=next(pathlib.Path('build/windows-ci-repro').glob('*/ledger.json'))\ns=json.loads(p.read_text())['stages'][-1]\nassert s['outcome']=='started' and s['started_utc'] and s['started_monotonic']\nprint('start ledger visible')")
+    assert record["outcome"] == "pass"
+
+
+def test_fourth_run_prunes_only_verified_owned_runs(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    first = windows_ci_repro.reproduce(repo)
+    root = repo / "build/windows-ci-repro"
+    foreign = root / "foreign"
+    foreign.mkdir()
+    (foreign / "keep").write_text("untouched")
+    link = root / "linked"
+    link.symlink_to(foreign, target_is_directory=True)
+    quarantine = root / Path(first["evidence"]["ledger_path"]).parent.name
+    (quarantine / "foreign-file").write_text("quarantine")
+    runs = [windows_ci_repro.reproduce(repo) for _ in range(4)]
+    assert not (repo / runs[0]["evidence"]["ledger_path"]).exists()
+    assert all((repo / r["evidence"]["ledger_path"]).exists() for r in runs[1:])
+    assert (quarantine / "foreign-file").read_text() == "quarantine"
+    assert (foreign / "keep").read_text() == "untouched"
+    assert link.is_symlink()
+
+
+@pytest.mark.parametrize("component", ["build", "windows-ci-repro"])
+def test_reproduction_rejects_symlinked_evidence_parent(tmp_path, monkeypatch, component):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    foreign = tmp_path / "foreign"
+    foreign.mkdir()
+    if component == "build":
+        (repo / "build").rename(repo / "saved-build")
+        (repo / "build").symlink_to(foreign, target_is_directory=True)
+    else:
+        (repo / "build/windows-ci-repro").symlink_to(foreign, target_is_directory=True)
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "fail"
+    assert not (repo / "dispatch").exists()
+    assert list(foreign.iterdir()) == []
+
+
+def test_private_logs_are_exclusive_no_follow_and_no_parent_chmod(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    (repo / "build").chmod(0o755)
+    run_dir = windows_ci_repro._new_repro_run(repo)
+    assert run_dir.stat().st_mode & 0o777 == 0o700
+    target = tmp_path / "untouched"
+    target.write_text("untouched")
+    (run_dir / "build-windows-from-linux.stdout.log").symlink_to(target)
+    with pytest.raises((OSError, ValueError)):
+        windows_ci_repro._run_repro_step(repo, run_dir, "build-windows-from-linux", ["scripts/build-windows-from-linux.sh"])
+    assert target.read_text() == "untouched"
+    assert (repo / "build").stat().st_mode & 0o777 == 0o755
+    with pytest.raises(ValueError):
+        windows_ci_repro._run_repro_step(repo, run_dir, "arbitrary", ["sh", "-c", "exit 0"])
+
+
+@pytest.mark.parametrize("key,value", [("TEST_FILTER", "selected"), ("SPACE_TEST_CASE_TIMEOUT_SECONDS", "0"),
+                                       ("SPACE_MATRIX_TEST", "1"), ("SPACE_REALTIME_TEST", "1"),
+                                       ("SPACE_TEST_SUITE", "slow"), ("TEST_MODULES", "selected")])
+def test_conflicting_inherited_selection_rejected_before_dispatch(tmp_path, monkeypatch, key, value):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv(key, value)
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "fail"
+    assert result["evidence"]["failing_step"] == "preflight"
+    assert not (repo / "dispatch").exists()
+    assert key not in result["evidence"]["metadata"]
+    assert result["evidence"]["stages"][0]["details"]["evidence"]["conflicting_keys"] == [key]
+
+
+def test_encoded_total_response_budget_with_real_controls_unicode_and_all_stages(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    body = "os.write(1, ('\\x00😀' * 6000 + '\\n[PASS] final\\n').encode()); os.write(2, ('\\x01😀'*6000).encode())"
+    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
+        fixture_script(repo, script, body)
+    monkeypatch.setenv("SECRET_TOKEN", "do-not-copy")
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "pass"
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    assert result["evidence"]["response_truncated"] is True
+    assert len(result["evidence"]["stages"]) == 6
+    assert "do-not-copy" not in json.dumps(result)
+    ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
+    assert len(ledger["stages"][1]["stdout"]["tail"]) == 4000
+    for stage in result["evidence"]["stages"]:
+        for name in ("stdout", "stderr"):
+            stream = stage[name]
+            assert not Path(stream["path"]).is_absolute()
+            assert (repo / stream["path"]).stat().st_size == stream["stored_bytes"]
+            assert stream["stored_bytes"] == stream["observed_bytes"]
+
+
+def test_admission_metadata_read_is_allowlisted_readonly_and_preserves_receipt(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    receipt = repo / "build/wine/windows/admission.json"
+    before = receipt.read_bytes()
+    monkeypatch.setenv("WINEPREFIX", "/selected-prefix")
+    monkeypatch.setenv("DISPLAY", ":private-display")
+    result = windows_ci_repro.reproduce(repo)
+    metadata = result["evidence"]["metadata"]
+    assert metadata["wine"]["version"] == "fixture"
+    assert metadata["wine"]["sha256"] == "a"*64
+    assert metadata["payload"]["space-cli.exe"] == "b"*64
+    payload = json.loads(before)["payload"]
+    assert metadata["payload_inventory_sha256"] == hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+    assert metadata["prefix_selection"] == "inherited"
+    assert metadata["effective_prefix"] == "/selected-prefix"
+    assert metadata["display_present"] is True
+    assert metadata["effective_uid"] == os.geteuid()
+    assert ":private-display" not in json.dumps(result)
+    assert receipt.read_bytes() == before
+
+
+def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker():
+    text = (SCRIPT_ROOT / "test-windows-under-wine.sh").read_text()
+    assert "TEST_VERBOSE=1" in text and "SPACE_TEST_TIMINGS=1" in text
+    assert "timeout 180s" in text and "tests.fast:main" in text
+    assert "[LAUNCH]" in text
+
+
+def test_cli_keeps_exactly_four_commands_and_no_execution_passthrough():
+    for option in ("--command", "--env", "--profile", "--timeout"):
+        with pytest.raises(SystemExit):
+            windows_ci_repro._parse_args(["reproduce", "--repo-root", ".", option, "x"])
+
+
+def test_encoded_budget_with_all_marker_kinds_and_later_failure(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    body = "\n".join(f"print('[{kind}] ' + '\\x00' * 3800 + '😀' * 40, flush=True)"
+                     for kind in ("LAUNCH", "BOOT", "LOAD", "RUN", "PASS", "FAIL", "TIME"))
+    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
+        fixture_script(repo, script, body + ("\nsys.exit(17)" if script == "test-windows-under-wine.sh" else ""))
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "fail"
+    assert result["evidence"]["failing_step"] == "wine-fast"
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    assert len(result["evidence"]["stages"]) == 6
+    assert result["evidence"]["stages"][-1]["returncode"] == 17
+    assert result["evidence"]["stages"][-1]["progress"]["counts"]["fail"] == 1
+    ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
+    assert len(ledger["stages"][-1]["progress"]["last_markers"]["fail"]["text"]) > 3800
+
+
+def test_log_write_error_still_drains_and_finalizes_incomplete(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    import _windows_repro_evidence as evidence
+    real_exclusive = evidence._exclusive
+    class BrokenLog:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+        def write(self, data):
+            raise OSError("fixture disk full")
+        def close(self):
+            self.wrapped.close()
+    def exclusive(path):
+        wrapped = real_exclusive(path)
+        return BrokenLog(wrapped) if path.name.endswith(".stdout.log") else wrapped
+    monkeypatch.setattr(evidence, "_exclusive", exclusive)
+    record, _ = run_build_fixture(repo, "os.write(1, b'x'*3000000 + b'\\n[PASS] after-write-error\\n'); os.write(2, b'y'*3000000)")
+    assert record["stdout"]["observed_bytes"] == 3000026
+    assert record["stderr"]["observed_bytes"] == 3000000
+    assert record["stdout"]["stored_bytes"] == 0
+    assert record["outcome"] == "capture_error" and record["capture_complete"] is False
+    assert record["progress"]["last_markers"]["pass"]["text"] == "[PASS] after-write-error"
+    assert record["stdout"]["errors"] == record["capture_errors"]
+
+
+def test_real_gnu_timeout_124_is_failure_with_retained_progress(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, "package-windows-runtime.sh", "print('[RUN] active at timeout', flush=True)\nos.execvp('timeout', ['timeout', '.15s', sys.executable, '-c', 'import time; time.sleep(30)'])")
+    result = windows_ci_repro.reproduce(repo)
+    stage = result["evidence"]["stages"][-1]
+    assert result["status"] == "fail"
+    assert stage["returncode"] == 124 and stage["outcome"] == "timeout"
+    assert stage["progress"]["last_markers"]["run"]["text"] == "[RUN] active at timeout"
+
+
+def test_shell_diagnostics_do_not_change_admission_conditions_and_reject_filter(tmp_path):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    dispatcher = runtime.bin / "fake-wine"
+    dispatcher.write_text(dispatcher.read_text().replace("'WINEDLLOVERRIDES','WINEPREFIX'", "'TEST_VERBOSE','SPACE_TEST_TIMINGS','WINEDLLOVERRIDES','WINEPREFIX'"))
+    runtime.package()
+    assert runtime.prepare([10, 0]).returncode == 0
+    receipt = runtime.overlay / "admission.json"
+    before = receipt.read_bytes()
+    assert runtime.run("test-windows-under-wine.sh").returncode == 0
+    app = [c for c in runtime.calls() if "wine" in c][-1]
+    assert app["env"]["TEST_VERBOSE"] == "1" and app["env"]["SPACE_TEST_TIMINGS"] == "1"
+    assert receipt.read_bytes() == before
+    runtime.env["TEST_FILTER"] = "unknown-selection"
+    count = len(runtime.calls())
+    result = runtime.run("test-windows-under-wine.sh")
+    assert result.returncode != 0
+    assert len(runtime.calls()) == count
+
+
+def test_admission_builtin_compat_phases_stay_separate_from_full_tests(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, "prepare-windows-wine-runtime.sh", "print('Wine admission: probe backend=bcryptprimitives=b;advapi32,cryptbase=b deadline=60s kill-after=5s', flush=True)\nprint('Wine admission: probe exit=10', flush=True)\nprint('Wine admission: probe backend=bcryptprimitives=n;advapi32,cryptbase=b deadline=60s kill-after=5s', flush=True)\nprint('Wine admission: probe exit=0', flush=True)")
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "pass"
+    assert result["evidence"]["stages"][-2]["progress"]["admission_phases"] == [
+        {"backend": "builtin", "returncode": 10}, {"backend": "compat", "returncode": 0}]
+    assert result["evidence"]["stages"][-1]["progress"]["admission_phases"] == []
+
+
+@pytest.mark.parametrize("damage", ["malformed-marker", "changed-log", "linked-log", "identity"])
+def test_pruning_preserves_damaged_owned_evidence(tmp_path, monkeypatch, damage):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    first = windows_ci_repro.reproduce(repo)
+    run_dir = (repo / first["evidence"]["ledger_path"]).parent
+    marker = run_dir / ".space-windows-repro-v1.json"
+    if damage == "malformed-marker":
+        marker.write_text("[]")
+    elif damage == "identity":
+        data = json.loads(marker.read_text())
+        data["ownership"]["identity"]["build"][1] += 1
+        marker.write_text(json.dumps(data))
+    else:
+        log = run_dir / "build-windows-from-linux.stdout.log"
+        if damage == "changed-log":
+            log.write_text("quarantined modified log")
+        else:
+            target = tmp_path / "unrelated"
+            target.write_text("unrelated")
+            log.unlink()
+            log.symlink_to(target)
+    before = marker.read_bytes()
+    for _ in range(4):
+        result = windows_ci_repro.reproduce(repo)
+        assert result["status"] == "pass", result
+    assert marker.read_bytes() == before
+    assert run_dir.is_dir()
+
+
+def test_budget_retains_failure_context_with_extreme_metadata(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    receipt = repo / "build/wine/windows/admission.json"
+    data = json.loads(receipt.read_text())
+    data["wine"]["executable"] = "/" + "😀" * 4000
+    data["wine"]["version"] = "\x01" * 4000
+    receipt.write_text(json.dumps(data))
+    monkeypatch.setenv("WINEPREFIX", "/" + "😀" * 4000)
+    body = "\n".join(f"print('[{kind}] ' + '\\x01' * 3800 + '😀' * 40, flush=True)"
+                     for kind in ("LAUNCH", "BOOT", "LOAD", "RUN", "PASS", "TIME"))
+    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", "prepare-windows-wine-runtime.sh"):
+        fixture_script(repo, script, body)
+    fixture_script(repo, "test-windows-under-wine.sh", body + "\nprint('[FAIL] important failure context: broken call', file=sys.stderr, flush=True)\nsys.exit(17)")
+    result = windows_ci_repro.reproduce(repo)
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    assert len(result["evidence"]["stages"]) == 6
+    failure = result["evidence"]["stages"][-1]
+    assert "important failure context: broken call" in failure["stderr"]["tail"]
+    assert failure["returncode"] == 17
+    assert result["evidence"]["response_truncated"] is True
+
+
+def test_missing_home_does_not_guess_default_prefix_identity(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.delenv("WINEPREFIX", raising=False)
+    monkeypatch.delenv("HOME", raising=False)
+    fixture_script(repo, "prepare-windows-wine-runtime.sh", "print('HOME is required', file=sys.stderr); sys.exit(1)")
+    result = windows_ci_repro.reproduce(repo)
+    assert result["evidence"]["metadata"]["effective_prefix"] is None
+    assert result["status"] == "fail"
+
+
+def test_missing_admission_metadata_is_not_complete_pass_or_full_launch(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    (repo / "build/wine/windows/admission.json").unlink()
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "fail"
+    assert result["evidence"]["complete"] is False
+    assert result["evidence"]["failing_step"] == "wine-admission"
+    assert result["evidence"]["stages"][-1]["outcome"] == "evidence_error"
+    assert result["evidence"]["stages"][-1]["returncode"] == 0
+    assert "fast" not in (repo / "dispatch").read_text()
+
+
+def test_long_repo_root_uses_relative_log_paths_and_encoded_response_stays_bounded(tmp_path, monkeypatch):
+    parent = tmp_path
+    for _ in range(16):
+        parent = parent / ("r" * 200)
+    parent.mkdir(parents=True)
+    repo = reproduction_fixture(parent, monkeypatch)
+    assert len(str(repo)) > 3200
+    result = windows_ci_repro.reproduce(repo)
+    assert result["status"] == "pass"
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    assert all(s["stdout"]["path"].startswith("build/windows-ci-repro/") for s in result["evidence"]["stages"])
+
+
+def test_prefix_metadata_uses_same_working_directory_as_admission(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv("WINEPREFIX", "selected-prefix")
+    result = windows_ci_repro.reproduce(repo)
+    assert result["evidence"]["metadata"]["effective_prefix"] == str(repo / "selected-prefix")
+
+
+def install_atomic_writer(monkeypatch, target, write):
+    import _windows_repro_evidence as evidence
+    original = evidence._exclusive
+    class Writer:
+        def __init__(self, output):
+            self.output = output
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            self.output.close()
+        def fileno(self):
+            return self.output.fileno()
+        def write(self, data):
+            return write(self.output, data)
+    def exclusive(path):
+        output = original(path)
+        return Writer(output) if path.parent == target.parent and path.name.startswith(f".{target.name}.") else output
+    monkeypatch.setattr(evidence, "_exclusive", exclusive)
+
+
+@pytest.mark.parametrize("name", ["ledger.json", ".space-windows-repro-v1.json"])
+def test_atomic_partial_then_enospc_preserves_previous_checkpoint(tmp_path, monkeypatch, name):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    run_dir = windows_ci_repro._new_repro_run(repo)
+    target = run_dir / name
+    before = target.read_bytes()
+    calls = []
+    def partial_then_fail(output, data):
+        calls.append(len(data))
+        if len(calls) == 1:
+            return output.write(data[:7])
+        raise OSError(errno.ENOSPC, "fixture atomic disk full")
+    install_atomic_writer(monkeypatch, target, partial_then_fail)
+    with pytest.raises(OSError, match="fixture atomic disk full"):
+        evidence._atomic(target, {"replacement": "must never replace a valid checkpoint"})
+    assert len(calls) == 2
+    assert target.read_bytes() == before
+    assert json.loads(target.read_bytes())
+    assert not list(run_dir.glob(f".{target.name}.*.tmp"))
+
+
+@pytest.mark.parametrize("progress", [0, -1, None, False, True, 1.5, "1", 1000000])
+def test_atomic_rejects_invalid_write_progress_without_replacing(tmp_path, monkeypatch, progress):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    run_dir = windows_ci_repro._new_repro_run(repo)
+    target = run_dir / "ledger.json"
+    before = target.read_bytes()
+    install_atomic_writer(monkeypatch, target, lambda output, data: progress)
+    with pytest.raises(OSError, match="write progress"):
+        evidence._atomic(target, {"replacement": "incomplete"})
+    assert target.read_bytes() == before
+
+
+def test_atomic_completes_short_writes_before_fsync_and_replace(tmp_path, monkeypatch):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    run_dir = windows_ci_repro._new_repro_run(repo)
+    target = run_dir / "ledger.json"
+    value = {"replacement": "complete 😀 checkpoint" * 20}
+    expected = (json.dumps(value, sort_keys=True) + "\n").encode()
+    written = 0
+    def short_write(output, data):
+        nonlocal written
+        count = output.write(data[:7])
+        written += count
+        return count
+    install_atomic_writer(monkeypatch, target, short_write)
+    original_fsync = evidence.os.fsync
+    def fsync(fd):
+        assert written == len(expected)
+        original_fsync(fd)
+    monkeypatch.setattr(evidence.os, "fsync", fsync)
+    evidence._atomic(target, value)
+    assert target.read_bytes() == expected
+
+
+def test_persistent_checkpoint_enospc_keeps_memory_progress_history_and_pointers(tmp_path, monkeypatch):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    suffix = "\n[RUN] checkpoint failure\n[PASS] after checkpoint failure\n"
+    fixture_script(repo, "package-windows-runtime.sh", "os.write(1, b'x'*3000000 + b'\\n[RUN] checkpoint failure\\n')\ntime.sleep(.4)\nprint('[PASS] after checkpoint failure', flush=True)\nsys.exit(17)")
+    original = evidence._atomic
+    failed_calls = []
+    before = {}
+    def disk_full(path, value):
+        stages = value.get("stages", [])
+        trigger = (path.name == "ledger.json" and stages and stages[-1]["step"] == "package-windows-runtime"
+                   and stages[-1]["outcome"] == "started" and stages[-1]["progress"]["counts"]["run"])
+        if before or trigger:
+            if not before:
+                before["ledger"] = path.read_bytes()
+                before["marker"] = (path.parent / evidence._MARKER).read_bytes()
+            failed_calls.append(path.name)
+            raise OSError(errno.ENOSPC, "fixture persistent checkpoint disk full")
+        return original(path, value)
+    monkeypatch.setattr(evidence, "_atomic", disk_full)
+    result = windows_ci_repro.reproduce(repo)
+    data = result["evidence"]
+    assert result["status"] == "fail" and data["complete"] is False
+    assert data["failing_step"] == "package-windows-runtime"
+    assert [s["step"] for s in data["stages"]] == ["preflight", "build-windows-from-linux", "package-windows-runtime"]
+    assert data["stages"][1]["stdout"]["tail"] == "successful build\n"
+    stage = data["stages"][-1]
+    assert stage["returncode"] == 17 and stage["outcome"] == "nonzero_exit"
+    assert stage["capture_complete"] is False
+    assert stage["stdout"]["observed_bytes"] == 3000000 + len(suffix)
+    assert stage["progress"]["counts"]["run"] == stage["progress"]["counts"]["pass"] == 1
+    assert stage["progress"]["latest"]["text"] == "[PASS] after checkpoint failure"
+    assert "persistent checkpoint disk full" in " ".join(data["persistence_errors"])
+    assert len(failed_calls) == 1  # No recursive final-save/seal retries on broken storage.
+    assert data["sealed"] is False
+    ledger_path = repo / data["ledger_path"]
+    assert ledger_path.read_bytes() == before["ledger"]
+    assert (ledger_path.parent / evidence._MARKER).read_bytes() == before["marker"]
+    assert json.loads(ledger_path.read_bytes())["stages"][-1]["outcome"] == "started"
+    assert all((repo / s[stream]["path"]).is_file() for s in data["stages"] for stream in ("stdout", "stderr"))
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+
+
+@pytest.mark.parametrize("fault", ["final-save", "seal"])
+@pytest.mark.parametrize("code", [0, 17, 124])
+def test_finalization_storage_failure_keeps_actual_status_and_complete_history(tmp_path, monkeypatch, fault, code):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, "test-windows-under-wine.sh", f"print('[RUN] finalized fixture', flush=True)\nsys.exit({code})")
+    original = evidence._atomic
+    failed_calls = []
+    before = {}
+    def disk_full(path, value):
+        trigger = ((fault == "final-save" and path.name == "ledger.json" and value.get("finished_utc"))
+                   or (fault == "seal" and path.name == evidence._MARKER and value.get("state") == "finalized"))
+        if before or trigger:
+            if not before:
+                before["ledger"] = (path.parent / "ledger.json").read_bytes()
+                before["marker"] = (path.parent / evidence._MARKER).read_bytes()
+            failed_calls.append(path.name)
+            raise OSError(errno.ENOSPC, f"fixture persistent {fault} disk full")
+        return original(path, value)
+    monkeypatch.setattr(evidence, "_atomic", disk_full)
+    result = windows_ci_repro.reproduce(repo)
+    data = result["evidence"]
+    assert result["status"] == "fail" and data["complete"] is False
+    assert len(data["stages"]) == 6
+    assert data["stages"][1]["stdout"]["tail"] == "successful build\n"
+    stage = data["stages"][-1]
+    assert stage["returncode"] == code
+    assert stage["outcome"] == {0: "pass", 17: "nonzero_exit", 124: "timeout"}[code]
+    assert stage["progress"]["latest"]["text"] == "[RUN] finalized fixture"
+    assert all(s["finished_utc"] for s in data["stages"])
+    assert data["sealed"] is False
+    assert fault in " ".join(data["persistence_errors"])
+    assert len(failed_calls) == 1
+    ledger_path = repo / data["ledger_path"]
+    assert ledger_path.read_bytes() == before["ledger"]
+    assert (ledger_path.parent / evidence._MARKER).read_bytes() == before["marker"]
+    assert json.loads(ledger_path.read_bytes())
+    assert all((repo / s[stream]["path"]).is_file() for s in data["stages"] for stream in ("stdout", "stderr"))
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+
+
+def test_eof_checkpoint_is_visible_during_live_child_shutdown_without_spin(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    cpu = time.process_time()
+    record, _ = run_build_fixture(repo, "print('[RUN] shutting down', flush=True)\nos.close(1); os.close(2)\ntime.sleep(.3)\np=next(pathlib.Path('build/windows-ci-repro').glob('*/ledger.json'))\ns=json.loads(p.read_text())['stages'][-1]\npathlib.Path('shutdown-checkpoint.json').write_text(json.dumps({'stage':s,'pid':os.getpid()}))\ntime.sleep(.4)")
+    snapshot = json.loads((repo / "shutdown-checkpoint.json").read_text())
+    assert snapshot["stage"]["outcome"] == "started"
+    assert snapshot["stage"]["progress"]["latest"]["text"] == "[RUN] shutting down"
+    assert snapshot["stage"]["stdout"]["eof"] is True and snapshot["stage"]["stderr"]["eof"] is True
+    assert record["returncode"] == 0 and record["elapsed_seconds"] >= .7
+    assert time.process_time() - cpu < .25
+
+
+@pytest.mark.parametrize("step", ["wine-fast", "build-windows-from-linux"])
+def test_zero_exit_runner_failure_is_rejected_only_for_wine_fast(tmp_path, monkeypatch, step):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    script = "test-windows-under-wine.sh" if step == "wine-fast" else "build-windows-from-linux.sh"
+    fixture_script(repo, script, "print('[FAIL] failed runner case', file=sys.stderr, flush=True)")
+    result = windows_ci_repro.reproduce(repo)
+    stage = next(s for s in result["evidence"]["stages"] if s["step"] == step)
+    assert stage["returncode"] == 0
+    assert stage["capture_complete"] is True
+    assert stage["progress"]["last_markers"]["fail"]["stream"] == "stderr"
+    if step == "wine-fast":
+        assert result["status"] == "fail" and result["evidence"]["complete"] is False
+        assert result["evidence"]["failing_step"] == "wine-fast"
+        assert stage["outcome"] == "inconsistent_result"
+    else:
+        assert result["status"] == "pass" and stage["outcome"] == "pass"
+
+
+def test_clock_rollback_retention_always_protects_current_run(tmp_path, monkeypatch):
+    import _windows_repro_evidence as evidence
+    from datetime import datetime, timezone
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    old = [windows_ci_repro.reproduce(repo) for _ in range(3)]
+    class RolledBack(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2000, 1, 1, tzinfo=timezone.utc)
+    monkeypatch.setattr(evidence, "datetime", RolledBack)
+    current = windows_ci_repro.reproduce(repo)
+    data = current["evidence"]
+    assert current["status"] == "pass"
+    assert Path(data["ledger_path"]).parent.name.startswith("20000101T")
+    assert (repo / data["ledger_path"]).is_file()
+    assert all((repo / s[stream]["path"]).is_file() for s in data["stages"] for stream in ("stdout", "stderr"))
+    assert not (repo / old[0]["evidence"]["ledger_path"]).exists()
+    assert all((repo / result["evidence"]["ledger_path"]).exists() for result in old[1:])
+    assert len(list((repo / "build/windows-ci-repro").iterdir())) == 3
