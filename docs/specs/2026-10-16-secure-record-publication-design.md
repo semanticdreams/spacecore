@@ -1,115 +1,142 @@
-# Secure record publication correction
+# Compatible secure record publication
 
-## Authority and scope
+## Authority and correction
 
-The user explicitly approved a narrow native publication boundary after final
-whole-branch review of uniform graph capabilities found two defects: CRT rename
-does not reliably overwrite existing files on Windows, and ordinary staging can
-expose private content or replace a restricted destination with broader access.
-This supplements `2026-10-15-uniform-graph-access-design.md`; it does not change
-the graph contract or authorize an ACL framework or unrelated filesystem repair.
+The user authorized a native correction for Windows overwrite failures and
+private-record permission weakening found during whole-branch graph review.
+Ordinary default editing must continue to work: refusing normal umask002 paths
+is an implementation defect, not an accepted product policy. The user clarified
+that these interfaces are fresh and internal; migrate all repository callers,
+refactor when useful, and do not retain draft APIs through compatibility shims.
 
-The diagnosis and unavailable existing primitives are recorded in
-`.superpowers/sdd/graph-capabilities/publication-fix-report.md`. Existing native
-atomic replacement applies permissions after writing; it cannot supply the
-required before-content privacy. The existing JSON helper remains canonical.
+This document supersedes its earlier pathname-callback design. Root causes and
+chronology remain in `.superpowers/sdd/secure-record-publication/` reports. The
+callback required overly strict ancestry because another user could redirect its
+path before private writes. Preparing special test fixtures did not fix ordinary
+userdata. The replacement removes the path-writing mechanism, not privacy checks.
 
-## Alternatives and selected boundary
+## Selected mechanism
 
-1. Adapt `fs.rename` locally: fixes the CRT/void-return issue but not security.
-2. Add a native file writer and change JSON helper write hooks: workable, but
-   introduces shared-helper surface and two coordinated staging paths.
-3. **Selected:** one scoped native publication operation owns an exclusive private
-   sibling directory, calls the current checked text/JSON writer inside it,
-   verifies bytes and security, and performs atomic publication.
+Three options were considered:
 
-This reuses `json-utils.write-json!` unchanged while protecting both its destination
-and `.tmp` name. Directory ownership is local to a synchronous operation, not a
-new Lua lifetime/service or a general persistence abstraction.
+1. Linux `/proc/self/fd` callback paths anchor a writer but are not a portable
+   macOS/Windows interface and depend on procfs availability.
+2. **Selected:** native code already receives the complete serialized payload;
+   write it directly through exclusively owned handles, verify and publish through
+   pinned directory/file handles. JSONUtils gains a small publisher hook and
+   remains the canonical JSON-writing abstraction.
+3. A separate private-directory allocator still leaves subsequent pathname
+   resolution redirectable and adds lifetime machinery without solving the defect.
 
-## Contract
+Retain one focused native publication module. No general filesystem/ACL framework,
+new runtime, production subprocess, global umask mutation, or parent chmod.
 
-Add `fs.publish-record(destination, expected-bytes, stage!, opts?)` returning
-`{committed: true, cleanup-error?: string}`. `stage!` receives the single owned
-staging file path. Callback failure, mismatch, security-preparation failure, or
-publication failure before commit raises an explicit error. Successful atomic
-replacement is the commit point; subsequent cleanup failure must not be reported
-as a rolled-back mutation.
+## Native contract
 
-The operation owns short, exclusive same-directory staging independent of the
-destination basename. Create restrictions before invoking any writer or storing
-private bytes. The callback's record path starts absent; only the JSON temporary
-is privately precreated. Thus the unchanged JSON helper renames to a new record,
-without depending on inner overwrite behavior. The only expected entries are
-the fixed record and JSON temporary. Keep cleanup attempt-local, identity checked,
-and nonrecursive; never
-remove the destination to make publication work. Do not expose an independently
-owned stage to Lua GC or retain callbacks after the synchronous call.
+`fs.publish-record(destination, payload, opts?)` returns
+`{committed: true, cleanup-error?: string}`. Remove the staging callback and its
+native type entirely. No overloaded legacy signature or writable-path callback
+escapes. Retain the three explicit test phase hooks; they are not payload writers.
 
-Use a focused native module behind the existing filesystem binding. RecordFiles
-retains checked write/flush/close behavior, byte verification, failure injection,
-and successful boolean return. Replace its old rename seam with phase hooks
-at the new owning boundary, migrating tests instead of keeping a bypass alias.
+Pin the target directory, exclusively allocate a private workspace and record,
+establish confidentiality before bytes, and write the payload through retained
+handles. Check partial writes, interruptions, completion, readback and identity.
+There is no JSON `.tmp` inside this native operation: it writes serialized bytes
+directly. New records publish privately; existing records retain supported access
+restrictions. Unsupported or unreadable security policy fails explicitly.
 
-## Access restrictions and platform behavior
+Reserve an internal `.space-publication` directory within each destination
+parent, created exclusively or opened without following links and verified as
+owned/private before use. Retain this anchor intentionally; never remove its
+entry from a foreign-writable parent. Each operation owns a private attempt
+directory beneath the retained anchor handle. Attempt cleanup is therefore in
+a private namespace, not identity-check-then-unlink in a shared writable parent.
+An empty retained anchor is metadata, not a leak or cleanup error. Do not sweep
+other attempts or unrelated anchor entries, or compare volatile directory times
+and link counts as identity. The anchor has no independent service/global cache.
 
-- POSIX staging directory is private (0700). It protects effective access to
-  intermediate files even if the unchanged writer's creation mode inside it is
-  broader; no private content is publicly reachable. Newly created records must
-  have verified private mode0600 before publication outside that directory.
-- Existing destinations retain their owner/group/mode restrictions. Inspect
-  additional ACL/security policy rather than assuming mode bits describe it all;
-  preserve supported restrictions or fail closed before publication. Do not
-  silently drop restrictive ACLs or broaden access.
-- Windows staging uses an explicit owner-restricted, inheritable protected DACL,
-  not an assumption about default temporary-file permissions. Preserve the
-  existing destination's supported owner/group/DACL and restrictive policy before
-  atomic overwrite, with checked native security APIs. Unsupported/uninspectable
-  policies fail explicitly; no generic ACL editing interface is introduced.
-- Final replacement must work on existing Windows destinations, without a
-  delete-first or cross-volume-copy fallback. Do not rely on CRT `os.rename`.
-- Verify regular-file identities, short staging ownership and destination policy
-  before commit. Reject symlink/reparse/hard-link cases where identity/security
-  preservation cannot be guaranteed. Do not follow a substituted staging entry.
-- The path-based callback must operate under trusted, stable ancestry. Defend
-  against other local users accessing or substituting private staging. Hostile
-  same-identity writers and general external-writer transactions remain excluded.
-- Never change process-wide umask, invoke a production shell, apply restrictions
-  only after publicly writing content, or ignore a security-check failure.
+POSIX anchors require directory type, effective-user ownership, exact0700,
+supported inspectable metadata and named-entry/handle identity. Windows anchors
+require a non-reparse local directory with the expected owner and protected
+owner-only inheritable DACL. Reject unsafe or uninspectable preexisting entries,
+including file/symlink/name collisions, without chmod or ownership takeover.
+Do not widen the owner-only anchor to serve multiple UIDs in one directory;
+this boundary supports the per-user owning stores in scope.
 
-Supported platform-policy details and exact native validation must be explicit in
-the plan and code; complex unsupported policies may be rejected rather than
-approximately copied. This is not metadata migration or a power-loss guarantee.
+On Linux/macOS, use directory-relative `openat`/`mkdirat`/`fstatat`/`renameat`.
+On Windows, use directory-handle-relative `NtCreateFile` and retained-source-handle
+`NtSetInformationFile(FileRenameInformation)` with the pinned target directory.
+Do not pretend Win32 FILE_RENAME_INFO.RootDirectory accepts a non-null value, or
+fall back to path-based MoveFileExW when anchoring cannot be established.
+Resolve the needed Native API entry points explicitly and fail if unavailable.
 
-## Failure and cache ordering
+Group/other write bits on an ancestor are not, by themselves, grounds to refuse
+ordinary editing when writes and commit are handle anchored. Preserve normal
+default/custom roots under umask002 and existing home0750/inner0775 layouts.
+Verify relevant namespace identity/security changes before commit; do not claim
+an external-writer transaction. Other local users must not redirect private bytes
+into their files. Denial of service and hostile same-identity writers are not
+prevented by this boundary.
 
-All precommit failures leave destination bytes/access and owning cache/revision
-unchanged. Native RAII cleans only this attempt even after a Lua callback throws.
-Fault hooks are local test seams before security, commit, and cleanup; the final
-security check has no intervening arbitrary Lua callback before commit.
+Renaming the public anchor entry cannot redirect already retained handles.
+Revalidate relevant namespace changes before publication and clean only through
+verified private handles, leaving foreign/substituted public entries untouched.
+Record filenames/formats are unchanged, but record-empty directories may contain
+the retained private anchor; store scans must continue filtering records rather
+than assuming filesystem emptiness.
 
-After commit, return committed status before handling cleanup diagnostics. Stores
-must still publish their cache/revision and follow existing notification behavior.
-Cleanup diagnostics must be surfaced without claiming rollback or encouraging a
-blind retry. Existing store APIs, formats, exact text and graph DTOs are unchanged.
+Preserve the existing bounded policy for destination restrictions: POSIX supported
+UID/GID/mode without silently dropping unsupported ACL/xattr policy; Windows
+supported owner/group/ordered allow-deny DACL, with explicit unsupported-policy
+refusal. Keep new files private, never broaden access while preparing publication,
+and do not delete the destination to make overwrite succeed.
 
-## Acceptance and validation
+Run final byte, link, identity and security checks after any phase fault hook,
+with no arbitrary Lua callback between final validation and atomic commit. Latch
+commit immediately after success. Fixed-entry, identity-checked, nonrecursive
+cleanup owns only the attempt. Retained handle-close or cleanup failures after
+commit are diagnostics, not rollback claims. No power-loss guarantee is made.
 
-1. Existing text/link create, unconditional update and revision replacement work
-   through the new default boundary, including long destination basenames.
-2. POSIX child-process umask022 tests start from0600 files and verify final access
-   is0600 for text replacement/update and link update. Inspect privacy while both
-   staging and JSON `.tmp` contain bytes, not just after commit.
-3. Security/verification/publication faults preserve old bytes, access, cached
-   object identity/content/revision and unrelated temporary artifacts.
-4. Test destination security/identity changes before commit, unsafe links, Lua
-   errors, owned cleanup and honest postcommit cleanup outcomes.
-5. Guarded Windows/Wine tests cover existing overwrite and supported ACL
-   preservation including deny restrictions; native Windows validation remains
-   authoritative. No ad-hoc dependency installation or broad permission prompts.
-6. Build native changes, then project-native Fennel compile, constraints and
-   focused native/store/graph/editor tests. Independent review precedes commit;
-   rerun the full local suite after reviewed fixes.
+## JSON and owning integration
 
-The previously observed native timeout/shutdown SIGSEGV remains a separate open
-incident. This correction and its passing tests do not close that investigation.
+JSONUtils remains canonical, but its implementation is not frozen. Add the
+canonical `publish!` option receiving `(path, serialized-payload)` and returning
+`true, cleanup-error?`. Serialize once and forward both returns. Without that
+option, unrelated repository callers retain their existing atomic write path;
+this is a bounded integration choice, not a public compatibility commitment.
+The unused `atomic? false` option is removed after a full caller audit; update its
+documentation and reject old/unknown options rather than add aliases.
+
+RecordFiles supplies the native-backed publisher for JSON and uses it directly
+for text. Its `open` injection remains read-only. Remove `stage-json!` and all
+production pathname-write/open/flush/close seams; migrate fault coverage to native
+writer tests and the existing owning `files` injection boundary.
+
+Preserve the already implemented store ordering: native commit, cache/revision
+publication, one normal notification attempt, then explicit committed cleanup or
+notification error. Preserve detached results, exact text, graph DTOs and the
+editor's committed-baseline advancement. Migrate all repo callers/tests/docs of
+the draft native and adapter APIs together, without compatibility overloads.
+
+## Acceptance
+
+- Unmodified production constructors create, update and replace text/link records
+  under both umask022 and002, using default/custom roots and a preexisting private
+  home with group-writable descendants. Do not treat refusal as a passing case.
+- Verify confidentiality during native writes and final0600/restricted access,
+  real overwrite on Windows, supported policy preservation, unsafe stage/namespace
+  substitutions, unsupported-policy failure, exact bytes and long basenames.
+- Verify anchor reuse, independent attempts, unsafe preexisting anchors, public
+  anchor substitution without unrelated deletion, and exact expected entries
+  including retained metadata with no owned attempt residue after normal cleanup.
+- Precommit faults preserve destination and cache/revision. Postcommit faults
+  publish cache/revision, attempt notification, and return truthful committed data.
+- Native and Fennel tests cover the new signature, strict hook validation,
+  serialization-once and second-return propagation, obsolete-option rejection,
+  ordinary JSON callers, graph operations and full/preview editor recovery.
+- Build native changes, run native Fennel compile then constraints then focused
+  native/store/graph/editor tests; independently review; rerun the full local suite
+  and platform gates. Linux/Wine/source results are not native Windows/macOS proof.
+
+The historical native timeout/shutdown SIGSEGV remains separately open. This
+refactor, its changed safety budget, and passing normal runs do not close it.
