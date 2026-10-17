@@ -368,12 +368,13 @@ def _admitted_metadata(repo: Path, session: _prefix.Session) -> dict[str, object
         tools = receipt["tools"]
         payload = receipt["payload"]
         if (receipt["version"] != 2 or not isinstance(tools, dict) or not isinstance(payload, dict)
-                or tools != session.owner['tools'] or receipt['ownedSession'] != _session_metadata(session)
+                or tools != session.owner['tools'] or receipt['ownedSession'] != session.binding()
                 or not all(isinstance(identity[key], str) and len(identity[key]) <= 4096
                            for identity in tools.values() for key in ("executable", "version", "sha256"))
                 or receipt["backend"] not in ("bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b")):
             raise ValueError("Invalid admission metadata")
-        return {"wine": {key: tools['wine'][key] for key in ("executable", "version", "sha256")},
+        return {"owned_session": session.binding(),
+                "wine": {key: tools['wine'][key] for key in ("executable", "version", "sha256")},
                 "backend": receipt["backend"],
                 "payload": {name: payload[name] for name in ("space.exe", "space-cli.exe") if name in payload},
                 "payload_inventory_sha256": hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()}
@@ -428,11 +429,6 @@ def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str],
             output.close()
             record[stream]["eof"] = True
     return _evidence._finish(repo, run_dir, ledger, record, outcome, code, complete)
-
-
-def _session_metadata(session):
-    return {"id": session.id, "nonce": session.nonce, "prefix": str(session.prefix),
-            "identity": session.owner["roots"]["prefix"], "arch": "win64"}
 
 
 def _session_state(session):
@@ -497,7 +493,7 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
                     fcntl.flock(session_fd, fcntl.LOCK_EX)
                 finally:
                     os.close(build_fd)
-                ledger['metadata'].update(owned_session=_session_metadata(session),
+                ledger['metadata'].update(owned_session=session.binding(),
                                           effective_prefix=str(session.prefix), tools=session.owner['tools'])
                 _evidence._save(repo, run_dir, ledger)
             if record['step'] == "wine-admission":

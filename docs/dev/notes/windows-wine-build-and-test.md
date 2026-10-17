@@ -397,6 +397,7 @@ Fixed GNU timeout budgets (each with a further5-second kill escalation):
 | --- | --- |
 | Prefix initialization | 90 seconds |
 | Each admission probe | 60 seconds |
+| Each owned path-conversion / registry setup command | 30 seconds |
 | Workflow smoke `--help` | 60 seconds |
 | Full application `tests.fast:main` | 1800 seconds |
 | Prefix-scoped wineserver stop / wait | 10 / 15 seconds |
@@ -454,6 +455,64 @@ so an already-gone server is a normal possibility, not a failure by itself.
 certify which silent internal Wine branch occurred or prove the full application
 suite completed. Actual guarded full 1800-second/session confirmation remains a
 separate post-review run.
+
+### Owned data roots and automatic crash reporting
+
+Each generated session also owns private0700 `data/`, `cache/` and `tmp/`
+directories immediately under its session directory. Their device/inode identities
+are immutable owner metadata alongside the prefix and tool identities. The fresh
+owner schema/bounds reject incomplete retained ownership; old sessions are not
+adopted or acted on. `Session.binding()` is the single producer for admission
+receipt and parent-wrapper owned metadata, including those roots, pinned tools,
+verified Windows temp mapping and the fixed policy verification flag. Substituted
+roots fail before launching Wine. No parent chmod or global umask change is used.
+
+Every Wine child overrides inherited XDG_DATA_HOME/XDG_CACHE_HOME with the owned
+host `data/`/`cache/` paths and POSIX TMPDIR with the owned host `tmp/`. Before
+conversion is ready, Windows TEMP/TMP are `C:\windows\temp` **inside the fresh
+owned prefix**, Wine's bootstrap system-temp location; regular host capture files
+already use the private host `tmp/`. After wineboot, the selected Wine launches
+builtin `C:\windows\system32\winepath.exe -w <owned-tmp>` then `-u <result>`.
+Only that one owned root can be converted. The result must be drive-absolute and
+roundtrip exactly to the owned host root. No `Z:` mapping is presumed or inspected.
+After verification TEMP and TMP both use that returned Windows path, so native
+temp operations and POSIX TMPDIR refer to the same owned directory. Windows
+profile data remains within the private prefix as well; old shared/home data is
+neither inspected nor cleaned. Data isolation is not claimed to fix a DACL mismatch.
+
+Before the API probe, selected builtin `C:\windows\system32\reg.exe` sets only
+these three values, with `/f /reg:64`, then queries each exact `/v` name with
+`/reg:64` to verify type and data:
+
+| Key | Value | Type | Data |
+| --- | --- | --- | --- |
+| `HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug` | `Debugger` | `REG_SZ` | `winedbg --auto %ld %ld` |
+| same AeDebug key | `Auto` | `REG_SZ` | `1` |
+| `HKCU\Software\Wine\WineDbg` | `ShowCrashDialog` | `REG_DWORD` | `0` (`0x0` query output also accepted) |
+
+All eight path/registry launches have30+5 bounds, durable generation accounting,
+closed parent FDs and bounded regular-file capture. Only these debug-policy keys
+are queried; there is no registry enumeration/hive/drive-content read or arbitrary
+key/mode interface. Utilities are builtin-pinned with utility-only DLL overrides;
+the application's admitted backend and normal features remain unchanged. Any
+conversion, write, query or verification failure prevents API/application launch,
+ends authorization and cleans the owned session. A new wineboot invalidates the
+policy verification flag until the fixed setup is reverified.
+
+Derived mapping/policy observations live separately from immutable cleanup
+authority. Invalid observations block launch/binding but cannot block safely
+owned server cleanup. The server CLI always uses its minimal immutable environment
+(including private host roots and prefix-local bootstrap Windows temp), independent
+of those observations. Owner/root/tool corruption still refuses unsafe commands;
+mutable lifecycle errors still make cleanup fail. The existing silent1/0 CLI
+acceptance policy and its native-proof limitation above are unchanged.
+
+This policy keeps the automatic `winedbg --auto` reporter enabled to produce a
+backtrace and detach without interactive crash dialogs; it does not use Auto0,
+delete Debugger, disable winedbg DLLs, alter WINEDEBUG or disable application
+features. Application status is not debugger status. Actual native reporting
+behavior remains unconfirmed by host fixtures; fatal-report timing/grace and
+launch-observation changes belong to the separate follow-up, not this component.
 
 Root/build/session ownership locks stay with their owning parents; child FDs are
 closed, so an escaped descendant cannot retain these locks. The guarded parent

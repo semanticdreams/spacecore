@@ -411,7 +411,10 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
         env = dict(os.environ)
         if session is not None:
             session.validate()
-            env.update(session.environment(), SPACE_WINE_SESSION_ID=session.id)
+            # Only the terminal backstop is independent of derived setup data;
+            # admission/application handoffs must retain normal launch validation.
+            owned_env = session._server_environment() if record['step'] == 'terminal-stop' else session.environment()
+            env.update(owned_env, SPACE_WINE_SESSION_ID=session.id)
         env.update(TEST_VERBOSE="1", SPACE_TEST_TIMINGS="1")
         proc = subprocess.Popen(args, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, start_new_session=True,

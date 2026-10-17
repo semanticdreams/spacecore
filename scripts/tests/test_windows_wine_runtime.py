@@ -13,6 +13,39 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 MARKER = ".space-windows-artifact-v1.json"
 
+# Inert host implementation of the two fixed builtin setup utilities. Every call
+# remains visible in both argv inventories; no actual Wine or registry is used.
+SETUP_UTILITIES = '''
+import json, os, pathlib, stat, sys
+_utility = pathlib.PureWindowsPath(sys.argv[1]).name.lower() if len(sys.argv) > 1 else ''
+if _utility in ['winepath.exe', 'reg.exe']:
+    with open(os.environ['FIXTURE_LOG'], 'a') as _stream:
+        _stream.write(json.dumps({'wine':sys.argv[1:], 'tool':sys.argv[0], 'args':sys.argv[1:],
+            'utility':True, 'regular_streams':all(stat.S_ISREG(os.fstat(fd).st_mode) for fd in [1,2]),
+            'env':{k:os.environ.get(k) for k in
+            ['WINEPREFIX','WINEARCH','WINESERVER','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP','WINEDLLOVERRIDES']}})+'\\n')
+    if _utility == 'winepath.exe':
+        _path = sys.argv[3]
+        if os.environ.get('FIXTURE_BAD_WINEPATH'): print('relative-temp'); sys.exit(0)
+        if sys.argv[2] == '-u' and os.environ.get('FIXTURE_BAD_ROUNDTRIP'): print('/not-owned'); sys.exit(0)
+        print('Q:' + _path.replace('/', '\\\\') if sys.argv[2] == '-w' else _path[2:].replace('\\\\', '/'))
+        sys.exit(0)
+    _name = sys.argv[sys.argv.index('/v') + 1]
+    _operation = sys.argv[2]
+    _selected = os.environ.get('FIXTURE_REG_NAME') == _name
+    if _selected and os.environ.get('FIXTURE_REG_OPERATION', 'query') == _operation:
+        if os.environ.get('FIXTURE_REG_EXIT'): sys.exit(int(os.environ['FIXTURE_REG_EXIT']))
+    if _operation == 'query':
+        _type, _value = {'Debugger':('REG_SZ','winedbg --auto %ld %ld'),
+                        'Auto':('REG_SZ','1'), 'ShowCrashDialog':('REG_DWORD','0x0')}[_name]
+        if _selected:
+            _type = os.environ.get('FIXTURE_REG_TYPE', _type)
+            _value = os.environ.get('FIXTURE_REG_VALUE', _value)
+        print(sys.argv[3].replace('HKLM', 'HKEY_LOCAL_MACHINE').replace('HKCU', 'HKEY_CURRENT_USER'))
+        print('    ' + _name + '    ' + _type + '    ' + _value)
+    sys.exit(0)
+'''
+
 
 def hashes(path):
     return {str(p.relative_to(path)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -73,7 +106,7 @@ if sys.argv[1:] == ['--version']:
     print('wine-9.0 (fixture)'); sys.exit(0)
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'wine':sys.argv[1:], 'env':{k:os.environ.get(k) for k in
-        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH']}})+'\\n')
+        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP']}})+'\\n')
 if pathlib.Path(sys.argv[1]).name == 'process-prng-probe.exe':
     p = pathlib.Path(os.environ['FIXTURE_CODES']); codes = json.loads(p.read_text())
     code = codes.pop(0); p.write_text(json.dumps(codes)); sys.exit(code)
@@ -89,6 +122,9 @@ os.execvp(args[1], args[1:])
 ''')
 
     def write_executable(self, name, text):
+        if name == 'wine':
+            first, rest = text.split('\n', 1)
+            text = first + '\n' + SETUP_UTILITIES + '\n' + rest
         path = self.bin / name
         path.write_text(text)
         path.chmod(0o755)
@@ -176,7 +212,7 @@ def test_builtin_success_never_builds_bridge_and_app_uses_receipt(runtime):
     result = runtime.run("test-windows-under-wine.sh")
     assert result.returncode == 0, result.stderr
     calls = runtime.calls()
-    boot, probes, app = [c for c in calls if "wine" in c]
+    boot, probes, app = [c for c in calls if "wine" in c and not c.get('utility')]
     assert probes["env"]["WINEDLLOVERRIDES"] == "bcryptprimitives=b;advapi32,cryptbase=b"
     assert app["env"]["WINEDLLOVERRIDES"] == probes["env"]["WINEDLLOVERRIDES"]
     assert app["env"]["WINEPREFIX"] == probes["env"]["WINEPREFIX"]
@@ -186,7 +222,7 @@ def test_builtin_success_never_builds_bridge_and_app_uses_receipt(runtime):
     assert app["env"]["SPACE_BIN"] == str(runtime.overlay / "space-cli.exe")
     assert str(runtime.overlay / "assets/lua") in app["env"]["FENNEL_PATH"]
     assert app["env"]["FENNEL_PATH"] == app["env"]["FENNEL_MACRO_PATH"]
-    assert [c["timeout"] for c in calls if "timeout" in c] == ["60s", "60s", "90s", "60s", "10s", "15s", "1800s", "10s", "15s"]
+    assert [c["timeout"] for c in calls if "timeout" in c] == ["60s", "60s", "90s", *["30s"] * 8, "60s", "10s", "15s", "1800s", "10s", "15s"]
     assert all(c["kill_after"] == "--kill-after=5s" for c in calls if "timeout" in c)
     assert not (runtime.overlay / "bcryptprimitives.dll").exists()
 
@@ -196,7 +232,7 @@ def test_compat_selection_is_fixed_and_receipt_is_not_shell(runtime):
     assert runtime.prepare([10, 0]).returncode == 0
     runtime.env["WINEDLLOVERRIDES"] = "malicious=inherited"
     assert runtime.run("test-windows-under-wine.sh").returncode == 0
-    wine = [c for c in runtime.calls() if "wine" in c and c['wine'][0] != 'wineboot.exe']
+    wine = [c for c in runtime.calls() if "wine" in c and c['wine'][0] != 'wineboot.exe' and not c.get('utility')]
     assert [c["env"]["WINEDLLOVERRIDES"] for c in wine] == [
         "bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b",
         "bcryptprimitives=n;advapi32,cryptbase=b"]
@@ -472,7 +508,7 @@ def test_selected_wine_resolves_symlink_before_parent_directory(runtime):
     assert json.loads(receipt)["tools"]["wine"] == expected
     result = runtime.run("test-windows-under-wine.sh")
     assert result.returncode == 0, result.stderr
-    assert [c["selected"] for c in runtime.calls() if "wine" in c] == [
+    assert [c["selected"] for c in runtime.calls() if "wine" in c and not c.get('utility')] == [
         "filesystem-selected", "filesystem-selected", "filesystem-selected"]
     assert (runtime.overlay / "admission.json").read_bytes() == receipt
     assert before_executables == (hashes(versions), hashes(tools))

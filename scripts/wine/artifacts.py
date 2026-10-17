@@ -228,11 +228,6 @@ def launch_conditions():
     return {key: os.environ.get(key) for key in ("DISPLAY", "WAYLAND_DISPLAY")}
 
 
-def session_binding(session):
-    return {"id": session.id, "nonce": session.nonce, "prefix": str(session.prefix),
-            "identity": session.owner["roots"]["prefix"], "arch": "win64"}
-
-
 def probe(session, backend):
     before = verify(OVERLAY, "wine-overlay")
     print(f"Wine admission: probe backend={backend} deadline=60s kill-after=5s", flush=True)
@@ -254,6 +249,7 @@ def _prepare_payload(session):
     code = prefix.initialize(session)
     if code:
         raise ValueError(f"Wine initialization failed: exit={code}")
+    prefix.configure_crash_reporting(session)
     with private_stage(OVERLAY.parent) as stage:
         # Copy only the immutable, verified native package, never build leftovers.
         for item in PACKAGE.iterdir():
@@ -277,7 +273,7 @@ def _prepare_payload(session):
         raise ValueError("Native package changed during Wine admission")
     cleanup = prefix.stop_session(session, end=False)
     require_cleanup(cleanup)
-    receipt = {"version": 2, "ownedSession": session_binding(session),
+    receipt = {"version": 2, "ownedSession": session.binding(),
                "tools": session.owner["tools"], "conditions": conditions,
                "backend": backend, "package": package_before,
                "payload": verify(OVERLAY, "wine-overlay")}
@@ -302,7 +298,7 @@ def configuration(session):
     backend = receipt.get("backend")
     payload = {k: v for k, v in entries.items() if k != "admission.json"}
     if (receipt.get("version") != 2 or backend not in (BUILTIN, COMPAT)
-            or receipt.get("ownedSession") != session_binding(session)
+            or receipt.get("ownedSession") != session.binding()
             or receipt.get("tools") != session.owner['tools']
             or receipt.get("payload") != payload or receipt.get("package") != native
             or receipt.get("conditions") != launch_conditions()):
@@ -391,7 +387,7 @@ def execute_admitted(session, mode):
         if mode == 'fast1800':
             args = ['-m', 'tests.fast:main']
             env.update(TEST_VERBOSE='1', SPACE_TEST_TIMINGS='1', SKIP_KEYRING_TESTS='1',
-                       XDG_DATA_HOME='/tmp/space/tests/xdg-data', PWD=str(ROOT), SPACE_DISABLE_AUDIO='1')
+                       PWD=str(ROOT), SPACE_DISABLE_AUDIO='1')
             print('[LAUNCH] Wine full fast module=tests.fast:main deadline=1800s TEST_VERBOSE=1 SPACE_TEST_TIMINGS=1', flush=True)
         return session.launch([config['wine'], str(OVERLAY / 'space-cli.exe'), *args], mode, env)
     return owning_operation(session, execute)

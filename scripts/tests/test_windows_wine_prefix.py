@@ -15,11 +15,185 @@ import pytest
 from test_windows_wine_runtime import Fixture
 
 ROOT = Path(__file__).resolve().parents[2]
+EXPECTED_POLICY = [
+    (r'HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug', 'Debugger', 'REG_SZ', 'winedbg --auto %ld %ld'),
+    (r'HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug', 'Auto', 'REG_SZ', '1'),
+    (r'HKCU\Software\Wine\WineDbg', 'ShowCrashDialog', 'REG_DWORD', '0'),
+]
+
+
+def setup_argv(session):
+    reg = r'C:\windows\system32\reg.exe'
+    winepath = r'C:\windows\system32\winepath.exe'
+    windows_tmp = 'Q:' + str(session.tmp).replace('/', '\\')
+    return ([[winepath, '-w', str(session.tmp)], [winepath, '-u', windows_tmp]] +
+            [[reg, 'add', key, '/v', name, '/t', typ, '/d', value, '/f', '/reg:64']
+             for key, name, typ, value in EXPECTED_POLICY] +
+            [[reg, 'query', key, '/v', name, '/reg:64'] for key, name, _, _ in EXPECTED_POLICY])
 
 
 @pytest.fixture
 def runtime(tmp_path):
     return Fixture(tmp_path)
+
+
+def test_owned_roots_are_private_isolated_and_override_inherited_data(runtime, monkeypatch):
+    module = prefix_module()
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    inherited = runtime.bin.parent / 'unowned-data'
+    inherited.mkdir()
+    sentinel = inherited / 'sentinel'
+    sentinel.write_text('leave old shared data alone')
+    for key in ['XDG_DATA_HOME', 'XDG_CACHE_HOME', 'TMPDIR', 'TEMP', 'TMP']:
+        monkeypatch.setenv(key, str(inherited))
+    first, second = module.create_session(runtime.root), module.create_session(runtime.root)
+    for session in [first, second]:
+        assert all((session.directory / name).is_dir() for name in ['data', 'cache', 'tmp'])
+        for name in ['data', 'cache', 'tmp']:
+            path = session.directory / name
+            assert path.stat().st_mode & 0o777 == 0o700
+            assert session.owner['roots'][name] == [path.stat().st_dev, path.stat().st_ino]
+        env = session.environment()
+        assert env['XDG_DATA_HOME'] == str(session.directory / 'data')
+        assert env['XDG_CACHE_HOME'] == str(session.directory / 'cache')
+        assert env['TMPDIR'] == str(session.directory / 'tmp')
+        assert env['TEMP'] == env['TMP'] == r'C:\windows\temp'
+    assert first.binding()['roots'] != second.binding()['roots']
+    assert sentinel.read_text() == 'leave old shared data alone'
+
+
+def test_stale_ended_owner_is_rejected_without_adopting_or_cleaning_it(runtime, monkeypatch):
+    module = prefix_module()
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    session = module.create_session(runtime.root)
+    assert module.stop_session(session, end=True).ok
+    owner_file = session.directory / 'owner.json'
+    owner = json.loads(owner_file.read_text())
+    owner['version'] = 2
+    owner['bounds'].pop('setup')
+    for name in ['data', 'cache', 'tmp']:
+        owner['roots'].pop(name)
+    owner_file.write_text(json.dumps(owner))
+    before = runtime.calls()
+    with pytest.raises(ValueError, match='Invalid session ownership'):
+        module.load_session(runtime.root, session.id)
+    assert runtime.calls() == before and session.prefix.is_dir()
+
+
+def test_owned_setup_precedes_probe_and_binds_receipt_and_native_tmp(runtime):
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    module, session = load_owned(runtime)
+    calls = [call['wine'] for call in runtime.calls() if call.get('utility')]
+    winepath = r'C:\windows\system32\winepath.exe'
+    reg = r'C:\windows\system32\reg.exe'
+    windows_tmp = 'Q:' + str(session.directory / 'tmp').replace('/', '\\')
+    assert calls[:2] == [[winepath, '-w', str(session.directory / 'tmp')], [winepath, '-u', windows_tmp]]
+    assert module.CRASH_POLICY == EXPECTED_POLICY
+    assert calls == setup_argv(session)
+    assert [call['wine'] for call in runtime.calls() if 'wine' in call] == [
+        ['wineboot.exe', '--init'], *setup_argv(session), [str(runtime.overlay / 'process-prng-probe.exe')]]
+    utilities = [call for call in runtime.calls() if call.get('utility')]
+    assert all(call['regular_streams'] for call in utilities)
+    for index, call in enumerate(utilities):
+        env = call['env']
+        assert env['TEMP'] == env['TMP'] == (r'C:\windows\temp' if index < 2 else windows_tmp)
+        assert env['TMPDIR'] == str(session.tmp)
+        assert env['WINEPREFIX'] == str(session.prefix) and env['WINEARCH'] == 'win64'
+        assert env['WINESERVER'] == session.owner['tools']['server']['executable']
+        assert env['WINEDLLOVERRIDES'] == 'winepath.exe=b;reg.exe=b'
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['ownedSession'] == session.binding()
+    assert session.binding()['crash_policy']['verified']
+    assert session.state()['generation'] == 10
+    assert runtime.run('test-windows-under-wine.sh').returncode == 0
+    app = [call for call in runtime.calls() if 'wine' in call][-1]
+    assert app['env']['TEMP'] == app['env']['TMP'] == windows_tmp
+    assert app['env']['TMPDIR'] == str(session.directory / 'tmp')
+    assert app['env']['XDG_DATA_HOME'] == str(session.directory / 'data')
+    assert session.state()['generation'] == 11
+
+
+@pytest.mark.parametrize('name', ['Debugger', 'Auto', 'ShowCrashDialog'])
+@pytest.mark.parametrize('damage', ['add-exit', 'query-exit', 'type', 'value'])
+def test_fixed_registry_setup_failure_never_admits_and_cleans_owned_prefix(runtime, name, damage):
+    runtime.package()
+    runtime.env['FIXTURE_REG_NAME'] = name
+    if damage in ['add-exit', 'query-exit']:
+        runtime.env['FIXTURE_REG_OPERATION'] = damage.split('-')[0]
+        runtime.env['FIXTURE_REG_EXIT'] = '23'
+    else:
+        runtime.env['FIXTURE_REG_' + damage.upper()] = 'unexpected'
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    assert not (runtime.overlay / 'admission.json').exists()
+    assert not [call for call in runtime.calls() if 'wine' in call and call['wine'][0].endswith('process-prng-probe.exe')]
+    assert [call['server'] for call in runtime.calls() if 'server' in call][-2:] == [['-k'], ['-w']]
+    owner_file = next((runtime.root / 'build/wine/sessions').glob('*/owner.json'))
+    session = prefix_module().load_session(runtime.root, owner_file.parent.name)
+    state = session.state()
+    assert state['ended'] and not state['authorized']
+    assert not session.setup()['policy_verified']
+    assert state['generation'] == 1 + len([call for call in runtime.calls() if call.get('utility')])
+
+
+@pytest.mark.parametrize('setting', ['FIXTURE_BAD_WINEPATH', 'FIXTURE_BAD_ROUNDTRIP'])
+def test_unverified_owned_windows_path_never_reaches_registry_or_probe(runtime, setting):
+    runtime.package()
+    runtime.env[setting] = '1'
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    assert not (runtime.overlay / 'admission.json').exists()
+    assert not [call for call in runtime.calls() if call.get('utility') and call['wine'][0].endswith('reg.exe')]
+    assert [call['server'] for call in runtime.calls() if 'server' in call] == [['-k'], ['-w']]
+
+
+@pytest.mark.parametrize('damage', ['missing', 'json', 'relative', 'roundtrip', 'flag'])
+def test_setup_observation_damage_blocks_launch_not_immutable_owned_cleanup(runtime, monkeypatch, damage):
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    module, session = load_owned(runtime)
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    state = session.state()
+    state.update(generation=state['generation'] + 1, stopped_generation=None)
+    session.save(state)
+    path = session.directory / 'setup.json'
+    if damage == 'missing':
+        path.unlink()
+    elif damage == 'json':
+        path.write_text('broken observations')
+    else:
+        setup = json.loads(path.read_text())
+        key, value = {'relative': ('windows_tmp', 'relative'), 'roundtrip': ('roundtrip_tmp', '/foreign'),
+                      'flag': ('policy_verified', 'yes')}[damage]
+        setup[key] = value
+        path.write_text(json.dumps(setup))
+    before = runtime.calls()
+    with pytest.raises((OSError, ValueError)):
+        module.initialize(session)
+    assert runtime.calls() == before
+    result = module.stop_session(session, end=True)
+    assert result.ok, result.errors
+    assert [call['server'] for call in runtime.calls()[len(before):] if 'server' in call] == [['-k'], ['-w']]
+    assert session.state()['ended'] and not session.state()['authorized']
+
+
+@pytest.mark.parametrize('name', ['data', 'cache', 'tmp'])
+def test_owned_root_substitution_refuses_before_wine_launch(runtime, name):
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    module, session = load_owned(runtime)
+    path = session.directory / name
+    path.rename(path.with_name(name + '-preserved'))
+    path.mkdir(mode=0o700)
+    before = runtime.calls()
+    with pytest.raises(ValueError, match='Substituted session root'):
+        module.initialize(session)
+    assert runtime.calls() == before
 
 
 def test_one_owned_prefix_for_probe_app_cleanup(runtime):
@@ -91,8 +265,8 @@ def test_silent_kill_one_wait_zero_admits_cold_prefix_and_owns_consumer(runtime)
     module, session = load_owned(runtime)
     state = session.state()
     assert state['authorized'] and not state['ended']
-    assert state['stopped_generation'] == state['generation'] == 2
-    assert [call['wine'] for call in runtime.calls() if 'wine' in call][:2] == [
+    assert state['stopped_generation'] == state['generation'] == 10
+    assert [call['wine'] for call in runtime.calls() if 'wine' in call and not call.get('utility')][:2] == [
         ['wineboot.exe', '--init'], [str(runtime.overlay / 'process-prng-probe.exe')]]
     result = runtime.run('test-windows-under-wine.sh')
     assert result.returncode == 0, result.stderr
@@ -105,7 +279,7 @@ def test_silent_kill_one_wait_zero_admits_cold_prefix_and_owns_consumer(runtime)
     assert module.stop_session(session, end=True).ok
     assert runtime.calls() == before
     assert session.state()['ended'] and not session.state()['authorized']
-    assert session.state()['stopped_generation'] == session.state()['generation'] == 3
+    assert session.state()['stopped_generation'] == session.state()['generation'] == 11
 
 
 def test_silent_terminal_cleanup_marker_preserves_raw_pair_and_idempotence(runtime):
@@ -337,15 +511,16 @@ def test_logical_sibling_server_can_resolve_to_backend(runtime, monkeypatch, bac
     assert [(c['tool'], c['args']) for c in calls] == [
         (str(wine), ['--version']), (str(server), ['--version']),
         (str(wine), ['wineboot.exe', '--init']),
+        *[(str(wine), args) for args in setup_argv(session)],
         (str(wine), [str(runtime.overlay / 'process-prng-probe.exe')]),
         (str(server), ['-k']), (str(server), ['-w']),
         (str(wine), [str(runtime.overlay / 'space-cli.exe'), '-m', 'tests.fast:main']),
         (str(server), ['-k']), (str(server), ['-w'])]
-    assert all(c['env'] == {'WINEPREFIX': str(session.prefix), 'WINEARCH': 'win64',
-                            'WINESERVER': str(server)} for c in calls)
+    assert all({key: c['env'][key] for key in ['WINEPREFIX', 'WINEARCH', 'WINESERVER']} ==
+               {'WINEPREFIX': str(session.prefix), 'WINEARCH': 'win64', 'WINESERVER': str(server)} for c in calls)
     state = session.state()
     assert state['ended'] and not state['authorized']
-    assert state['stopped_generation'] == state['generation'] == 3
+    assert state['stopped_generation'] == state['generation'] == 11
     assert not Path(runtime.env['WINEPREFIX']).exists()
 
 
@@ -725,7 +900,7 @@ def test_fifo_control_is_rejected_promptly_with_only_verified_owned_cleanup(runt
     assert all(call['env']['WINEPREFIX'] == str(session.prefix) for call in added if 'server' in call)
 
 
-@pytest.mark.parametrize('root', ['repo', 'build', 'wine', 'sessions', 'session', 'prefix'])
+@pytest.mark.parametrize('root', ['repo', 'build', 'wine', 'sessions', 'session', 'prefix', 'data', 'cache', 'tmp'])
 def test_substituted_root_refuses_server_commands(runtime, monkeypatch, root):
     runtime.package()
     assert runtime.prepare([0]).returncode == 0

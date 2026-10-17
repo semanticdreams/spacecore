@@ -540,7 +540,7 @@ def reproduction_fixture(tmp_path, monkeypatch):
         session = create(root)
         if receipt.exists():
             value = json.loads(receipt.read_text())
-            value.update(ownedSession=windows_ci_repro._session_metadata(session), tools=session.owner['tools'])
+            value.update(ownedSession=session.binding(), tools=session.owner['tools'])
             receipt.write_text(json.dumps(value))
         return session
     monkeypatch.setattr(windows_ci_repro._prefix, 'create_session', fixture_session)
@@ -768,6 +768,29 @@ def test_admission_metadata_read_is_allowlisted_readonly_and_preserves_receipt(t
     assert receipt.read_bytes() == before
 
 
+def test_ready_owned_binding_matches_actual_receipt_and_readonly_parent_metadata(tmp_path):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    receipt_file = runtime.overlay / 'admission.json'
+    before = receipt_file.read_bytes()
+    receipt = json.loads(before)
+    session = windows_ci_repro._prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    calls = runtime.calls()
+    metadata = windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert metadata['owned_session'] == receipt['ownedSession'] == session.binding()
+    assert metadata['owned_session']['crash_policy']['verified'] is True
+    assert set(metadata['owned_session']['roots']) == {'data', 'cache', 'tmp'}
+    assert receipt_file.read_bytes() == before and runtime.calls() == calls
+    del receipt['ownedSession']['roots']
+    receipt_file.write_text(json.dumps(receipt))
+    with pytest.raises(ValueError, match='Invalid admission metadata'):
+        windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert runtime.calls() == calls
+
+
 def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_path):
     import ast
     from test_windows_wine_runtime import Fixture
@@ -778,7 +801,7 @@ def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_pa
     bounds = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
                   and any(isinstance(target, ast.Name) and target.id == "BOUNDS" for target in node.targets))
     assert bounds == {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
-                      "stop": 10, "wait": 15, "kill_after": 5}
+                      "stop": 10, "wait": 15, "kill_after": 5, "setup": 30}
 
     runtime = Fixture(tmp_path)
     dispatcher = runtime.bin / "wine"
@@ -1450,6 +1473,75 @@ def test_parent_backstop_survives_failed_capture_and_uses_immutable_owner(tmp_pa
     if fault in ('log-open', 'checkpoint'):
         assert data['sealed'] is False
     assert len(json.dumps(result).encode()) <= 48 * 1024
+
+
+@pytest.mark.parametrize('damage', ['missing', 'malformed'])
+@pytest.mark.parametrize('handoff', ['wine-admission', 'wine-fast'])
+def test_parent_terminal_backstop_ignores_damaged_setup_but_normal_handoffs_refuse(
+        tmp_path, monkeypatch, damage, handoff):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    server = runtime.bin / 'wineserver'
+    server.write_text(server.read_text().replace(
+        "['WINEPREFIX','WINEARCH','WINESERVER']",
+        "['WINEPREFIX','WINEARCH','WINESERVER','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP']"))
+    original = windows_ci_repro._run_repro_step
+    observed = {}
+    def damage_before_handoff(repo, run_dir, step, args, session=None):
+        if step == handoff:
+            assert session is not None
+            state = session.state()
+            state.update(generation=state['generation'] + 1, stopped_generation=None, authorized=True)
+            session.save(state)
+            setup_file = session.directory / 'setup.json'
+            if damage == 'missing':
+                setup_file.unlink()
+            else:
+                setup_file.write_text('malformed setup observations')
+            observed.update(session=session, calls=len(runtime.calls()))
+        return original(repo, run_dir, step, args, session)
+    monkeypatch.setattr(windows_ci_repro, '_run_repro_step', damage_before_handoff)
+
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail'
+    data = result['evidence']
+    assert data['failing_step'] == handoff and not data['complete']
+    assert len(json.dumps(result).encode()) <= 48 * 1024
+    stage = data['stages'][-1]
+    assert stage['step'] == handoff and stage['outcome'] == 'launch_error'
+    assert stage['returncode'] is None and stage['capture_errors']
+    assert all(item['outcome'] == 'pass' for item in data['stages'][:-1])
+    cleanup = stage['cleanup']
+    assert len(cleanup['attempts']) == 1
+    attempt = cleanup['attempts'][0]
+    assert attempt['args'] == list(windows_ci_repro._TERMINAL_STOP)
+    assert attempt['returncode'] == 0, attempt
+    assert attempt['outcome'] == cleanup['outcome'] == 'pass'
+    assert attempt['server_result']['ok'] is True
+    assert (attempt['server_result']['stop_returncode'], attempt['server_result']['wait_returncode']) == (0, 0)
+    assert cleanup['capture_complete'] and attempt['capture_complete']
+    assert attempt['stdout']['eof'] and attempt['stderr']['eof']
+    state = cleanup['after']['state']
+    assert state['ended'] and not state['authorized']
+    assert state['stopped_generation'] == state['generation']
+    session = observed['session']
+    assert session.state() == state
+    with pytest.raises((OSError, ValueError)):
+        session.environment()  # Normal launch environment still rejects the damaged setup.
+    calls = runtime.calls()[observed['calls']:]
+    assert not [call for call in calls if 'wine' in call]
+    servers = [call for call in calls if 'server' in call]
+    assert [call['server'] for call in servers] == [['-k'], ['-w']]
+    expected_env = {'WINEPREFIX': str(session.prefix), 'WINEARCH': 'win64',
+                    'WINESERVER': session.owner['tools']['server']['executable'],
+                    'XDG_DATA_HOME': str(session.directory / 'data'),
+                    'XDG_CACHE_HOME': str(session.directory / 'cache'), 'TMPDIR': str(session.tmp),
+                    'TEMP': r'C:\windows\temp', 'TMP': r'C:\windows\temp'}
+    assert all(call['env'] == expected_env for call in servers)
+    ledger = json.loads((runtime.root / data['ledger_path']).read_text())
+    assert ledger['stages'][-1]['cleanup']['outcome'] == 'pass'
+    assert ledger['stages'][-1]['cleanup']['after']['state'] == state
+    for stream in ['stdout', 'stderr']:
+        assert (runtime.root / attempt[stream]['path']).is_file()
 
 
 def shortened_gnu_timeouts(runtime, *, fast='0.3s', admission='4s', cleanup='1s'):

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import os
+import ntpath
 from pathlib import Path
 import re
 import shutil
@@ -20,7 +21,27 @@ import tempfile
 import uuid
 
 BOUNDS = {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
-          "stop": 10, "wait": 15, "kill_after": 5}
+          "stop": 10, "wait": 15, "kill_after": 5, "setup": 30}
+BOOTSTRAP_TEMP = r'C:\windows\temp'
+WINEPATH = r'C:\windows\system32\winepath.exe'
+REG = r'C:\windows\system32\reg.exe'
+CRASH_POLICY = [
+    (r'HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug', 'Debugger', 'REG_SZ', 'winedbg --auto %ld %ld'),
+    (r'HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug', 'Auto', 'REG_SZ', '1'),
+    (r'HKCU\Software\Wine\WineDbg', 'ShowCrashDialog', 'REG_DWORD', '0'),
+]
+PRIVATE_ENV_KEYS = ('WINEPREFIX', 'WINEARCH', 'WINESERVER', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'TMPDIR', 'TEMP', 'TMP')
+
+
+def _owned_environment(directory, server, windows_tmp):
+    return dict(os.environ, WINEPREFIX=str(directory / 'prefix'), WINEARCH='win64', WINESERVER=server,
+                XDG_DATA_HOME=str(directory / 'data'), XDG_CACHE_HOME=str(directory / 'cache'),
+                TMPDIR=str(directory / 'tmp'), TEMP=windows_tmp, TMP=windows_tmp)
+
+
+def _windows_absolute(value):
+    return (isinstance(value, str) and re.fullmatch(r'[A-Za-z]:\\[^\x00-\x1f\x7f]*', value) is not None
+            and ntpath.isabs(value) and '..' not in value.split('\\'))
 VERSION_BYTES = 4096
 VERSION_LINE = re.compile(
     r'(?:wine-|Wine )([0-9]+(?:\.[0-9]+)+(?:-?(?:rc[0-9]+|dev[0-9]*))?)'
@@ -100,7 +121,7 @@ def tool_identity(path, env):
     Exact duplicate identity lines are accepted (stdout wins across streams);
     different raw identity lines, even annotation-only differences, are ambiguous.
     """
-    with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
+    with tempfile.TemporaryFile(dir=env['TMPDIR']) as output, tempfile.TemporaryFile(dir=env['TMPDIR']) as errors:
         code = wait_leader(['timeout', '--kill-after=5s', '60s', str(path), '--version'],
                            env=env, stdout=output, stderr=errors)
         data, observation = {}, {}
@@ -168,18 +189,51 @@ class Session:
     def nonce(self):
         return self.owner['nonce']
 
+    @property
+    def tmp(self):
+        return self.directory / 'tmp'
+
+    def _server_environment(self):
+        # Immutable ownership alone suffices for scoped cleanup. Never consult
+        # derived path/policy observations here, even if setup storage is broken.
+        return _owned_environment(self.directory, self.owner['tools']['server']['executable'], BOOTSTRAP_TEMP)
+
     def environment(self):
-        return dict(os.environ, WINEPREFIX=str(self.prefix), WINEARCH='win64',
-                    WINESERVER=self.owner['tools']['server']['executable'])
+        setup = self.setup()
+        return _owned_environment(self.directory, self.owner['tools']['server']['executable'],
+                                  setup['windows_tmp'] or BOOTSTRAP_TEMP)
+
+    def setup(self):
+        value = read_control(self.directory / 'setup.json')
+        if (not isinstance(value, dict) or set(value) != {'nonce', 'windows_tmp', 'roundtrip_tmp', 'policy_verified'}
+                or value['nonce'] != self.nonce or type(value['policy_verified']) is not bool):
+            raise ValueError('Invalid owned setup observations')
+        if value['windows_tmp'] is None:
+            if value['roundtrip_tmp'] is not None or value['policy_verified']:
+                raise ValueError('Incomplete owned path setup')
+        elif not _windows_absolute(value['windows_tmp']) or value['roundtrip_tmp'] != str(self.tmp):
+            raise ValueError('Invalid owned Windows temp mapping')
+        return value
+
+    def binding(self):
+        self.validate()
+        setup = self.setup()
+        return {'id': self.id, 'nonce': self.nonce, 'prefix': str(self.prefix),
+                'identity': self.owner['roots']['prefix'], 'arch': 'win64', 'tools': self.owner['tools'],
+                'roots': {name: {'path': str(self.roots()[name]), 'identity': self.owner['roots'][name]}
+                          for name in ['data', 'cache', 'tmp']},
+                'windows_tmp': setup['windows_tmp'],
+                'crash_policy': {'values': self.owner['crash_policy'], 'verified': setup['policy_verified']}}
 
     def validate(self):
         expected = self.owner
-        if (expected['version'] != 2 or expected['id'] != self.id
+        if (expected['version'] != 3 or expected['id'] != self.id
                 or expected['uid'] != os.geteuid() or expected['bounds'] != BOUNDS
+                or expected.get('crash_policy') != [list(row) for row in CRASH_POLICY]
                 or expected['repo'] != str(self.repo) or not re.fullmatch('[0-9a-f]{32}', self.nonce)):
             raise ValueError('Invalid session ownership')
         for name, path in self.roots().items():
-            identity = real_directory(path, name in ('sessions', 'session', 'prefix'))
+            identity = real_directory(path, name in ('sessions', 'session', 'prefix', 'data', 'cache', 'tmp'))
             if expected['roots'][name] != identity:
                 raise ValueError(f'Substituted session root: {name}')
         if read_control(self.directory / 'owner.json') != expected:
@@ -192,7 +246,8 @@ class Session:
 
     def roots(self):
         return {'repo': self.repo, 'build': self.repo / 'build', 'wine': self.repo / 'build/wine',
-                'sessions': self.directory.parent, 'session': self.directory, 'prefix': self.prefix}
+                'sessions': self.directory.parent, 'session': self.directory, 'prefix': self.prefix,
+                **{name: self.directory / name for name in ['data', 'cache', 'tmp']}}
 
     def state(self):
         value = read_control(self.directory / 'state.json')
@@ -211,15 +266,21 @@ class Session:
         self.validate()
         write_control(self.directory / 'state.json', state)
 
-    def launch(self, argv, kind, extra_env=None):
+    def launch(self, argv, kind, extra_env=None, stdout=None, stderr=None):
         self.validate()
+        setup = self.setup()
+        if kind in ('probe', 'smoke60', 'fast1800') and not setup['policy_verified']:
+            raise ValueError('Owned paths/debug policy not verified')
         state = self.state()
         if state['ended']:
             raise ValueError('Ended session cannot launch Wine')
+        if kind == 'init':
+            setup['policy_verified'] = False
+            write_control(self.directory / 'setup.json', setup)
         state['generation'] += 1
         state['stopped_generation'] = None
         self.save(state)  # Durable before a child can exist.
-        return bounded(self, argv, kind, extra_env)
+        return bounded(self, argv, kind, extra_env, stdout=stdout, stderr=stderr)
 
 
 def create_session(repo):
@@ -233,6 +294,8 @@ def create_session(repo):
     directory = repo / 'build/wine/sessions' / identifier
     directory.mkdir(mode=0o700)
     (directory / 'prefix').mkdir(mode=0o700)
+    for name in ['data', 'cache', 'tmp']:
+        (directory / name).mkdir(mode=0o700)
     # Even version queries use the private prefix, never HOME/.wine.
     wine_lookup = _wine_lookup()
     match = re.fullmatch(r'wine(?:64)?(-[\w.-]+)?', wine_lookup.name)
@@ -244,7 +307,7 @@ def create_session(repo):
     server_lookup = wine_lookup.with_name('wineserver' + (match[1] or ''))
     wine = wine_lookup.resolve(strict=True)
     server = server_lookup.resolve(strict=True)
-    env = dict(os.environ, WINEPREFIX=str(directory / 'prefix'), WINEARCH='win64', WINESERVER=str(server))
+    env = _owned_environment(directory, str(server), BOOTSTRAP_TEMP)
     tools, versions, failures = {}, {}, []
     for name, path in [('wine', wine), ('server', server)]:
         try:
@@ -264,15 +327,17 @@ def create_session(repo):
     if versions['wine']['release'] != versions['server']['release']:
         raise ValueError(
             f'Wine/wineserver release mismatch; {paths}; {detail}')
-    owner = {'version': 2, 'id': identifier, 'nonce': uuid.uuid4().hex,
+    owner = {'version': 3, 'id': identifier, 'nonce': uuid.uuid4().hex,
              'repo': str(repo), 'uid': os.geteuid(), 'bounds': BOUNDS, 'tools': tools,
-             'tool_versions': versions}
+             'tool_versions': versions, 'crash_policy': [list(row) for row in CRASH_POLICY]}
     session = Session(repo, identifier, owner)
-    owner['roots'] = {name: real_directory(path, name in ('sessions', 'session', 'prefix'))
+    owner['roots'] = {name: real_directory(path, name in ('sessions', 'session', 'prefix', 'data', 'cache', 'tmp'))
                       for name, path in session.roots().items()}
     write_control(directory / 'owner.json', owner, exclusive=True)
     write_control(directory / 'state.json', {'nonce': session.nonce, 'generation': 0,
                   'stopped_generation': None, 'authorized': False, 'ended': False}, exclusive=True)
+    write_control(directory / 'setup.json', {'nonce': session.nonce, 'windows_tmp': None,
+                  'roundtrip_tmp': None, 'policy_verified': False}, exclusive=True)
     session.validate()
     return session
 
@@ -290,8 +355,11 @@ def load_session(repo, identifier):
 
 def bounded(session, argv, kind, extra_env=None, *, stdout=None, stderr=None):
     # Inherit outer capture streams. Never communicate() on Wine-descendant pipes.
+    owned = session._server_environment() if kind in ('stop', 'wait') else session.environment()
+    env = dict(owned, **(extra_env or {}))
+    env.update({key: owned[key] for key in PRIVATE_ENV_KEYS})
     return wait_leader(['timeout', '--kill-after=5s', f'{BOUNDS[kind]}s', *argv],
-                       cwd=session.repo, env=dict(session.environment(), **(extra_env or {})),
+                       cwd=session.repo, env=env,
                        stdout=stdout, stderr=stderr)
 
 
@@ -334,6 +402,60 @@ def wait_leader(argv, **kwargs):
 
 def initialize(session):
     return session.launch([session.owner['tools']['wine']['executable'], 'wineboot.exe', '--init'], 'init')
+
+
+def _setup_utility(session, args):
+    # Only fixed builtin utilities below call this private capture helper.
+    with tempfile.TemporaryFile(dir=session.tmp) as output, tempfile.TemporaryFile(dir=session.tmp) as stderr:
+        code = session.launch([session.owner['tools']['wine']['executable'], *args], 'setup',
+                              {'WINEDLLOVERRIDES': 'winepath.exe=b;reg.exe=b'}, stdout=output, stderr=stderr)
+        captured = []
+        for stream in [output, stderr]:
+            stream.seek(0)
+            raw = stream.read(4097)
+            if len(raw) > 4096 or os.fstat(stream.fileno()).st_size > 4096:
+                raise ValueError('Oversized owned Wine setup output')
+            captured.append(raw)
+    if code:
+        raise ValueError(f'Owned Wine setup {ntpath.basename(args[0])} exit={code}; stderr={captured[1][:160]!r}')
+    try:
+        text = [raw.decode('utf-8') for raw in captured]
+    except UnicodeDecodeError:
+        raise ValueError('Invalid UTF-8 owned Wine setup output') from None
+    if captured[1]:
+        print(f'Wine setup stderr: bytes={len(captured[1])} excerpt={captured[1][:160]!r}', file=sys.stderr, flush=True)
+    return text[0]
+
+
+def configure_crash_reporting(session):
+    """Convert only our tmp root, then apply/query three fixed 64-bit values."""
+    session.validate()
+    setup = session.setup()
+    setup['policy_verified'] = False
+    write_control(session.directory / 'setup.json', setup)
+    windows_tmp = _setup_utility(session, [WINEPATH, '-w', str(session.tmp)]).rstrip('\r\n')
+    if not _windows_absolute(windows_tmp):
+        raise ValueError('Owned Wine path conversion is not Windows absolute')
+    roundtrip = _setup_utility(session, [WINEPATH, '-u', windows_tmp]).rstrip('\r\n')
+    if roundtrip != str(session.tmp):
+        raise ValueError('Owned Wine temp roundtrip mismatch')
+    setup.update(windows_tmp=windows_tmp, roundtrip_tmp=roundtrip)
+    session.validate()
+    write_control(session.directory / 'setup.json', setup)
+    for key, name, typ, value in CRASH_POLICY:
+        _setup_utility(session, [REG, 'add', key, '/v', name, '/t', typ, '/d', value, '/f', '/reg:64'])
+    for key, name, typ, value in CRASH_POLICY:
+        output = _setup_utility(session, [REG, 'query', key, '/v', name, '/reg:64'])
+        lines = [line.strip() for line in output.splitlines() if line.strip()]
+        header = key.replace('HKLM\\', 'HKEY_LOCAL_MACHINE\\', 1).replace('HKCU\\', 'HKEY_CURRENT_USER\\', 1)
+        match = re.fullmatch(re.escape(name) + r'[ \t]+(REG_[A-Z]+)[ \t]+(.*)', lines[-1]) if lines else None
+        accepted = [value, '0x0'] if typ == 'REG_DWORD' else [value]
+        if (len(lines) != 2 or lines[0].casefold() != header.casefold() or not match
+                or match[1] != typ or match[2] not in accepted):
+            raise ValueError(f'Owned Wine debug policy verification failed: {name}')
+    setup['policy_verified'] = True
+    session.validate()
+    write_control(session.directory / 'setup.json', setup)
 
 
 @contextmanager
@@ -386,7 +508,7 @@ def stop_session(session, end):
                 session.validate()  # Revalidate immediately before EACH destructive operation.
                 # Regular streams avoid descendant-held pipe waits. Retain the
                 # raw code even if observing/relaying its diagnostics then fails.
-                with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as stderr:
+                with tempfile.TemporaryFile(dir=session.tmp) as output, tempfile.TemporaryFile(dir=session.tmp) as stderr:
                     code = bounded(session, [session.owner['tools']['server']['executable'], flag], kind,
                                    stdout=output, stderr=stderr)
                     empty = _server_output(flag, output, stderr)
