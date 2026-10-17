@@ -510,6 +510,150 @@ struct Impersonation {
     ~Impersonation() { if (!::RevertToSelf()) std::abort(); }
 };
 
+unsigned long long diagnostic_id(const std::string& diagnostic, const char* name)
+{
+    const std::string field = std::string(" ") + name + "=";
+    const auto offset = diagnostic.find(field);
+    check(offset != std::string::npos, std::string("refusal includes ") + name);
+    const auto start = offset + field.size();
+    const auto end = diagnostic.find_first_not_of("0123456789", start);
+    check(end != start && (end == std::string::npos || diagnostic[end] == ' '),
+        std::string(name) + " is a complete numeric token");
+    const auto value = std::stoull(diagnostic.substr(start, end - start));
+    check(value > 0, std::string(name) + " is positive");
+    return value;
+}
+
+void creation_diagnostic(const std::string& diagnostic, const fs::path& root,
+                         const char* phase, bool collision, bool initial)
+{
+    check(diagnostic.find("; cleanup: ") == std::string::npos, "validate one refusal segment at a time");
+    diagnostic_id(diagnostic, "attempt-id");
+    diagnostic_id(diagnostic, "acquisition-id");
+    for (const auto* field : {"acquisition-phase=initial-prepare",
+            "native-complete=true", "initial-private=", " input{sd-present=", "dacl-valid=",
+            "dacl-match=", "dacl-bytes=", "ace-count="}) {
+        check(diagnostic.find(field) != std::string::npos, std::string("creation diagnostic includes ") + field);
+    }
+    check(diagnostic.find(std::string(" phase=") + phase + " ") != std::string::npos,
+        "refusal phase is distinct from acquisition phase");
+    check(diagnostic.find(initial ? "initial-private=refused" : "initial-private=accepted") != std::string::npos,
+        "initial same-handle private check is distinguished from a later refusal");
+    if (!initial) {
+        check(diagnostic.find("actual-protected=false") != std::string::npos,
+            "later refusal still rejects the injected unprotected policy");
+    }
+    const std::string protected_input = "{sd-present=true sd-valid=true owner-match=true protected=true "
+        "dacl-present=true dacl-valid=true dacl-match=true dacl-bytes=";
+    const auto expected_offset = diagnostic.find("expected-dacl-bytes=");
+    check(expected_offset != std::string::npos, "returned policy retains expected DACL size");
+    const auto expected_start = expected_offset + std::strlen("expected-dacl-bytes=");
+    const auto expected_bytes = diagnostic.substr(expected_start, diagnostic.find(' ', expected_start) - expected_start);
+    const auto matching_input = protected_input + expected_bytes + " ace-count=1}";
+    if (collision) {
+        check(diagnostic.find("acquisition=collision-reopen native-complete=true file-created=false") != std::string::npos,
+            "collision/reopen is not described as newly created");
+        check(diagnostic.find("collision-id=") != std::string::npos
+            && diagnostic.find("collision-input" + matching_input) != std::string::npos,
+            "collision retains the actual failed exclusive-create descriptor input");
+        check(diagnostic.find("input{sd-present=false sd-valid=false") != std::string::npos,
+            "successful reopen reports its own absent descriptor, not the create request");
+    } else {
+        check(diagnostic.find("acquisition=exclusive-create native-complete=true file-created=true") != std::string::npos,
+            "exclusive-create classification uses checked FILE_CREATED completion");
+        check(diagnostic.find("input" + matching_input) != std::string::npos,
+            "actual successful native creation input is valid, matching and protected");
+        check(diagnostic.find("collision-input") == std::string::npos, "fresh acquisition has no collision input");
+    }
+    check(diagnostic.size() < 1536, "individual refusal fits the structured message field budget");
+    check(diagnostic.find(root.string()) == std::string::npos && diagnostic.find("S-1-") == std::string::npos
+        && diagnostic.find("PRIVATE_PAYLOAD_SENTINEL") == std::string::npos,
+        "creation diagnostics never expose paths, SIDs or payload");
+}
+
+void unprotect(const fs::path& path)
+{
+    const auto policy = windows_policy(path);
+    check(::SetNamedSecurityInfoW(const_cast<wchar_t*>(path.c_str()), SE_FILE_OBJECT,
+        DACL_SECURITY_INFORMATION | UNPROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr,
+        reinterpret_cast<PACL>(const_cast<unsigned char*>(policy.dacl.data())), nullptr) == ERROR_SUCCESS,
+        "test-owned private policy mutation");
+}
+
+void windows_creation_boundary_diagnostics()
+{
+    unsigned long long previous = 0;
+    for (bool reused : {false, true}) {
+        for (int phase = 0; phase < 4; ++phase) {
+            Fixture fixture;
+            if (reused) check(rp::publish(fixture.root / "seed", "seed").committed, "seed reusable anchor");
+            rp::Hooks hooks;
+            const auto mutate = [&] { unprotect(anchor(fixture.root)); };
+            if (phase == 0) hooks.before_write = mutate;
+            if (phase == 1) hooks.before_security = mutate;
+            if (phase == 2) hooks.before_commit = mutate;
+            if (phase == 3) hooks.before_cleanup = mutate;
+            std::string diagnostic;
+            if (phase == 3) {
+                const auto result = rp::publish(fixture.root / "record", "PRIVATE_PAYLOAD_SENTINEL", hooks);
+                check(result.committed && result.cleanup_error, "cleanup refusal never rolls back committed publication");
+                diagnostic = *result.cleanup_error;
+                creation_diagnostic(diagnostic, fixture.root, "cleanup", reused, false);
+            } else {
+                diagnostic = rejects([&] { rp::publish(fixture.root / "record", "PRIVATE_PAYLOAD_SENTINEL", hooks); });
+                check(!fs::exists(fixture.root / "record"), "later unsafe policy is still rejected before commit");
+                const auto separator = diagnostic.find("; cleanup: ");
+                check(separator != std::string::npos, "unsafe anchor must cause both primary and cleanup refusals");
+                const auto primary = diagnostic.substr(0, separator);
+                const auto cleanup = diagnostic.substr(separator + std::strlen("; cleanup: "));
+                creation_diagnostic(primary, fixture.root,
+                    phase == 0 ? "write-validation" : phase == 1 ? "security-validation" : "commit-validation", reused, false);
+                creation_diagnostic(cleanup, fixture.root, "cleanup", reused, false);
+                check(diagnostic_id(primary, "attempt-id") == diagnostic_id(cleanup, "attempt-id"),
+                    "failure and cleanup refer to the same attempt");
+                check(diagnostic_id(primary, "acquisition-id") == diagnostic_id(cleanup, "acquisition-id"),
+                    "cleanup retains the same original handle acquisition, not its fresh name-check handle");
+            }
+            check(diagnostic.size() < 2048, "complete native failure including cleanup stays below 2048 bytes");
+            const auto id = diagnostic_id(diagnostic, "attempt-id");
+            check(id > previous, "attempt identifiers are monotonic, not reused across publications");
+            previous = id;
+        }
+    }
+
+    Fixture outer, inner;
+    std::string nested_error;
+    rp::Hooks hooks;
+    hooks.before_write = [&] {
+        rp::Hooks nested;
+        nested.before_write = [&] { unprotect(only_attempt(inner.root)); };
+        nested_error = rejects([&] { rp::publish(inner.root / "record", "PRIVATE_PAYLOAD_SENTINEL", nested); });
+        unprotect(anchor(outer.root));
+    };
+    const auto error = rejects([&] { rp::publish(outer.root / "record", "PRIVATE_PAYLOAD_SENTINEL", hooks); });
+    const auto outer_cleanup = error.find("; cleanup: ");
+    const auto inner_cleanup = nested_error.find("; cleanup: ");
+    check(outer_cleanup != std::string::npos && inner_cleanup != std::string::npos,
+        "both overlapping unsafe-policy attempts must report cleanup refusal");
+    creation_diagnostic(error.substr(0, outer_cleanup), outer.root, "write-validation", false, false);
+    creation_diagnostic(error.substr(outer_cleanup + std::strlen("; cleanup: ")), outer.root, "cleanup", false, false);
+    creation_diagnostic(nested_error.substr(0, inner_cleanup), inner.root, "write-validation", false, false);
+    creation_diagnostic(nested_error.substr(inner_cleanup + std::strlen("; cleanup: ")), inner.root, "cleanup", false, false);
+    check(error.size() < 2048 && nested_error.size() < 2048, "complete overlapping native failures stay below 2048 bytes");
+    check(error.find("role=anchor") != std::string::npos && nested_error.find("role=attempt") != std::string::npos,
+        "overlapping attempts retain their own failing handle role");
+    check(diagnostic_id(error, "attempt-id") < diagnostic_id(nested_error, "attempt-id"),
+        "nested attempt cannot overwrite outer correlation");
+
+    Fixture record;
+    rp::Hooks record_hooks;
+    record_hooks.before_security = [&] { unprotect(only_attempt(record.root) / "record"); };
+    const auto record_error = rejects([&] { rp::publish(record.root / "destination", "PRIVATE_PAYLOAD_SENTINEL", record_hooks); });
+    creation_diagnostic(record_error, record.root, "security-validation", false, false);
+    check(record_error.find("role=record") != std::string::npos && !fs::exists(record.root / "destination"),
+        "private record rejection retains its own acquisition and prevents commit");
+}
+
 void windows_foreign_parent_and_private_children()
 {
     Fixture fixture;
@@ -569,6 +713,7 @@ void windows_foreign_parent_and_private_children()
         "explicit foreign-readable/writable preexisting anchor fixture");
     const auto before = windows_policy(anchor(unsafe));
     const auto diagnostic = rejects([&] { rp::publish(unsafe / "record", "secret"); });
+    creation_diagnostic(diagnostic, fixture.root, "initial-prepare", true, true);
     for (const auto* metric : {"role=anchor", "owner-match=", "expected-protected=true", "actual-protected=true",
             "dacl-match=false", "expected-dacl-bytes=", "actual-dacl-bytes=", "expected-ace-count=1", "actual-ace-count=2"}) {
         check(diagnostic.find(metric) != std::string::npos, std::string("private-policy refusal must include safe metric: ") + metric);
@@ -728,6 +873,7 @@ int main()
         unsafe_anchors();
         real_writer_failure();
 #else
+        windows_creation_boundary_diagnostics();
         windows_foreign_parent_and_private_children();
         windows_junction_anchor_attack();
         windows_security();

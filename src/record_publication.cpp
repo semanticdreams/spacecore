@@ -463,20 +463,105 @@ std::wstring native_path(const fs::path& path)
     return L"\\\\?\\" + preferred.native();
 }
 
+using Blob = std::vector<unsigned char>;
+
+struct DescriptorInput {
+    bool present = false, valid = false;
+    const char* owner_match = "unavailable";
+    const char* protected_dacl = "unavailable";
+    const char* dacl_present = "unavailable";
+    const char* dacl_valid = "unavailable";
+    const char* dacl_match = "unavailable";
+    std::optional<DWORD> dacl_bytes, ace_count;
+
+    std::string metrics() const
+    {
+        return std::string("{sd-present=") + (present ? "true" : "false")
+            + " sd-valid=" + (valid ? "true" : "false") + " owner-match=" + owner_match
+            + " protected=" + protected_dacl + " dacl-present=" + dacl_present
+            + " dacl-valid=" + dacl_valid + " dacl-match=" + dacl_match
+            + " dacl-bytes=" + (dacl_bytes ? std::to_string(*dacl_bytes) : "unavailable")
+            + " ace-count=" + (ace_count ? std::to_string(*ace_count) : "unavailable") + "}";
+    }
+};
+
+DescriptorInput diagnostic_input(PSECURITY_DESCRIPTOR descriptor, const Blob& owner, const Blob& expected_dacl)
+{
+    // Read only the actual OBJECT_ATTRIBUTES input. These observations neither
+    // validate for acceptance nor change policy; failed diagnostic queries stay
+    // explicitly unavailable. Preserve the native operation's error context.
+    const DWORD saved_error = ::GetLastError();
+    DescriptorInput input;
+    input.present = descriptor != nullptr;
+    input.valid = descriptor && ::IsValidSecurityDescriptor(descriptor);
+    if (input.valid) {
+        PSID actual_owner = nullptr;
+        BOOL defaulted = FALSE, present = FALSE;
+        PACL dacl = nullptr;
+        SECURITY_DESCRIPTOR_CONTROL control = 0;
+        DWORD revision = 0;
+        if (::GetSecurityDescriptorOwner(descriptor, &actual_owner, &defaulted)
+            && actual_owner && ::IsValidSid(actual_owner)) {
+            input.owner_match = ::EqualSid(actual_owner, const_cast<unsigned char*>(owner.data())) ? "true" : "false";
+        }
+        if (::GetSecurityDescriptorControl(descriptor, &control, &revision))
+            input.protected_dacl = (control & SE_DACL_PROTECTED) ? "true" : "false";
+        if (::GetSecurityDescriptorDacl(descriptor, &present, &dacl, &defaulted)) {
+            input.dacl_present = present ? "true" : "false";
+            const bool valid_dacl = present && dacl && ::IsValidAcl(dacl);
+            input.dacl_valid = valid_dacl ? "true" : "false";
+            if (valid_dacl) {
+                input.dacl_bytes = dacl->AclSize;
+                input.ace_count = dacl->AceCount;
+                input.dacl_match = dacl->AclSize == expected_dacl.size()
+                    && std::memcmp(dacl, expected_dacl.data(), expected_dacl.size()) == 0 ? "true" : "false";
+            }
+        }
+    }
+    ::SetLastError(saved_error);
+    return input;
+}
+
+struct Acquisition {
+    unsigned long long attempt_id = 0, id = 0;
+    const char* phase = "acquire";
+    const char* kind = "uncompleted";
+    DescriptorInput input;
+    bool complete = false, file_created = false, initial_private = false;
+    struct Collision { unsigned long long id; DescriptorInput input; };
+    std::optional<Collision> collision;
+};
+
 class Handle {
 public:
-    explicit Handle(HANDLE value = INVALID_HANDLE_VALUE) : value_(value) {}
+    explicit Handle(HANDLE value = INVALID_HANDLE_VALUE, Acquisition acquisition = {})
+        : value_(value), acquisition_(std::move(acquisition)) {}
     ~Handle() { close(); }
-    Handle(Handle&& other) noexcept : value_(std::exchange(other.value_, INVALID_HANDLE_VALUE)) {}
+    Handle(Handle&& other) noexcept
+        : value_(std::exchange(other.value_, INVALID_HANDLE_VALUE)), acquisition_(std::move(other.acquisition_)) {}
     Handle& operator=(Handle&& other) noexcept
     {
         close();
         value_ = std::exchange(other.value_, INVALID_HANDLE_VALUE);
+        acquisition_ = std::move(other.acquisition_);
         return *this;
     }
     Handle(const Handle&) = delete;
     Handle& operator=(const Handle&) = delete;
     HANDLE get() const { return value_; }
+    const Acquisition& acquisition() const { return acquisition_; }
+    void note_completion(bool create, ULONG_PTR information)
+    {
+        acquisition_.complete = true;
+        acquisition_.file_created = information == 2; // FILE_CREATED, from checked completion only.
+        acquisition_.kind = create ? "exclusive-create" : "open";
+    }
+    void note_collision(const Acquisition& collision)
+    {
+        acquisition_.collision = Acquisition::Collision {collision.id, collision.input};
+        acquisition_.kind = "collision-reopen";
+    }
+    void note_initial_private() { acquisition_.initial_private = true; }
     void close() noexcept
     {
         if (value_ != INVALID_HANDLE_VALUE && value_ != nullptr) ::CloseHandle(value_);
@@ -490,14 +575,13 @@ public:
     }
 private:
     HANDLE value_;
+    Acquisition acquisition_;
 };
 
 struct LocalMemory {
     HLOCAL value = nullptr;
     ~LocalMemory() { if (value) ::LocalFree(value); }
 };
-
-using Blob = std::vector<unsigned char>;
 
 Blob copy_sid(PSID sid)
 {
@@ -616,7 +700,7 @@ public:
     using StatusError = ULONG (NTAPI*)(NTSTATUS);
     using Wait = NTSTATUS (NTAPI*)(HANDLE, BOOLEAN, PLARGE_INTEGER);
 
-    NativeFiles()
+    NativeFiles(const Blob& owner, const Blob& private_acl) : owner_(owner), private_acl_(private_acl)
     {
         const HMODULE module = ::GetModuleHandleW(L"ntdll.dll");
         if (!module) win_error("load existing ntdll");
@@ -627,9 +711,12 @@ public:
         if (!create_ || !set_ || !status_error_ || !wait_) fail("required ntdll file operations unavailable");
     }
 
+    void set_phase(const char* phase) { phase_ = phase; }
+    const char* phase() const { return phase_; }
+
     Handle relative(HANDLE root, const std::wstring& name, bool directory, bool create,
                     ACCESS_MASK access, PSECURITY_DESCRIPTOR security = nullptr,
-                    bool* collision = nullptr, bool* missing = nullptr) const
+                    bool* collision = nullptr, bool* missing = nullptr)
     {
         if (name.empty() || name == L"." || name == L".." || name.find_first_of(L"\\/:") != std::wstring::npos
             || name.find(L'\0') != std::wstring::npos
@@ -650,14 +737,23 @@ public:
         // FILE_NON_DIRECTORY_FILE=0x40; FILE_SYNCHRONOUS_IO_NONALERT=0x20
         // requires SYNCHRONIZE. FILE_OPEN_REPARSE_POINT=0x200000 opens the
         // entry itself, which metadata then refuses if it is a reparse point.
+        Acquisition acquisition;
+        acquisition.attempt_id = attempt_id_;
+        acquisition.id = ++acquisition_sequence_;
+        acquisition.phase = phase_;
+        acquisition.input = diagnostic_input(attributes.SecurityDescriptor, owner_, private_acl_);
         const NTSTATUS status = create_(&raw, access | SYNCHRONIZE, &attributes, &completion,
             nullptr, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             create ? 2 : 1, (directory ? 1 : 0x40) | 0x20 | 0x200000, nullptr, 0);
-        if (collision && status == static_cast<NTSTATUS>(0xC0000035UL)) { *collision = true; return Handle(); }
+        if (collision && status == static_cast<NTSTATUS>(0xC0000035UL)) {
+            *collision = true;
+            return Handle(INVALID_HANDLE_VALUE, std::move(acquisition));
+        }
         if (missing && status == static_cast<NTSTATUS>(0xC0000034UL)) { *missing = true; return Handle(); }
-        Handle result(raw);
+        Handle result(raw, std::move(acquisition));
         complete(status, raw, completion, "NtCreateFile relative acquisition");
         if (create && completion.Information != 2) fail("exclusive Native creation did not create a new object");
+        result.note_completion(create, completion.Information);
         metadata(result.get(), directory);
         return result;
     }
@@ -671,6 +767,12 @@ public:
     }
 
 private:
+    static unsigned long long next_attempt_id()
+    {
+        static std::atomic<unsigned long long> sequence {0};
+        return sequence.fetch_add(1) + 1;
+    }
+
     void complete(NTSTATUS status, HANDLE handle, const IO_STATUS_BLOCK& completion, const char* operation) const
     {
         if (status == 0x103) { // STATUS_PENDING is not a completed operation.
@@ -687,6 +789,11 @@ private:
     SetInformation set_ = nullptr;
     StatusError status_error_ = nullptr;
     Wait wait_ = nullptr;
+    const Blob& owner_;
+    const Blob& private_acl_;
+    const unsigned long long attempt_id_ = next_attempt_id();
+    unsigned long long acquisition_sequence_ = 0;
+    const char* phase_ = "acquire";
 };
 
 class Attempt {
@@ -743,6 +850,7 @@ public:
 
     void prepare()
     {
+        native_.set_phase("initial-prepare");
         private_acl_.resize(sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD) + owner_.size());
         auto* dacl = reinterpret_cast<PACL>(private_acl_.data());
         if (!::InitializeAcl(dacl, private_acl_.size(), ACL_REVISION)
@@ -757,9 +865,13 @@ public:
         bool collision = false;
         anchor_ = native_.relative(parent_.get(), L".space-publication", true, true,
             directory_access, &descriptor, &collision);
-        if (collision) anchor_ = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
+        if (collision) {
+            auto reopened = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
+            reopened.note_collision(anchor_.acquisition());
+            anchor_ = std::move(reopened);
+        }
         anchor_id_ = metadata(anchor_.get(), true);
-        require_private(inspect_policy(anchor_.get()), "anchor");
+        require_private(inspect_policy(anchor_.get()), "anchor", anchor_, true);
         for (int tries = 0; tries < 64; ++tries) {
             workspace_name_ = fs::path(workspace_name()).wstring();
             collision = false;
@@ -769,11 +881,11 @@ public:
         }
         if (!owned_) fail("cannot allocate exclusive workspace");
         workspace_id_ = metadata(workspace_.get(), true);
-        require_private(inspect_policy(workspace_.get()), "attempt");
+        require_private(inspect_policy(workspace_.get()), "attempt", workspace_, true);
         record_ = native_.relative(workspace_.get(), L"record", false, true,
             GENERIC_READ | GENERIC_WRITE | READ_CONTROL | WRITE_DAC | WRITE_OWNER | DELETE, &descriptor);
         record_id_ = metadata(record_.get());
-        require_private(inspect_policy(record_.get()), "record");
+        require_private(inspect_policy(record_.get()), "record", record_, true);
         validate_workspace();
     }
 
@@ -781,9 +893,10 @@ public:
 
     void write(std::string_view bytes)
     {
+        native_.set_phase("write-validation");
         validate_workspace();
         validate_record_name();
-        require_private(inspect_policy(record_.get()), "record");
+        require_private(inspect_policy(record_.get()), "record", record_);
         std::size_t offset = 0;
         while (offset < bytes.size()) {
             DWORD count = 0;
@@ -798,10 +911,11 @@ public:
 
     void secure(std::string_view bytes)
     {
+        native_.set_phase("security-validation");
         validate_workspace();
         validate_record_name();
         const auto policy = inspect_policy(record_.get());
-        require_private(policy, "record");
+        require_private(policy, "record", record_);
         verify_bytes(bytes);
         if (destination_policy_) {
             auto& desired = *destination_policy_;
@@ -825,6 +939,7 @@ public:
 
     void validate(std::string_view bytes)
     {
+        native_.set_phase("commit-validation");
         validate_workspace();
         validate_record_name();
         const auto value = metadata(record_.get());
@@ -857,6 +972,7 @@ public:
 
     std::optional<std::string> cleanup()
     {
+        native_.set_phase("cleanup");
         cleaned_ = true;
         std::optional<std::string> errors;
         if (!owned_) return errors;
@@ -864,8 +980,8 @@ public:
             auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
             if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_))
                 fail("workspace identity changed; left untouched");
-            require_private(inspect_policy(anchor_.get()), "anchor");
-            require_private(inspect_policy(workspace_.get()), "attempt");
+            require_private(inspect_policy(anchor_.get()), "anchor", anchor_);
+            require_private(inspect_policy(workspace_.get()), "attempt", workspace_);
             cleanup_entry(errors);
             record_.close_checked(); // Complete delete-pending children first.
             BOOLEAN remove = TRUE; // FILE_DISPOSITION_INFORMATION.DeleteFile
@@ -887,33 +1003,49 @@ private:
             READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_DATA, nullptr, nullptr, &missing);
     }
 
-    std::string private_policy_metrics(const Policy& policy, const char* role) const
+    std::string private_policy_metrics(const Policy& policy, const char* role, const Handle& handle, bool initial) const
     {
-        return std::string("role=") + role
+        const auto& acquisition = handle.acquisition();
+        std::string metrics = std::string("role=") + role
             + " owner-match=" + (policy.owner == owner_ ? "true" : "false")
             + " expected-protected=true actual-protected=" + (policy.protected_dacl ? "true" : "false")
             + " dacl-match=" + (policy.dacl == private_acl_ ? "true" : "false")
             + " expected-dacl-bytes=" + std::to_string(private_acl_.size())
             + " actual-dacl-bytes=" + std::to_string(policy.dacl.size())
             + " expected-ace-count=" + diagnostic_ace_count(private_acl_)
-            + " actual-ace-count=" + diagnostic_ace_count(policy.dacl);
+            + " actual-ace-count=" + diagnostic_ace_count(policy.dacl)
+            + " attempt-id=" + std::to_string(acquisition.attempt_id)
+            + " phase=" + native_.phase()
+            + " initial-private=" + (initial ? "refused" : acquisition.initial_private ? "accepted" : "unobserved")
+            + " acquisition-id=" + std::to_string(acquisition.id)
+            + " acquisition-phase=" + acquisition.phase
+            + " acquisition=" + acquisition.kind
+            + " native-complete=" + (acquisition.complete ? "true" : "false")
+            + " file-created=" + (acquisition.file_created ? "true" : "false")
+            + " input" + acquisition.input.metrics();
+        if (acquisition.collision) {
+            metrics += " collision-id=" + std::to_string(acquisition.collision->id)
+                + " collision-input" + acquisition.collision->input.metrics();
+        }
+        return metrics;
     }
 
-    void require_private(const Policy& policy, const char* role)
+    void require_private(const Policy& policy, const char* role, Handle& handle, bool initial = false)
     {
         if (policy.owner != owner_ || !policy.protected_dacl || policy.dacl != private_acl_)
-            fail("private owner/protected DACL changed: " + private_policy_metrics(policy, role));
+            fail("private owner/protected DACL changed: " + private_policy_metrics(policy, role, handle, initial));
         const auto* acl = reinterpret_cast<const ACL*>(policy.dacl.data());
-        if (acl->AceCount != 1) fail("stage must inherit only the owner ACE: " + private_policy_metrics(policy, role));
+        if (acl->AceCount != 1) fail("stage must inherit only the owner ACE: " + private_policy_metrics(policy, role, handle, initial));
         void* raw = nullptr;
         if (!::GetAce(const_cast<PACL>(acl), 0, &raw)) {
             const DWORD error = ::GetLastError();
-            win_error("inspect private stage ACE: " + private_policy_metrics(policy, role), error);
+            win_error("inspect private stage ACE: " + private_policy_metrics(policy, role, handle, initial), error);
         }
         auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
         if (ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !::EqualSid(&ace->SidStart, owner_.data())
             || ace->Mask != FILE_ALL_ACCESS || (ace->Header.AceFlags & INHERIT_ONLY_ACE))
-            fail("stage is not owner-only before publication: " + private_policy_metrics(policy, role));
+            fail("stage is not owner-only before publication: " + private_policy_metrics(policy, role, handle, initial));
+        if (initial) handle.note_initial_private();
     }
 
     void validate_workspace()
@@ -921,12 +1053,12 @@ private:
         auto anchor = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
         if (!anchor_id_ || !identity(metadata(anchor.get(), true), *anchor_id_)
             || !identity(metadata(anchor_.get(), true), *anchor_id_)) fail("anchor identity changed");
-        require_private(inspect_policy(anchor_.get()), "anchor");
+        require_private(inspect_policy(anchor_.get()), "anchor", anchor_);
         auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
         if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_)
             || !identity(metadata(workspace_.get(), true), *workspace_id_))
             fail("workspace identity/security changed");
-        require_private(inspect_policy(workspace_.get()), "attempt");
+        require_private(inspect_policy(workspace_.get()), "attempt", workspace_);
     }
 
     void validate_record_name()
@@ -971,9 +1103,9 @@ private:
 
     static constexpr ACCESS_MASK directory_access = READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_LIST_DIRECTORY
         | FILE_TRAVERSE | FILE_ADD_FILE | FILE_ADD_SUBDIRECTORY | SYNCHRONIZE;
-    NativeFiles native_;
     std::wstring name_, workspace_name_;
     Blob owner_, private_acl_;
+    NativeFiles native_ {owner_, private_acl_};
     Handle parent_, anchor_, workspace_, record_;
     BY_HANDLE_FILE_INFORMATION parent_id_ {};
     std::optional<BY_HANDLE_FILE_INFORMATION> destination_, anchor_id_, workspace_id_, record_id_, final_;
