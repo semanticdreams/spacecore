@@ -4,7 +4,7 @@
 
 **Goal:** Fix the reproduced InputDialType boundary defect and obtain an isolated, actionable Windows failure result instead of opaque errors and a debugger wait.
 
-**Architecture:** Two independently reviewed units: required native input validation, then owned-session/error/crash diagnostics. Extend existing lifecycle/capture ownership rather than add another runner. One subsequent guarded run defines the next source fix from its first decoded failure and security metrics.
+**Architecture:** Required native input validation, followed by three focused diagnostic components with independent review: readable errors/security metrics, owned roots/crash policy, and bounded fatal capture. Extend existing lifecycle/capture ownership rather than add another runner. One subsequent guarded run defines the next source fix from its first decoded failure and security metrics.
 
 **Tech Stack:** C++17, existing sol2/Lua/Fennel, Python/pytest, Wine9, GNU timeout; existing dependencies.
 
@@ -53,7 +53,11 @@ Run `build/windows-ci-repro/20261017T021559707002Z-290576cffcc94012a145d36380114
 - [ ] **3. Retain the valid contract.** All four existing real-engine input/update cases remain unchanged and pass. Child assertions, not diagnostic-parent exit0 alone, establish rejection. Update SDK/subsystem error and caller-lifetime documentation.
 - [ ] **4. Validate and review.** Native rebuild, touched Fennel compile, constraints and complete test-dial-type. Retain actual old child signal/acceptance RED and post-fix completion markers. Independent review before checkpoint; no real Wine until Task3.
 
-### Task 2: Preserve First Failures and Bound Native Crash Reporting
+### Task 2: Readable First Failures and Unchanged Security Metrics
+
+**Scope:** Implement only the formatter/runner/native-metric portions listed below (original steps5–7). Files: new `assets/lua/tests/error-format.fnl`; existing runner.fnl, test-runner.fnl, runner-regression-cases.fnl; src/record_publication.cpp, tests/test_record_publication.cpp; harness cleanup note. Interfaces: `format-error(err)->string` bounded2048 and `require_private(policy,role)` diagnostics. Build/compile/constraints/focused runner/native CTest before independent review. No prefix or fatal-capture source edits in this task.
+
+The remaining shared diagnostic contract is retained below; Task3 and Task4 own its other components. This decomposition follows a worker's pre-edit capacity report and changes no behavior/security requirement.
 
 **Files:**
 - Modify: `scripts/wine/prefix.py`, `scripts/wine/artifacts.py`, `scripts/_windows_repro_evidence.py`, `scripts/opencode_windows_ci_repro.py`
@@ -84,7 +88,15 @@ Run `build/windows-ci-repro/20261017T021559707002Z-290576cffcc94012a145d36380114
 - [ ] **10. Exercise fatal/error edge cases.** Host fixtures cover split/repeated banner, false-positive negatives, both trace streams, fatal+exit0, report hang, near-hard-deadline crash, early EOF, held writers, interruption and persistence failure. Retain caps/48KiB, owner cleanup and unrelated-session survival. Structured error tests cover hostile metatables, invalid/large/cyclic values and private-result sentinels through real isolated runner wiring.
 - [ ] **11. Validate and review.** Build native first; compile/constraints/Fennel runner + native publication CTest and full six-module harness suite below. Update canonical notes and retain historical observations. No actual Windows rerun until review/commit.
 
-### Task 3: One Guarded Observation and Next Source Contract
+### Task 3: Owned Roots and Automatic Noninteractive Crash Policy
+
+**Scope:** Implement only original steps1–4 and their prefix/artifact/runtime-fixture/docs portions. Files: prefix.py, artifacts.py, test_windows_wine_prefix.py, test_windows_wine_runtime.py, affected mechanical binding-consumer fixtures and the Wine note. Interfaces: Session.binding/environment/launch and configure_crash_reporting. Reg/value/path-conversion setup is bounded/owned and fail-closed. Data/cache/tmp isolation is not claimed to cure the DACL mismatch. Source review and the complete six-module host gate precede checkpoint. Do not implement fatal deadlines or change native security policy.
+
+### Task 4: One-Shot Bounded Fatal Report Capture
+
+**Scope:** Implement only original steps8–11 and evidence/wrapper/application-launch-observation/fixture/docs portions after Task3. Files: _windows_repro_evidence.py, opencode_windows_ci_repro.py, artifacts.py launch observation, test_opencode_windows_ci_repro.py and relevant policy-doc guards/notes. Retain all existing caps/lifecycle/cleanup contracts. Validate fake native-fatal versus ordinary text, exact first grace deadline/hard bound, early EOF/held writers/storage failure and unrelated-prefix survival; review independently. No source binding or DACL policy edits.
+
+### Task 5: One Guarded Observation and Next Source Contract
 
 **Files:** generated owned logs/ledger; update `docs/dev/notes/windows-wine-build-and-test.md` after execution only.
 
