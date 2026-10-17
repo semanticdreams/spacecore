@@ -388,8 +388,9 @@ The observed historical run stopped active progress at the old180-second cutoff:
 **93 RUN / 92 PASS / 0 FAIL**, with the last PASS9.13 seconds before cutoff.
 Descendants retained pipes. This established an inadequate whole-suite bound,
 not a runner-group hang, later-suite success, a slowness explanation or the
-identity of surviving processes. Actual guarded confirmation of this correction
-is still a separate post-review capability run; fixture success is not that run.
+identity of surviving processes. The two actual post-diagnostic guarded runs
+recorded below subsequently ended before the unchanged1800-second bound; neither
+was a passing full suite. Fixture success alone is not actual-run evidence.
 
 Fixed GNU timeout budgets (each with a further5-second kill escalation):
 
@@ -453,8 +454,9 @@ documents normal default persistence of 3 seconds after the last client exits,
 so an already-gone server is a normal possibility, not a failure by itself.
 `CleanupResult.ok` means completion under this explicit CLI contract; it does not
 certify which silent internal Wine branch occurred or prove the full application
-suite completed. Actual guarded full 1800-second/session confirmation remains a
-separate post-review run.
+suite completed. The actual post-diagnostic runs below acknowledge generation11
+with stop/wait0/0; that is CLI cleanup evidence, not native-process proof or a
+passing full suite.
 
 ### Owned data roots and automatic crash reporting
 
@@ -510,9 +512,10 @@ acceptance policy and its native-proof limitation above are unchanged.
 This policy keeps the automatic `winedbg --auto` reporter enabled to produce a
 backtrace and detach without interactive crash dialogs; it does not use Auto0,
 delete Debugger, disable winedbg DLLs, alter WINEDEBUG or disable application
-features. Application status is not debugger status. Actual native reporting
-behavior remains unconfirmed by host fixtures; the guarded real Wine reproduction
-is a separate post-review capability run, not established by the host tests below.
+features. Application status is not debugger status. The actual post-diagnostic
+runs below verified the fixed crash policy, but neither observed a root native
+fatal. Actual reporter/grace behavior therefore remains unexercised, not verified
+fixed by either those runs or the host fixtures.
 
 Root/build/session ownership locks stay with their owning parents; child FDs are
 closed, so an escaped descendant cannot retain these locks. The guarded parent
@@ -541,9 +544,9 @@ fixtures check ABI compilation without running PE/Wine.
 These are **API-contract admission checks, not entropy certification** or native
 Windows security/ACL certification. Wine's underlying host RNG can hide upstream
 short reads; even passing output probes cannot guarantee future backend failures
-will be observable. Native Windows remains authoritative. Real admission and the
-full guarded reproduction remain required separately; this tooling alone does not
-establish later full-suite outcomes, nor close the
+will be observable. Native Windows remains authoritative. The actual runs below
+passed admission but failed the full guarded reproduction; this tooling alone does
+not establish later full-suite success, nor close the
 historical Linux native SIG investigation. Agents must use the existing guarded
 capability, not the manual shell examples above, for real reproduction.
 
@@ -685,8 +688,107 @@ guessed from the ambient environment.
 No environment dump, credentials, registry or private-prefix contents are read.
 Tooling regression tests use temporary repositories and host fixture processes;
 they are not actual Wine admission, a PE runtime pass, or proof of a full-suite
-result beyond the historical cutoff. A real guarded reproduction remains a separate
-post-review step.
+result beyond the historical cutoff. Actual post-review observations are recorded
+separately below; their diagnostic clarity does not make the Windows gate green.
+
+### Actual post-diagnostic observations (2026-10-17)
+
+Two actual guarded `reproduce --repo-root .` runs followed review/commit of the
+diagnostics. The second was a single advisor-requested discriminating experiment,
+not an unchanged retry. Retained evidence roots (all paths repo-relative):
+
+- **Run A:** `build/windows-ci-repro/20261017T084732204168Z-596071b82b514e789559dc7802dd6eac/`
+- **Run B:** `build/windows-ci-repro/20261017T094643826398Z-3c1534e65b1d4821afb46c6a137ce75d/`
+
+Each root retains `ledger.json`, `build-windows-from-linux.stdout.log` and
+`wine-fast.stdout.log` / `wine-fast.stderr.log`, alongside the other stage logs.
+
+| Observation | Run A | Run B |
+| --- | --- | --- |
+| Clean source HEAD at execution | `027a63e498f8f3d18bec0ff976eebe5a734f650c` | `583d213fedf10069b928effc9bdd34f8c9bd634a` |
+| Build version | `6+git.2293.g027a63e4` | `6+git.2294.g583d213f` |
+| Cross-build / package / output verification / API admission | PASS | PASS |
+| Wine fast outcome | FAIL | FAIL |
+| Observed RUN / PASS / FAIL markers | 2261 / 1816 / 446 | 2261 / 1816 / 446 |
+| Application-command / stage-helper return codes | 1 / 1 | 1 / 1 |
+| Approximate Wine-fast stage duration | 471 seconds | 501.66 seconds |
+| Root native fatal banner | None observed | None observed |
+| Primary capture | Complete | Complete |
+| Terminal cleanup helper / wineserver stop / wait | 0 / 0 / 0 | 0 / 0 / 0 |
+| Final owned lifecycle | Ended, unauthorized; generation11 / stopped11 | Ended, unauthorized; generation11 / stopped11 |
+
+Marker counts include the terminal module-load failure; they are not 446 proven
+independent product bugs, nor is RUN minus PASS a reliable substitute for FAIL
+counting. Both runs stopped later while loading `tests.test-openai-offline`, with
+`get-asset-path` nil, not a native crash. Complete capture and successful cleanup
+do not mean a complete successful test suite or a successful top-level ledger.
+The fixed owned data/cache/tmp roots and crash-policy verification were recorded
+in both runs. With no observed root native fatal, actual automatic reporter
+detach and the 30-second fatal-report grace remain **unexercised**.
+
+Before each actual run, the standard full Linux gate passed: Fennel compile
+**1331 files**, constraints **0 violations**, CTest **31/31**. The six-module host
+tooling gate passed **478/478** before the actual runs. These are retained prior
+validation results, not new checks performed for this documentation update.
+Run B's build log records version at line 224, recompilation of
+`src/record_publication.cpp.obj` at 447 and Windows build completion at 492. The new
+Windows production diagnostic branch therefore cross-compiled; its native Windows
+C++ test assertions remain **unrun**. Run B's captured CLI payload SHA-256 is
+`f940618f4107289fff3c7004cc201226ce2e5362cc94a2eb829f149cfdc63bb7`.
+Version, clean HEAD and payload identity correlate the observation; they are not
+independent full-binary-to-source attestation.
+
+#### First refusal and the measured creation/query boundary
+
+Both runs first fail `Menu root show link entities adds related nodes`
+(`wine-fast.stdout.log`:796–798), reporting `storage-failed` / `not-committed`.
+Run A reports anchor owner-match=true, expected-protected=true versus
+actual-protected=false, dacl-match=false, expected 44 versus actual 64 DACL bytes,
+and expected 1 versus actual 2 ACEs. Its 127 matching diagnostic occurrences are
+message occurrences, not failed-test counts. Those metrics alone did not correlate
+input/create-versus-reopen/initial-versus-later validation, so did not settle the
+creation boundary.
+
+Run B's complete first refusal at `wine-fast.stdout.log`:798 adds the reviewed
+same-attempt correlation:
+
+- `attempt-id=1 phase=initial-prepare initial-private=refused`;
+  `acquisition-id=2 acquisition-phase=initial-prepare acquisition=exclusive-create`.
+- Actual descriptor input: present and valid; owner-match=true; protected=true;
+  DACL present, valid and matching the expected owner-only policy; 44 bytes, 1 ACE.
+- Checked native completion: `native-complete=true file-created=true`
+  (`FILE_CREATED`), establishing successful exclusive creation of a fresh anchor,
+  not collision/reopen.
+- Immediate query of that **same acquired handle**, with no intervening application
+  mutation in the reviewed source: owner-match=true, actual-protected=false,
+  dacl-match=false, 64 bytes and 2 ACEs versus expected protected 44 bytes/1 ACE.
+
+The unchanged security predicate correctly **fails closed**. This establishes a
+creation/query security-descriptor fidelity incompatibility in the exercised Wine
+environment. It does **not** establish an exact upstream function responsible,
+the additional ACE's trustee (including any claim that it is SYSTEM), or a native
+Windows failure. Upstream Wine9 source is compatible with the observation, not
+direct proof of the installed implementation or observed ACE identity.
+
+Later missing-directory failures are consistent with a failed test leaving a
+default store override referring to a removed temporary directory; later engine
+stub/get-asset-path failures may also be fixture cascades. Those remain hypotheses,
+not demonstrated identities or fixed defects. No guessed cascade fix is included.
+
+#### Human/infrastructure block: validation policy is unchanged
+
+Advisor `ses_eb6e4928cffe1uGagsdt54R5O4` assessed the final correlated evidence as
+**requires_human**. The next requirements are native Windows persistent-ACL
+validation and an explicit decision whether that native validation may substitute
+for the mandatory Wine-green gate for this work. **The user has not approved that
+substitution.** If substitution is not approved, the work remains blocked on the
+Wine gate; native validation alone does not silently waive it.
+
+Repeated unchanged Wine probes are not useful next evidence. No additional skip,
+production security-policy relaxation, post-create ACL repair, budget increase or
+gate bypass is authorized. No publish, readiness or completion claim follows from
+these runs. Native Windows/macOS proof and the historical Linux signal
+investigation remain separate; this measured Wine boundary does not close them.
 
 
 ## See also
