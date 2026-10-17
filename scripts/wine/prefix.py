@@ -20,6 +20,10 @@ import uuid
 
 BOUNDS = {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
           "stop": 10, "wait": 15, "kill_after": 5}
+VERSION_BYTES = 4096
+VERSION_LINE = re.compile(
+    r'(?:wine-|Wine )([0-9]+(?:\.[0-9]+)+(?:-?(?:rc[0-9]+|dev[0-9]*))?)'
+    r'(?: \([^\x00-\x1f\x7f-\x9f]*\))?')
 
 
 def real_directory(path, private=False):
@@ -81,25 +85,67 @@ def resolve_wine():
     return _wine_lookup().resolve(strict=True)
 
 
+class _VersionRejection(ValueError):
+    """Keep the primary cause independent of the bounded capture diagnostics."""
+    def __init__(self, summary, observation):
+        self.summary = summary
+        super().__init__(f'{summary}; capture={json.dumps(observation, ensure_ascii=True)}')
+
+
 def tool_identity(path, env):
-    # A regular temporary stream cannot be retained as a pipe by descendants.
-    with tempfile.TemporaryFile(mode='w+') as output:
+    """Return pinned identity and a separate bounded version-query observation.
+
+    Both streams are regular files, never descendant-held communicate pipes.
+    Exact duplicate identity lines are accepted (stdout wins across streams);
+    different raw identity lines, even annotation-only differences, are ambiguous.
+    """
+    with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
         code = wait_leader(['timeout', '--kill-after=5s', '60s', str(path), '--version'],
-                           env=env, stdout=output)
-        if code:
-            raise ValueError(f'Wine tool version failed: {path} exit={code}')
-        output.seek(0)
-        version = output.read(4097).strip()
-        if len(version) > 4096:
-            raise ValueError('Oversized Wine tool version')
-    return {'executable': str(path), 'version': version,
-            'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+                           env=env, stdout=output, stderr=errors)
+        data, observation = {}, {}
+        for name, stream in [('stdout', output), ('stderr', errors)]:
+            stream.seek(0)
+            data[name] = stream.read(VERSION_BYTES + 1)
+            observation[name] = {'bytes': os.fstat(stream.fileno()).st_size,
+                                 'excerpt': repr(data[name][:160])}
+
+    def fail(message):
+        # Byte repr is ASCII/control-safe even for invalid UTF-8. Never interpolate
+        # unbounded raw output or a UnicodeDecodeError's input into diagnostics.
+        raise _VersionRejection(message, observation)
+
+    if code:
+        fail(f'Wine tool version failed: exit={code}')
+    if any(len(raw) > VERSION_BYTES or observation[name]['bytes'] > VERSION_BYTES
+           for name, raw in data.items()):
+        fail('Oversized Wine tool version')
+    try:
+        text = {name: raw.decode('utf-8') for name, raw in data.items()}
+    except UnicodeDecodeError:
+        fail('Invalid UTF-8 Wine tool version')
+    candidates = []
+    for name, value in text.items():
+        for line in value.splitlines():
+            if VERSION_LINE.fullmatch(line):
+                candidates.append((name, line))
+            elif line.startswith(('wine-', 'Wine ')):
+                fail('Unsupported Wine release identity')
+    if not candidates:
+        fail('Unsupported Wine release identity')
+    if len({line for _, line in candidates}) != 1:
+        fail('Ambiguous Wine release identity')
+    stream, version = candidates[0]  # Fixed stdout-then-stderr iteration order.
+    observation.update(stream=stream, release=release(version), occurrences=len(candidates))
+    identity = {'executable': str(path), 'version': version,
+                'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+    return identity, observation
 
 
 def release(version):
-    match = re.fullmatch(r'(?:wine-|Wine )(.+)', version)
+    # Compare the entire numeric/rc/dev token, never the distribution annotation.
+    match = VERSION_LINE.fullmatch(version)
     if not match:
-        raise ValueError(f'Unsupported Wine release identity: {version}')
+        raise ValueError('Unsupported Wine release identity')
     return match[1]
 
 
@@ -198,17 +244,28 @@ def create_session(repo):
     wine = wine_lookup.resolve(strict=True)
     server = server_lookup.resolve(strict=True)
     env = dict(os.environ, WINEPREFIX=str(directory / 'prefix'), WINEARCH='win64', WINESERVER=str(server))
-    tools = {'wine': tool_identity(wine, env), 'server': tool_identity(server, env)}
-    try:
-        if release(tools['wine']['version']) != release(tools['server']['version']):
-            raise ValueError('Wine/wineserver release mismatch')
-    except ValueError as error:
+    tools, versions, failures = {}, {}, []
+    for name, path in [('wine', wine), ('server', server)]:
+        try:
+            tools[name], versions[name] = tool_identity(path, env)
+        except _VersionRejection as error:
+            failures.append((name, error))
+    paths = (f'wine lookup={ascii(str(wine_lookup))[1:-1]} canonical={ascii(str(wine))[1:-1]}; '
+             f'wineserver lookup={ascii(str(server_lookup))[1:-1]} canonical={ascii(str(server))[1:-1]}')
+    detail = '; '.join(f"{name} version={ascii(tools[name]['version'][:160])} "
+                       f"capture={json.dumps(versions[name], ensure_ascii=True)}" for name in tools)
+    if failures:
+        # Wrapper evidence retains only the first 500 characters. All primary
+        # role/cause summaries must precede paths, peer warnings and raw excerpts.
+        summary = '; '.join(f'{name}: {error.summary}' for name, error in failures)
+        diagnostics = '; '.join(f'{name}: {error}' for name, error in failures)
+        raise ValueError(f'Wine tool identity rejected: {summary}; {paths}; {detail}; {diagnostics}')
+    if versions['wine']['release'] != versions['server']['release']:
         raise ValueError(
-            f"{error}; wine lookup={wine_lookup} canonical={wine} version={tools['wine']['version']!r}; "
-            f"wineserver lookup={server_lookup} canonical={server} version={tools['server']['version']!r}"
-        ) from error
+            f'Wine/wineserver release mismatch; {paths}; {detail}')
     owner = {'version': 2, 'id': identifier, 'nonce': uuid.uuid4().hex,
-             'repo': str(repo), 'uid': os.geteuid(), 'bounds': BOUNDS, 'tools': tools}
+             'repo': str(repo), 'uid': os.geteuid(), 'bounds': BOUNDS, 'tools': tools,
+             'tool_versions': versions}
     session = Session(repo, identifier, owner)
     owner['roots'] = {name: real_directory(path, name in ('sessions', 'session', 'prefix'))
                       for name, path in session.roots().items()}

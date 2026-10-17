@@ -181,7 +181,7 @@ def test_invalid_logical_server_never_falls_back_to_path(runtime, damage, select
     assert not [c for c in runtime.calls() if 'wine' in c or 'server' in c]
 
 
-@pytest.mark.parametrize('version', ['Wine 8.0', 'Wine 9.0', 'Wine 9.0 (Fixture)', 'unrecognized-release'])
+@pytest.mark.parametrize('version', ['Wine 8.0', 'unrecognized-release'])
 def test_release_failure_reports_captured_versions_and_both_path_pairs(runtime, version):
     wine, server = relocate_tools(runtime)
     # Distinct logical/canonical launcher as well as relocated server paths.
@@ -196,11 +196,199 @@ def test_release_failure_reports_captured_versions_and_both_path_pairs(runtime, 
     assert result.returncode != 0
     assert ('Unsupported Wine release identity' if version == 'unrecognized-release'
             else 'Wine/wineserver release mismatch') in result.stderr
-    assert f"wine lookup={alias} canonical={wine} version='wine-9.0 (fixture)'" in result.stderr
-    assert f"wineserver lookup={logical_server} canonical={server} version={version!r}" in result.stderr
+    if version == 'unrecognized-release':
+        assert result.stderr.startswith('Windows runtime: Wine tool identity rejected: server: '
+                                        'Unsupported Wine release identity;')
+    else:
+        assert result.stderr.startswith('Windows runtime: Wine/wineserver release mismatch;')
+    assert f"wine lookup={alias} canonical={wine}" in result.stderr
+    assert f"wineserver lookup={logical_server} canonical={server}" in result.stderr
+    assert 'wine-9.0 (fixture)' in result.stderr and version in result.stderr
     assert [(c['tool'], c['args']) for c in runtime.calls() if 'tool' in c] == [
         (str(wine), ['--version']), (str(server), ['--version'])]
     assert not [c for c in runtime.calls() if 'wine' in c or 'server' in c]
+
+
+def version_output(path, stdout, stderr, code=0):
+    """Change only the fake tool's existing --version branch, preserving call logging."""
+    source = path.read_text()
+    branch = "if sys.argv[1:] == ['--version']:\n"
+    start = source.index(branch) + len(branch)
+    end = source.index('\n', start)
+    path.write_text(source[:start] +
+                    f'    os.write(1, {stdout!r}); os.write(2, {stderr!r}); sys.exit({code})' + source[end:])
+
+
+@pytest.mark.parametrize('mode', ['fast1800', 'smoke60'])
+def test_observed_stdout_stderr_vendor_layout_admits_and_owns_execution(runtime, mode):
+    wine, server = relocate_tools(runtime)
+    raw_wine = 'wine-9.0 (Ubuntu 9.0~repack-4build3)'
+    version_output(wine, (raw_wine + '\n').encode(), b'')
+    version_output(server, b'', b'Wine 9.0\n')
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    _, session = load_owned(runtime)
+    assert session.owner['tools'] == {
+        'wine': {'executable': str(wine), 'version': raw_wine,
+                 'sha256': hashlib.sha256(wine.read_bytes()).hexdigest()},
+        'server': {'executable': str(server), 'version': 'Wine 9.0',
+                   'sha256': hashlib.sha256(server.read_bytes()).hexdigest()}}
+    captures = session.owner['tool_versions']
+    assert captures['wine']['stream'] == 'stdout' and captures['server']['stream'] == 'stderr'
+    assert captures['wine']['release'] == captures['server']['release'] == '9.0'
+    assert captures['wine']['stdout']['bytes'] == len(raw_wine.encode()) + 1
+    assert captures['server']['stdout']['bytes'] == 0
+    assert captures['server']['stderr']['bytes'] == len(b'Wine 9.0\n')
+    if mode == 'fast1800':
+        result = runtime.run('test-windows-under-wine.sh')
+    else:
+        result = subprocess.run([sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), mode],
+                                cwd=runtime.root, env=runtime.env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    calls = [call for call in runtime.calls() if 'tool' in call]
+    assert [(call['tool'], call['args']) for call in calls[:2]] == [
+        (str(wine), ['--version']), (str(server), ['--version'])]
+    assert sum(call['args'] == ['--version'] for call in calls) == 2
+    assert calls[2]['args'] == ['wineboot.exe', '--init']
+    assert calls[-3]['args'] == [str(runtime.overlay / 'space-cli.exe'), *(
+        ['-m', 'tests.fast:main'] if mode == 'fast1800' else ['--help'])]
+    assert [call['args'] for call in calls[-2:]] == [['-k'], ['-w']]
+    assert all(call['env']['WINEPREFIX'] == str(session.prefix) for call in calls)
+    assert session.state()['ended'] and not session.state()['authorized']
+    assert not Path(runtime.env['WINEPREFIX']).exists()
+
+
+@pytest.mark.parametrize('wine_stream,server_stream', [('stdout', 'stdout'), ('stdout', 'stderr'),
+                                                       ('stderr', 'stdout'), ('stderr', 'stderr')])
+@pytest.mark.parametrize('release', ['9.0', '9.0rc1', '9.0-rc1', '9.0dev2', '9.0-dev'])
+def test_version_streams_keep_exact_core_and_ignore_vendor_annotation(runtime, wine_stream, server_stream, release):
+    wine, server = relocate_tools(runtime)
+    for path, stream, line in [(wine, wine_stream, f'wine-{release} (Ubuntu)'),
+                               (server, server_stream, f'Wine {release} (Fixture)')]:
+        output = ('wine: warning: bounded diagnostic noise\n' + line + '\n').encode()
+        version_output(path, output if stream == 'stdout' else b'warning: other stream\n',
+                       output if stream == 'stderr' else b'warning: other stream\n')
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    _, session = load_owned(runtime)
+    for name, stream in [('wine', wine_stream), ('server', server_stream)]:
+        capture = session.owner['tool_versions'][name]
+        assert capture['release'] == release and capture['stream'] == stream
+        assert capture['occurrences'] == 1
+        assert 'bounded diagnostic noise' in capture[stream]['excerpt']
+    assert [(call['tool'], call['args']) for call in runtime.calls() if 'tool' in call][:2] == [
+        (str(wine), ['--version']), (str(server), ['--version'])]
+
+
+@pytest.mark.parametrize('cross_stream', [False, True])
+def test_identical_version_lines_are_accepted_with_explicit_stdout_precedence(runtime, cross_stream):
+    wine, server = relocate_tools(runtime)
+    version_output(server, b'Wine 9.0\n' if cross_stream else b'Wine 9.0\nWine 9.0\n',
+                   b'Wine 9.0\n' if cross_stream else b'')
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    _, session = load_owned(runtime)
+    capture = session.owner['tool_versions']['server']
+    assert session.owner['tools']['server']['version'] == 'Wine 9.0'
+    assert capture['stream'] == 'stdout' and capture['occurrences'] == 2
+
+
+def test_version_limit_is_per_stream_bytes_and_retains_full_selected_line(runtime):
+    wine, server = relocate_tools(runtime)
+    raw_version = 'Wine 9.0 (' + 'é' * 2042 + 'x)'
+    assert len(raw_version.encode()) == 4096
+    warning = b'warning: ' + b'x' * (4096 - len(b'warning: '))
+    version_output(server, warning, raw_version.encode())
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    _, session = load_owned(runtime)
+    assert session.owner['tools']['server']['version'] == raw_version
+    capture = session.owner['tool_versions']['server']
+    assert capture['release'] == '9.0' and capture['stream'] == 'stderr'
+    assert capture['stdout']['bytes'] == capture['stderr']['bytes'] == 4096
+    assert all(len(capture[name]['excerpt']) <= 800 for name in ['stdout', 'stderr'])
+
+
+def test_version_queries_wait_leaders_without_communicating(runtime, monkeypatch):
+    module = prefix_module()
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    def no_communicate(*args, **kwargs):
+        raise AssertionError('Version queries must not communicate on descendant pipes')
+    monkeypatch.setattr(module.subprocess.Popen, 'communicate', no_communicate)
+    session = module.create_session(runtime.root)
+    assert session.owner['tool_versions']['wine']['release'] == '9.0'
+    assert module.stop_session(session, end=True).ok
+
+
+BAD_VERSIONS = [
+    (b'', b'', 0, 'Unsupported Wine release identity'),
+    (b'Wine v9.0\n', b'', 0, 'Unsupported Wine release identity'),
+    (b'wine-9.0-custom\n', b'', 0, 'Unsupported Wine release identity'),
+    (b'warning: Wine 9.0\n', b'', 0, 'Unsupported Wine release identity'),
+    (b'Wine 9.0\nWine 8.0\n', b'', 0, 'Ambiguous Wine release identity'),
+    (b'Wine 9.0 (A)\nWine 9.0 (B)\n', b'', 0, 'Ambiguous Wine release identity'),
+    (b'Wine 9.0\n', b'Wine 9.1\n', 0, 'Ambiguous Wine release identity'),
+    (b'x' * 4097, b'Wine 9.0\n', 0, 'Oversized Wine tool version'),
+    (b'Wine 9.0\n', b'x' * 4097, 0, 'Oversized Wine tool version'),
+    (('é' * 2050).encode(), b'Wine 9.0\n', 0, 'Oversized Wine tool version'),
+    (b'\xff', b'Wine 9.0\n', 0, 'Invalid UTF-8 Wine tool version'),
+    (b'Wine 9.0\n', b'\xff', 0, 'Invalid UTF-8 Wine tool version'),
+    (b'Wine 9.0\n', b'warning: error\n', 23, 'exit=23'),
+    (b'\x1b[31mwarning\x00\n', b'not a version\n', 0, 'Unsupported Wine release identity'),
+]
+
+
+@pytest.mark.parametrize('tool', ['wine', 'server'])
+@pytest.mark.parametrize('stdout,stderr,code,diagnostic', BAD_VERSIONS,
+                         ids=['empty', 'unsupported', 'unsupported-suffix', 'unanchored', 'conflict',
+                              'ambiguous-annotation', 'cross-conflict', 'stdout-overflow', 'stderr-overflow',
+                              'multibyte-overflow', 'stdout-invalid', 'stderr-invalid', 'nonzero', 'controls'])
+def test_invalid_identity_queries_both_tools_then_fails_before_any_lifecycle(runtime, tool, stdout, stderr, code, diagnostic):
+    wine, server = relocate_tools(runtime)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    _, old_session = load_owned(runtime)
+    old_files = {path: path.read_bytes() for path in [old_session.directory / 'owner.json',
+                 old_session.directory / 'state.json', runtime.overlay / 'admission.json']}
+    version_output(wine if tool == 'wine' else server, stdout, stderr, code)
+    before = len(runtime.calls())
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    assert diagnostic in result.stderr
+    assert result.stderr.startswith(f'Windows runtime: Wine tool identity rejected: {tool}: ')
+    assert diagnostic in result.stderr[:500]
+    assert f'wine lookup={wine} canonical={wine}' in result.stderr
+    assert f'wineserver lookup={runtime.bin / "wineserver-stable"} canonical={server}' in result.stderr
+    assert 'stdout' in result.stderr and 'stderr' in result.stderr and 'bytes' in result.stderr
+    assert len(result.stderr) < 5000
+    assert '\x1b' not in result.stderr and '\x00' not in result.stderr
+    added = [call for call in runtime.calls()[before:] if 'tool' in call]
+    assert [(call['tool'], call['args']) for call in added] == [
+        (str(wine), ['--version']), (str(server), ['--version'])]
+    assert not [call for call in runtime.calls()[before:] if 'wine' in call or 'server' in call]
+    assert all(path.read_bytes() == data for path, data in old_files.items())
+    assert not Path(runtime.env['WINEPREFIX']).exists()
+
+
+@pytest.mark.parametrize('wine_core,server_core', [('9.0', '9.1'), ('9.0rc1', '9.0rc2'),
+                                                  ('9.0-rc1', '9.0-rc2'), ('9.0dev1', '9.0dev2'),
+                                                  ('9.0-dev', '9.0-dev1'), ('9.0', '9.0-dev')])
+def test_core_release_difference_is_not_hidden_by_annotation_parsing(runtime, wine_core, server_core):
+    wine, server = relocate_tools(runtime)
+    version_output(wine, f'wine-{wine_core} (Ubuntu)\n'.encode(), b'')
+    version_output(server, b'', f'Wine {server_core}\n'.encode())
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    assert 'Wine/wineserver release mismatch' in result.stderr
+    assert wine_core in result.stderr and server_core in result.stderr
+    assert [(call['tool'], call['args']) for call in runtime.calls() if 'tool' in call] == [
+        (str(wine), ['--version']), (str(server), ['--version'])]
 
 
 def test_admission_failure_still_stops_owned_prefix(runtime):

@@ -937,7 +937,12 @@ def test_budget_retains_failure_context_with_extreme_metadata(tmp_path, monkeypa
     repo = reproduction_fixture(tmp_path, monkeypatch)
     for name, label in [('wine', 'wine-'), ('wineserver', 'Wine ')]:
         path = repo / 'fixture-tools' / name
-        path.write_text(f'#!{sys.executable}\nimport sys\nif sys.argv[1:]==["--version"]: print({(label + chr(1) * 4000)!r})\n')
+        # Admit a real core token while maximizing legitimate escaped metadata:
+        # 1020 non-BMP annotation characters expand to 12240 JSON ASCII bytes.
+        # Keep control noise on its own non-identity line; use all 4096 stream bytes.
+        output = ('\x01\x02\x03\n' + label + '9.0 (' + '😀' * 1020 + ')\n').encode('utf-8')
+        assert len(output) == 4096
+        path.write_text(f'#!{sys.executable}\nimport sys\nif sys.argv[1:]==["--version"]: sys.stdout.buffer.write({output!r})\n')
     monkeypatch.setenv("WINEPREFIX", "/" + "😀" * 4000)
     body = "\n".join(f"print('[{kind}] ' + '\\x01' * 3800 + '😀' * 40, flush=True)"
                      for kind in ("LAUNCH", "BOOT", "LOAD", "RUN", "PASS", "TIME"))
@@ -951,6 +956,92 @@ def test_budget_retains_failure_context_with_extreme_metadata(tmp_path, monkeypa
     assert "important failure context: broken call" in failure["stderr"]["tail"]
     assert failure["returncode"] == 17
     assert result["evidence"]["response_truncated"] is True
+
+
+@pytest.mark.parametrize('reject_wine', [False, True])
+@pytest.mark.parametrize('server_output,server_code,reason', [
+    (b'Wine not-a-release\n', 0, 'Unsupported Wine release identity'),
+    (b'Wine 9.0\n', 23, 'Wine tool version failed: exit=23'),
+    (b'\xff', 0, 'Invalid UTF-8 Wine tool version'),
+], ids=['unsupported', 'nonzero', 'invalid-utf8'])
+def test_identity_rejection_survives_wrapper_error_cap_with_long_paths_and_peer_warnings(
+        tmp_path, monkeypatch, reject_wine, server_output, server_code, reason):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    logical = repo / 'selected-tools' / ('s' * 180) / ('t' * 180) / ('u' * 180)
+    canonical = repo / 'tool-backends' / ('c' * 170) / ('d' * 170) / ('e' * 170)
+    logical.mkdir(parents=True)
+    canonical.mkdir(parents=True)
+    calls_path = repo / 'identity-calls.jsonl'
+
+    def write_tool(path, stdout, stderr, code):
+        path.write_text(f'''#!{sys.executable}
+import json, os, sys
+with open({str(calls_path)!r}, 'a') as stream:
+    stream.write(json.dumps({{'tool': sys.argv[0], 'args': sys.argv[1:]}})+'\\n')
+if sys.argv[1:] != ['--version']: sys.exit(91)
+os.write(1, {stdout!r})
+os.write(2, {stderr!r})
+sys.exit({code})
+''')
+        path.chmod(0o755)
+
+    wine, server = canonical / 'wine64', canonical / 'wineserver64'
+    warning = b'warning: \x1b[31m' + b'x' * 2000 + b'\n'
+    raw_wine = b'wine-9.0 (Ubuntu 9.0~repack-4build3)\n'
+    write_tool(wine, b'wine-unsupported\n' if reject_wine else raw_wine, warning, 0)
+    write_tool(server, b'', server_output, server_code)
+    wine_lookup, server_lookup = logical / 'wine-stable', logical / 'wineserver-stable'
+    wine_lookup.symlink_to(wine)
+    server_lookup.symlink_to(server)
+    assert len(str(wine_lookup)) > 500
+    monkeypatch.setenv('WINE_CMD', str(wine_lookup))
+    # Observe, never replace, the production create_session and its real reads of
+    # our fake executables. Preserve the complete exception for detailed-fact checks.
+    create = windows_ci_repro._prefix.create_session
+    full_errors = []
+    def observe_create(root):
+        try:
+            return create(root)
+        except ValueError as error:
+            full_errors.append(str(error))
+            raise
+    monkeypatch.setattr(windows_ci_repro._prefix, 'create_session', observe_create)
+
+    result = windows_ci_repro.reproduce(repo)
+    assert result['status'] == 'fail'
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    evidence = result['evidence']
+    ledger = json.loads((repo / evidence['ledger_path']).read_text())
+    assert evidence['errors'] == ledger['errors']
+    assert len(evidence['errors']) == 1 and len(evidence['errors'][0]) <= len('ValueError: ') + 500
+    assert 'server:' in evidence['errors'][0] and reason in evidence['errors'][0]
+    if reject_wine:
+        assert 'wine: Unsupported Wine release identity' in evidence['errors'][0]
+    assert evidence['failing_step'] == 'wine-admission' and ledger['outcome'] == 'fail'
+    assert not evidence['complete'] and not ledger['complete']
+    assert evidence['sealed']
+    expected_steps = ['preflight', 'build-windows-from-linux', 'package-windows-runtime', 'verify-windows-outputs']
+    assert [stage['step'] for stage in evidence['stages']] == expected_steps
+    assert [stage['step'] for stage in ledger['stages']] == expected_steps
+    for stage in evidence['stages']:
+        assert stage['outcome'] == 'pass' and stage['capture_complete']
+    for returned, stage in zip(evidence['stages'][1:3], ledger['stages'][1:3]):
+        for stream in ['stdout', 'stderr']:
+            log = Path(stage[stream]['path'])
+            assert returned[stream]['path'] == stage[stream]['path']
+            assert not log.is_absolute() and (repo / log).is_file()
+        assert 'successful' in (repo / stage['stdout']['path']).read_text()
+    assert (repo / 'dispatch').read_text().splitlines() == ['build', 'package']
+    assert [json.loads(line) for line in calls_path.read_text().splitlines()] == [
+        {'tool': str(wine), 'args': ['--version']},
+        {'tool': str(server), 'args': ['--version']}]
+    assert len(full_errors) == 1
+    assert f'wine lookup={wine_lookup} canonical={wine}' in full_errors[0]
+    assert f'wineserver lookup={server_lookup} canonical={server}' in full_errors[0]
+    assert 'stdout' in full_errors[0] and 'stderr' in full_errors[0]
+    assert '\x1b' not in full_errors[0] and '\x00' not in full_errors[0]
+    if not reject_wine:
+        assert raw_wine.decode().strip() in full_errors[0] and 'warning:' in full_errors[0]
 
 
 def test_missing_home_does_not_guess_default_prefix_identity(tmp_path, monkeypatch):
