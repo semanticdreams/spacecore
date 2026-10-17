@@ -68,3 +68,17 @@ def test_windows_notes_match_post_merge_manual_policy_and_keep_native_authority(
     assert "Manual dispatch remains applicable to Windows validation and release packaging" in text
     assert "native Windows CI remains authoritative" in text
     assert "not a substitute for native Windows CI" in " ".join(text.split())
+
+
+def test_current_wine_notes_describe_owned_lifecycle_not_retired_default_prefix_contract():
+    text = read('docs/dev/notes/windows-wine-build-and-test.md')
+    current = text.split('## Reproducible Workflow (Current)', 1)[1]
+    for phrase in ('1800 seconds', '480 seconds', '1920 seconds', '45 seconds',
+                   'immutable ownership', 'quiescence', 'terminal', 'SIGKILL', '93 RUN', '92 PASS',
+                   'FD', 'retained', 'stopped_generation'):
+        assert phrase in current
+    for retired in ('retains180 seconds', 'still uses **180 seconds**', "application's180-second bound is unchanged",
+                    'inherited/default prefix selection', 'Default-prefix identity is derived'):
+        assert retired not in current
+    assert 'scripts/wine/runtime.sh' not in text
+    assert '{runtime.sh,' not in text

@@ -16,7 +16,10 @@ import sys
 import tempfile
 import signal
 
-import prefix
+if __package__:
+    from . import prefix
+else:
+    import prefix
 
 ROOT = Path(__file__).absolute().parents[2]
 BUILD = ROOT / "build"
@@ -26,6 +29,11 @@ MARKER = ".space-windows-artifact-v1.json"
 FORBIDDEN = "bcryptprimitives.dll"
 BUILTIN = "bcryptprimitives=b;advapi32,cryptbase=b"
 COMPAT = "bcryptprimitives=n;advapi32,cryptbase=b"
+# Producer and capture parser share the encoded, newline-excluding line budget.
+CLEANUP_LINE_BYTES = 4096
+CLEANUP_MARKER = 'Wine cleanup: '
+CLEANUP_FIELDS = {'ok', 'stop_returncode', 'wait_returncode', 'errors',
+                  'error_count', 'errors_truncated', 'error_excerpt_truncated'}
 TZ_FILES = ("africa antarctica asia australasia backward etcetera europe northamerica "
             "southamerica leapseconds version windowsZones.xml LICENSE CLDR-LICENSE.txt").split()
 
@@ -312,6 +320,26 @@ def require_cleanup(result):
         raise ValueError('Owned Wine cleanup failed: ' + '; '.join(result.errors))
 
 
+def cleanup_marker(result):
+    errors = [str(error) for error in result.errors[:8]]
+    excerpts = [error[:500] for error in errors]
+    truncated = [excerpt != error for excerpt, error in zip(excerpts, errors)]
+    value = {'ok': result.ok, 'stop_returncode': result.stop_returncode,
+             'wait_returncode': result.wait_returncode, 'errors': excerpts,
+             'error_count': len(result.errors), 'errors_truncated': len(result.errors) > len(errors) or any(truncated),
+             'error_excerpt_truncated': truncated}
+    while True:
+        marker = CLEANUP_MARKER + json.dumps(value, ensure_ascii=True)
+        if len(marker.encode('utf-8')) <= CLEANUP_LINE_BYTES:
+            return marker
+        # At most eight 500-character excerpts; shrink only diagnostic text,
+        # never native stop/wait fields, counts or explicit truncation flags.
+        index = max(range(len(excerpts)), key=lambda i: len(excerpts[i]))
+        excerpts[index] = excerpts[index][:len(excerpts[index]) // 2]
+        truncated[index] = True
+        value['errors_truncated'] = True
+
+
 def owning_operation(session, operation):
     primary = None
     code = 1
@@ -396,7 +424,9 @@ def main():
         elif action in ('smoke60', 'fast1800') and not args:
             return execute_admitted(selected_session(), action)
         elif action == 'terminal-stop' and not args:
-            require_cleanup(prefix.stop_session(selected_session(), end=True))
+            result = prefix.stop_session(selected_session(), end=True)
+            print(cleanup_marker(result), flush=True)
+            require_cleanup(result)
         elif action == "compat" and not args:
             verify(OVERLAY, "wine-overlay")
             if (OVERLAY / "admission.json").exists():

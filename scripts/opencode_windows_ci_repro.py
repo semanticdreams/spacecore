@@ -9,12 +9,14 @@ import hashlib
 import json
 import os
 import shutil
+import signal
 import sys
 import time
 from pathlib import Path
 from typing import Sequence
 
 import _windows_repro_evidence as _evidence
+from wine import prefix as _prefix
 from opencode_capabilities import CapabilityError, CommandResult, ensure_space_repo, failure, human_decision, run_command, success
 
 
@@ -302,12 +304,21 @@ def reproduce(repo_root: Path) -> dict[str, object]:
     # Serialize the complete fixed operation without a replaceable lockfile.
     # Artifact preparation/consumption independently locks build/ as well.
     fd = os.open(repo, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    previous = {}
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
+        def interrupted(signum, frame):
+            # selectors treats InterruptedError as a retryable syscall EINTR.
+            # A lifecycle exit must escape that retry path and reach finally.
+            raise KeyboardInterrupt(f"Reproduction interrupted by signal {signum}")
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            previous[sig] = signal.signal(sig, interrupted)
         return _reproduce_steps(repo)
     except (OSError, ValueError) as error:
         return _evidence._bounded_response(_failure_for_exception("reproduce", error))
     finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
         os.close(fd)
 
 
@@ -316,9 +327,10 @@ _REPRO_STEPS = (
     ("build-windows-from-linux", ("scripts/build-windows-from-linux.sh",)),
     ("package-windows-runtime", ("scripts/package-windows-runtime.sh",)),
     ("verify-windows-outputs", ()),
-    ("wine-admission", ("scripts/prepare-windows-wine-runtime.sh",)),
-    ("wine-fast", ("scripts/test-windows-under-wine.sh",)),
+    ("wine-admission", ("timeout", "--kill-after=5s", "480s", "scripts/prepare-windows-wine-runtime.sh")),
+    ("wine-fast", ("timeout", "--kill-after=5s", "1920s", "scripts/test-windows-under-wine.sh")),
 )
+_TERMINAL_STOP = ("timeout", "--kill-after=5s", "45s", "python3", "scripts/wine/artifacts.py", "terminal-stop")
 
 
 def _selection_conflicts() -> list[str]:
@@ -328,39 +340,40 @@ def _selection_conflicts() -> list[str]:
                  "TEST_MODULES", "SPACE_TEST_MODULES")
     conflicts = [key for key in forbidden if os.environ.get(key)]
     conflicts.extend(key for key in ("SPACE_MATRIX_TEST", "SPACE_REALTIME_TEST") if os.environ.get(key) == "1")
+    if "SPACE_WINE_SESSION_ID" in os.environ:
+        conflicts.append("SPACE_WINE_SESSION_ID")
     return sorted(conflicts)
 
 
 def _launch_metadata(repo: Path) -> dict[str, object]:
-    prefix = os.environ.get("WINEPREFIX")
-    home = os.environ.get("HOME")
-    effective = prefix if prefix is not None else os.path.join(home, ".wine") if home else None
-    return {"module": "tests.fast:main", "deadline_seconds": 180, "admission_deadline_seconds": 60,
+    return {"module": "tests.fast:main", "deadline_seconds": 1800, "admission_deadline_seconds": 60,
+            "bounds": dict(_prefix.BOUNDS, admission_outer=480, fast_outer=1920, cleanup_backstop=45),
             "case_deadline_seconds": 120, "case_deadline_policy": "existing per-case overrides unchanged",
             "diagnostics": {"TEST_VERBOSE": "1", "SPACE_TEST_TIMINGS": "1"}, "skip_keyring_tests": True,
-            "prefix_selection": "inherited" if prefix is not None else "default",
-            "effective_prefix": os.path.abspath(repo / effective) if effective is not None else None,
+            "prefix_selection": "generated-owned-session", "effective_prefix": None,
             "display_present": bool(os.environ.get("DISPLAY")),
             "wayland_display_present": bool(os.environ.get("WAYLAND_DISPLAY")),
             "effective_uid": os.geteuid(), "effective_gid": os.getegid()}
 
 
-def _admitted_metadata(repo: Path) -> dict[str, object]:
+def _admitted_metadata(repo: Path, session: _prefix.Session) -> dict[str, object]:
     # Read the existing receipt only. Do not call configuration(), run --version,
     # reseal the overlay, or copy receipt conditions/private prefix contents.
+    session.validate()
     build = _evidence._safe_path(repo / "build")
     fd = os.open(build, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         receipt = _evidence._read_json(repo / "build/wine/windows/admission.json", 16 * 1024 * 1024)
-        wine = receipt["wine"]
+        tools = receipt["tools"]
         payload = receipt["payload"]
-        if (receipt["version"] != 1 or not isinstance(wine, dict) or not isinstance(payload, dict)
-                or not all(isinstance(wine[key], str) and len(wine[key]) <= 4096
-                           for key in ("executable", "version", "sha256"))
+        if (receipt["version"] != 2 or not isinstance(tools, dict) or not isinstance(payload, dict)
+                or tools != session.owner['tools'] or receipt['ownedSession'] != _session_metadata(session)
+                or not all(isinstance(identity[key], str) and len(identity[key]) <= 4096
+                           for identity in tools.values() for key in ("executable", "version", "sha256"))
                 or receipt["backend"] not in ("bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b")):
             raise ValueError("Invalid admission metadata")
-        return {"wine": {key: wine[key] for key in ("executable", "version", "sha256")},
+        return {"wine": {key: tools['wine'][key] for key in ("executable", "version", "sha256")},
                 "backend": receipt["backend"],
                 "payload": {name: payload[name] for name in ("space.exe", "space-cli.exe") if name in payload},
                 "payload_inventory_sha256": hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()}
@@ -372,14 +385,23 @@ def _new_repro_run(repo: Path) -> Path:
     return _evidence._new_run(repo)
 
 
-def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str]) -> dict:
+def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str],
+                    session: _prefix.Session | None = None) -> dict:
     # No arbitrary commands even via this private interface: only the fixed
     # internal stage table can supply argv; CLI accepts no command/env/profile.
     if (step, tuple(args)) not in _REPRO_STEPS:
         raise ValueError("Not a fixed Windows reproduction command")
+    if step in ('wine-admission', 'wine-fast'):
+        if not isinstance(session, _prefix.Session) or session.repo != repo:
+            raise ValueError("Wine stage requires the generated owned session")
+        session.validate()
+    elif session is not None:
+        raise ValueError("Session handoff is private to known Wine steps")
     ledger, record, logs = _evidence._start(repo, run_dir, step, args)
+    if session is not None:
+        record['session_before'] = _session_state(session)
     if args:
-        return _evidence._capture(repo, run_dir, ledger, record, logs, list(args))
+        return _evidence._capture(repo, run_dir, ledger, record, logs, list(args), session)
     outcome, code, complete = "pass", 0, True
     try:
         if step == "preflight":
@@ -408,24 +430,78 @@ def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str]) -
     return _evidence._finish(repo, run_dir, ledger, record, outcome, code, complete)
 
 
+def _session_metadata(session):
+    return {"id": session.id, "nonce": session.nonce, "prefix": str(session.prefix),
+            "identity": session.owner["roots"]["prefix"], "arch": "win64"}
+
+
+def _session_state(session):
+    try:
+        session.validate()
+        return {"state": session.state(), "errors": []}
+    except Exception as error:
+        return {"state": None, "errors": [f"{type(error).__name__}: {str(error)[:500]}"]}
+
+
+def _terminal_cleanup(repo, run_dir, ledger, stage, session):
+    cleanup = {"started_utc": _evidence._utc(), "started_monotonic": time.monotonic(),
+               "before": _session_state(session), "attempts": []}
+    stage["cleanup"] = cleanup
+    # Helpers already own teardown. One bounded backstop retries failed cleanup;
+    # verified stopped generations merely revoke authorization, no server calls.
+    attempt = _evidence._cleanup_capture(repo, run_dir, stage, list(_TERMINAL_STOP), session)
+    cleanup["attempts"].append(attempt)
+    cleanup["after"] = _session_state(session)
+    state = cleanup['after']['state']
+    result = attempt.get('server_result', {})
+    cleanup['outcome'] = ('pass' if result.get('ok') is True and attempt['returncode'] == 0
+                          and state is not None and state['ended'] and not state['authorized']
+                          and state['stopped_generation'] == state['generation'] else 'fail')
+    cleanup['finished_utc'] = _evidence._utc()
+    cleanup['finished_monotonic'] = time.monotonic()
+    cleanup['elapsed_seconds'] = cleanup['finished_monotonic'] - cleanup['started_monotonic']
+    cleanup['capture_complete'] = attempt['capture_complete']
+    return cleanup['outcome'] == 'pass' and cleanup['capture_complete']
+
+
 def _reproduce_steps(repo: Path) -> dict[str, object]:
     run_dir = _new_repro_run(repo)
     ledger = _evidence._read_json(run_dir / "ledger.json")
     ledger["metadata"] = _launch_metadata(repo)
     failed = None
     step = "preflight"
+    session = None
+    session_fd = None
     try:
         _evidence._save(repo, run_dir, ledger)
         for step, args in _REPRO_STEPS:
-            record = _run_repro_step(repo, run_dir, step, args)
+            record = _run_repro_step(repo, run_dir, step, args,
+                                     session if step in ('wine-admission', 'wine-fast') else None)
             # Keep the known history in memory, including the current record.
             # A stale disk checkpoint is never the recovery source of truth.
             ledger["stages"].append(record)
+            if session is not None and step in ('wine-admission', 'wine-fast'):
+                record['session_after'] = _session_state(session)
             if record["outcome"] != "pass":
                 failed = step
                 break
-            if step == "wine-admission":
-                ledger["metadata"].update(_admitted_metadata(repo))
+            if step == 'verify-windows-outputs':
+                # Output verification has succeeded. Ownership/metadata failures
+                # belong to admission, never rewrite that earlier success.
+                step = 'wine-admission'
+                build_fd = os.open(repo / 'build', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                try:
+                    fcntl.flock(build_fd, fcntl.LOCK_EX)
+                    session = _prefix.create_session(repo)
+                    session_fd = os.open(session.directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                    fcntl.flock(session_fd, fcntl.LOCK_EX)
+                finally:
+                    os.close(build_fd)
+                ledger['metadata'].update(owned_session=_session_metadata(session),
+                                          effective_prefix=str(session.prefix), tools=session.owner['tools'])
+                _evidence._save(repo, run_dir, ledger)
+            if record['step'] == "wine-admission":
+                ledger["metadata"].update(_admitted_metadata(repo, session))
                 _evidence._save(repo, run_dir, ledger)
     except _evidence._PersistenceError as error:
         ledger = error.ledger
@@ -446,9 +522,38 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
         ledger["complete"] = False
         if ledger["stages"] and ledger["stages"][-1]["step"] == step:
             partial = ledger["stages"][-1]
-            partial["outcome"] = "interrupted" if isinstance(error, KeyboardInterrupt) else "evidence_error"
+            if partial['outcome'] in ('started', 'pass'):
+                partial["outcome"] = "interrupted" if isinstance(error, (KeyboardInterrupt, InterruptedError)) else "evidence_error"
             partial["capture_complete"] = False
             partial["capture_errors"].extend(ledger["errors"])
+    finally:
+        if session is not None:
+            with _prefix.cleanup_signals():
+                try:
+                    stage = ledger['stages'][-1]
+                    # Ownership can precede wine-admission's first checkpoint.
+                    # Use its fixed log names, without adding a seventh stage.
+                    if stage['step'] not in ('wine-admission', 'wine-fast'):
+                        stage = _evidence._record('wine-admission', dict(_REPRO_STEPS)['wine-admission'])
+                        for name in ('stdout', 'stderr'):
+                            path = run_dir / f'wine-admission.{name}.log'
+                            stage[name] = _evidence._stream_info(path.relative_to(repo).as_posix())
+                            try:
+                                _evidence._exclusive(path).close()
+                            except (OSError, ValueError):
+                                pass  # Cleanup capture records unavailable logs explicitly.
+                        end = time.monotonic()
+                        stage.update(outcome='not_launched', finished_utc=_evidence._utc(),
+                                     finished_monotonic=end, elapsed_seconds=end-stage['started_monotonic'])
+                        ledger['stages'].append(stage)
+                    if not _terminal_cleanup(repo, run_dir, ledger, stage, session):
+                        failed = failed or stage['step']
+                except (Exception, KeyboardInterrupt) as error:
+                    failed = failed or step
+                    ledger.setdefault('errors', []).append(f'Terminal cleanup: {type(error).__name__}: {str(error)[:500]}')
+                finally:
+                    if session_fd is not None:
+                        os.close(session_fd)
     ledger.update(outcome="fail" if failed else "pass", finished_utc=_evidence._utc(),
                   complete=not failed and all(s["capture_complete"] for s in ledger["stages"]))
     sealed = False

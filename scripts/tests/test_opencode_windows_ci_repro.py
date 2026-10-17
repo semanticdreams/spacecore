@@ -2,6 +2,8 @@ import hashlib
 import errno
 import json
 import os
+import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -416,7 +418,7 @@ def test_reproduce_runs_build_package_verify_and_wine_steps_in_order(tmp_path, m
     assert ledger["stages"] == stages
     assert ledger["complete"] is True
     assert ledger["metadata"]["module"] == "tests.fast:main"
-    assert ledger["metadata"]["deadline_seconds"] == 180
+    assert ledger["metadata"]["deadline_seconds"] == 1800
     assert ledger["metadata"]["diagnostics"] == {"TEST_VERBOSE": "1", "SPACE_TEST_TIMINGS": "1"}
 
 
@@ -513,17 +515,35 @@ def reproduction_fixture(tmp_path, monkeypatch):
     install_fake_windows_outputs(repo)
     monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
     for key in ("TEST_FILTER", "SPACE_TEST_CASE_TIMEOUT_SECONDS", "SPACE_MATRIX_TEST", "SPACE_REALTIME_TEST",
-                "TEST_SUITE", "SPACE_TEST_SUITE", "TEST_MODULES", "SPACE_TEST_MODULES"):
+                "TEST_SUITE", "SPACE_TEST_SUITE", "TEST_MODULES", "SPACE_TEST_MODULES", "SPACE_WINE_SESSION_ID"):
         monkeypatch.delenv(key, raising=False)
+    tools = repo / 'fixture-tools'
+    tools.mkdir()
+    for name, version in [('wine', 'wine-9.0 (fixture)'), ('wineserver', 'Wine 9.0 (fixture)')]:
+        tool = tools / name
+        tool.write_text(f'#!{sys.executable}\nimport sys\nif sys.argv[1:]==["--version"]: print({version!r})\n')
+        tool.chmod(0o755)
+    monkeypatch.setenv('WINE_CMD', str(tools / 'wine'))
+    for name in ('prefix.py', 'artifacts.py'):
+        shutil.copy2(SCRIPT_ROOT / 'wine' / name, repo / 'scripts/wine' / name)
     for script, label in [("build-windows-from-linux.sh", "build"), ("package-windows-runtime.sh", "package"),
                           ("prepare-windows-wine-runtime.sh", "admission"), ("test-windows-under-wine.sh", "fast")]:
         fixture_script(repo, script, f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)")
     receipt = repo / "build/wine/windows/admission.json"
     receipt.parent.mkdir(parents=True)
-    receipt.write_text(json.dumps({"version": 1, "wine": {"executable": "/fixture/wine", "version": "fixture", "sha256": "a"*64},
+    receipt.write_text(json.dumps({"version": 2,
                                   "backend": "bcryptprimitives=b;advapi32,cryptbase=b",
                                   "payload": {"space-cli.exe": "b"*64}, "package": {"space-cli.exe": "b"*64},
-                                  "conditions": {"DISPLAY": "do-not-copy", "secret": "do-not-copy"}, "secret": "do-not-copy"}))
+                                   "conditions": {"DISPLAY": "do-not-copy", "secret": "do-not-copy"}, "secret": "do-not-copy"}))
+    create = windows_ci_repro._prefix.create_session
+    def fixture_session(root):
+        session = create(root)
+        if receipt.exists():
+            value = json.loads(receipt.read_text())
+            value.update(ownedSession=windows_ci_repro._session_metadata(session), tools=session.owner['tools'])
+            receipt.write_text(json.dumps(value))
+        return session
+    monkeypatch.setattr(windows_ci_repro._prefix, 'create_session', fixture_session)
     return repo
 
 
@@ -680,7 +700,7 @@ def test_private_logs_are_exclusive_no_follow_and_no_parent_chmod(tmp_path, monk
     target = tmp_path / "untouched"
     target.write_text("untouched")
     (run_dir / "build-windows-from-linux.stdout.log").symlink_to(target)
-    with pytest.raises((OSError, ValueError)):
+    with pytest.raises(windows_ci_repro._evidence._PersistenceError):
         windows_ci_repro._run_repro_step(repo, run_dir, "build-windows-from-linux", ["scripts/build-windows-from-linux.sh"])
     assert target.read_text() == "untouched"
     assert (repo / "build").stat().st_mode & 0o777 == 0o755
@@ -720,25 +740,28 @@ def test_encoded_total_response_budget_with_real_controls_unicode_and_all_stages
         for name in ("stdout", "stderr"):
             stream = stage[name]
             assert not Path(stream["path"]).is_absolute()
-            assert (repo / stream["path"]).stat().st_size == stream["stored_bytes"]
+            cleanup_bytes = sum(a[name]['stored_bytes'] for a in stage.get('cleanup', {}).get('attempts', []))
+            assert (repo / stream["path"]).stat().st_size == stream["stored_bytes"] + cleanup_bytes
             assert stream["stored_bytes"] == stream["observed_bytes"]
 
 
 def test_admission_metadata_read_is_allowlisted_readonly_and_preserves_receipt(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
     receipt = repo / "build/wine/windows/admission.json"
-    before = receipt.read_bytes()
     monkeypatch.setenv("WINEPREFIX", "/selected-prefix")
     monkeypatch.setenv("DISPLAY", ":private-display")
     result = windows_ci_repro.reproduce(repo)
+    before = receipt.read_bytes()
+    session = windows_ci_repro._prefix.load_session(repo, json.loads(before)['ownedSession']['id'])
+    windows_ci_repro._admitted_metadata(repo, session)
     metadata = result["evidence"]["metadata"]
-    assert metadata["wine"]["version"] == "fixture"
-    assert metadata["wine"]["sha256"] == "a"*64
+    assert metadata["wine"]["version"] == "wine-9.0 (fixture)"
+    assert metadata["wine"]["sha256"] == hashlib.sha256((repo / 'fixture-tools/wine').read_bytes()).hexdigest()
     assert metadata["payload"]["space-cli.exe"] == "b"*64
     payload = json.loads(before)["payload"]
     assert metadata["payload_inventory_sha256"] == hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
-    assert metadata["prefix_selection"] == "inherited"
-    assert metadata["effective_prefix"] == "/selected-prefix"
+    assert metadata["prefix_selection"] == "generated-owned-session"
+    assert metadata["effective_prefix"] == str(session.prefix)
     assert metadata["display_present"] is True
     assert metadata["effective_uid"] == os.geteuid()
     assert ":private-display" not in json.dumps(result)
@@ -912,11 +935,9 @@ def test_pruning_preserves_damaged_owned_evidence(tmp_path, monkeypatch, damage)
 
 def test_budget_retains_failure_context_with_extreme_metadata(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
-    receipt = repo / "build/wine/windows/admission.json"
-    data = json.loads(receipt.read_text())
-    data["wine"]["executable"] = "/" + "😀" * 4000
-    data["wine"]["version"] = "\x01" * 4000
-    receipt.write_text(json.dumps(data))
+    for name, label in [('wine', 'wine-'), ('wineserver', 'Wine ')]:
+        path = repo / 'fixture-tools' / name
+        path.write_text(f'#!{sys.executable}\nimport sys\nif sys.argv[1:]==["--version"]: print({(label + chr(1) * 4000)!r})\n')
     monkeypatch.setenv("WINEPREFIX", "/" + "😀" * 4000)
     body = "\n".join(f"print('[{kind}] ' + '\\x01' * 3800 + '😀' * 40, flush=True)"
                      for kind in ("LAUNCH", "BOOT", "LOAD", "RUN", "PASS", "TIME"))
@@ -938,7 +959,7 @@ def test_missing_home_does_not_guess_default_prefix_identity(tmp_path, monkeypat
     monkeypatch.delenv("HOME", raising=False)
     fixture_script(repo, "prepare-windows-wine-runtime.sh", "print('HOME is required', file=sys.stderr); sys.exit(1)")
     result = windows_ci_repro.reproduce(repo)
-    assert result["evidence"]["metadata"]["effective_prefix"] is None
+    assert result["evidence"]["metadata"]["effective_prefix"].startswith(str(repo / 'build/wine/sessions'))
     assert result["status"] == "fail"
 
 
@@ -971,7 +992,10 @@ def test_prefix_metadata_uses_same_working_directory_as_admission(tmp_path, monk
     repo = reproduction_fixture(tmp_path, monkeypatch)
     monkeypatch.setenv("WINEPREFIX", "selected-prefix")
     result = windows_ci_repro.reproduce(repo)
-    assert result["evidence"]["metadata"]["effective_prefix"] == str(repo / "selected-prefix")
+    metadata = result['evidence']['metadata']
+    receipt = json.loads((repo / 'build/wine/windows/admission.json').read_text())
+    assert metadata['effective_prefix'] == receipt['ownedSession']['prefix']
+    assert metadata['effective_prefix'] != str(repo / 'selected-prefix')
 
 
 def install_atomic_writer(monkeypatch, target, write):
@@ -1185,3 +1209,579 @@ def test_clock_rollback_retention_always_protects_current_run(tmp_path, monkeypa
     assert not (repo / old[0]["evidence"]["ledger_path"]).exists()
     assert all((repo / result["evidence"]["ledger_path"]).exists() for result in old[1:])
     assert len(list((repo / "build/windows-ci-repro").iterdir())) == 3
+
+
+def owned_reproduction_fixture(tmp_path, monkeypatch):
+    """Real artifact/prefix code with host dispatchers; no PE is executed."""
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    monkeypatch.setattr(windows_ci_repro, "ensure_space_repo", lambda path: runtime.root)
+    monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.delenv("SPACE_WINE_SESSION_ID", raising=False)
+    for key in ("TEST_FILTER", "SPACE_TEST_CASE_TIMEOUT_SECONDS", "TEST_SUITE", "SPACE_TEST_SUITE",
+                "TEST_MODULES", "SPACE_TEST_MODULES", "SPACE_MATRIX_TEST", "SPACE_REALTIME_TEST"):
+        monkeypatch.delenv(key, raising=False)
+    install_fake_windows_outputs(runtime.root)
+    fixture_script(runtime.root, "build-windows-from-linux.sh", "print('successful build', flush=True)")
+    runtime.codes.write_text('[0]')
+    return runtime
+
+
+@pytest.mark.parametrize("fault,code", [("success", 0), ("init", 42), ("admission", 20),
+                                         ("app", 124), ("app", 137)])
+def test_parent_owns_session_before_init_and_terminally_cleans_without_receipt(tmp_path, monkeypatch, fault, code):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    if fault == "admission":
+        runtime.codes.write_text('[20]')
+    elif fault in ("init", "app"):
+        monkeypatch.setenv("FIXTURE_" + fault.upper() + "_CODE", str(code))
+    result = windows_ci_repro.reproduce(runtime.root)
+    data = result['evidence']
+    assert result['status'] == ('pass' if fault == 'success' else 'fail'), result
+    metadata = data['metadata']
+    assert metadata['prefix_selection'] == 'generated-owned-session'
+    session_id = metadata['owned_session']['id']
+    state = json.loads((runtime.root / 'build/wine/sessions' / session_id / 'state.json').read_text())
+    assert state['ended'] and not state['authorized']
+    assert state['stopped_generation'] == state['generation']
+    assert data['stages'][-1]['cleanup']['outcome'] == 'pass'
+    calls = runtime.calls()
+    assert all(c['env']['WINEPREFIX'] == metadata['effective_prefix'] for c in calls if 'wine' in c or 'server' in c)
+    assert [c['server'] for c in calls if 'server' in c] == ([['-k'], ['-w']] if fault in ('init', 'admission')
+                                                          else [['-k'], ['-w'], ['-k'], ['-w']])
+    if fault == 'app':
+        assert data['stages'][-1]['returncode'] == code
+    if fault in ('init', 'admission'):
+        assert not (runtime.overlay / 'admission.json').exists()
+
+
+def test_inherited_private_session_handoff_rejected_before_any_execution(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv('SPACE_WINE_SESSION_ID', 'a' * 32)
+    result = windows_ci_repro.reproduce(repo)
+    assert result['status'] == 'fail'
+    assert result['evidence']['failing_step'] == 'preflight'
+    assert not (repo / 'dispatch').exists()
+    assert 'SPACE_WINE_SESSION_ID' in result['evidence']['stages'][0]['details']['evidence']['conflicting_keys']
+
+
+def test_wine_outer_vectors_are_exact_and_not_a_timeout_passthrough():
+    assert dict(windows_ci_repro._REPRO_STEPS)['wine-admission'] == (
+        'timeout', '--kill-after=5s', '480s', 'scripts/prepare-windows-wine-runtime.sh')
+    assert dict(windows_ci_repro._REPRO_STEPS)['wine-fast'] == (
+        'timeout', '--kill-after=5s', '1920s', 'scripts/test-windows-under-wine.sh')
+
+
+@pytest.mark.parametrize('code', [0, 17, 124, 137])
+def test_cleanup_retry_is_finite_and_preserves_primary_stage_status(tmp_path, monkeypatch, code):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv('FIXTURE_APP_CODE', str(code))
+    wine = runtime.bin / 'wine'
+    wine.write_text(wine.read_text().replace(
+        "sys.exit(int(os.environ.get('FIXTURE_INIT_CODE'",
+        "if sys.argv[1].endswith('space-cli.exe'): pathlib.Path(os.environ['WINEPREFIX']).parent.joinpath('app-ran').touch()\n"
+        "sys.exit(int(os.environ.get('FIXTURE_INIT_CODE'"))
+    server = runtime.bin / 'wineserver'
+    server.write_text(server.read_text().replace('import json, os, sys', 'import json, os, sys, pathlib').replace(
+        "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'",
+        "if sys.argv[1:] == ['-k'] and pathlib.Path(os.environ['WINEPREFIX']).parent.joinpath('app-ran').exists(): sys.exit(37)\n"
+        "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'"))
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail'
+    stage = result['evidence']['stages'][-1]
+    assert stage['step'] == 'wine-fast'
+    assert stage['returncode'] == (code or 1)
+    assert stage['outcome'] == ('timeout' if code == 124 else 'nonzero_exit')
+    cleanup = stage['cleanup']
+    assert cleanup['outcome'] == 'fail' and len(cleanup['attempts']) == 1
+    attempt = cleanup['attempts'][0]
+    assert attempt['server_result']['stop_returncode'] == 37
+    assert attempt['server_result']['wait_returncode'] == 0
+    assert attempt['started_utc'] and attempt['finished_utc']
+    assert [c['server'] for c in runtime.calls() if 'server' in c] == [['-k'], ['-w']] * 3
+    assert cleanup['after']['state']['stopped_generation'] is None
+
+
+@pytest.mark.parametrize('fault', ['checkpoint', 'log-open', 'interrupt', 'mutable-state', 'owner-substitution'])
+def test_parent_backstop_survives_failed_capture_and_uses_immutable_owner(tmp_path, monkeypatch, fault):
+    import _windows_repro_evidence as evidence
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    original = windows_ci_repro._run_repro_step
+    def run(repo, run_dir, step, args, session=None):
+        if step == 'wine-admission':
+            assert session is not None
+            state = session.state()
+            state.update(generation=1, stopped_generation=None, authorized=True)
+            session.save(state)
+            if fault == 'checkpoint':
+                atomic = evidence._atomic
+                def disk_full(path, value):
+                    if path.name == 'ledger.json':
+                        raise OSError(errno.ENOSPC, 'fixture post-acquisition storage failure')
+                    return atomic(path, value)
+                monkeypatch.setattr(evidence, '_atomic', disk_full)
+            elif fault == 'log-open':
+                exclusive = evidence._exclusive
+                def denied(path):
+                    if path.suffix == '.log' and path.name.startswith('wine-admission'):
+                        raise OSError('fixture log unavailable')
+                    return exclusive(path)
+                monkeypatch.setattr(evidence, '_exclusive', denied)
+            elif fault == 'mutable-state':
+                (session.directory / 'state.json').write_text('corrupt initial state')
+                raise ValueError('fixture state corruption before init')
+            elif fault == 'owner-substitution':
+                session.prefix.rename(session.prefix.with_name('preserved'))
+                session.prefix.symlink_to(session.prefix.with_name('preserved'), target_is_directory=True)
+                raise ValueError('fixture prefix substitution')
+            else:
+                raise KeyboardInterrupt()
+        return original(repo, run_dir, step, args, session)
+    monkeypatch.setattr(windows_ci_repro, '_run_repro_step', run)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail', result
+    data = result['evidence']
+    assert data['complete'] is False
+    assert len(data['stages']) == 5
+    assert all(s['outcome'] == 'pass' for s in data['stages'][:4])
+    cleanup = data['stages'][-1]['cleanup']
+    assert len(cleanup['attempts']) == 1
+    servers = [c['server'] for c in runtime.calls() if 'server' in c]
+    assert servers == ([] if fault == 'owner-substitution' else [['-k'], ['-w']])
+    if fault in ('mutable-state', 'owner-substitution'):
+        assert cleanup['outcome'] == 'fail'
+        assert cleanup['after']['errors']
+    else:
+        assert cleanup['outcome'] == 'pass'
+        assert cleanup['after']['state']['ended']
+    if fault in ('log-open', 'checkpoint'):
+        assert data['sealed'] is False
+    assert len(json.dumps(result).encode()) <= 48 * 1024
+
+
+def shortened_gnu_timeouts(runtime, *, fast='0.3s', admission='4s', cleanup='1s'):
+    real_timeout = shutil.which('timeout', path=os.defpath)
+    assert real_timeout
+    runtime.write_executable('timeout', f'''#!{sys.executable}
+import os, sys
+mapping = {{'1920s': {fast!r}, '480s': {admission!r}, '45s': {cleanup!r}, '--kill-after=5s': '--kill-after=0.15s'}}
+args = [mapping.get(a, a) for a in sys.argv[1:]]
+os.execv({real_timeout!r}, [{real_timeout!r}, *args])
+''')
+
+
+@pytest.mark.parametrize('resist', [False, True])
+def test_real_outer_timeout_bounds_early_eof_live_helper_and_preserves_124_137(tmp_path, monkeypatch, resist):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    shortened_gnu_timeouts(runtime)
+    fixture_script(runtime.root, 'test-windows-under-wine.sh',
+                   "import signal\n" + ("signal.signal(signal.SIGTERM, signal.SIG_IGN)\n" if resist else '') +
+                   "print('[RUN] before early EOF', flush=True)\nos.close(1); os.close(2)\ntime.sleep(30)")
+    started = time.monotonic()
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert time.monotonic() - started < 5
+    stage = result['evidence']['stages'][-1]
+    # GNU timeout's own process is killed by its group escalation; keep the
+    # actual Popen -SIGKILL status, not a fabricated shell-normalized 137.
+    assert stage['returncode'] == (-9 if resist else 124), result
+    assert stage['outcome'] == ('nonzero_exit' if resist else 'timeout')
+    assert stage['progress']['last_markers']['run']['text'] == '[RUN] before early EOF'
+    assert stage['cleanup']['outcome'] == 'pass'
+
+
+def test_fixed_wine_vectors_require_owner_and_reject_modified_timeout(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    run_dir = windows_ci_repro._new_repro_run(repo)
+    vector = dict(windows_ci_repro._REPRO_STEPS)['wine-fast']
+    with pytest.raises(ValueError, match='session'):
+        windows_ci_repro._run_repro_step(repo, run_dir, 'wine-fast', vector)
+    for bad in [vector[3:], ('timeout', '--kill-after=5s', '9999s', *vector[3:]),
+                ('timeout', '--kill-after=5s', '1920s', 'sh', '-c', 'exit 0')]:
+        with pytest.raises(ValueError, match='fixed'):
+            windows_ci_repro._run_repro_step(repo, run_dir, 'wine-fast', bad)
+
+
+@pytest.mark.parametrize('exit_mode', ['early-exit', 'interrupted-helper', 'outer-kill'])
+def test_backstop_stops_escaped_writer_but_not_unrelated_prefix_and_keeps_capture_incomplete(
+        tmp_path, monkeypatch, exit_mode):
+    import _windows_repro_evidence as evidence
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    shortened_gnu_timeouts(runtime, fast='0.7s')
+    writer_program = ("import os,signal,time\nsignal.signal(signal.SIGTERM,signal.SIG_IGN)\n"
+                      "while True:\n os.write(1,b'escaped-writer\\n'); time.sleep(.01)\n")
+    fixture_script(runtime.root, 'test-windows-under-wine.sh', '''
+import signal, subprocess
+directory = pathlib.Path('build/wine/sessions') / os.environ['SPACE_WINE_SESSION_ID']
+state_file = directory / 'state.json'
+state = json.loads(state_file.read_text())
+state.update(generation=state['generation']+1, stopped_generation=None, authorized=False)
+state_file.write_text(json.dumps(state))
+child = subprocess.Popen([sys.executable, '-c', WRITER_PROGRAM], start_new_session=True)
+(directory / 'fixture-writer').write_text(str(child.pid))
+print('[RUN] escaped writer', flush=True)
+'''.replace('WRITER_PROGRAM', repr(writer_program)) + ('' if exit_mode == 'early-exit' else
+       "signal.signal(signal.SIGTERM, signal.SIG_IGN)\ntime.sleep(30)"))
+    server = runtime.bin / 'wineserver'
+    server.write_text(server.read_text().replace('import json, os, sys', 'import json, os, sys, pathlib, signal').replace(
+        "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'",
+        "record=pathlib.Path(os.environ['WINEPREFIX']).parent/'fixture-writer'\n"
+        "if sys.argv[1:]==['-k'] and record.exists():\n"
+        " try: os.kill(int(record.read_text()), signal.SIGKILL)\n"
+        " except ProcessLookupError: pass\n"
+        "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'"))
+    if exit_mode == 'interrupted-helper':
+        read = evidence._read_pipe
+        fired = False
+        def interrupt(fd):
+            nonlocal fired
+            data = read(fd)
+            if b'[RUN] escaped writer' in data and not fired:
+                fired = True
+                raise KeyboardInterrupt()
+            return data
+        monkeypatch.setattr(evidence, '_read_pipe', interrupt)
+    control = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'],
+                               env=dict(runtime.env, WINEPREFIX=str(tmp_path / 'unrelated-prefix')),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        start = time.monotonic()
+        result = windows_ci_repro.reproduce(runtime.root)
+        assert time.monotonic() - start < 9
+        assert result['status'] == 'fail'
+        stage = result['evidence']['stages'][-1]
+        assert stage['step'] == 'wine-fast'
+        assert stage['capture_complete'] is False
+        assert stage['outcome'] == ('interrupted' if exit_mode == 'interrupted-helper' else 'capture_error')
+        assert stage['returncode'] == (0 if exit_mode == 'early-exit' else -9)
+        assert stage['cleanup']['outcome'] == 'pass'
+        assert stage['cleanup']['after']['state']['stopped_generation'] == stage['cleanup']['after']['state']['generation']
+        assert len(stage['cleanup']['attempts']) == 1
+        assert control.poll() is None
+        assert not (tmp_path / 'unrelated-prefix').exists()
+    finally:
+        control.kill()
+        control.wait()
+        for path in (runtime.root / 'build/wine/sessions').glob('*/fixture-writer'):
+            try:
+                os.kill(int(path.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+def test_real_parent_sigterm_has_terminal_backstop_and_does_not_leak_locks(tmp_path, monkeypatch):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(runtime.root, 'test-windows-under-wine.sh', '''
+import fcntl
+directory = pathlib.Path('build/wine/sessions') / os.environ['SPACE_WINE_SESSION_ID']
+for entry in pathlib.Path('/proc/self/fd').iterdir():
+    try: target = entry.readlink()
+    except FileNotFoundError: continue
+    assert target not in (pathlib.Path.cwd(), pathlib.Path.cwd()/'build', directory)
+for path in (pathlib.Path.cwd(), directory):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try: fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError: pass
+    else: raise AssertionError('parent ownership lock not held')
+    os.close(fd)
+(directory/'helper-ready').touch()
+print('[RUN] parent signal fixture', flush=True)
+time.sleep(30)
+''')
+    driver = (f"import sys,json,pathlib; sys.path.insert(0,{str(SCRIPT_ROOT)!r}); "
+              "import opencode_windows_ci_repro as w; "
+              f"repo=pathlib.Path({str(runtime.root)!r}); w.ensure_space_repo=lambda _:repo; "
+              "w.preflight=lambda _:w.success('preflight','fixture',{}); "
+              "print(json.dumps(w.reproduce(repo)),flush=True)")
+    child = subprocess.Popen([sys.executable, '-c', driver], cwd=runtime.root,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        deadline = time.monotonic() + 5
+        while not list((runtime.root/'build/wine/sessions').glob('*/helper-ready')) and time.monotonic() < deadline:
+            time.sleep(.01)
+        assert list((runtime.root/'build/wine/sessions').glob('*/helper-ready'))
+        child.send_signal(signal.SIGTERM)
+        stdout, stderr = child.communicate(timeout=7)
+        assert child.returncode == 0, stderr
+        result = json.loads(stdout)
+        assert result['status'] == 'fail'
+        stage = result['evidence']['stages'][-1]
+        assert stage['outcome'] == 'interrupted' and stage['capture_complete'] is False
+        assert stage['cleanup']['outcome'] == 'pass'
+        assert all(s['outcome'] == 'pass' for s in result['evidence']['stages'][:-1])
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.wait()
+
+
+def test_primary_success_plus_backstop_failure_is_fail_without_rewriting_primary(tmp_path, monkeypatch):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(runtime.root, 'test-windows-under-wine.sh', '''
+directory = pathlib.Path('build/wine/sessions')/os.environ['SPACE_WINE_SESSION_ID']
+state_file = directory/'state.json'
+state = json.loads(state_file.read_text())
+state.update(generation=state['generation']+1, stopped_generation=None, authorized=False)
+state_file.write_text(json.dumps(state))
+print('[PASS] primary success before backstop', flush=True)
+''')
+    original = windows_ci_repro._terminal_cleanup
+    def fail_stop(*args):
+        monkeypatch.setenv('FIXTURE_STOP_CODE', '37')
+        return original(*args)
+    monkeypatch.setattr(windows_ci_repro, '_terminal_cleanup', fail_stop)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail' and result['evidence']['complete'] is False
+    stage = result['evidence']['stages'][-1]
+    assert stage['returncode'] == 0 and stage['outcome'] == 'pass'
+    assert stage['capture_complete'] is True
+    assert stage['cleanup']['outcome'] == 'fail'
+    assert stage['progress']['last_markers']['pass']['text'] == '[PASS] primary success before backstop'
+
+
+@pytest.mark.parametrize('when', ['after-create', 'during-fast'])
+def test_owned_cleanup_after_persistent_storage_failure_retains_prior_success_and_live_markers(tmp_path, monkeypatch, when):
+    import _windows_repro_evidence as evidence
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(runtime.root, 'test-windows-under-wine.sh',
+                   "print('[RUN] after acquisition', flush=True)\ntime.sleep(.4)\n"
+                   "print('[PASS] after storage failure', flush=True)\nsys.exit(137)")
+    atomic = evidence._atomic
+    failed_calls = []
+    def disk_full(path, value):
+        stages = value.get('stages', [])
+        trigger = (path.name == 'ledger.json' and value.get('metadata', {}).get('owned_session')
+                   and ((when == 'after-create' and len(stages) == 4)
+                        or (when == 'during-fast' and stages[-1]['step'] == 'wine-fast'
+                            and stages[-1]['progress']['counts']['run'])))
+        if trigger or failed_calls:
+            failed_calls.append(path.name)
+            raise OSError(errno.ENOSPC, 'fixture owned checkpoint failure')
+        return atomic(path, value)
+    monkeypatch.setattr(evidence, '_atomic', disk_full)
+    result = windows_ci_repro.reproduce(runtime.root)
+    data = result['evidence']
+    assert result['status'] == 'fail' and data['complete'] is False and data['sealed'] is False
+    assert all(s['outcome'] == 'pass' for s in data['stages'][:4])
+    assert len(failed_calls) == 1
+    stage = data['stages'][-1]
+    assert stage['cleanup']['outcome'] == 'pass'
+    assert stage['cleanup']['after']['state']['ended']
+    if when == 'during-fast':
+        assert len(data['stages']) == 6
+        assert stage['returncode'] == 137 and stage['outcome'] == 'nonzero_exit'
+        assert stage['capture_complete'] is False
+        assert stage['progress']['last_markers']['pass']['text'] == '[PASS] after storage failure'
+    else:
+        assert len(data['stages']) == 5 and stage['outcome'] == 'not_launched'
+    assert len(json.dumps(result).encode()) <= 48 * 1024
+
+
+@pytest.mark.parametrize('fault', ['append-open', 'append-write'])
+def test_cleanup_log_failure_cannot_report_complete_success_but_still_stops(tmp_path, monkeypatch, fault):
+    import fcntl
+    import _windows_repro_evidence as evidence
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    if fault == 'append-open':
+        open_fd = evidence.os.open
+        def denied(path, flags, *args, **kwargs):
+            if flags & os.O_APPEND:
+                raise OSError('fixture cleanup append denied')
+            return open_fd(path, flags, *args, **kwargs)
+        monkeypatch.setattr(evidence.os, 'open', denied)
+    else:
+        fdopen = evidence.os.fdopen
+        class BrokenAppend:
+            def __init__(self, output):
+                self.output = output
+            def write(self, data):
+                raise OSError('fixture cleanup append full')
+            def close(self):
+                self.output.close()
+        def broken(fd, *args, **kwargs):
+            append = fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_APPEND
+            output = fdopen(fd, *args, **kwargs)
+            return BrokenAppend(output) if append else output
+        monkeypatch.setattr(evidence.os, 'fdopen', broken)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail' and result['evidence']['complete'] is False
+    stage = result['evidence']['stages'][-1]
+    assert stage['returncode'] == 0 and stage['outcome'] == 'pass'
+    assert stage['capture_complete'] is True
+    assert stage['cleanup']['outcome'] == 'pass'  # actual owned shutdown succeeded
+    attempt = stage['cleanup']['attempts'][0]
+    assert attempt['capture_complete'] is False and attempt['capture_errors']
+    assert attempt['server_result']['ok'] is True
+    assert stage['cleanup']['after']['state']['ended']
+
+
+def test_real_gnu_backstop_bound_terminates_term_resistant_helper_after_early_eof(tmp_path, monkeypatch):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    shortened_gnu_timeouts(runtime, fast='4s', cleanup='0.2s')
+    helper = runtime.root / 'scripts/wine/artifacts.py'
+    helper.write_text("import os,sys,signal,time\nif sys.argv[1:]==['terminal-stop']:\n"
+                      " signal.signal(signal.SIGTERM,signal.SIG_IGN)\n os.close(1); os.close(2)\n time.sleep(30)\n"
+                      + helper.read_text())
+    started = time.monotonic()
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert time.monotonic() - started < 5
+    assert result['status'] == 'fail'
+    stage = result['evidence']['stages'][-1]
+    assert stage['outcome'] == 'pass' and stage['returncode'] == 0
+    assert stage['cleanup']['outcome'] == 'fail'
+    attempt = stage['cleanup']['attempts'][0]
+    assert attempt['returncode'] == -9
+    assert attempt['args'] == list(windows_ci_repro._TERMINAL_STOP)
+    assert len(stage['cleanup']['attempts']) == 1
+
+
+def test_cleanup_appends_within_existing_full_log_cap_and_keeps_marker_in_memory(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    cap = 16 * 1024 * 1024
+    fixture_script(repo, 'test-windows-under-wine.sh',
+                   f"os.write(1, b'x'*{cap} + b'\\n[PASS] capped primary\\n')")
+    result = windows_ci_repro.reproduce(repo)
+    assert result['status'] == 'pass'
+    stage = result['evidence']['stages'][-1]
+    assert (repo / stage['stdout']['path']).stat().st_size == cap
+    assert stage['stdout']['stored_bytes'] == cap
+    attempt = stage['cleanup']['attempts'][0]
+    assert attempt['stdout']['stored_bytes'] == 0
+    assert attempt['stdout']['observed_bytes'] > 0 and attempt['stdout']['log_truncated'] is True
+    assert attempt['capture_complete'] is True and attempt['server_result']['ok'] is True
+    assert stage['progress']['last_markers']['pass']['text'] == '[PASS] capped primary'
+
+
+@pytest.mark.parametrize('publication_unavailable', [False, True])
+@pytest.mark.parametrize('primary_code', [0, 137])
+def test_malformed_cleanup_markers_keep_bounded_history_after_log_cap(
+        tmp_path, monkeypatch, publication_unavailable, primary_code):
+    import _windows_repro_evidence as evidence
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv('FIXTURE_APP_CODE', str(primary_code))
+    helper = runtime.root / 'scripts/wine/artifacts.py'
+    helper.write_text("import os,sys\nif sys.argv[1:]==['terminal-stop']:\n"
+                      " os.write(1,b'x'*(16*1024*1024)+b'\\n')\n"
+                      " for _ in range(2003): print('Wine cleanup: {}')\n" + helper.read_text())
+    if publication_unavailable:
+        atomic = evidence._atomic
+        def disk_full(path, value):
+            stages = value.get('stages', [])
+            if (path.name == 'ledger.json' and stages and stages[-1]['step'] == 'wine-fast'
+                    and stages[-1]['outcome'] != 'started'):
+                raise OSError(errno.ENOSPC, 'fixture final primary checkpoint unavailable')
+            return atomic(path, value)
+        monkeypatch.setattr(evidence, '_atomic', disk_full)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    assert result['status'] == 'fail'
+    data = result['evidence']
+    assert data['complete'] is False
+    assert [s['step'] for s in data['stages']] == list(evidence._STEPS)
+    assert all(s['outcome'] == 'pass' for s in data['stages'][:5])
+    stage = data['stages'][-1]
+    assert stage['returncode'] == primary_code
+    expected = 'evidence_error' if primary_code == 0 and publication_unavailable else 'pass' if primary_code == 0 else 'nonzero_exit'
+    assert stage['outcome'] == expected
+    cleanup = stage['cleanup']
+    assert cleanup['outcome'] == 'pass' and cleanup['after']['state']['ended']
+    attempt = cleanup['attempts'][0]
+    assert attempt['capture_complete'] is False
+    assert attempt['malformed_cleanup_markers'] == 2003
+    assert attempt['capture_errors'].count('Invalid owned cleanup result marker') == 1
+    assert len(attempt['capture_errors']) == 1
+    assert attempt['server_result']['ok'] is True
+    assert attempt['server_result']['stop_returncode'] == attempt['server_result']['wait_returncode'] == 0
+    assert stage['stdout']['stored_bytes'] + attempt['stdout']['stored_bytes'] == 16 * 1024 * 1024
+    assert attempt['stdout']['log_truncated'] is True
+    assert all((runtime.root / s[name]['path']).is_file() for s in data['stages'] for name in ('stdout', 'stderr'))
+    ledger_path = runtime.root / data['ledger_path']
+    assert ledger_path.is_file()
+    if publication_unavailable:
+        assert data['sealed'] is False and data['persistence_errors']
+    else:
+        assert json.loads(ledger_path.read_text())['stages'] == data['stages']
+
+
+def test_cleanup_marker_keeps_stop_wait_codes_for_missing_state_under_long_unicode_repo(tmp_path, monkeypatch):
+    parent = tmp_path
+    for index in range(18):
+        # Each component is 161 UTF-8 bytes, safely below the OS's 255-byte cap.
+        parent = parent / (str(index % 10) + '😀' * 40)
+    parent.mkdir(parents=True)
+    runtime = owned_reproduction_fixture(parent, monkeypatch)
+    run = windows_ci_repro._run_repro_step
+    def missing_state(repo, run_dir, step, args, session=None):
+        record = run(repo, run_dir, step, args, session)
+        if step == 'wine-fast':
+            (session.directory / 'state.json').unlink()
+        return record
+    monkeypatch.setattr(windows_ci_repro, '_run_repro_step', missing_state)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail'
+    assert len(json.dumps(result).encode()) <= 48 * 1024
+    data = result['evidence']
+    assert len(data['stages']) == 6
+    stage = data['stages'][-1]
+    assert stage['returncode'] == 0 and stage['outcome'] == 'pass'
+    cleanup = stage['cleanup']
+    assert cleanup['outcome'] == 'fail'
+    attempt = cleanup['attempts'][0]
+    server = attempt['server_result']
+    assert server['ok'] is False
+    assert server['stop_returncode'] == server['wait_returncode'] == 0
+    assert server['errors'] and 'Lifecycle read:' in server['errors'][0]
+    assert server['errors_truncated'] is True
+    assert server['error_count'] == 1
+    assert len(server['errors']) == len(server['error_excerpt_truncated']) == 1
+    assert server['error_excerpt_truncated'] == [True]
+    assert attempt['stdout']['oversized_lines'] == 0
+    assert [c['server'] for c in runtime.calls() if 'server' in c][-2:] == [['-k'], ['-w']]
+    raw = (runtime.root / attempt['stdout']['path']).read_bytes()
+    marker = next(line for line in raw.split(b'\n') if line.startswith(b'Wine cleanup: '))
+    assert len(marker) <= 4096
+
+
+@pytest.mark.parametrize('character', ['\x00', '😀'])
+@pytest.mark.parametrize('delta', [0, 1])
+def test_cleanup_marker_exact_encoded_boundary_not_character_count(tmp_path, monkeypatch, character, delta):
+    import _windows_repro_evidence as evidence
+    # The producer's metadata is present in both the untruncated and truncated
+    # variants. Include JSON escapes in the exact 4KiB arithmetic, not UTF-8 size.
+    value = {'ok': False, 'stop_returncode': 37, 'wait_returncode': 0,
+             'errors': ['', ''], 'error_count': 2, 'errors_truncated': False,
+             'error_excerpt_truncated': [False, False]}
+    prefix = 'Wine cleanup: '
+    overhead = len((prefix + json.dumps(value)).encode())
+    unit = len(json.dumps(character).encode()) - 2
+    count, padding = divmod(4096 - overhead, unit)
+    errors = [character * (count // 2), character * (count - count // 2) + 'a' * (padding + delta)]
+    value['errors'] = errors
+    assert len((prefix + json.dumps(value)).encode()) == 4096 + delta
+    assert all(len(error) <= 500 for error in errors)  # existing per-error char cap is not sufficient
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    helper = runtime.root / 'scripts/wine/artifacts.py'
+    # Run the real private terminal-stop path with deterministic host-only
+    # cleanup data to test the emitter/parser boundary without any PE process.
+    helper.write_text(helper.read_text().replace(
+        "result = prefix.stop_session(selected_session(), end=True)",
+        f"result = prefix.CleanupResult(False, 37, 0, {errors!r})"))
+    record = evidence._record('terminal-stop', windows_ci_repro._TERMINAL_STOP)
+    for name in ('stdout', 'stderr'):
+        record[name] = evidence._stream_info('fixture')
+    completed = subprocess.run([sys.executable, str(helper), 'terminal-stop'], cwd=runtime.root,
+                               capture_output=True, check=False, timeout=5)
+    marker = completed.stdout.removesuffix(b'\n')
+    assert marker.startswith(prefix.encode())
+    assert len(marker) <= evidence._LINE_CAP == 4096
+    evidence._marker_line(record, marker, 'stdout')
+    server = record['server_result']
+    assert server['stop_returncode'] == 37 and server['wait_returncode'] == 0
+    assert server['error_count'] == 2 and server['ok'] is False
+    assert server['errors_truncated'] is bool(delta)
+    assert any(server['error_excerpt_truncated']) is bool(delta)
+    if delta == 0:
+        assert len(marker) == 4096 and server['errors'] == errors
+    else:
+        assert any(len(excerpt) < len(error) for excerpt, error in zip(server['errors'], errors))

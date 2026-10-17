@@ -21,9 +21,12 @@ import subprocess
 import time
 import uuid
 
+from wine import prefix as _prefix
+from wine.artifacts import CLEANUP_FIELDS, CLEANUP_LINE_BYTES, CLEANUP_MARKER
+
 _LOG_CAP = 16 * 1024 * 1024
 _TAIL_CAP = 4000
-_LINE_CAP = 4096
+_LINE_CAP = CLEANUP_LINE_BYTES
 _RESPONSE_CAP = 48 * 1024
 _LEDGER_CAP = 4 * 1024 * 1024  # Six bounded stages, including JSON-escaped markers/tails.
 _MARKER = ".space-windows-repro-v1.json"
@@ -210,6 +213,22 @@ def _seal(repo, run_dir):
     _prune(repo, run_dir)
 
 
+def _record(step, args):
+    return {"step": step, "args": list(args), "started_utc": _utc(), "started_monotonic": time.monotonic(),
+              "finished_utc": None, "finished_monotonic": None, "elapsed_seconds": None,
+              "returncode": None, "outcome": "started", "capture_complete": False,
+              "capture_errors": [], "cleanup_signals": [],
+              "progress": {"counts": dict.fromkeys(("launch", "boot", "load", "run", "pass", "fail", "timing", "admission"), 0),
+                           "latest": None, "last_markers": {}, "admission_phases": []}}
+
+
+def _stream_info(path):
+    return {"path": path, "tail": "", "observed_bytes": 0,
+            "stored_bytes": 0, "observed_characters": 0, "excerpt_truncated": False,
+            "log_truncated": False, "oversized_lines": 0, "max_pending_line_bytes": 0,
+            "eof": False, "errors": []}
+
+
 def _start(repo, run_dir, step, args):
     _assert_owned(repo, run_dir)
     if step not in _STEPS:
@@ -217,23 +236,21 @@ def _start(repo, run_dir, step, args):
     ledger = _read_json(run_dir / "ledger.json")
     if any(s["step"] == step for s in ledger["stages"]):
         raise ValueError("Stage already recorded")
-    record = {"step": step, "args": list(args), "started_utc": _utc(), "started_monotonic": time.monotonic(),
-              "finished_utc": None, "finished_monotonic": None, "elapsed_seconds": None,
-              "returncode": None, "outcome": "started", "capture_complete": False,
-              "capture_errors": [], "cleanup_signals": [],
-              "progress": {"counts": dict.fromkeys(("launch", "boot", "load", "run", "pass", "fail", "timing", "admission"), 0),
-                           "latest": None, "last_markers": {}, "admission_phases": []}}
+    record = _record(step, args)
     logs = {}
+    for stream in ("stdout", "stderr"):
+        record[stream] = _stream_info((run_dir / f"{step}.{stream}.log").relative_to(repo).as_posix())
+    ledger["stages"].append(record)
     try:
         for stream in ("stdout", "stderr"):
             path = run_dir / f"{step}.{stream}.log"
             logs[stream] = _exclusive(path)
-            record[stream] = {"path": path.relative_to(repo).as_posix(), "tail": "", "observed_bytes": 0,
-                              "stored_bytes": 0, "observed_characters": 0, "excerpt_truncated": False,
-                              "log_truncated": False, "oversized_lines": 0, "max_pending_line_bytes": 0,
-                              "eof": False, "errors": []}
-        ledger["stages"].append(record)
         _save(repo, run_dir, ledger)
+    except (OSError, ValueError) as error:
+        for log in logs.values():
+            log.close()
+        _persistence_failure(ledger, "stage log creation", error)
+        raise _PersistenceError(ledger) from error
     except BaseException:
         for log in logs.values():
             log.close()
@@ -258,6 +275,29 @@ def _finish(repo, run_dir, ledger, record, outcome, code, complete):
 def _marker_line(record, raw, stream):
     # Only newline-terminated, bounded lines are treated as flushed markers.
     text = raw.decode("utf-8", errors="replace").rstrip("\r")
+    if record["step"] == "terminal-stop" and text.startswith(CLEANUP_MARKER):
+        try:
+            value = json.loads(text.removeprefix(CLEANUP_MARKER))
+            if (set(value) != CLEANUP_FIELDS
+                    or type(value["ok"]) is not bool
+                    or any(type(value[k]) is not int and value[k] is not None
+                           for k in ("stop_returncode", "wait_returncode"))
+                    or not isinstance(value["errors"], list)
+                    or len(value["errors"]) > 8
+                    or any(not isinstance(e, str) or len(e) > 500 for e in value["errors"])
+                    or type(value['error_count']) is not int or value['error_count'] < len(value['errors'])
+                    or type(value['errors_truncated']) is not bool
+                    or not isinstance(value['error_excerpt_truncated'], list)
+                    or len(value['error_excerpt_truncated']) != len(value['errors'])
+                    or any(type(flag) is not bool for flag in value['error_excerpt_truncated'])
+                    or value['errors_truncated'] != (value['error_count'] > len(value['errors'])
+                                                     or any(value['error_excerpt_truncated']))):
+                raise ValueError("Invalid cleanup result")
+            record["server_result"] = value
+        except (ValueError, TypeError):
+            record['malformed_cleanup_markers'] = record.get('malformed_cleanup_markers', 0) + 1
+            if record['malformed_cleanup_markers'] == 1:
+                record["capture_errors"].append("Invalid owned cleanup result marker")
     match = re.match(r"^\[(LAUNCH|BOOT|LOAD|RUN|PASS|FAIL|TIME|TIMINGS)\](?: |$)", text)
     kind = None
     if match:
@@ -280,13 +320,14 @@ def _marker_line(record, raw, stream):
 
 
 class _Stream:
-    def __init__(self, record, name, output):
+    def __init__(self, record, name, output, offset=0):
         self.record, self.name, self.output = record, name, output
         self.info = record[name]
         self.decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
         self.pending = bytearray()
         self.discard_line = False
         self.write_failed = False
+        self.offset = offset
 
     def _text(self, text):
         self.info["observed_characters"] += len(text)
@@ -298,7 +339,7 @@ class _Stream:
         info["observed_bytes"] += len(data)
         if not self.write_failed:
             try:
-                saved = data[:max(0, _LOG_CAP - info["stored_bytes"])]
+                saved = data[:max(0, _LOG_CAP - self.offset - info["stored_bytes"])]
                 while saved:
                     written = self.output.write(saved)
                     if not written:
@@ -361,17 +402,20 @@ def _stop_group(proc, record):
     proc.wait()
 
 
-def _capture(repo, run_dir, ledger, record, logs, args):
+def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist=True, offsets=None):
     proc = None
     selector = selectors.DefaultSelector()
-    streams = {name: _Stream(record, name, output) for name, output in logs.items()}
+    streams = {name: _Stream(record, name, output, (offsets or {}).get(name, 0)) for name, output in logs.items()}
     outcome = None
     try:
-        # Fixed diagnostics only. Inherit launch conditions unchanged: receipt
-        # identity must not be invalidated by evidence collection.
+        env = dict(os.environ)
+        if session is not None:
+            session.validate()
+            env.update(session.environment(), SPACE_WINE_SESSION_ID=session.id)
+        env.update(TEST_VERBOSE="1", SPACE_TEST_TIMINGS="1")
         proc = subprocess.Popen(args, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, start_new_session=True,
-                                env=dict(os.environ, TEST_VERBOSE="1", SPACE_TEST_TIMINGS="1"))
+                                close_fds=True, env=env)
         for name in streams:
             pipe = getattr(proc, name)
             os.set_blocking(pipe.fileno(), False)
@@ -398,17 +442,18 @@ def _capture(repo, run_dir, ledger, record, logs, args):
                     key.data.eof()
                     selector.unregister(key.fileobj)
                     key.fileobj.close()
-            if time.monotonic() - checkpoint >= .25:
+            if persist and time.monotonic() - checkpoint >= .25:
                 _capture_checkpoint(repo, run_dir, ledger)
                 checkpoint = time.monotonic()
         if outcome is None:
             # EOF may precede a long shutdown before the periodic checkpoint.
             # Persist the observed markers/EOF flags while the leader is alive.
-            _capture_checkpoint(repo, run_dir, ledger)
+            if persist:
+                _capture_checkpoint(repo, run_dir, ledger)
             # Pipes may close long before the process exits. Blocking wait, not
             # a zero-FD selector/status-spin, preserves both status and CPU.
             proc.wait()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, InterruptedError):
         outcome = "interrupted"
         record["capture_errors"].append("KeyboardInterrupt during reproduction capture")
     except Exception as error:
@@ -416,7 +461,8 @@ def _capture(repo, run_dir, ledger, record, logs, args):
         record["capture_errors"].append(f"{type(error).__name__}: {str(error)[:500]}")
     finally:
         if proc is not None and outcome is not None:
-            _stop_group(proc, record)
+            with _prefix.cleanup_signals():
+                _stop_group(proc, record)
         # Drain what is immediately available after cleanup, without another
         # grace or relying on descendants to close their copies of the pipes.
         for key in list(selector.get_map().values()):
@@ -444,7 +490,49 @@ def _capture(repo, run_dir, ledger, record, logs, args):
     outcome = outcome or ("capture_error" if not complete else "timeout" if code == 124 else "pass" if code == 0 else "nonzero_exit")
     if outcome == "pass" and record["step"] == "wine-fast" and record["progress"]["counts"]["fail"]:
         outcome = "inconsistent_result"  # Keep actual code 0, but never a contradictory runner PASS.
-    return _finish(repo, run_dir, ledger, record, outcome, code, complete)
+    if persist:
+        return _finish(repo, run_dir, ledger, record, outcome, code, complete)
+    end = time.monotonic()
+    record.update(finished_utc=_utc(), finished_monotonic=end, elapsed_seconds=end - record["started_monotonic"],
+                  outcome=outcome, returncode=code, capture_complete=complete)
+    return record
+
+
+class _UnavailableLog:
+    def write(self, data):
+        raise OSError("Owned cleanup log unavailable; retained in memory")
+
+    def close(self):
+        pass
+
+
+def _cleanup_capture(repo, run_dir, stage, args, session):
+    """Append within the existing stage caps, even when ledger storage failed.
+
+    Separate stream records never change the primary capture's EOF/completeness.
+    A missing/unsafe log is explicit, but cannot suppress owned terminal cleanup.
+    """
+    record = _record("terminal-stop", args)
+    logs, offsets = {}, {}
+    for name in ("stdout", "stderr"):
+        path = run_dir / f'{stage["step"]}.{name}.log'
+        record[name] = _stream_info(path.relative_to(repo).as_posix())
+        try:
+            _assert_owned(repo, run_dir)
+            info = _regular(path)
+            if stat.S_IMODE(info.st_mode) != 0o600 or info.st_size > _LOG_CAP:
+                raise ValueError("Invalid cleanup log mode/size")
+            fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW | os.O_CLOEXEC)
+            opened = os.fstat(fd)
+            if (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino):
+                os.close(fd)
+                raise ValueError("Cleanup log substituted")
+            logs[name] = os.fdopen(fd, "wb", buffering=0)
+            offsets[name] = info.st_size
+        except (OSError, ValueError) as error:
+            record["capture_errors"].append(f"{name} cleanup log: {str(error)[:500]}")
+            logs[name] = _UnavailableLog()
+    return _capture(repo, run_dir, {}, record, logs, args, session, persist=False, offsets=offsets)
 
 
 def _bounded_response(result):
@@ -476,7 +564,8 @@ def _bounded_response(result):
                 marker["response_text_truncated"] = True
                 evidence["response_truncated"] = True
 
-    stages = evidence.get("stages", [])
+    stages = [capture for stage in evidence.get("stages", [])
+              for capture in (stage, *stage.get("cleanup", {}).get("attempts", []))]
     # Exhaust compaction of success excerpts BEFORE touching failure context.
     for tail_limit, marker_limit in ((512, 128), (0, 32)):
         for stage in stages:

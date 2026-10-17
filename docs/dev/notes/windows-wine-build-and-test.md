@@ -33,7 +33,7 @@ Added/updated scripts:
 - `scripts/prepare-windows-wine-runtime.sh`
 - `scripts/test-windows-under-wine.sh`
 - `scripts/build-wine-bcryptprimitives-compat.sh`
-- `scripts/wine/{runtime.sh,artifacts.py,probe.c,process_prng_compat.c}`
+- `scripts/wine/{prefix.py,artifacts.py,probe.c,process_prng_compat.c}`
 - `scripts/vcpkg-triplets/*`
 - `scripts/vcpkg-ports/openal-soft/portfile.cmake`
 
@@ -365,20 +365,75 @@ The no-argument PE probe first runs with
 and other contract failures (exit20), crashes and the60-second admission timeout
 never authorize fallback. Admission uses a further5-second kill escalation if
 TERM is ignored; SIGKILL/forced timeout fails without fallback or a receipt.
-The application's180-second bound is unchanged. Load errors other than module absence are diagnosed
-as failures. Probe phases/results are flushed. Successful admission records a
-JSON receipt tying the payload/package inventory, selected Wine executable,
-version/hash, inherited/default prefix selection, and display conditions to the
-fixed backend. Default-prefix identity is derived from `HOME/.wine` without
-reading home/prefix contents; changing HOME invalidates default-prefix admission,
-but does not change an explicitly selected prefix. Wine selection uses the same
-absolute-path resolver at admission and consumption, including relative custom
-commands, while retaining executable hash/version checks.
-Consumers validate the receipt as data, never shell code. Prefix/display
-are not reset; no Xvfb is added. Workflow smoke uses the admitted overlay with
-the existing60-second `--help`; full fast validation retains180 seconds,
-`tests.fast:main`, existing skips, and test-data/working-directory behavior.
+Load errors other than module absence are diagnosed as failures. Probe
+phases/results are flushed. Successful admission records a schema-2 JSON receipt
+tying the payload/package inventory, generated owned session (ID, nonce, prefix
+inode identity and `win64` architecture), pinned Wine and matching wineserver
+executable/version/hash, and display conditions to the fixed backend.
+Consumers validate the receipt as data, never shell code. The guarded parent
+creates and retains immutable ownership through `prefix.create_session` after
+output verification, **before initialization or admission can launch**. Only
+known Wine steps receive the internally generated `SPACE_WINE_SESSION_ID`;
+inherited handoffs are rejected before execution. No caller/default/home prefix
+is selected, reset, read or stopped. All boot/probe/application/stop/wait commands
+use the same generated prefix, `WINEARCH=win64` and pinned `WINESERVER`.
+Display conditions are not reset; no Xvfb is added. Workflow smoke uses the
+admitted overlay with the existing60-second `--help`; full fast validation uses
+**1800 seconds**, `tests.fast:main`, existing skips and test-data/working-directory behavior.
 Assets, Fennel macro paths and `SPACE_BIN` all refer to the overlay.
+
+### Owned Wine session lifecycle and fixed budgets
+
+The observed historical run stopped active progress at the old180-second cutoff:
+**93 RUN / 92 PASS / 0 FAIL**, with the last PASS9.13 seconds before cutoff.
+Descendants retained pipes. This established an inadequate whole-suite bound,
+not a runner-group hang, later-suite success, a slowness explanation or the
+identity of surviving processes. Actual guarded confirmation of this correction
+is still a separate post-review capability run; fixture success is not that run.
+
+Fixed GNU timeout budgets (each with a further5-second kill escalation):
+
+| Phase | Budget |
+| --- | --- |
+| Prefix initialization | 90 seconds |
+| Each admission probe | 60 seconds |
+| Workflow smoke `--help` | 60 seconds |
+| Full application `tests.fast:main` | 1800 seconds |
+| Prefix-scoped wineserver stop / wait | 10 / 15 seconds |
+| Guarded admission outer helper | 480 seconds |
+| Guarded fast outer helper | 1920 seconds |
+| Parent terminal cleanup backstop helper | 45 seconds |
+
+Outer bounds cover overhead only: they do not add application test time. They
+also terminate a live helper whose output pipes have already reached EOF.
+Case120/240-second policies, regression-child deadlines, assertions, module lists
+and Windows skips are unchanged. There is no idle watchdog.
+
+Admission establishes **quiescence**, not terminal shutdown: verified
+`stopped_generation == generation` permits a still-authorized one-shot consumer.
+Every launch increments the durable generation and invalidates that stopped
+generation. Full/smoke consumers revoke authorization before launching and own
+terminal stop/wait in `finally`. Initialization/admission failures also stop the
+owned session, even without any admission receipt. The guarded parent retains
+the immutable owner and always runs one bounded terminal backstop in `finally`
+after acquisition, including interruption or evidence-storage failure. This
+retries failed helper cleanup once; a verified already-stopped current generation
+needs no duplicate server operations, but still ends authorization. Mutable
+state corruption never authorizes execution and does not suppress cleanup using
+verified immutable ownership. Stop/wait codes and state errors are evidence, not
+an assumption of quiescence. Every server operation first verifies private roots,
+owner/nonce and pinned tools; root or symlink substitution refuses the operation.
+
+Root/build/session ownership locks stay with their owning parents; child FDs are
+closed, so an escaped descendant cannot retain these locks. The guarded parent
+holds the repo/session locks; artifact helpers hold the build lock (the parent
+releases its acquisition-time build lock before launching a helper). The mutable
+session directories under `build/wine/sessions/<generated-id>/prefix` are retained
+outside native package, overlay and evidence inventories. There is no prefix
+pruning/deletion, registry inspection or global wineserver kill. Catchable
+termination is handled and repeated signals cannot interrupt the finite cleanup;
+an uncatchable parent **SIGKILL**, host crash or power loss can still prevent its
+backstop and leave retained session evidence for investigation.
 
 The bridge exports `BOOL WINAPI ProcessPrng(PBYTE,SIZE_T)` and statically imports
 `BOOLEAN WINAPI SystemFunction036(PVOID,ULONG)` from builtin advapi32. There is
@@ -397,8 +452,8 @@ These are **API-contract admission checks, not entropy certification** or native
 Windows security/ACL certification. Wine's underlying host RNG can hide upstream
 short reads; even passing output probes cannot guarantee future backend failures
 will be observable. Native Windows remains authoritative. Real admission and the
-full guarded reproduction remain required separately; this tooling does not
-establish that the earlier180-second Wine timeout is fixed, nor close the
+full guarded reproduction remain required separately; this tooling alone does not
+establish later full-suite outcomes, nor close the
 historical Linux native SIG investigation. Agents must use the existing guarded
 capability, not the manual shell examples above, for real reproduction.
 
@@ -457,7 +512,8 @@ argument is accepted. Supervisors can inspect the named artifacts without giving
 the restricted reproducer a raw log-reading or arbitrary execution capability.
 
 If pipes reach EOF first, capture checkpoints the observed markers/EOF flags
-before blocking for the leader's real exit status, without status spinning.
+before waiting for the leader's real exit status, without status spinning. The
+fixed outer GNU timeouts still bound Wine helper shutdown in that state.
 After leader exit, pipes have a two-second EOF
 grace; if descendants hold them open, only that newly owned process group gets
 TERM, then two seconds later KILL if still present. Capture then closes its pipes
@@ -465,26 +521,44 @@ and records incomplete evidence, never a complete PASS. Launch errors, capture
 errors, interruption, nonzero exits and GNU timeout exit **124** remain distinct
 outcomes. A recognized `[FAIL]` from `wine-fast` with exit zero is an
 `inconsistent_result`, not PASS; the real zero status is retained. This runner
-failure rule does not reinterpret arbitrary successful build output. There is no global
-`wineserver` kill, prefix cleanup/reset or guessed display/Xvfb change.
+failure rule does not reinterpret arbitrary successful build output. Process-group
+cleanup is separate from prefix-scoped wineserver shutdown, not proof of it.
+The parent's backstop appends to the current Wine stage's same capped logs, with
+a separate cleanup subrecord for attempts, UTC/monotonic timestamps, actual helper
+and stop/wait results, launch generation, authorization and state-read/write errors.
+Structured cleanup markers share the parser's4KiB encoded-byte budget, including
+JSON escaping; diagnostic excerpts carry explicit truncation flags and total error
+counts without losing stop/wait codes. Malformed cleanup markers retain an aggregate
+count and one diagnostic, even after log caps; they make capture incomplete rather
+than growing the in-memory error list or replacing retained history with a generic failure.
+No seventh stage or extra log inventory is introduced. Cleanup capture has its own
+EOF/completeness fields: stopping a writer cannot retroactively make the primary
+capture complete. Primary return codes/outcomes (including124/137, or an actual
+negative signal status) are preserved. Cleanup never converts a primary failure
+to PASS; success plus failed cleanup is FAIL. If log publication is unavailable,
+owned cleanup still runs with bounded in-memory evidence and named log pointers;
+the existing persistence-failure history recovery is retained.
 
 The fixed operation enables `TEST_VERBOSE=1` and `SPACE_TEST_TIMINGS=1` internally.
 Nonempty inherited `TEST_FILTER`, `SPACE_TEST_CASE_TIMEOUT_SECONDS`, `TEST_SUITE`,
 `SPACE_TEST_SUITE`, `TEST_MODULES` or `SPACE_TEST_MODULES`, and enabled
 `SPACE_MATRIX_TEST=1`/`SPACE_REALTIME_TEST=1`, are rejected rather than running an
-unknown selection. The full `tests.fast:main` invocation still uses **180 seconds**;
-admission still uses **60 seconds** (with its existing kill escalation). Case
+unknown selection. Inherited `SPACE_WINE_SESSION_ID` is also rejected, including
+an empty value. The full `tests.fast:main` invocation uses **1800 seconds**;
+each admission probe uses **60 seconds** (with its existing kill escalation). Case
 deadlines, assertions, Windows skips and module lists are not changed.
 
 Metadata is allowlisted: module/deadline/diagnostic settings, effective uid/gid,
-inherited/default prefix selection and effective prefix identity, display-presence
-booleans, and admitted Wine executable/version/hash, backend and payload identity.
-Wine facts are read from the existing admission receipt under the build lock;
-collection does not execute Wine again or modify/reseal the receipt/overlay.
+generated session/prefix identity and architecture, all fixed budgets,
+display-presence booleans, and pinned tool identities, backend and payload identity.
+Tool facts come from the retained session and existing schema-2 admission receipt
+under the build lock; metadata collection does not execute a second Wine version
+query or modify/reseal the receipt/overlay. HOME/default-prefix identity is not
+guessed from the ambient environment.
 No environment dump, credentials, registry or private-prefix contents are read.
 Tooling regression tests use temporary repositories and host fixture processes;
-they are not actual Wine admission, a PE runtime pass, or proof that the underlying
-180-second Wine failure is fixed. A real guarded reproduction remains a separate
+they are not actual Wine admission, a PE runtime pass, or proof of a full-suite
+result beyond the historical cutoff. A real guarded reproduction remains a separate
 post-review step.
 
 
