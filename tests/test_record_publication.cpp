@@ -568,7 +568,13 @@ void windows_foreign_parent_and_private_children()
         DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr, dacl, nullptr) == ERROR_SUCCESS,
         "explicit foreign-readable/writable preexisting anchor fixture");
     const auto before = windows_policy(anchor(unsafe));
-    rejects([&] { rp::publish(unsafe / "record", "secret"); });
+    const auto diagnostic = rejects([&] { rp::publish(unsafe / "record", "secret"); });
+    for (const auto* metric : {"role=anchor", "owner-match=", "expected-protected=true", "actual-protected=true",
+            "dacl-match=false", "expected-dacl-bytes=", "actual-dacl-bytes=", "expected-ace-count=1", "actual-ace-count=2"}) {
+        check(diagnostic.find(metric) != std::string::npos, std::string("private-policy refusal must include safe metric: ") + metric);
+    }
+    check(diagnostic.find("S-1-") == std::string::npos && diagnostic.find("secret") == std::string::npos,
+        "diagnostic must not print SID or payload");
     check(windows_policy(anchor(unsafe)).dacl == before.dacl && !fs::exists(unsafe / "record"), "unsafe existing anchor policy untouched");
 }
 

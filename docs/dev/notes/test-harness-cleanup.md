@@ -175,6 +175,39 @@ cleanup/rollback, and still fails a case that catches the timeout exception.
 
 ## What To Watch Out For
 
+### Readable bounded failures
+
+`tests.error-format.format-error(err)` is the shared base diagnostic formatter.
+It reads only raw `code`, `message`, `outcome`, and `current-revision` fields, in
+that priority order. Encoded field caps are respectively128,1536,96,192 bytes;
+the complete base description is at most2048 bytes. Plain strings use the same
+2048-byte encoded limit. Truncation is visible as `[truncated]`; controls,
+non-ASCII bytes, quotes and backslashes are escaped into printable ASCII. Work
+is bounded by the output budget, not by the size of an oversized input string.
+
+Nested values and unsupported objects have type-only descriptions. The formatter
+never walks `result`, invokes table getters/iteration/metamethods or stringifies
+arbitrary objects. This is a **metadata allowlist, not a PII redactor**:
+producer-supplied `message` text can still appear, bounded and escaped. Producers
+remain responsible for excluding credentials/private payloads from that field.
+Formatter failure falls back to the original error's type, not a new exception.
+
+The runner normalizes raw body/load/teardown errors **before** adding a traceback,
+and uses the same base description when traceback support is absent. Generated
+stacks are not escaped again when logged or combined with shutdown diagnostics.
+Shutdown failures are logged safely while original single-failure propagation,
+counts, timeout latches/hooks and the captured Engine finalizer remain intact.
+Runner regression cases that own an Engine continue to run in child processes;
+negative logs are captured rather than leaked into the successful parent suite.
+
+Windows private-publication refusals now identify the literal `anchor`, `attempt`
+or `record` role, owner-match/protection/DACL-match booleans, expected/actual DACL
+byte lengths and safe ACE counts. SID/ACL/descriptor bytes and payloads are never
+printed. This instrumentation does not change the owner/protection/raw-DACL
+equality predicate or subsequent owner-ACE checks. Linux checks do not execute
+that Windows branch; use the next actual guarded Windows/Wine evidence to decide
+what mismatched, rather than guessing a policy change from an opaque error.
+
 When writing or refactoring tests in this codebase:
 
 - do not hardcode user-home fixture paths

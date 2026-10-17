@@ -513,6 +513,17 @@ struct Policy {
     bool protected_dacl = false;
 };
 
+std::string diagnostic_ace_count(const Blob& bytes)
+{
+    // Diagnostics must not introduce an out-of-bounds ACL header/ACE read.
+    if (bytes.size() < sizeof(ACL)) return "unavailable";
+    ACL header {};
+    std::memcpy(&header, bytes.data(), sizeof(header));
+    if (header.AclSize < sizeof(ACL) || header.AclSize > bytes.size()
+        || !::IsValidAcl(reinterpret_cast<PACL>(const_cast<unsigned char*>(bytes.data())))) return "invalid";
+    return std::to_string(header.AceCount);
+}
+
 Policy inspect_policy(HANDLE handle)
 {
     PSID owner = nullptr, group = nullptr;
@@ -748,7 +759,7 @@ public:
             directory_access, &descriptor, &collision);
         if (collision) anchor_ = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
         anchor_id_ = metadata(anchor_.get(), true);
-        require_private(inspect_policy(anchor_.get()));
+        require_private(inspect_policy(anchor_.get()), "anchor");
         for (int tries = 0; tries < 64; ++tries) {
             workspace_name_ = fs::path(workspace_name()).wstring();
             collision = false;
@@ -758,11 +769,11 @@ public:
         }
         if (!owned_) fail("cannot allocate exclusive workspace");
         workspace_id_ = metadata(workspace_.get(), true);
-        require_private(inspect_policy(workspace_.get()));
+        require_private(inspect_policy(workspace_.get()), "attempt");
         record_ = native_.relative(workspace_.get(), L"record", false, true,
             GENERIC_READ | GENERIC_WRITE | READ_CONTROL | WRITE_DAC | WRITE_OWNER | DELETE, &descriptor);
         record_id_ = metadata(record_.get());
-        require_private(inspect_policy(record_.get()));
+        require_private(inspect_policy(record_.get()), "record");
         validate_workspace();
     }
 
@@ -772,7 +783,7 @@ public:
     {
         validate_workspace();
         validate_record_name();
-        require_private(inspect_policy(record_.get()));
+        require_private(inspect_policy(record_.get()), "record");
         std::size_t offset = 0;
         while (offset < bytes.size()) {
             DWORD count = 0;
@@ -790,7 +801,7 @@ public:
         validate_workspace();
         validate_record_name();
         const auto policy = inspect_policy(record_.get());
-        require_private(policy);
+        require_private(policy, "record");
         verify_bytes(bytes);
         if (destination_policy_) {
             auto& desired = *destination_policy_;
@@ -853,8 +864,8 @@ public:
             auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
             if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_))
                 fail("workspace identity changed; left untouched");
-            require_private(inspect_policy(anchor_.get()));
-            require_private(inspect_policy(workspace_.get()));
+            require_private(inspect_policy(anchor_.get()), "anchor");
+            require_private(inspect_policy(workspace_.get()), "attempt");
             cleanup_entry(errors);
             record_.close_checked(); // Complete delete-pending children first.
             BOOLEAN remove = TRUE; // FILE_DISPOSITION_INFORMATION.DeleteFile
@@ -876,18 +887,33 @@ private:
             READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_DATA, nullptr, nullptr, &missing);
     }
 
-    void require_private(const Policy& policy)
+    std::string private_policy_metrics(const Policy& policy, const char* role) const
+    {
+        return std::string("role=") + role
+            + " owner-match=" + (policy.owner == owner_ ? "true" : "false")
+            + " expected-protected=true actual-protected=" + (policy.protected_dacl ? "true" : "false")
+            + " dacl-match=" + (policy.dacl == private_acl_ ? "true" : "false")
+            + " expected-dacl-bytes=" + std::to_string(private_acl_.size())
+            + " actual-dacl-bytes=" + std::to_string(policy.dacl.size())
+            + " expected-ace-count=" + diagnostic_ace_count(private_acl_)
+            + " actual-ace-count=" + diagnostic_ace_count(policy.dacl);
+    }
+
+    void require_private(const Policy& policy, const char* role)
     {
         if (policy.owner != owner_ || !policy.protected_dacl || policy.dacl != private_acl_)
-            fail("private owner/protected DACL changed");
+            fail("private owner/protected DACL changed: " + private_policy_metrics(policy, role));
         const auto* acl = reinterpret_cast<const ACL*>(policy.dacl.data());
-        if (acl->AceCount != 1) fail("stage must inherit only the owner ACE");
+        if (acl->AceCount != 1) fail("stage must inherit only the owner ACE: " + private_policy_metrics(policy, role));
         void* raw = nullptr;
-        if (!::GetAce(const_cast<PACL>(acl), 0, &raw)) win_error("inspect private stage ACE");
+        if (!::GetAce(const_cast<PACL>(acl), 0, &raw)) {
+            const DWORD error = ::GetLastError();
+            win_error("inspect private stage ACE: " + private_policy_metrics(policy, role), error);
+        }
         auto* ace = static_cast<ACCESS_ALLOWED_ACE*>(raw);
         if (ace->Header.AceType != ACCESS_ALLOWED_ACE_TYPE || !::EqualSid(&ace->SidStart, owner_.data())
             || ace->Mask != FILE_ALL_ACCESS || (ace->Header.AceFlags & INHERIT_ONLY_ACE))
-            fail("stage is not owner-only before publication");
+            fail("stage is not owner-only before publication: " + private_policy_metrics(policy, role));
     }
 
     void validate_workspace()
@@ -895,12 +921,12 @@ private:
         auto anchor = native_.relative(parent_.get(), L".space-publication", true, false, directory_access);
         if (!anchor_id_ || !identity(metadata(anchor.get(), true), *anchor_id_)
             || !identity(metadata(anchor_.get(), true), *anchor_id_)) fail("anchor identity changed");
-        require_private(inspect_policy(anchor_.get()));
+        require_private(inspect_policy(anchor_.get()), "anchor");
         auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
         if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_)
             || !identity(metadata(workspace_.get(), true), *workspace_id_))
             fail("workspace identity/security changed");
-        require_private(inspect_policy(workspace_.get()));
+        require_private(inspect_policy(workspace_.get()), "attempt");
     }
 
     void validate_record_name()

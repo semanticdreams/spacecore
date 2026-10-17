@@ -60,7 +60,7 @@
                     :timeout 120}))
     (assert-child result (.. "RUNNER_REGRESSION_OK " index "/" variant " " name))))
 
-(assert (= (# cases.names) 21) "retain the 15 original and six budget regressions")
+(assert (= (# cases.names) 34) "retain the 15 original, six budget and thirteen readable-error regressions")
 (each [index name (ipairs cases.names)]
   (fn invoke [] (run-case index name))
   (fn check [] (with-parent-runtime invoke))
@@ -92,6 +92,69 @@
 (table.insert tests {:name "runner outer filter selects shutdown regression with custom deadline" :fn filtered-shutdown})
 (table.insert tests {:name "runner outer filter selects timeout regression with disabled parent deadline" :fn filtered-timeout})
 (table.insert tests {:name "runner outer filter selects per-test budget override" :fn filtered-override})
+
+(fn filtered-diagnostics []
+  (fn invoke [] (filtered-case "runner prints safe readable errors tests body" "30"))
+  (with-parent-runtime invoke))
+(table.insert tests {:name "runner outer filter captures deliberate structured child failures" :fn filtered-diagnostics})
+
+(fn formatter-allowlist []
+  (local {:format-error format-error} (require :tests.error-format))
+  (local state {:calls 0})
+  (fn hostile [_] (set state.calls (+ state.calls 1)) (error "hostile metatable"))
+  (local err {:code :storage-failed :message "readable first failure" :outcome :not-committed
+             :current-revision "revision-1" :result {:private "PRIVATE_RESULT_SENTINEL"}
+             :credential "PRIVATE_RESULT_SENTINEL"})
+  (set err.result.cycle err)
+  (setmetatable err {:__index hostile :__pairs hostile :__tostring hostile :__len hostile})
+  (assert (= (format-error err)
+             "code=\"storage-failed\" message=\"readable first failure\" outcome=\"not-committed\" current-revision=\"revision-1\""))
+  (assert (= (format-error (setmetatable {} {:__index hostile :__pairs hostile :__tostring hostile})) "<table>"))
+  (set err.code err)
+  (set err.message (fn unsupported [] nil))
+  (assert (= (format-error err)
+             "code=\"<table>\" message=\"<function>\" outcome=\"not-committed\" current-revision=\"revision-1\""))
+  (assert (= state.calls 0)))
+
+(fn formatter-bounds []
+  (local {:format-error format-error} (require :tests.error-format))
+  (assert (= (format-error "plain readable error") "plain readable error"))
+  (assert (= (format-error (.. "line\n\r\t" (string.char 27 0) "雪\\\"")) "line\\n\\r\\t\\x1b\\x00\\xe9\\x9b\\xaa\\\\\\\""))
+  (local huge (string.rep (.. (string.char 27) "雪") 1048576))
+  (each [_ err (ipairs [huge {:code huge :message huge :outcome huge :current-revision huge}])]
+    (local formatted (format-error err))
+    (assert (<= (# formatted) 2048) "bound encoded bytes, not raw input bytes")
+    (assert (string.find formatted "[truncated]" 1 true) "truncation must be visible")
+    (for [index 1 (# formatted)]
+      (local byte (string.byte formatted index))
+      (assert (and (>= byte 32) (<= byte 126)) "only printable ASCII in base error"))
+    (when (= (type err) :table)
+      (assert (string.find formatted "message=" 1 true) "huge code must not crowd out message")
+      (assert (string.find formatted "outcome=" 1 true))
+      (assert (string.find formatted "current-revision=" 1 true)))))
+
+(fn formatter-primitives []
+  (local {:format-error format-error} (require :tests.error-format))
+  (local state {:calls 0})
+  (fn hostile [_] (set state.calls (+ state.calls 1)) (error "primitive tostring invoked"))
+  (local old-number (debug.getmetatable 1))
+  (local old-boolean (debug.getmetatable true))
+  (debug.setmetatable 1 {:__tostring hostile})
+  (debug.setmetatable true {:__tostring hostile})
+  (local (ok formatted) (pcall format-error {:code 123 :message false :outcome true}))
+  (debug.setmetatable 1 old-number)
+  (debug.setmetatable true old-boolean)
+  (assert ok)
+  (assert (= formatted "code=\"123\" message=\"false\" outcome=\"true\""))
+  (assert (= state.calls 0))
+  (assert (= (format-error nil) "<nil>"))
+  (assert (= (format-error io.stdout) "<userdata>")))
+
+(each [_ test (ipairs [{:name "runner error formatter whitelists raw scalar fields without traversing objects" :fn formatter-allowlist}
+                       {:name "runner error formatter bounds encoded output and escapes controls" :fn formatter-bounds}
+                       {:name "runner error formatter never stringifies primitive or unsupported objects" :fn formatter-primitives}])]
+  (fn invoke [] (with-parent-runtime test.fn))
+  (table.insert tests {:name test.name :fn invoke}))
 
 (fn main []
   (local runner (require :tests/runner))

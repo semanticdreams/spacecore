@@ -1,12 +1,18 @@
+(local ErrorFormat (require :tests.error-format))
+
 (fn log-line [msg]
   (print msg)
   (io.flush))
 
+(fn describe-error [err]
+  (local (ok message) (pcall ErrorFormat.format-error err))
+  (if (and ok (= (type message) :string)) message (.. "<" (type err) ">")))
+
 (fn protected-call [traceback f]
-  (if traceback
-      (xpcall f (fn [err]
-                  (traceback err 2)))
-      (pcall f)))
+  (fn report-error [err]
+    (local message (describe-error err))
+    (if traceback (traceback message 2) message))
+  (xpcall f report-error))
 
 (fn copy-array [items]
   (local out [])
@@ -308,7 +314,7 @@
           (log-line (.. "[PASS] " test.name)))
         (do
           (log-line (.. "[FAIL] " test.name))
-          (log-line (tostring err))
+          (log-line err)
           (set failures (+ failures 1)))))
 
   (values failures (# registered-tests)))
@@ -328,7 +334,7 @@
   (when suite.teardown
     (local (_ok err) (protected-call traceback suite.teardown))
     (when (not _ok)
-      (log-line (.. "[FAIL] teardown " (tostring err)))
+      (log-line (.. "[FAIL] teardown " err))
       (set failures (+ failures 1))))
 
   (when (> failures 0)
@@ -341,8 +347,15 @@
 (fn with-engine-shutdown [engine f]
   (local (ok result) (pcall f))
   (local (shutdown-ok shutdown-err) (pcall engine.shutdown engine))
+  (local shutdown-message (when (not shutdown-ok) (describe-error shutdown-err)))
+  (when (not shutdown-ok)
+    (log-line (.. "[FAIL] engine shutdown " shutdown-message)))
   (if (and (not ok) (not shutdown-ok))
-      (error (.. (tostring result) "\nengine shutdown also failed: " (tostring shutdown-err)) 0)
+      ;; String failures here are runner-generated counts/validation or the
+      ;; already-normalized load error + traceback. Do not escape that stack a
+      ;; second time. Raw nonstring failures still use the same safe formatter.
+      (error (.. (if (= (type result) :string) result (describe-error result))
+                 "\nengine shutdown also failed: " shutdown-message) 0)
       (not ok) (error result 0)
       (not shutdown-ok) (error shutdown-err 0)
       result))
@@ -372,7 +385,9 @@
       (protected-call traceback (fn []
                                   (require module-name))))
     (when (not ok)
-      (error (.. "Failed to load " module-name ":\n" (tostring result))))
+      (log-line (.. "[FAIL] load " module-name))
+      (log-line result)
+      (error (.. "Failed to load " module-name ":\n" result)))
     (do
       (when (not (= (type result) "table"))
         (error (.. module-name " must return a test suite")))
@@ -400,7 +415,7 @@
   (when suite.teardown
     (local (_ok err) (protected-call traceback suite.teardown))
     (when (not _ok)
-      (log-line (.. "[FAIL] teardown " (tostring err)))
+      (log-line (.. "[FAIL] teardown " err))
       (set failures (+ failures 1))))
 
   (when print-timings

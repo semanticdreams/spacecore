@@ -31,7 +31,7 @@
   (for [i 1 20000] (set total (+ total i)))
   total)
 
-(fn observe-shutdown! [engine shutdown-fails?]
+(fn observe-shutdown! [engine shutdown-fails? shutdown-error]
   (local original-shutdown engine.shutdown)
   (var calls 0)
   (set engine.shutdown
@@ -39,7 +39,8 @@
       (assert (= self engine))
       (set calls (+ calls 1))
       (original-shutdown self)
-      (when shutdown-fails? (error "runner regression shutdown failure"))))
+      (when shutdown-fails?
+        (error (if (= shutdown-error nil) "runner regression shutdown failure" shutdown-error)))))
   {:restore! (fn [] (set engine.shutdown original-shutdown))
    :verify! (fn []
               (assert (= calls 1) (.. "runner shutdown calls: expected 1, got " calls))
@@ -286,7 +287,121 @@
   (isolated run))
 
 (table.insert tests {:name "runner per-test budget rejects invalid explicit values"
-                     :variants (# invalid-budgets) :fn invalid-budget})
+                      :variants (# invalid-budgets) :fn invalid-budget})
+
+(local diagnostic-variants
+  [{:label "tests body" :mode :tests :phase :body}
+   {:label "modules body" :mode :modules :phase :body}
+   {:label "tests teardown" :mode :tests :phase :teardown}
+   {:label "modules teardown" :mode :modules :phase :teardown}
+   {:label "modules load" :mode :modules :phase :load}
+   {:label "tests shutdown" :mode :tests :shutdown? true}
+   {:label "modules shutdown" :mode :modules :shutdown? true}
+   {:label "tests combined shutdown" :mode :tests :phase :body :shutdown? true}
+   {:label "modules combined shutdown" :mode :modules :phase :load :shutdown? true}
+   {:label "tests without traceback" :mode :tests :phase :body :no-traceback? true}
+   {:label "modules without traceback" :mode :modules :phase :load :shutdown? true :no-traceback? true}
+   {:label "formatter failure" :mode :tests :phase :body :broken-formatter? true}
+   {:label "bounded cyclic fields" :mode :tests :phase :body :huge? true}])
+
+(fn readable-failure-case [variant]
+  (fn run []
+    (local spec (. diagnostic-variants variant))
+    (local private "PRIVATE_RESULT_PAYLOAD_MUST_NOT_APPEAR")
+    (local state {:meta-calls 0 :logs []})
+    (fn hostile [_]
+      (set state.meta-calls (+ state.meta-calls 1))
+      (error "error formatter invoked a hostile metatable"))
+    (fn structured [phase]
+      (local err {:code (.. "diagnostic-" phase) :message (.. "readable-first-" phase)
+                 :outcome :not-committed :current-revision "revision-1"
+                 :result {:payload private} :credential private})
+      (set err.result.cycle err)
+      (when spec.huge?
+        (set err.code (.. err.code " " (string.rep "code" 1048576)))
+        (set err.message (.. err.message " " (string.rep (string.char 27) 1048576)))
+        (set err.current-revision err))
+      (setmetatable err {:__index hostile :__pairs hostile :__tostring hostile :__len hostile}))
+    (local body-error (structured (if (= spec.phase nil) :unused spec.phase)))
+    (local shutdown-error (structured :shutdown))
+    (var observer nil)
+    (fn observe! [] (set observer (observe-shutdown! app.engine spec.shutdown? shutdown-error)))
+    (fn body [] (observe!) (when (= spec.phase :body) (error body-error)))
+    (fn teardown [] (error body-error))
+    (local suite {:tests [{:name "runner readable inner" :fn body}] :modules [:tests-runner-readable]})
+    (when (= spec.phase :teardown) (set suite.teardown teardown))
+    (local old-loaded package.loaded.tests-runner-readable)
+    (local old-loader package.preload.tests-runner-readable)
+    (set package.loaded.tests-runner-readable nil)
+    (set package.preload.tests-runner-readable
+         (fn [] (when (= spec.phase :load) (observe!) (error body-error)) suite))
+    (local old-print _G.print)
+    (local old-debug _G.debug)
+    (local formatter (when spec.broken-formatter? (require :tests.error-format)))
+    (local old-format (when formatter formatter.format-error))
+    (when formatter (set formatter.format-error (fn broken [_err] (error "formatter failure must not mask original"))))
+    ;; Only the runner's initial lookup sees no traceback. Fennel's compiler
+    ;; itself requires debug.traceback during subsequent setup module loads.
+    ;; Restore the real library at lookup, without bypassing the runner path.
+    (when spec.no-traceback?
+      (fn no-traceback [_self key]
+        (assert (= key :traceback))
+        (set _G.debug old-debug)
+        nil)
+      (set _G.debug (setmetatable {} {:__index no-traceback})))
+    (set _G.print (fn capture [message]
+                    (table.insert state.logs message)
+                    (old-print message)))
+    (local (ok err) (pcall (if (= spec.mode :modules) runner.run-modules runner.run-tests) suite))
+    (set _G.print old-print)
+    (set _G.debug old-debug)
+    (when formatter (set formatter.format-error old-format))
+    (set package.loaded.tests-runner-readable old-loaded)
+    (set package.preload.tests-runner-readable old-loader)
+    (assert observer (.. "actual selected body/loader must run; variant=" variant "; "
+                        (if (= (type err) :string) err (.. "<" (type err) ">"))))
+    (observer.restore!)
+    (observer.verify!)
+    (assert (not ok) "structured failures must still fail")
+    (local printed (table.concat state.logs "\n"))
+    (assert (= state.meta-calls 0) "logging must not invoke error metatables")
+    (assert (not (contains? printed private)) "private result/credential data must not be printed")
+    (assert (contains? printed "[FAIL]") "real runner failure logs must execute")
+    (if spec.broken-formatter?
+        (do
+          (assert (contains? printed "<table>") "formatter failure must fall back to original error type")
+          (assert (not (contains? printed "formatter failure must not mask original"))))
+        (do
+          (when spec.phase
+            (assert (contains? printed (.. "code=\"diagnostic-" spec.phase)) "real failure output must name structured code")
+            (assert (contains? printed (.. "message=\"readable-first-" spec.phase)) "real failure output must include readable message"))
+          (when spec.shutdown?
+            (assert (contains? printed "code=\"diagnostic-shutdown\"") "shutdown failure must be normalized too"))
+          (assert (contains? printed "outcome=\"not-committed\""))
+          (assert (contains? printed (if spec.huge? "current-revision=\"<table>\"" "current-revision=\"revision-1\"")))))
+    (when spec.no-traceback?
+      (assert (not (contains? printed "\nstack traceback:")) "same base description without a generated traceback"))
+    (when spec.huge?
+      (var inspected? false)
+      (each [_ line (ipairs state.logs)]
+        (when (= (string.sub line 1 5) "code=")
+          (local newline (string.find line "\n" 1 true))
+          (local base (if newline (string.sub line 1 (- newline 1)) line))
+          (assert (<= (# base) 2048) "real printed base must honor encoded bound")
+          (assert (contains? base "[truncated]"))
+          (assert (contains? base "\\x1b"))
+          (set inspected? true)))
+      (assert inspected? "actual bounded failure log must be inspected"))
+    (when (and spec.shutdown? (not spec.phase))
+      (assert (= err shutdown-error) "shutdown-only failure must preserve original error identity"))
+    (when (and (= spec.phase :load) spec.shutdown? (not spec.no-traceback?))
+      (assert (contains? err "\nstack traceback:") "combined failure must not double-escape generated traceback")
+      (assert (not (contains? err private)))))
+  (isolated run))
+
+(each [variant spec (ipairs diagnostic-variants)]
+  (fn check [] (readable-failure-case variant))
+  (table.insert tests {:name (.. "runner prints safe readable errors " spec.label) :fn check}))
 
 (local names (icollect [_ test (ipairs tests)] test.name))
 (local configured-timeouts {})
