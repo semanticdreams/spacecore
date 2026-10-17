@@ -18,6 +18,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 
 BOUNDS = {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
@@ -266,7 +267,7 @@ class Session:
         self.validate()
         write_control(self.directory / 'state.json', state)
 
-    def launch(self, argv, kind, extra_env=None, stdout=None, stderr=None):
+    def launch(self, argv, kind, extra_env=None, stdout=None, stderr=None, *, on_launch=None):
         self.validate()
         setup = self.setup()
         if kind in ('probe', 'smoke60', 'fast1800') and not setup['policy_verified']:
@@ -280,7 +281,7 @@ class Session:
         state['generation'] += 1
         state['stopped_generation'] = None
         self.save(state)  # Durable before a child can exist.
-        return bounded(self, argv, kind, extra_env, stdout=stdout, stderr=stderr)
+        return bounded(self, argv, kind, extra_env, stdout=stdout, stderr=stderr, on_launch=on_launch)
 
 
 def create_session(repo):
@@ -353,14 +354,14 @@ def load_session(repo, identifier):
     return session
 
 
-def bounded(session, argv, kind, extra_env=None, *, stdout=None, stderr=None):
+def bounded(session, argv, kind, extra_env=None, *, stdout=None, stderr=None, on_launch=None):
     # Inherit outer capture streams. Never communicate() on Wine-descendant pipes.
     owned = session._server_environment() if kind in ('stop', 'wait') else session.environment()
     env = dict(owned, **(extra_env or {}))
     env.update({key: owned[key] for key in PRIVATE_ENV_KEYS})
     return wait_leader(['timeout', '--kill-after=5s', f'{BOUNDS[kind]}s', *argv],
                        cwd=session.repo, env=env,
-                       stdout=stdout, stderr=stderr)
+                       stdout=stdout, stderr=stderr, on_launch=on_launch)
 
 
 def _server_output(flag, output, stderr):
@@ -377,9 +378,14 @@ def _server_output(flag, output, stderr):
     return empty
 
 
-def wait_leader(argv, **kwargs):
+def wait_leader(argv, *, on_launch=None, **kwargs):
+    # Sample at bounded-command creation, after all accounting/environment work.
+    # Publish only successful creation, inside the same owning teardown path.
+    launched = time.monotonic()
     process = subprocess.Popen(argv, close_fds=True, start_new_session=True, **kwargs)
     try:
+        if on_launch is not None:
+            on_launch(launched)
         return process.wait()
     except BaseException:
         # Own only this launched POSIX group; prefix cleanup separately handles

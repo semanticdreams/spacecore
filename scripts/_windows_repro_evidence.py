@@ -11,6 +11,7 @@ import copy
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -22,7 +23,7 @@ import time
 import uuid
 
 from wine import prefix as _prefix
-from wine.artifacts import CLEANUP_FIELDS, CLEANUP_LINE_BYTES, CLEANUP_MARKER
+from wine.artifacts import APPLICATION_OBSERVER_ENV, CLEANUP_FIELDS, CLEANUP_LINE_BYTES, CLEANUP_MARKER
 
 _LOG_CAP = 16 * 1024 * 1024
 _TAIL_CAP = 4000
@@ -33,6 +34,10 @@ _MARKER = ".space-windows-repro-v1.json"
 _STEPS = ("preflight", "build-windows-from-linux", "package-windows-runtime",
           "verify-windows-outputs", "wine-admission", "wine-fast")
 _RUN_NAME = re.compile(r"\d{8}T\d{12}Z-[0-9a-f]{32}")
+_FATAL_BANNER = re.compile(
+    r'wine: Unhandled (?:page fault on (?:read|write|execute) access to [0-9A-Fa-f]{8,16}'
+    r'|exception 0x[0-9A-Fa-f]{8}|stack overflow|division by zero|illegal instruction)'
+    r' at address [0-9A-Fa-f]{8,16} \(thread [0-9A-Fa-f]{4,8}\), starting debugger\.\.\.')
 
 
 def _utc():
@@ -214,12 +219,17 @@ def _seal(repo, run_dir):
 
 
 def _record(step, args):
-    return {"step": step, "args": list(args), "started_utc": _utc(), "started_monotonic": time.monotonic(),
+    record = {"step": step, "args": list(args), "started_utc": _utc(), "started_monotonic": time.monotonic(),
               "finished_utc": None, "finished_monotonic": None, "elapsed_seconds": None,
               "returncode": None, "outcome": "started", "capture_complete": False,
               "capture_errors": [], "cleanup_signals": [],
               "progress": {"counts": dict.fromkeys(("launch", "boot", "load", "run", "pass", "fail", "timing", "admission"), 0),
-                           "latest": None, "last_markers": {}, "admission_phases": []}}
+                            "latest": None, "last_markers": {}, "admission_phases": []}}
+    if step == 'wine-fast':
+        record.update(application={'launched_monotonic': None, 'hard_deadline_monotonic': None,
+                                   'command_returncode': None}, debugger_returncode=None,
+                      fatal_report={'first': None, 'deadline_monotonic': None, 'termination': None})
+    return record
 
 
 def _stream_info(path):
@@ -275,6 +285,13 @@ def _finish(repo, run_dir, ledger, record, outcome, code, complete):
 def _marker_line(record, raw, stream):
     # Only newline-terminated, bounded lines are treated as flushed markers.
     text = raw.decode("utf-8", errors="replace").rstrip("\r")
+    if (record['step'] == 'wine-fast' and stream == 'stderr'
+            and _FATAL_BANNER.fullmatch(text) and record['fatal_report']['first'] is None):
+        now = time.monotonic()
+        report = record['fatal_report']
+        report['first'] = {'text': text, 'stream': stream, 'observed_utc': _utc(), 'observed_monotonic': now}
+        hard = record['application']['hard_deadline_monotonic']
+        report['deadline_monotonic'] = min(now + 30, hard) if hard is not None else now + 30
     if record["step"] == "terminal-stop" and text.startswith(CLEANUP_MARKER):
         try:
             value = json.loads(text.removeprefix(CLEANUP_MARKER))
@@ -379,6 +396,49 @@ def _read_pipe(fd):
     return os.read(fd, 65536)
 
 
+class _ApplicationObservation:
+    """Two bounded private helper messages; never parse these from app streams."""
+
+    def __init__(self, record):
+        self.record = record
+        self.pending = bytearray()
+        self.count = 0
+
+    def feed(self, data):
+        for byte in data:
+            if byte != 10:
+                self.pending.append(byte)
+                if len(self.pending) > _LINE_CAP:
+                    raise ValueError('Oversized private application observation')
+                continue
+            value = json.loads(self.pending)
+            self.pending.clear()
+            app = self.record['application']
+            if self.count == 0:
+                if (set(value) != {'event', 'launched_monotonic', 'hard_deadline_monotonic'}
+                        or value['event'] != 'launch'
+                        or any(type(value[key]) not in (int, float) or not math.isfinite(value[key])
+                               for key in ('launched_monotonic', 'hard_deadline_monotonic'))
+                        or value['hard_deadline_monotonic'] != value['launched_monotonic'] + 1800):
+                    raise ValueError('Invalid private application launch observation')
+                app.update({key: value[key] for key in ('launched_monotonic', 'hard_deadline_monotonic')})
+                report = self.record['fatal_report']
+                if report['first'] is not None:
+                    report['deadline_monotonic'] = min(report['deadline_monotonic'], app['hard_deadline_monotonic'])
+            elif self.count == 1:
+                if (set(value) != {'event', 'command_returncode'} or value['event'] != 'result'
+                        or type(value['command_returncode']) is not int):
+                    raise ValueError('Invalid private application result observation')
+                app['command_returncode'] = value['command_returncode']
+            else:
+                raise ValueError('Repeated private application observation')
+            self.count += 1
+
+    def eof(self):
+        if self.pending:
+            raise ValueError('Unterminated private application observation')
+
+
 def _signal_group(proc, sig, record):
     try:
         os.killpg(proc.pid, sig)
@@ -404,6 +464,7 @@ def _stop_group(proc, record):
 
 def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist=True, offsets=None):
     proc = None
+    observer_read = observer_write = None
     selector = selectors.DefaultSelector()
     streams = {name: _Stream(record, name, output, (offsets or {}).get(name, 0)) for name, output in logs.items()}
     outcome = None
@@ -416,25 +477,62 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
             owned_env = session._server_environment() if record['step'] == 'terminal-stop' else session.environment()
             env.update(owned_env, SPACE_WINE_SESSION_ID=session.id)
         env.update(TEST_VERBOSE="1", SPACE_TEST_TIMINGS="1")
+        if record['step'] == 'wine-fast':
+            observer_read, observer_write = os.pipe()
+            env[APPLICATION_OBSERVER_ENV] = str(observer_write)
         proc = subprocess.Popen(args, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, start_new_session=True,
-                                close_fds=True, env=env)
+                                close_fds=True, env=env,
+                                pass_fds=() if observer_write is None else (observer_write,))
+        if observer_write is not None:
+            os.close(observer_write)
+            observer_write = None
+            pipe = os.fdopen(observer_read, 'rb', buffering=0)
+            observer_read = None
+            os.set_blocking(pipe.fileno(), False)
+            selector.register(pipe, selectors.EVENT_READ, _ApplicationObservation(record))
         for name in streams:
             pipe = getattr(proc, name)
             os.set_blocking(pipe.fileno(), False)
             selector.register(pipe, selectors.EVENT_READ, streams[name])
         leader_exited = None
         checkpoint = time.monotonic()
-        while selector.get_map():
+        while selector.get_map() or proc.poll() is None:
             now = time.monotonic()
+            report = record.get('fatal_report')
+            fatal = report is not None and report['first'] is not None
+            if fatal and now >= report['deadline_monotonic']:
+                report['termination'] = 'deadline_expired'
+                # A report timeout is secondary to an already observed failure;
+                # do not confuse the later group signal with a command status.
+                known = record['application']['command_returncode']
+                if known in (None, 0):
+                    known = proc.poll()
+                outcome = ('timeout' if known == 124 else 'nonzero_exit' if known not in (None, 0)
+                           else 'fatal_report_timeout')
+                break
             if proc.poll() is not None:
                 if leader_exited is None:
                     leader_exited = now
-                if now - leader_exited >= 2:
+                if not fatal and now - leader_exited >= 2:
                     record["capture_errors"].append("Descendant-held pipes exceeded 2s EOF grace; forced closure")
                     outcome = "capture_error"
                     break
-            for key, _ in selector.select(.1):
+            if not selector.get_map():
+                if not fatal:
+                    # Ordinary EOF retains the existing blocking wait behavior.
+                    if persist:
+                        _capture_checkpoint(repo, run_dir, ledger)
+                    proc.wait()
+                    break
+                # Fatal EOF/live leader must still honor the reporting deadline.
+                try:
+                    proc.wait(timeout=min(.1, max(0, report['deadline_monotonic'] - now)))
+                except subprocess.TimeoutExpired:
+                    pass
+                continue
+            wait = min(.1, max(0, report['deadline_monotonic'] - now)) if fatal else .1
+            for key, _ in selector.select(wait):
                 try:
                     data = _read_pipe(key.fd)
                 except BlockingIOError:
@@ -453,9 +551,7 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
             # Persist the observed markers/EOF flags while the leader is alive.
             if persist:
                 _capture_checkpoint(repo, run_dir, ledger)
-            # Pipes may close long before the process exits. Blocking wait, not
-            # a zero-FD selector/status-spin, preserves both status and CPU.
-            proc.wait()
+            proc.wait()  # The loop has already observed leader exit.
     except (KeyboardInterrupt, InterruptedError):
         outcome = "interrupted"
         record["capture_errors"].append("KeyboardInterrupt during reproduction capture")
@@ -463,6 +559,9 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
         outcome = "launch_error" if proc is None else "capture_error"
         record["capture_errors"].append(f"{type(error).__name__}: {str(error)[:500]}")
     finally:
+        for fd in (observer_read, observer_write):
+            if fd is not None:
+                os.close(fd)
         if proc is not None and outcome is not None:
             with _prefix.cleanup_signals():
                 _stop_group(proc, record)
@@ -491,8 +590,16 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
     code = proc.returncode if proc is not None else None
     complete = outcome is None and not record["capture_errors"] and all(s["eof"] for s in (record["stdout"], record["stderr"]))
     outcome = outcome or ("capture_error" if not complete else "timeout" if code == 124 else "pass" if code == 0 else "nonzero_exit")
+    app_code = record.get('application', {}).get('command_returncode')
+    if outcome in ('pass', 'nonzero_exit') and app_code not in (None, 0):
+        outcome = 'timeout' if app_code == 124 else 'nonzero_exit'
     if outcome == "pass" and record["step"] == "wine-fast" and record["progress"]["counts"]["fail"]:
         outcome = "inconsistent_result"  # Keep actual code 0, but never a contradictory runner PASS.
+    report = record.get('fatal_report')
+    if report is not None and report['first'] is not None:
+        report['termination'] = report['termination'] or ('completed' if complete else outcome)
+        if outcome == 'pass':
+            outcome = 'native_fatal'
     if persist:
         return _finish(repo, run_dir, ledger, record, outcome, code, complete)
     end = time.monotonic()

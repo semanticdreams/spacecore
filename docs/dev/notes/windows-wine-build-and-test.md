@@ -511,8 +511,8 @@ This policy keeps the automatic `winedbg --auto` reporter enabled to produce a
 backtrace and detach without interactive crash dialogs; it does not use Auto0,
 delete Debugger, disable winedbg DLLs, alter WINEDEBUG or disable application
 features. Application status is not debugger status. Actual native reporting
-behavior remains unconfirmed by host fixtures; fatal-report timing/grace and
-launch-observation changes belong to the separate follow-up, not this component.
+behavior remains unconfirmed by host fixtures; the guarded real Wine reproduction
+is a separate post-review capability run, not established by the host tests below.
 
 Root/build/session ownership locks stay with their owning parents; child FDs are
 closed, so an escaped descendant cannot retain these locks. The guarded parent
@@ -601,10 +601,10 @@ or otherwise quarantined paths are never pruned. No arbitrary recursive cleanup
 argument is accepted. Supervisors can inspect the named artifacts without giving
 the restricted reproducer a raw log-reading or arbitrary execution capability.
 
-If pipes reach EOF first, capture checkpoints the observed markers/EOF flags
-before waiting for the leader's real exit status, without status spinning. The
-fixed outer GNU timeouts still bound Wine helper shutdown in that state.
-After leader exit, pipes have a two-second EOF
+For ordinary nonfatal output, if pipes reach EOF first, capture checkpoints the
+observed markers/EOF flags before waiting for the leader's real exit status,
+without status spinning. The fixed outer GNU timeouts still bound Wine helper
+shutdown in that state. After leader exit, pipes have a two-second EOF
 grace; if descendants hold them open, only that newly owned process group gets
 TERM, then two seconds later KILL if still present. Capture then closes its pipes
 and records incomplete evidence, never a complete PASS. Launch errors, capture
@@ -613,6 +613,43 @@ outcomes. A recognized `[FAIL]` from `wine-fast` with exit zero is an
 `inconsistent_result`, not PASS; the real zero status is retained. This runner
 failure rule does not reinterpret arbitrary successful build output. Process-group
 cleanup is separate from prefix-scoped wineserver shutdown, not proof of it.
+
+Only root wine-fast stderr can latch a fatal report: a bounded, newline-terminated
+Wine banner must match the entire line, including an allowlisted fault description,
+hexadecimal fault address and thread, and `starting debugger...`. Wrong stages or
+streams, quoted/embedded banners, ordinary exception text and captured expected-child
+failures do not qualify. The first observation starts one30-second reporting grace;
+it never resets on repeated banners, progress or reporter output. Its deadline is
+clamped to the explicit 1800-second application hard deadline, never to outer-stage
+startup or inferred shutdown overhead. No other execution budget changes.
+
+The owning artifact helper sends launch time/hard deadline and, when available,
+the raw bounded Wine application `command_returncode` over a private application observation pipe.
+The helper removes its private FD environment handoff and closes the FD across
+application exec; application stdout/stderr cannot forge observations. The launch
+clock is sampled at bounded-command creation, after `Session.launch` completes
+validation, durable generation accounting and environment construction. Launch is
+published only after successful `Popen`; prelaunch/spawn failure emits no launch
+observation. The observer runs inside the process owner's exception/teardown path,
+so publication failure still stops and reaps the created group. The command result
+is sent before owned shutdown. The ledger's `application` observation is distinct from the stage's raw
+helper `returncode`, `debugger_returncode` (unknown/null without an observation),
+capture outcome and cleanup helper/server codes. A command return code is not
+proof of a native PE/debugger exit status. Unobserved application status stays
+unknown/null; helper exit zero never fabricates it.
+
+During fatal reporting both streams continue draining, including after log caps,
+through early EOF with a live leader or an exited leader with held pipes. Normal
+completion may finish sooner; otherwise deadline expiry records
+`fatal_report.termination: deadline_expired`, uses the existing owned process-group
+teardown and prefix backstop, and keeps incomplete evidence/partial trace. It does
+not block indefinitely in a leader wait or apply the ordinary two-second held-pipe
+grace instead of the report grace. `native_fatal` prevents PASS even with helper or
+application-command exit zero; `fatal_report_timeout` identifies expiry without a
+previously known primary failure. Known nonzero/124 statuses, interruptions,
+capture/storage errors and cleanup results retain their separate evidence and
+precedence; report termination never rewrites raw return codes.
+
 The parent's backstop appends to the current Wine stage's same capped logs, with
 a separate cleanup subrecord for attempts, UTC/monotonic timestamps, actual helper
 and stop/wait results, launch generation, authorization and state-read/write errors.

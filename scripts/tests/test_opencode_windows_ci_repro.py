@@ -599,6 +599,529 @@ def test_incremental_utf8_and_oversized_unterminated_line(tmp_path, monkeypatch)
     assert record["capture_complete"] is True
 
 
+FATAL_BANNER = ('wine: Unhandled page fault on read access to 0000000000000000 '
+                'at address 0000000140269C6D (thread 0024), starting debugger...')
+
+
+def fatal_stream_record(step='wine-fast'):
+    import _windows_repro_evidence as evidence
+    import io
+    record = evidence._record(step, [])
+    for name in ('stdout', 'stderr'):
+        record[name] = evidence._stream_info(name)
+    return record, {name: evidence._Stream(record, name, io.BytesIO()) for name in ('stdout', 'stderr')}
+
+
+def test_root_fatal_banner_split_and_repeated_latches_first_clock(monkeypatch):
+    import _windows_repro_evidence as evidence
+    record, streams = fatal_stream_record()
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: 100.)
+    streams['stderr'].feed(FATAL_BANNER[:50].encode())
+    assert record['fatal_report']['first'] is None
+    streams['stderr'].feed((FATAL_BANNER[50:] + '\r\n').encode())
+    first = dict(record['fatal_report']['first'])
+    assert first['observed_monotonic'] == 100.
+    assert first['text'] == FATAL_BANNER
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: 110.)
+    streams['stderr'].feed((FATAL_BANNER + '\n').encode())
+    assert record['fatal_report']['first'] == first
+    assert record['fatal_report']['deadline_monotonic'] == 130.
+
+
+@pytest.mark.parametrize('step,stream,text', [
+    ('wine-admission', 'stderr', FATAL_BANNER + '\n'),
+    ('build-windows-from-linux', 'stderr', FATAL_BANNER + '\n'),
+    ('wine-fast', 'stdout', FATAL_BANNER + '\n'),
+    ('wine-fast', 'stderr', 'ordinary Unhandled page fault, starting debugger...\n'),
+    ('wine-fast', 'stderr', 'quoted: ' + FATAL_BANNER + '\n'),
+    ('wine-fast', 'stderr', '"' + FATAL_BANNER + '"\n'),
+    ('wine-fast', 'stderr', '[PASS] expected child: ' + FATAL_BANNER + '\n'),
+    ('wine-fast', 'stderr', FATAL_BANNER.replace('0024', 'not-a-thread') + '\n'),
+    ('wine-fast', 'stderr', FATAL_BANNER.replace('0000000140269C6D', 'no-address') + '\n'),
+    ('wine-fast', 'stderr', FATAL_BANNER + ' embedded suffix\n'),
+    ('wine-fast', 'stderr', FATAL_BANNER),
+    ('wine-fast', 'stderr', 'x' * 4097 + '\n' + FATAL_BANNER),
+])
+def test_root_fatal_banner_rejects_false_positives(step, stream, text):
+    record, streams = fatal_stream_record(step)
+    streams[stream].feed(text.encode())
+    streams[stream].eof()
+    assert record.get('fatal_report', {}).get('first') is None
+
+
+@pytest.mark.parametrize('launch_first', [True, False])
+def test_root_fatal_deadline_uses_private_launch_not_stage_or_shutdown_clock(monkeypatch, launch_first):
+    import _windows_repro_evidence as evidence
+    record, streams = fatal_stream_record()
+    record['started_monotonic'] = 1.  # Outer startup is deliberately unrelated.
+    observer = evidence._ApplicationObservation(record)
+    launch = (json.dumps(dict(event='launch', launched_monotonic=100., hard_deadline_monotonic=1900.)) + '\n').encode()
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: 1895.)
+    if launch_first:
+        observer.feed(launch)
+    streams['stderr'].feed((FATAL_BANNER + '\n').encode())
+    if not launch_first:
+        observer.feed(launch)
+    assert record['fatal_report']['deadline_monotonic'] == 1900.
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: 1899.)
+    observer.feed(b'{"event":"result","command_returncode":0}\n')
+    streams['stderr'].feed((FATAL_BANNER + '\n').encode())
+    assert record['fatal_report']['first']['observed_monotonic'] == 1895.
+    assert record['fatal_report']['deadline_monotonic'] == 1900.
+
+
+def run_fatal_fixture(repo, body):
+    # The fixture is the owning helper, not the fake Wine/expected-child output.
+    observation = '''
+fd = int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+os.set_inheritable(fd, False)
+start = time.monotonic()
+def observe(event, **fields):
+ os.write(fd, (json.dumps(dict(event=event, **fields))+'\\n').encode())
+observe('launch', launched_monotonic=start, hard_deadline_monotonic=start+1800)
+'''
+    fixture_script(repo, 'test-windows-under-wine.sh', observation + body)
+    return windows_ci_repro.reproduce(repo)
+
+
+def test_root_fatal_exit_zero_retains_both_traces_and_unknown_application_status(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    result = run_fatal_fixture(repo, f'''
+os.write(2, {FATAL_BANNER.encode()!r} + b'\\n')
+print('registers stdout', flush=True)
+print('backtrace stderr', file=sys.stderr, flush=True)
+''')
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'fail'
+    assert stage['returncode'] == 0  # helper/debugger success is not app success
+    assert stage['outcome'] == 'native_fatal'
+    assert stage['application']['command_returncode'] is None
+    assert stage['debugger_returncode'] is None
+    assert stage['capture_complete'] is True
+    assert stage['fatal_report']['termination'] == 'completed'
+    assert 'registers stdout' in stage['stdout']['tail']
+    assert 'backtrace stderr' in stage['stderr']['tail']
+
+
+@pytest.mark.parametrize('mode', ['hang', 'early-eof', 'held-writer', 'near-hard-deadline'])
+def test_root_fatal_grace_bounds_all_process_and_pipe_states(tmp_path, monkeypatch, mode):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    # Accelerate only the parent's monotonic clock; no production budget option.
+    clock = time.monotonic
+    origin = clock()
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: origin + (clock() - origin) * 30)
+    body = f"os.write(2, {(FATAL_BANNER + chr(10)).encode()!r})\n"
+    if mode == 'near-hard-deadline':
+        body = "observe('launch', launched_monotonic=start-1799, hard_deadline_monotonic=start+1)\n" + body
+        # Send just this launch (the protocol rejects a second launch).
+    if mode == 'early-eof':
+        body += 'os.close(1); os.close(2); os.close(fd)\ntime.sleep(60)'
+    elif mode == 'held-writer':
+        body += "pid=os.fork()\nif pid == 0:\n os.close(fd)\n time.sleep(.3)\n print('late trace from held writer', flush=True)\n time.sleep(60)\nelse:\n sys.exit(0)"
+    else:
+        body += 'time.sleep(60)'
+    if mode == 'near-hard-deadline':
+        fixture_script(repo, 'test-windows-under-wine.sh', '''
+fd=int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+start=time.monotonic()
+def observe(event, **fields):
+ os.write(fd, (json.dumps(dict(event=event, **fields))+'\\n').encode())
+''' + body)
+        result = windows_ci_repro.reproduce(repo)
+    else:
+        result = run_fatal_fixture(repo, body)
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'fail'
+    report = stage['fatal_report']
+    assert report['termination'] == 'deadline_expired'
+    assert report['deadline_monotonic'] == min(report['first']['observed_monotonic'] + 30,
+                                               stage['application']['hard_deadline_monotonic'])
+    assert stage['application']['command_returncode'] is None
+    assert stage['outcome'] == 'fatal_report_timeout'
+    assert stage['capture_complete'] is False
+    if mode == 'held-writer':
+        assert stage['returncode'] == 0
+        assert 'late trace from held writer' in stage['stdout']['tail']
+    assert clock() - origin < 5
+
+
+def test_owning_helper_reports_application_launch_and_status_before_cleanup(tmp_path):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    read_fd, write_fd = os.pipe()
+    try:
+        env = dict(runtime.env, SPACE_WINE_APPLICATION_OBSERVER_FD=str(write_fd))
+        result = subprocess.run([str(runtime.root / 'scripts/test-windows-under-wine.sh')],
+                                cwd=runtime.root, env=env, pass_fds=(write_fd,),
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=20)
+        os.close(write_fd)
+        write_fd = None
+        observations = [json.loads(line) for line in os.read(read_fd, 4096).splitlines()]
+    finally:
+        os.close(read_fd)
+        if write_fd is not None:
+            os.close(write_fd)
+    assert result.returncode == 0, result.stderr
+    assert [entry['event'] for entry in observations] == ['launch', 'result']
+    assert observations[0]['hard_deadline_monotonic'] - observations[0]['launched_monotonic'] == 1800
+    assert observations[1]['command_returncode'] == 0
+
+
+def run_observed_owned_helper(runtime, monkeypatch, before_execute):
+    """Real admitted helper/launch code; the child tools are inert host fixtures."""
+    from wine import artifacts, prefix
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    session = prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    for key, value in [('ROOT', runtime.root), ('PACKAGE', runtime.dist), ('OVERLAY', runtime.overlay)]:
+        monkeypatch.setattr(artifacts, key, value)
+    read_fd, write_fd = os.pipe()
+    monkeypatch.setenv(artifacts.APPLICATION_OBSERVER_ENV, str(write_fd))
+    error, code = None, None
+    try:
+        try:
+            before_execute(prefix, session, write_fd)
+            code = artifacts.execute_admitted(session, 'fast1800')
+        except (OSError, ValueError) as caught:
+            error = caught
+    finally:
+        # The helper owns this FD, including its exception path. Close only if
+        # an earlier configuration failure prevented transfer to that path.
+        try:
+            os.close(write_fd)
+        except OSError as caught:
+            assert caught.errno == errno.EBADF
+        with os.fdopen(read_fd, 'rb') as source:
+            observations = [json.loads(line) for line in source.read().splitlines()]
+    return session, observations, code, error
+
+
+@pytest.mark.parametrize('delay_at', ['validation', 'persistence', 'environment'])
+def test_application_observation_clock_follows_delayed_prelaunch_accounting(tmp_path, monkeypatch, delay_at):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    boundary = {}
+    def install(prefix, session, fd):
+        launch = prefix.Session.launch
+        active = False
+        delayed = False
+        method_name = {'validation': 'validate', 'persistence': 'save', 'environment': 'environment'}[delay_at]
+        method = getattr(prefix.Session, method_name)
+        initial_generation = session.state()['generation']
+        def slow_prelaunch(self, *args, **kwargs):
+            nonlocal delayed
+            if active and not delayed:
+                delayed = True
+                time.sleep(.2)
+                boundary['accounting_finished'] = time.monotonic()
+            return method(self, *args, **kwargs)
+        def launch_accounted(self, *args, **kwargs):
+            nonlocal active
+            active = self is session
+            try:
+                return launch(self, *args, **kwargs)
+            finally:
+                active = False
+        monkeypatch.setattr(prefix.Session, method_name, slow_prelaunch)
+        monkeypatch.setattr(prefix.Session, 'launch', launch_accounted)
+        popen = prefix.subprocess.Popen
+        def spawn(argv, **kwargs):
+            if '1800s' in argv:
+                state = session.state()
+                assert state['generation'] == initial_generation + 1
+                assert not state['authorized'] and state['stopped_generation'] is None
+                assert kwargs['close_fds'] and not kwargs.get('pass_fds')
+                assert 'SPACE_WINE_APPLICATION_OBSERVER_FD' not in kwargs['env']
+                boundary['before_spawn'] = time.monotonic()
+                process = popen(argv, **kwargs)
+                boundary['after_spawn'] = time.monotonic()
+                return process
+            return popen(argv, **kwargs)
+        monkeypatch.setattr(prefix.subprocess, 'Popen', spawn)
+    session, observations, code, error = run_observed_owned_helper(runtime, monkeypatch, install)
+    assert error is None and code == 0
+    assert [value['event'] for value in observations] == ['launch', 'result']
+    observed = observations[0]
+    assert boundary['accounting_finished'] <= observed['launched_monotonic']
+    assert boundary['before_spawn'] - .01 <= observed['launched_monotonic'] <= boundary['after_spawn']
+    assert observed['hard_deadline_monotonic'] == observed['launched_monotonic'] + 1800
+    # Preserve the full command budget (and remaining fatal-report allowance),
+    # rather than subtracting the prelaunch accounting delay from its deadline.
+    assert observed['hard_deadline_monotonic'] >= boundary['before_spawn'] + 1800 - .01
+    assert observations[1]['command_returncode'] == 0
+    assert session.state()['ended']
+
+
+@pytest.mark.parametrize('fault', ['validation', 'persistence', 'environment', 'spawn'])
+def test_application_prelaunch_or_spawn_failure_has_no_successful_launch_observation(tmp_path, monkeypatch, fault):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    spawned = []
+    def install(prefix, session, fd):
+        launch = prefix.Session.launch
+        active = False
+        def launch_accounted(self, *args, **kwargs):
+            nonlocal active
+            active = self is session
+            try:
+                return launch(self, *args, **kwargs)
+            finally:
+                active = False
+        monkeypatch.setattr(prefix.Session, 'launch', launch_accounted)
+        if fault != 'spawn':
+            name = {'validation': 'validate', 'persistence': 'save', 'environment': 'environment'}[fault]
+            method = getattr(prefix.Session, name)
+            def fail_prelaunch(self, *args, **kwargs):
+                if active:
+                    raise OSError('fixture prelaunch ' + fault + ' failed')
+                return method(self, *args, **kwargs)
+            monkeypatch.setattr(prefix.Session, name, fail_prelaunch)
+        popen = prefix.subprocess.Popen
+        def spawn(argv, **kwargs):
+            if '1800s' in argv:
+                spawned.append(argv)
+                if fault == 'spawn':
+                    raise OSError('fixture bounded spawn failed')
+            return popen(argv, **kwargs)
+        monkeypatch.setattr(prefix.subprocess, 'Popen', spawn)
+    session, observations, code, error = run_observed_owned_helper(runtime, monkeypatch, install)
+    assert isinstance(error, OSError) and code is None
+    assert observations == []
+    assert bool(spawned) == (fault == 'spawn')
+    assert session.state()['ended'] and not session.state()['authorized']
+    assert [call['server'] for call in runtime.calls() if 'server' in call][-2:] == [['-k'], ['-w']]
+
+
+def test_application_launch_observer_failure_after_spawn_uses_owning_group_teardown(tmp_path, monkeypatch):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    spawned, signalled = [], []
+    def install(prefix, session, fd):
+        popen = prefix.subprocess.Popen
+        write = os.write
+        killpg = os.killpg
+        def spawn(argv, **kwargs):
+            if '1800s' in argv:
+                # A real long-lived host leader makes ownership/reaping observable.
+                process = popen([sys.executable, '-c', 'import time; time.sleep(60)'], **kwargs)
+                spawned.append(process)
+                return process
+            return popen(argv, **kwargs)
+        def broken_observer(target, data):
+            if target == fd:
+                raise OSError('fixture launch observer unavailable')
+            return write(target, data)
+        def signal_group(pid, sig):
+            signalled.append((pid, sig))
+            return killpg(pid, sig)
+        monkeypatch.setattr(prefix.subprocess, 'Popen', spawn)
+        monkeypatch.setattr(os, 'write', broken_observer)
+        monkeypatch.setattr(os, 'killpg', signal_group)
+    session, observations, code, error = run_observed_owned_helper(runtime, monkeypatch, install)
+    assert isinstance(error, OSError) and 'observer unavailable' in str(error)
+    assert code is None and observations == []
+    assert len(spawned) == 1
+    assert spawned[0].poll() is not None
+    assert (spawned[0].pid, signal.SIGTERM) in signalled
+    assert session.state()['ended']
+    assert [call['server'] for call in runtime.calls() if 'server' in call][-2:] == [['-k'], ['-w']]
+
+
+@pytest.mark.parametrize('app_code,helper_code,fatal', [(17, 0, False), (124, 0, True), (-9, 1, True), (0, 1, False)])
+def test_application_command_status_is_separate_from_helper_and_debugger(tmp_path, monkeypatch, app_code, helper_code, fatal):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    result = run_fatal_fixture(repo, (f"print({FATAL_BANNER!r}, file=sys.stderr, flush=True)\n" if fatal else '') + f'''
+observe('result', command_returncode={app_code})
+os.close(fd)
+sys.exit({helper_code})
+''')
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'fail'
+    assert stage['application']['command_returncode'] == app_code
+    assert stage['returncode'] == helper_code
+    assert stage['debugger_returncode'] is None
+    assert stage['outcome'] == ('timeout' if app_code == 124 else 'nonzero_exit')
+
+
+@pytest.mark.parametrize('known_status', ['application', 'helper'])
+def test_root_fatal_deadline_preserves_already_known_primary_failure(tmp_path, monkeypatch, known_status):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    clock = time.monotonic
+    origin = clock()
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: origin + (clock() - origin) * 60)
+    body = f"print({FATAL_BANNER!r}, file=sys.stderr, flush=True)\n"
+    if known_status == 'application':
+        body += "observe('result', command_returncode=17)\nos.close(fd)\ntime.sleep(60)"
+    else:
+        body += "pid=os.fork()\nif pid == 0:\n os.close(fd)\n time.sleep(60)\nelse:\n sys.exit(124)"
+    result = run_fatal_fixture(repo, body)
+    stage = result['evidence']['stages'][-1]
+    assert stage['fatal_report']['termination'] == 'deadline_expired'
+    assert stage['outcome'] == ('nonzero_exit' if known_status == 'application' else 'timeout')
+    if known_status == 'application':
+        assert stage['application']['command_returncode'] == 17
+    else:
+        assert stage['returncode'] == 124
+
+
+def test_root_fatal_selector_wait_cannot_swallow_near_hard_deadline(tmp_path, monkeypatch):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    factory = evidence.selectors.DefaultSelector
+    marker_line = evidence._marker_line
+    active = None
+    waits = []
+    def remember(record, raw, stream):
+        nonlocal active
+        marker_line(record, raw, stream)
+        if record.get('fatal_report', {}).get('first'):
+            active = record['fatal_report']
+    def selector():
+        selected = factory()
+        select = selected.select
+        primary_capture = active is None
+        def check_wait(timeout):
+            if primary_capture and active is not None:
+                remaining = active['deadline_monotonic'] - time.monotonic()
+                waits.append(timeout)
+                assert timeout <= max(0, remaining) + .005
+            return select(timeout)
+        selected.select = check_wait
+        return selected
+    monkeypatch.setattr(evidence, '_marker_line', remember)
+    monkeypatch.setattr(evidence.selectors, 'DefaultSelector', selector)
+    fixture_script(repo, 'test-windows-under-wine.sh', f'''
+fd = int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+start = time.monotonic() - 1799.95
+os.write(fd, (json.dumps(dict(event='launch', launched_monotonic=start, hard_deadline_monotonic=start+1800))+'\\n').encode())
+print({FATAL_BANNER!r}, file=sys.stderr, flush=True)
+time.sleep(60)
+''')
+    result = windows_ci_repro.reproduce(repo)
+    stage = result['evidence']['stages'][-1]
+    assert waits
+    assert stage['fatal_report']['termination'] == 'deadline_expired', stage
+    assert stage['cleanup']['outcome'] == 'pass'
+
+
+def test_inherited_private_application_observer_rejected_before_execution(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv('SPACE_WINE_APPLICATION_OBSERVER_FD', '1')
+    result = windows_ci_repro.reproduce(repo)
+    assert result['status'] == 'fail'
+    assert result['evidence']['failing_step'] == 'preflight'
+    assert not (repo / 'dispatch').exists()
+    assert 'SPACE_WINE_APPLICATION_OBSERVER_FD' in result['evidence']['stages'][0]['details']['evidence']['conflicting_keys']
+
+
+def test_expected_child_captured_fatal_is_not_root_output(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    result = run_fatal_fixture(repo, f'''
+import subprocess
+child = subprocess.run([sys.executable, '-c', {('import sys; print(' + repr(FATAL_BANNER) + ', file=sys.stderr); sys.exit(1)')!r}],
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+assert child.returncode == 1 and child.stderr.decode().strip() == {FATAL_BANNER!r}
+print('[PASS] expected child failure captured', flush=True)
+observe('result', command_returncode=0)
+''')
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'pass'
+    assert stage['fatal_report']['first'] is None
+
+
+def test_private_application_observation_cannot_be_spoofed_in_output(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    result = run_fatal_fixture(repo, '''
+print(json.dumps(dict(event='result', command_returncode=17)), flush=True)
+print(json.dumps(dict(event='launch', launched_monotonic=0, hard_deadline_monotonic=1800)), file=sys.stderr, flush=True)
+observe('result', command_returncode=0)
+''')
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'pass'
+    assert stage['application']['command_returncode'] == 0
+    assert stage['application']['launched_monotonic'] > 0
+
+
+@pytest.mark.parametrize('payload', [
+    b'{"event":"launch","launched_monotonic":false,"hard_deadline_monotonic":1800}\n',
+    b'{"event":"launch","launched_monotonic":1,"hard_deadline_monotonic":1900}\n',
+    b'{"event":"launch","launched_monotonic":NaN,"hard_deadline_monotonic":NaN}\n',
+    b'{"event":"result","command_returncode":0}\n', b'x' * 4097, b'{"event":',
+])
+def test_private_application_observation_rejects_invalid_or_unbounded_messages(payload):
+    import _windows_repro_evidence as evidence
+    record, _ = fatal_stream_record()
+    observation = evidence._ApplicationObservation(record)
+    with pytest.raises(ValueError):
+        observation.feed(payload)
+        observation.eof()
+    assert record['application']['command_returncode'] is None
+
+
+@pytest.mark.parametrize('fault', ['checkpoint', 'log-write', 'interrupt'])
+def test_root_fatal_retains_first_banner_trace_and_status_through_capture_faults(tmp_path, monkeypatch, fault):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    if fault == 'checkpoint':
+        atomic = evidence._atomic
+        def fail_checkpoint(path, value):
+            if path.name == 'ledger.json' and value.get('stages'):
+                last = value['stages'][-1]
+                if last.get('fatal_report', {}).get('first'):
+                    raise OSError('fatal checkpoint disk full')
+            return atomic(path, value)
+        monkeypatch.setattr(evidence, '_atomic', fail_checkpoint)
+    elif fault == 'log-write':
+        exclusive = evidence._exclusive
+        class BrokenLog:
+            def __init__(self, output): self.output = output
+            def write(self, data): raise OSError('fatal log disk full')
+            def close(self): self.output.close()
+        def fail_log(path):
+            output = exclusive(path)
+            return BrokenLog(output) if path.name == 'wine-fast.stderr.log' else output
+        monkeypatch.setattr(evidence, '_exclusive', fail_log)
+    else:
+        marker_line = evidence._marker_line
+        interrupted = False
+        def interrupt_after_banner(record, raw, stream):
+            nonlocal interrupted
+            marker_line(record, raw, stream)
+            if not interrupted and record.get('fatal_report', {}).get('first'):
+                interrupted = True
+                raise KeyboardInterrupt()
+        monkeypatch.setattr(evidence, '_marker_line', interrupt_after_banner)
+    result = run_fatal_fixture(repo, f'''
+print({FATAL_BANNER!r}, file=sys.stderr, flush=True)
+print('partial trace stdout', flush=True)
+time.sleep(.4)
+observe('result', command_returncode=17)
+sys.exit(17)
+''')
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'fail'
+    assert stage['fatal_report']['first']['text'] == FATAL_BANNER
+    assert stage['fatal_report']['deadline_monotonic'] == stage['fatal_report']['first']['observed_monotonic'] + 30
+    assert stage['capture_complete'] is False
+    assert stage['cleanup']['attempts']
+    assert len(json.dumps(result).encode()) <= 48 * 1024
+    if fault == 'interrupt':
+        assert stage['outcome'] == 'interrupted'
+    else:
+        assert stage['returncode'] == 17
+        assert stage['application']['command_returncode'] == 17
+        assert 'partial trace stdout' in stage['stdout']['tail']
+        if fault == 'checkpoint':
+            assert result['evidence']['persistence_errors'] and not result['evidence']['sealed']
+
+
 def test_eof_before_leader_exit_waits_without_poll_spin(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
     start = time.monotonic()
@@ -1371,6 +1894,63 @@ def test_parent_owns_session_before_init_and_terminally_cleans_without_receipt(t
         assert not (runtime.overlay / 'admission.json').exists()
 
 
+def test_root_fatal_real_helper_backstop_stops_only_owned_escaped_writer(tmp_path, monkeypatch):
+    import _windows_repro_evidence as evidence
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    wine = runtime.bin / 'wine'
+    writer = "import os,time\nwhile True:\n os.write(1,b'automatic trace stdout\\n'); os.write(2,b'automatic trace stderr\\n'); time.sleep(.03)"
+    wine.write_text(wine.read_text().replace(
+        "sys.exit(int(os.environ.get('FIXTURE_INIT_CODE'",
+        f'''if pathlib.Path(sys.argv[1]).name == 'space-cli.exe':
+ import subprocess, time
+ assert 'SPACE_WINE_APPLICATION_OBSERVER_FD' not in os.environ
+ child = subprocess.Popen([sys.executable, '-c', {writer!r}], start_new_session=True)
+ (pathlib.Path(os.environ['WINEPREFIX']).parent/'fatal-writer').write_text(str(child.pid))
+ print({FATAL_BANNER!r}, file=sys.stderr, flush=True)
+ time.sleep(60)
+sys.exit(int(os.environ.get('FIXTURE_INIT_CODE' '''.rstrip()))
+    server = runtime.bin / 'wineserver'
+    server.write_text(server.read_text().replace('import json, os, sys', 'import json, os, sys, pathlib, signal').replace(
+        "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'",
+        "record=pathlib.Path(os.environ['WINEPREFIX']).parent/'fatal-writer'\n"
+        "if sys.argv[1:]==['-k'] and record.exists():\n"
+        " try: os.kill(int(record.read_text()), signal.SIGKILL)\n"
+        " except ProcessLookupError: pass\n"
+        "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'"))
+    clock = time.monotonic
+    origin = clock()
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: origin + (clock() - origin) * 30)
+    control = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'],
+                               env=dict(runtime.env, WINEPREFIX=str(tmp_path / 'unrelated-prefix')),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        result = windows_ci_repro.reproduce(runtime.root)
+        stage = result['evidence']['stages'][-1]
+        assert result['status'] == 'fail', result
+        assert stage['fatal_report']['first']['text'] == FATAL_BANNER
+        assert stage['fatal_report']['termination'] == 'deadline_expired'
+        assert stage['application']['command_returncode'] is None
+        assert stage['application']['hard_deadline_monotonic'] - stage['application']['launched_monotonic'] == 1800
+        assert stage['capture_complete'] is False
+        assert stage['cleanup']['outcome'] == 'pass'
+        assert 'automatic trace stdout' in stage['stdout']['tail']
+        assert 'automatic trace stderr' in stage['stderr']['tail']
+        assert control.poll() is None
+        assert not (tmp_path / 'unrelated-prefix').exists()
+        assert clock() - origin < 8
+        session_dir = runtime.root / 'build/wine/sessions' / result['evidence']['metadata']['owned_session']['id']
+        pid = int((session_dir / 'fatal-writer').read_text())
+        # An unreaped orphan may briefly be a zombie, but must no longer write.
+        proc_stat = Path(f'/proc/{pid}/stat')
+        assert not proc_stat.exists() or proc_stat.read_text().split()[2] == 'Z'
+    finally:
+        control.kill()
+        control.wait()
+        for path in (runtime.root / 'build/wine/sessions').glob('*/fatal-writer'):
+            try:
+                os.kill(int(path.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 def test_inherited_private_session_handoff_rejected_before_any_execution(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
     monkeypatch.setenv('SPACE_WINE_SESSION_ID', 'a' * 32)
@@ -1603,9 +2183,13 @@ state.update(generation=state['generation']+1, stopped_generation=None, authoriz
 state_file.write_text(json.dumps(state))
 child = subprocess.Popen([sys.executable, '-c', WRITER_PROGRAM], start_new_session=True)
 (directory / 'fixture-writer').write_text(str(child.pid))
+if EXIT_MODE != 'early-exit':
+ signal.signal(signal.SIGTERM, signal.SIG_IGN)
+if EXIT_MODE == 'interrupted-helper':
+ assert signal.getsignal(signal.SIGTERM) == signal.SIG_IGN, 'readiness precedes SIGTERM-ignore'
 print('[RUN] escaped writer', flush=True)
-'''.replace('WRITER_PROGRAM', repr(writer_program)) + ('' if exit_mode == 'early-exit' else
-       "signal.signal(signal.SIGTERM, signal.SIG_IGN)\ntime.sleep(30)"))
+'''.replace('WRITER_PROGRAM', repr(writer_program)).replace('EXIT_MODE', repr(exit_mode)) + ('' if exit_mode == 'early-exit' else
+       "time.sleep(30)"))
     server = runtime.bin / 'wineserver'
     server.write_text(server.read_text().replace('import json, os, sys', 'import json, os, sys, pathlib, signal').replace(
         "sys.exit(int(os.environ.get('FIXTURE_STOP_CODE'",
@@ -1634,6 +2218,8 @@ print('[RUN] escaped writer', flush=True)
         assert time.monotonic() - start < 9
         assert result['status'] == 'fail'
         stage = result['evidence']['stages'][-1]
+        if exit_mode == 'interrupted-helper':
+            assert fired, stage['stderr']['tail']
         assert stage['step'] == 'wine-fast'
         assert stage['capture_complete'] is False
         assert stage['outcome'] == ('interrupted' if exit_mode == 'interrupted-helper' else 'capture_error')

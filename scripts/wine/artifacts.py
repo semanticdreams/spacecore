@@ -34,6 +34,7 @@ CLEANUP_LINE_BYTES = 4096
 CLEANUP_MARKER = 'Wine cleanup: '
 CLEANUP_FIELDS = {'ok', 'stop_returncode', 'wait_returncode', 'errors',
                   'error_count', 'errors_truncated', 'error_excerpt_truncated'}
+APPLICATION_OBSERVER_ENV = 'SPACE_WINE_APPLICATION_OBSERVER_FD'
 TZ_FILES = ("africa antarctica asia australasia backward etcetera europe northamerica "
             "southamerica leapseconds version windowsZones.xml LICENSE CLDR-LICENSE.txt").split()
 
@@ -389,7 +390,28 @@ def execute_admitted(session, mode):
             env.update(TEST_VERBOSE='1', SPACE_TEST_TIMINGS='1', SKIP_KEYRING_TESTS='1',
                        PWD=str(ROOT), SPACE_DISABLE_AUDIO='1')
             print('[LAUNCH] Wine full fast module=tests.fast:main deadline=1800s TEST_VERBOSE=1 SPACE_TEST_TIMINGS=1', flush=True)
-        return session.launch([config['wine'], str(OVERLAY / 'space-cli.exe'), *args], mode, env)
+        # A parent-only pipe, never application output or an inherited app FD.
+        # Observe successful bounded-command creation, not caller entry/shutdown.
+        observer = os.environ.pop(APPLICATION_OBSERVER_ENV, None) if mode == 'fast1800' else None
+        fd = int(observer) if observer is not None else None
+        if fd is not None:
+            os.set_inheritable(fd, False)
+        def observe(event, **fields):
+            if fd is not None:
+                data = (json.dumps(dict(event=event, **fields)) + '\n').encode('ascii')
+                if os.write(fd, data) != len(data):
+                    raise OSError('Incomplete private application observation')
+        def launched(at):
+            observe('launch', launched_monotonic=at,
+                    hard_deadline_monotonic=at + prefix.BOUNDS[mode])
+        try:
+            code = session.launch([config['wine'], str(OVERLAY / 'space-cli.exe'), *args], mode, env,
+                                  on_launch=launched if fd is not None else None)
+            observe('result', command_returncode=code)
+            return code
+        finally:
+            if fd is not None:
+                os.close(fd)
     return owning_operation(session, execute)
 
 

@@ -342,6 +342,8 @@ def _selection_conflicts() -> list[str]:
     conflicts.extend(key for key in ("SPACE_MATRIX_TEST", "SPACE_REALTIME_TEST") if os.environ.get(key) == "1")
     if "SPACE_WINE_SESSION_ID" in os.environ:
         conflicts.append("SPACE_WINE_SESSION_ID")
+    if _evidence.APPLICATION_OBSERVER_ENV in os.environ:
+        conflicts.append(_evidence.APPLICATION_OBSERVER_ENV)
     return sorted(conflicts)
 
 

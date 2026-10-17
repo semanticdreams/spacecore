@@ -82,3 +82,14 @@ def test_current_wine_notes_describe_owned_lifecycle_not_retired_default_prefix_
         assert retired not in current
     assert 'scripts/wine/runtime.sh' not in text
     assert '{runtime.sh,' not in text
+
+
+def test_wine_notes_describe_one_shot_root_fatal_reporting_and_status_authority():
+    text = read('docs/dev/notes/windows-wine-build-and-test.md')
+    for phrase in ('one30-second reporting grace', 'newline-terminated', 'wine-fast stderr',
+                   'private application observation pipe', 'command_returncode', 'unknown',
+                   'early EOF', 'held pipes', 'native_fatal', 'fatal_report_timeout',
+                   'never resets', '1800-second application hard deadline'):
+        assert phrase in text
+    assert 'launch-observation changes belong to the separate follow-up' not in text
+    assert 'Actual native reporting' in text
