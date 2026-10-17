@@ -17,6 +17,7 @@ from typing import Sequence
 
 import _windows_repro_evidence as _evidence
 from wine import prefix as _prefix
+from wine import publication_toolchain as _publication_toolchain
 from opencode_capabilities import CapabilityError, CommandResult, ensure_space_repo, failure, human_decision, run_command, success
 
 
@@ -30,6 +31,7 @@ REQUIRED_TOOLS = (
     "zip",
     "pwsh",
     "autoconf",
+    "g++",
     "x86_64-w64-mingw32-gcc-posix",
     "x86_64-w64-mingw32-g++-posix",
     "rustc",
@@ -42,6 +44,7 @@ REQUIRED_SCRIPTS = (
     "scripts/build-wine-bcryptprimitives-compat.sh",
     "scripts/wine/prefix.py",
     "scripts/wine/artifacts.py",
+    "scripts/wine/publication_toolchain.py",
     "scripts/wine/probe.c",
     "scripts/wine/process_prng_compat.c",
     "scripts/test-windows-under-wine.sh",
@@ -162,6 +165,7 @@ def preflight(repo_root: Path) -> dict[str, object]:
         "vcpkg": [],
         "wine": [],
         "rust_targets": [],
+        "publication_toolchain": [],
     }
 
     missing_by_category["system_tools"].extend(tool for tool in REQUIRED_TOOLS if shutil.which(tool) is None)
@@ -173,6 +177,13 @@ def preflight(repo_root: Path) -> dict[str, object]:
         missing_by_category["wine"].append("wine")
     if not _rust_target_installed(repo):
         missing_by_category["rust_targets"].append(f"rust-target:{WINDOWS_RUST_TARGET}")
+    toolchain = None
+    toolchain_error = None
+    try:
+        toolchain = _publication_toolchain.resolve_toolchain(repo)
+    except (ValueError, OSError) as error:
+        toolchain_error = str(error)[:1000]
+        missing_by_category['publication_toolchain'].extend(getattr(error, 'missing', []) or ['wine-publication-toolchain'])
 
     for category_missing in missing_by_category.values():
         category_missing.sort()
@@ -180,9 +191,19 @@ def preflight(repo_root: Path) -> dict[str, object]:
 
     evidence: dict[str, object] = {
         "repo_root": str(repo),
-        "missing": sorted(missing),
+        "missing": sorted(set(missing)),
         "missing_by_category": missing_by_category,
     }
+    if toolchain is not None:
+        summary = dict(toolchain)
+        headers = dict(toolchain['headers'])
+        files = headers.pop('files')
+        headers.update(file_count=len(files), inventory_sha256=hashlib.sha256(
+            json.dumps(files, sort_keys=True).encode()).hexdigest())
+        summary['headers'] = headers
+        evidence['publication_toolchain'] = summary
+    if toolchain_error is not None:
+        evidence['publication_toolchain_error'] = toolchain_error
     if not missing:
         return success("preflight", "Windows CI reproduction prerequisites are available", evidence)
 
@@ -213,6 +234,11 @@ def setup_host(repo_root: Path) -> dict[str, object]:
             },
         )
 
+    try:
+        _publication_toolchain.plan_setup(repo)
+    except (ValueError, OSError) as error:
+        return human_decision('setup-host', 'Matched Wine publication provisioning refused',
+                              {'code': 'wine_publication_setup_refused', 'error': str(error)[:1000]})
     result = run_command(["scripts/setup-windows-build-host.sh"], repo, check=False)
     evidence = _command_evidence(result)
     if result.returncode == 0:

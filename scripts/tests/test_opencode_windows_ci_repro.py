@@ -78,6 +78,10 @@ def monkeypatch_required_tools_missing(monkeypatch, *, missing: set[str]) -> Non
 
 
 def monkeypatch_rust_target(monkeypatch, *, installed: bool) -> None:
+    # These are wrapper-unit prerequisites. Real package/tool resolution has
+    # separate inert package fixtures in test_wine_publication_build.py.
+    monkeypatch.setattr(windows_ci_repro._publication_toolchain, 'resolve_toolchain',
+                        lambda repo: {'headers': {'package': {}, 'files': {}}})
     target_output = f"{windows_ci_repro.WINDOWS_RUST_TARGET}\n" if installed else "x86_64-unknown-linux-gnu\n"
 
     def fake_run_command(args, cwd: Path, check: bool = True):
@@ -397,6 +401,7 @@ def test_setup_host_runs_existing_setup_script_on_supported_host(tmp_path, monke
     repo = make_space_repo(tmp_path)
     install_required_scripts(repo)
     monkeypatch_linux_ubuntu_with_sudo(monkeypatch)
+    monkeypatch.setattr(windows_ci_repro._publication_toolchain, 'plan_setup', lambda repo: {'packages': []})
     calls = capture_run_command_calls(monkeypatch, windows_ci_repro)
 
     result = windows_ci_repro.setup_host(repo)

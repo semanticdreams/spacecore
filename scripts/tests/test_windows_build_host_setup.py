@@ -37,6 +37,7 @@ def test_mingw_epoxy_imported_target_filters_host_include_directories() -> None:
 
 def test_windows_smoke_rg_dependency_is_installed_and_guarded() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
+    packages = read_repo_text('scripts/wine/publication_toolchain.py')
     workflows = [
         ".github/workflows/windows.yml",
         ".github/workflows/build.yml",
@@ -47,7 +48,7 @@ def test_windows_smoke_rg_dependency_is_installed_and_guarded() -> None:
         assert "scripts/setup-windows-build-host.sh" in workflow
         assert "| rg " in workflow
 
-    assert "ripgrep" in setup_script
+    assert "ripgrep" in packages
     assert "command -v rg" in setup_script
     assert "Missing ripgrep after setup." in setup_script
 
@@ -55,13 +56,13 @@ def test_windows_smoke_rg_dependency_is_installed_and_guarded() -> None:
 def test_windows_build_host_installs_masm_compatible_llvm_ml() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
 
-    assert "llvm-14" in setup_script
+    assert "llvm-14" in read_repo_text('scripts/wine/publication_toolchain.py')
 
 
 def test_windows_build_host_installs_and_verifies_zip() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
 
-    assert "    zip" in setup_script
+    assert "'zip'" in read_repo_text('scripts/wine/publication_toolchain.py')
     assert "command -v zip" in setup_script
     assert "Missing zip after setup." in setup_script
 
@@ -71,7 +72,7 @@ def test_windows_build_host_installs_and_verifies_powershell_core() -> None:
 
     assert "install_powershell_core" in setup_script
     assert "packages-microsoft-prod.deb" in setup_script
-    assert "sudo apt-get install -y powershell" in setup_script
+    assert "install_host_packages powershell" in setup_script
     assert "command -v pwsh" in setup_script
     assert "PowerShell Core (pwsh) is required by vcpkg." in setup_script
 
@@ -79,9 +80,9 @@ def test_windows_build_host_installs_and_verifies_powershell_core() -> None:
 def test_windows_build_host_installs_and_verifies_autotools_for_vcpkg_ports() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
 
-    assert "    autoconf" in setup_script
-    assert "    automake" in setup_script
-    assert "    libtool" in setup_script
+    packages = read_repo_text('scripts/wine/publication_toolchain.py')
+    for name in ('autoconf', 'automake', 'libtool'):
+        assert repr(name) in packages
     assert "command -v autoconf" in setup_script
     assert "Missing autoconf after setup." in setup_script
 
