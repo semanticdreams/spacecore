@@ -1,4 +1,5 @@
-"""Publication build/provisioning fixtures: no real Wine, APT or compiler build."""
+"""Host publication tests: inert Wine tools plus real host-only ABI/SO checks."""
+import ctypes
 import hashlib
 import importlib
 import json
@@ -437,3 +438,305 @@ if any(arg.startswith('wine32:i386=') for arg in sys.argv):
     assert wrapper.setup_host(fixture.root)['status'] == 'human_decision_required'
     assert len([call for call in fixture.calls() if Path(call[0]).name == 'apt-get']) == 2
     assert not [call for call in fixture.calls() if Path(call[0]).name == 'sudo']
+
+
+PAIR = ('modules/x86_64-windows/space_record_publication.dll',
+        'modules/x86_64-unix/space_record_publication.so')
+BUILD_INPUTS = ('src/record_publication_wine_abi.h', 'scripts/wine/record_publication_bridge.c',
+                'scripts/wine/record_publication_unix_entry.cpp', 'scripts/wine/build_publication.py')
+
+
+def builder_module():
+    assert (ROOT / BUILD_INPUTS[-1]).is_file(), 'fixed publication builder is missing'
+    return importlib.import_module('wine.build_publication')
+
+
+@pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
+def test_publication_identity_layout_compiles_in_c_and_cpp(tmp_path, compiler, standard):
+    header = ROOT / BUILD_INPUTS[0]
+    assert header.is_file(), 'shared publication ABI header is missing'
+    source = '''#include "record_publication_wine_abi.h"
+#ifdef __cplusplus
+#define ASSERT static_assert
+#else
+#define ASSERT _Static_assert
+#endif
+ASSERT(sizeof(SrpIdentity) == 112, "size");
+ASSERT(offsetof(SrpIdentity, challenge) == 8, "challenge");
+ASSERT(offsetof(SrpIdentity, echo) == 16, "echo");
+ASSERT(offsetof(SrpIdentity, pe_build_id) == 24, "PE ID");
+ASSERT(offsetof(SrpIdentity, unix_build_id) == 56, "Unix ID");
+ASSERT(offsetof(SrpIdentity, module_device) == 88, "device");
+ASSERT(offsetof(SrpIdentity, module_inode) == 96, "inode");
+ASSERT(offsetof(SrpIdentity, architecture) == 104, "architecture");
+ASSERT(offsetof(SrpIdentity, features) == 108, "features");
+ASSERT(SRP_ABI == 1 && SRP_FEATURE_IDENTITY == 1 && SRP_FEATURE_OPERATION == 2, "ABI/features");
+ASSERT(SRP_REQUIRED_FEATURES == SRP_FEATURE_IDENTITY, "identity only");
+int main(void) { return 0; }
+'''
+    result = subprocess.run([compiler, '-x', 'c++' if compiler == 'c++' else 'c', f'-std={standard}',
+                             '-Wall', '-Werror', '-I', str(header.parent), '-o', str(tmp_path / 'layout'), '-'],
+                            input=source, text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+
+
+class Identity(ctypes.Structure):
+    _fields_ = [('size', ctypes.c_uint32), ('abi', ctypes.c_uint32),
+                ('challenge', ctypes.c_uint64), ('echo', ctypes.c_uint64),
+                ('pe_build_id', ctypes.c_uint8 * 32), ('unix_build_id', ctypes.c_uint8 * 32),
+                ('module_device', ctypes.c_uint64), ('module_inode', ctypes.c_uint64),
+                ('architecture', ctypes.c_uint32), ('features', ctypes.c_uint32)]
+
+
+def test_publication_real_host_so_identity_and_explicit_unsupported_entry(tmp_path):
+    source = ROOT / BUILD_INPUTS[2]
+    assert source.is_file(), 'Unix identity entry is missing'
+    expected = bytes(range(32))
+    definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in expected) + '}'
+    output = tmp_path / 'identity.so'
+    result = subprocess.run(['c++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fPIC', '-shared',
+                             '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
+                             '-I', str(ROOT / 'src'), definition, str(source),
+                             '-o', str(output), '-ldl'], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert 'libc.so.6' in builder_module()._elf_dependencies(output.read_bytes())
+    library = ctypes.CDLL(str(output))  # Host ELF only; never Wine or PE.
+    exported = (ctypes.c_uint8 * 32).in_dll(library, 'SpaceRecordPublicationUnixBuildId')
+    assert bytes(exported) == expected
+    entries = (ctypes.c_void_p * 2).in_dll(library, '__wine_unix_call_funcs')
+    call = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.c_void_p)
+    identify, unsupported = (call(entry) for entry in entries)
+    value = Identity(size=112, abi=1, challenge=0x1122334455667788)
+    value.pe_build_id[:] = bytes([0xA5]) * 32
+    assert identify(ctypes.byref(value)) == 0
+    info = output.stat()
+    assert value.echo == value.challenge and value.architecture == 0x8664 and value.features == 1
+    assert (value.module_device, value.module_inode) == (info.st_dev, info.st_ino)
+    assert bytes(value.pe_build_id) == bytes([0xA5]) * 32 and bytes(value.unix_build_id) == expected
+    assert unsupported(ctypes.byref(value)) == ctypes.c_int32(0xC00000BB).value
+    assert identify(None) != 0
+    for size, abi in [(111, 1), (113, 1), (112, 2)]:
+        invalid = Identity(size=size, abi=abi)
+        assert identify(ctypes.byref(invalid)) != 0
+    output.unlink()
+    value.echo = 0
+    assert identify(ctypes.byref(value)) != 0 and value.echo == 0
+
+
+@pytest.fixture
+def publication_fixture(fixture):
+    from wine import prefix
+    # Build admission gets an existing immutable Session, without launching even
+    # a fake Wine --version. Real Session ownership validation remains active.
+    build = fixture.root / 'build'
+    build.mkdir(mode=0o700)
+    identifier = 'a' * 32
+    directory = build / 'wine/sessions' / identifier
+    directory.mkdir(parents=True, mode=0o700)
+    for path in [build / 'wine', directory.parent, directory]:
+        path.chmod(0o700)
+    for name in ['prefix', 'data', 'cache', 'tmp']:
+        (directory / name).mkdir(mode=0o700)
+    wine = fixture.lib / 'wine64'
+    runtime = dict(executable=str(wine), sha256=hashlib.sha256(wine.read_bytes()).hexdigest(), version='wine-9.0 (fixture)')
+    owner = dict(version=3, id=identifier, nonce='b' * 32, repo=str(fixture.root), uid=os.geteuid(),
+                 bounds=prefix.BOUNDS, tools=dict(wine=runtime, server=runtime),
+                 crash_policy=[list(row) for row in prefix.CRASH_POLICY])
+    session = prefix.Session(fixture.root, identifier, owner)
+    owner['roots'] = {key: prefix.real_directory(path, key not in ('repo', 'build', 'wine'))
+                      for key, path in session.roots().items()}
+    prefix.write_control(directory / 'owner.json', owner, exclusive=True)
+    session.validate()
+    shutil.copy2(ROOT / 'scripts/wine/prefix.py', fixture.root / 'scripts/wine/prefix.py')
+    for relative in BUILD_INPUTS:
+        source = ROOT / relative
+        assert source.is_file(), f'publication build input missing: {relative}'
+        target = fixture.root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    windows = Path(fixture.files['libwine-dev:amd64'][0]).parents[1] / 'windows'
+    windows.mkdir()
+    for name in ['winternl.h', 'windef.h', 'winbase.h']:
+        path = windows / name
+        path.write_text('/* inert matched header: NOT a compilation/ABI proof */\n')
+        fixture.files['libwine-dev:amd64'].append(str(path))
+    # Structurally sufficient synthetic ELF/PE files let the real fixed builder
+    # check architecture/dependency inventories. They are NOT real tool outputs.
+    compile_body = '''
+if '-o' not in sys.argv:
+ print('x86_64-w64-mingw32' if '-dumpmachine' in sys.argv and 'mingw32' in sys.argv[0] else 'x86_64-linux-gnu' if '-dumpmachine' in sys.argv else '13.2.0' if '-dumpversion' in sys.argv else 'fixture host build tool 9.0')
+ sys.exit(0)
+import struct
+definition = next(a for a in sys.argv if a.startswith('-DSRP_BUILD_ID_BYTES='))
+identity = bytes(int(v, 16) for v in definition.split('=', 1)[1].strip('{}').split(','))
+if 'mingw32' in sys.argv[0]:
+ data = bytearray(1024)
+ data[:2] = b'MZ'; struct.pack_into('<I', data, 60, 128)
+ data[128:132] = b'PE\\0\\0'; struct.pack_into('<HHIIIHH', data, 132, 0x8664, 0, 0, 0, 0, 240, 0x2022)
+ struct.pack_into('<H', data, 152, 0x20b)
+ data[-32:] = identity
+else:
+ strings = b'\\0libc.so.6\\0'
+ header = struct.pack('<16sHHIQQQIHHHHHH', b'\\x7fELF\\x02\\x01\\x01' + bytes(9), 3, 62, 1, 0, 0, 64, 0, 64, 0, 0, 64, 3, 0)
+ section = lambda typ, off, size, link=0, ent=0: struct.pack('<IIQQQQIIQQ', 0, typ, 0, 0, off, size, link, 0, 1, ent)
+ data = header + bytes(64) + section(3, 256, len(strings)) + section(6, 256+len(strings), 32, 1, 16) + strings + struct.pack('<QQQQ', 1, 1, 0, 0) + identity
+pathlib.Path(sys.argv[sys.argv.index('-o') + 1]).write_bytes(data)
+'''
+    fixture.executable('g++', compile_body)
+    fixture.executable('x86_64-w64-mingw32-gcc-posix', compile_body)
+    fixture.executable('winebuild', '''
+if '--builtin' not in sys.argv:
+ print('fixture host build tool 9.0'); sys.exit(0)
+path = pathlib.Path(sys.argv[-1]); data = bytearray(path.read_bytes())
+data[64:80] = b'Wine builtin DLL'; path.write_bytes(data)
+''', fixture.lib)
+    fixture.save()
+    return fixture, session
+
+
+def test_publication_fixed_builder_seals_pair_and_replaces_only_recognized_output(publication_fixture):
+    fixture, session = publication_fixture
+    module = builder_module()
+    manifest = module.build_publication(fixture.root, session)
+    assert set(manifest) == {'version', 'abi', 'build_id', 'runtime', 'toolchain', 'files'}
+    assert manifest['version'] == 1 and manifest['abi'] == 1
+    assert manifest['runtime'] == session.owner['tools']['wine'] and set(manifest['files']) == set(PAIR)
+    output = fixture.root / 'build/wine-publication'
+    assert json.loads((output / 'build.json').read_text()) == manifest
+    assert {str(path.relative_to(output)) for path in output.rglob('*') if path.is_file()} == {*PAIR, 'build.json'}
+    for relative in PAIR:
+        raw = (output / relative).read_bytes()
+        assert bytes.fromhex(manifest['build_id']) in raw
+        assert manifest['files'][relative]['sha256'] == hashlib.sha256(raw).hexdigest()
+        assert manifest['files'][relative]['architecture'] == 'x86_64'
+    assert manifest['files'][PAIR[1]]['dependencies'] == ['libc.so.6']
+    assert manifest['files'][PAIR[0]]['dependencies'] == []
+    assert module.build_publication(fixture.root, session) == manifest
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
+    builtins = [call for call in fixture.calls() if '--builtin' in call]
+    assert len(builtins) == 2 and all(Path(call[-1]).name == 'space_record_publication.dll' for call in builtins)
+
+
+@pytest.mark.parametrize('damage', ['extra', 'symlink-root', 'symlink-file', 'unrecognized', 'tamper', 'unowned'])
+def test_publication_builder_refuses_unsafe_existing_output_without_compiling(publication_fixture, monkeypatch, damage):
+    fixture, session = publication_fixture
+    module = builder_module()
+    module.build_publication(fixture.root, session)
+    output = fixture.root / 'build/wine-publication'
+    if damage == 'extra':
+        (output / 'foreign').write_text('keep')
+    elif damage == 'symlink-root':
+        output.rename(output.with_name('saved'))
+        output.symlink_to(output.with_name('saved'), target_is_directory=True)
+    elif damage == 'symlink-file':
+        path = output / PAIR[0]
+        path.unlink()
+        path.symlink_to(fixture.lib / 'wine64')
+    elif damage == 'unrecognized':
+        (output / 'build.json').write_text('{}')
+    elif damage == 'tamper':
+        (output / PAIR[0]).write_bytes(b'foreign')
+    else:
+        original = os.stat
+        def foreign_owner(path, *args, **kwargs):
+            value = original(path, *args, **kwargs)
+            if Path(path) == output:
+                fields = list(value)
+                fields[4] = os.geteuid() + 1
+                return os.stat_result(fields)
+            return value
+        monkeypatch.setattr(os, 'stat', foreign_owner)
+    before = len([call for call in fixture.calls() if '-o' in call])
+    with pytest.raises((ValueError, OSError)):
+        module.build_publication(fixture.root, session)
+    assert len([call for call in fixture.calls() if '-o' in call]) == before
+    if damage == 'extra':
+        assert (output / 'foreign').read_text() == 'keep'
+
+
+def test_publication_builder_binds_source_header_and_tool_inputs(publication_fixture):
+    fixture, session = publication_fixture
+    module = builder_module()
+    first = module.build_publication(fixture.root, session)
+    for path in [fixture.root / BUILD_INPUTS[0], Path(fixture.files['libwine-dev:amd64'][0]), fixture.lib / 'winebuild']:
+        with path.open('a') as stream:
+            stream.write('\n# changed identity input\n' if path.name == 'winebuild' else '\n/* changed identity input */\n')
+        next_manifest = module.build_publication(fixture.root, session)
+        assert next_manifest['build_id'] != first['build_id']
+        first = next_manifest
+
+
+@pytest.mark.parametrize('field,value', [('files', None), ('toolchain', None), ('runtime', None)])
+def test_publication_builder_malformed_manifest_fails_explicitly(publication_fixture, field, value):
+    fixture, session = publication_fixture
+    module = builder_module()
+    manifest = module.build_publication(fixture.root, session)
+    manifest[field] = value
+    (fixture.root / 'build/wine-publication/build.json').write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match='[Mm]anifest'):
+        module.build_publication(fixture.root, session)
+
+
+def test_publication_builder_compiler_failure_is_bounded_and_preserves_previous_pair(publication_fixture):
+    fixture, session = publication_fixture
+    module = builder_module()
+    old = module.build_publication(fixture.root, session)
+    compiler = fixture.bin / 'g++'
+    compiler.write_text(compiler.read_text().replace("if '-o' not in sys.argv:",
+                        "if '-o' in sys.argv:\n sys.stderr.write('x' * 20000); sys.exit(7)\nif '-o' not in sys.argv:"))
+    with pytest.raises(ValueError, match='compiler failed') as error:
+        module.build_publication(fixture.root, session)
+    assert len(str(error.value)) < 4400 and str(error.value).endswith('[truncated]')
+    assert json.loads((fixture.root / 'build/wine-publication/build.json').read_text()) == old
+    assert not list((fixture.root / 'build').glob('.wine-publication-*'))
+
+
+@pytest.mark.parametrize('damage', ['pe-machine', 'elf-machine', 'builtin', 'build-id'])
+def test_publication_builder_checks_images_before_installing(publication_fixture, monkeypatch, damage):
+    fixture, session = publication_fixture
+    module = builder_module()
+    compile_fixed = module._compile
+    def damaged(args, stage):
+        compile_fixed(args, stage)
+        if '-o' in args:
+            path = Path(args[args.index('-o') + 1])
+            raw = bytearray(path.read_bytes())
+            if damage == 'pe-machine' and path.suffix == '.dll':
+                raw[132:134] = bytes(2)
+            if damage == 'elf-machine' and path.suffix == '.so':
+                raw[18:20] = bytes(2)
+            if damage == 'build-id':
+                raw[-32:] = bytes(32)
+            path.write_bytes(raw)
+        elif '--builtin' in args and damage == 'builtin':
+            path = Path(args[-1])
+            raw = bytearray(path.read_bytes())
+            raw[64:80] = bytes(16)
+            path.write_bytes(raw)
+    monkeypatch.setattr(module, '_compile', damaged)
+    with pytest.raises(ValueError):
+        module.build_publication(fixture.root, session)
+    assert not (fixture.root / 'build/wine-publication').exists()
+
+
+def test_publication_builder_cli_loads_existing_immutable_session_without_wine(publication_fixture):
+    fixture, session = publication_fixture
+    result = subprocess.run([sys.executable, str(fixture.root / BUILD_INPUTS[-1])],
+                            env=dict(fixture.env, SPACE_WINE_SESSION_ID=session.id),
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert summary['version'] == 1 and summary['abi'] == 1 and summary['files'] == list(PAIR)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
+
+
+@pytest.mark.parametrize('arguments,session_id', [(['extra'], None), ([], None), ([], 'not-a-session')])
+def test_publication_builder_cli_refuses_arguments_or_missing_owned_handoff(tmp_path, arguments, session_id):
+    script = ROOT / BUILD_INPUTS[-1]
+    assert script.is_file(), 'fixed publication builder is missing'
+    env = dict(os.environ)
+    env.pop('SPACE_WINE_SESSION_ID', None)
+    if session_id is not None:
+        env['SPACE_WINE_SESSION_ID'] = session_id
+    result = subprocess.run([sys.executable, str(script), *arguments], env=env, capture_output=True, text=True, timeout=10)
+    assert result.returncode != 0 and 'refused' in result.stderr.lower()
