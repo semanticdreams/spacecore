@@ -125,9 +125,25 @@ sol::table create_dial_type_table(sol::state_view lua)
     dial_type_table.set_function("DialType", []() {
         return DialType();
     });
-    dial_type_table.set_function("InputDialType", [](sol::object inputStateObject) {
-        InputState& inputState = inputStateObject.as<InputState&>();
-        return InputDialType(inputState);
+    dial_type_table.set_function("InputDialType", [](sol::optional<sol::object> inputStateObject) {
+        constexpr const char* error = "InputDialType requires a non-null InputState userdata";
+        if (!inputStateObject || !inputStateObject->valid()
+            || inputStateObject->get_type() != sol::type::userdata) {
+            throw sol::error(error);
+        }
+        // sol2 accepts userdata without a metatable as any native type.
+        lua_State* state = inputStateObject->lua_state();
+        inputStateObject->push();
+        const bool hasMetatable = lua_getmetatable(state, -1) != 0;
+        lua_pop(state, hasMetatable ? 2 : 1);
+        if (!hasMetatable || !inputStateObject->is<InputState>()) {
+            throw sol::error(error);
+        }
+        InputState* inputState = inputStateObject->as<InputState*>();
+        if (!inputState) {
+            throw sol::error(error);
+        }
+        return InputDialType(*inputState);
     });
 
     return dial_type_table;

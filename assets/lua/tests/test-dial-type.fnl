@@ -1,4 +1,7 @@
 (local DialTypeModule (require :dial-type))
+(local process (require :process))
+(local RuntimeBin (require :tests.runtime-bin))
+(local sysinfo (require :sysinfo))
 ;; gamepad axis ids
 (local AXIS-LX 0)
 (local AXIS-LY 1)
@@ -63,6 +66,40 @@
                      :fn dial-type-keeps-sticks-independent})
 (table.insert tests {:name "InputDialType adapter updates on demand"
                      :fn input-dial-type-adapter-processes-only-when-updated})
+
+(fn invalid-argument-child-args []
+  (local args [(RuntimeBin.resolve) "-m" "tests.dial-type-invalid-argument:main"])
+  ;; Limit cores only in the POSIX child, then exec so process.run sees its signal.
+  (if (= (. (sysinfo.platform) :os) :windows)
+      args
+      (do
+        (local wrapped ["sh" "-c" "ulimit -c 0 || exit 1; exec \"$@\"" "dial-type-invalid"])
+        (each [_ arg (ipairs args)] (table.insert wrapped arg))
+        wrapped)))
+
+(fn rejects-invalid-input-in-child [case-name]
+  (local result (process.run {:args (invalid-argument-child-args)
+                              :env {:SPACE_DIAL_TYPE_INVALID_CASE case-name}
+                              :timeout 90}))
+  (local details (.. "invalid InputState case=" case-name
+                     " exit-code=" (tostring result.exit-code)
+                     " signal=" (tostring result.signal)
+                     " timed-out=" (tostring result.timed-out)
+                     " stdout=" (or result.stdout "")
+                     " stderr=" (or result.stderr "")))
+  (assert (not result.timed-out) details)
+  (assert (= result.signal nil) details)
+  (assert (= result.exit-code 0) details)
+  (local stdout (string.gsub (or result.stdout "") "\r\n" "\n"))
+  (local marker (.. "DIAL_INVALID_OK " case-name))
+  (var marker-count 0)
+  (each [line (string.gmatch stdout "[^\n]+")]
+    (when (= line marker) (set marker-count (+ marker-count 1))))
+  (assert (= marker-count 1) details))
+
+(each [_ case-name (ipairs [:omitted :nil :table :boolean :number :string :foreign])]
+  (table.insert tests {:name (.. "InputDialType rejects " case-name " in isolated child")
+                       :fn (fn [] (rejects-invalid-input-in-child case-name))}))
 
 (local main
   (fn []
