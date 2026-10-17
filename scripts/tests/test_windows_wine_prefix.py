@@ -59,6 +59,207 @@ def test_cleanup_failure_is_failure_waits_and_can_retry(runtime):
     assert runtime.calls() == before
 
 
+def cleanup_server(runtime, stop=0, wait=0, stop_out=b'', stop_err=b'', wait_out=b'', wait_err=b''):
+    """Model the public server CLI, not Wine's private server lock implementation."""
+    runtime.write_executable('wineserver', '''#!/usr/bin/python3
+import json, os, signal, stat, sys
+if sys.argv[1:] == ['--version']:
+    print('Wine 9.0 (fixture)'); sys.exit(0)
+with open(os.environ['FIXTURE_LOG'], 'a') as stream:
+    stream.write(json.dumps({'server':sys.argv[1:], 'regular_streams':all(
+        stat.S_ISREG(os.fstat(fd).st_mode) for fd in (1, 2)), 'env':{k:os.environ.get(k)
+        for k in ['WINEPREFIX','WINEARCH','WINESERVER']}})+'\\n')
+kind = 'STOP' if sys.argv[1:] == ['-k'] else 'WAIT'
+os.write(1, bytes.fromhex(os.environ.get('FIXTURE_'+kind+'_OUT', '')))
+os.write(2, bytes.fromhex(os.environ.get('FIXTURE_'+kind+'_ERR', '')))
+code = int(os.environ.get('FIXTURE_'+kind+'_CODE', '0'))
+if code < 0:
+    signal.signal(-code, signal.SIG_DFL)
+    os.kill(os.getpid(), -code)
+sys.exit(code)
+''')
+    runtime.env.update(FIXTURE_STOP_CODE=str(stop), FIXTURE_WAIT_CODE=str(wait),
+                       FIXTURE_STOP_OUT=stop_out.hex(), FIXTURE_STOP_ERR=stop_err.hex(),
+                       FIXTURE_WAIT_OUT=wait_out.hex(), FIXTURE_WAIT_ERR=wait_err.hex())
+
+
+def test_silent_kill_one_wait_zero_admits_cold_prefix_and_owns_consumer(runtime):
+    cleanup_server(runtime, stop=1)
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    module, session = load_owned(runtime)
+    state = session.state()
+    assert state['authorized'] and not state['ended']
+    assert state['stopped_generation'] == state['generation'] == 2
+    assert [call['wine'] for call in runtime.calls() if 'wine' in call][:2] == [
+        ['wineboot.exe', '--init'], [str(runtime.overlay / 'process-prng-probe.exe')]]
+    result = runtime.run('test-windows-under-wine.sh')
+    assert result.returncode == 0, result.stderr
+    calls = [call for call in runtime.calls() if 'server' in call]
+    assert [call['server'] for call in calls] == [['-k'], ['-w'], ['-k'], ['-w']]
+    assert all(call['regular_streams'] for call in calls)
+    assert all(call['env']['WINEPREFIX'] == str(session.prefix) for call in calls)
+    assert all(call['env']['WINEARCH'] == 'win64' for call in calls)
+    before = runtime.calls()
+    assert module.stop_session(session, end=True).ok
+    assert runtime.calls() == before
+    assert session.state()['ended'] and not session.state()['authorized']
+    assert session.state()['stopped_generation'] == session.state()['generation'] == 3
+
+
+def test_silent_terminal_cleanup_marker_preserves_raw_pair_and_idempotence(runtime):
+    cleanup_server(runtime)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    _, session = load_owned(runtime)
+    state = session.state()
+    state.update(generation=state['generation'] + 1, stopped_generation=None)
+    session.save(state)
+    runtime.env['FIXTURE_STOP_CODE'] = '1'
+    command = [sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), 'terminal-stop']
+    result = subprocess.run(command, cwd=runtime.root, env=runtime.env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    marker = next(line for line in result.stdout.splitlines() if line.startswith('Wine cleanup: '))
+    status = json.loads(marker.removeprefix('Wine cleanup: '))
+    assert status['ok'] and (status['stop_returncode'], status['wait_returncode']) == (1, 0)
+    assert status['errors'] == []
+    before = runtime.calls()
+    assert subprocess.run(command, cwd=runtime.root, env=runtime.env, capture_output=True).returncode == 0
+    assert runtime.calls() == before
+
+
+@pytest.mark.parametrize('stop,wait,stop_out,stop_err,wait_out,wait_err,ok', [
+    (1, 0, b'', b'', b'', b'', True),
+    (0, 0, b'normal stdout\n', b'normal stderr\n', b'', b'', True),
+    (1, 0, b'error\n', b'', b'', b'', False),
+    (1, 0, b'', b'error\n', b'', b'', False),
+    (1, 0, b' ', b'', b'', b'', False),
+    (1, 0, b'', b'', b'error\n', b'', False),
+    (1, 0, b'', b'', b'', b'error\n', False),
+    (1, 7, b'', b'', b'', b'', False),
+    (1, 124, b'', b'', b'', b'', False),
+    (0, 137, b'', b'', b'', b'', False),
+    (124, 0, b'', b'', b'', b'', False),
+    (137, 0, b'', b'', b'', b'', False),
+    (37, 0, b'', b'', b'', b'', False),
+    (-signal.SIGTERM, 0, b'', b'', b'', b'', False),
+    (1, -signal.SIGTERM, b'', b'', b'', b'', False),
+    (1, 0, b'\x1b\x00' + b'x' * 10000, b'', b'', b'', False),
+])
+def test_cleanup_cli_completion_policy_preserves_status_and_retry(
+        runtime, monkeypatch, capsys, stop, wait, stop_out, stop_err, wait_out, wait_err, ok):
+    cleanup_server(runtime)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    module, session = load_owned(runtime)
+    state = session.state()
+    state.update(generation=state['generation'] + 1, stopped_generation=None)
+    session.save(state)
+    for key, value in dict(runtime.env, FIXTURE_STOP_CODE=str(stop), FIXTURE_WAIT_CODE=str(wait),
+                           FIXTURE_STOP_OUT=stop_out.hex(), FIXTURE_STOP_ERR=stop_err.hex(),
+                           FIXTURE_WAIT_OUT=wait_out.hex(), FIXTURE_WAIT_ERR=wait_err.hex()).items():
+        monkeypatch.setenv(key, value)
+    before = len(runtime.calls())
+    result = module.stop_session(session, end=True)
+    assert result.ok == ok
+    assert (result.stop_returncode, result.wait_returncode) == (stop, wait)
+    calls = [call for call in runtime.calls()[before:] if 'server' in call]
+    assert [call['server'] for call in calls] == [['-k'], ['-w']]
+    assert all(call['regular_streams'] and call['env']['WINEPREFIX'] == str(session.prefix) for call in calls)
+    output = capsys.readouterr()
+    combined = output.out + output.err
+    if any((stop_out, stop_err, wait_out, wait_err)):
+        assert 'Wine server' in combined and 'bytes=' in combined
+    assert '\x1b' not in combined and '\x00' not in combined and len(combined) < 2000
+    assert session.state()['ended'] and not session.state()['authorized']
+    assert session.state()['stopped_generation'] == (state['generation'] if ok else None)
+    if not ok:
+        for key in ['FIXTURE_STOP_CODE', 'FIXTURE_WAIT_CODE']:
+            monkeypatch.setenv(key, '0')
+        for key in ['FIXTURE_STOP_OUT', 'FIXTURE_STOP_ERR', 'FIXTURE_WAIT_OUT', 'FIXTURE_WAIT_ERR']:
+            monkeypatch.setenv(key, '')
+        assert module.stop_session(session, end=True).ok
+    before = runtime.calls()
+    assert module.stop_session(session, end=True).ok
+    assert runtime.calls() == before
+
+
+@pytest.mark.parametrize('damage', ['owner', 'mutable', 'write', 'invocation', 'capture'])
+def test_silent_cleanup_pair_does_not_hide_other_errors(runtime, monkeypatch, damage):
+    cleanup_server(runtime)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    module, session = load_owned(runtime)
+    state = session.state()
+    state.update(generation=state['generation'] + 1, stopped_generation=None)
+    session.save(state)
+    for key, value in dict(runtime.env, FIXTURE_STOP_CODE='1').items():
+        monkeypatch.setenv(key, value)
+    if damage == 'owner':
+        owner_file = session.directory / 'owner.json'
+        owner = json.loads(owner_file.read_text())
+        owner['nonce'] = '0' * 32
+        owner_file.write_text(json.dumps(owner))
+    elif damage == 'mutable':
+        (session.directory / 'state.json').write_text('corrupt state')
+    elif damage == 'write':
+        def fail_write(*args, **kwargs):
+            raise OSError('fixture state write failure')
+        monkeypatch.setattr(module, 'write_control', fail_write)
+    elif damage == 'capture':
+        def fail_capture(*args):
+            raise OSError('fixture capture failure')
+        monkeypatch.setattr(module, '_server_output', fail_capture)
+    else:
+        wait_leader = module.wait_leader
+        def fail_stop(argv, **kwargs):
+            if argv[-1] == '-k':
+                raise OSError('fixture stop invocation failure')
+            return wait_leader(argv, **kwargs)
+        monkeypatch.setattr(module, 'wait_leader', fail_stop)
+    before = len(runtime.calls())
+    result = module.stop_session(session, end=True)
+    assert not result.ok and result.errors
+    calls = [call['server'] for call in runtime.calls()[before:] if 'server' in call]
+    expected = [] if damage == 'owner' else [['-w']] if damage == 'invocation' else [['-k'], ['-w']]
+    assert calls == expected
+    assert result.stop_returncode == (None if damage in ['owner', 'invocation'] else 1)
+    assert result.wait_returncode == (None if damage == 'owner' else 0)
+    if damage in ['write', 'capture']:
+        assert session.state()['stopped_generation'] is None
+
+
+@pytest.mark.parametrize('app_code,diagnostic,expected', [(19, b'', 19), (0, b'error\n', 1), (19, b'error\n', 19)])
+def test_cli_cleanup_policy_preserves_helper_primary_result(runtime, app_code, diagnostic, expected):
+    cleanup_server(runtime)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    runtime.env.update(FIXTURE_STOP_CODE='1', FIXTURE_STOP_ERR=diagnostic.hex(), FIXTURE_APP_CODE=str(app_code))
+    result = runtime.run('test-windows-under-wine.sh')
+    assert result.returncode == expected, result.stderr
+    assert ('Owned Wine cleanup failed:' in result.stderr) == bool(diagnostic)
+    _, session = load_owned(runtime)
+    state = session.state()
+    assert state['ended'] and not state['authorized']
+    assert state['stopped_generation'] == (None if diagnostic else state['generation'])
+
+
+@pytest.mark.parametrize('init_code,probe_code,diagnostic', [
+    (42, 0, 'Wine initialization failed: exit=42'),
+    (0, 20, 'Wine API admission failed: probe exit=20'),
+])
+def test_silent_cleanup_does_not_hide_preparation_primary_failure(runtime, init_code, probe_code, diagnostic):
+    cleanup_server(runtime, stop=1)
+    runtime.env['FIXTURE_INIT_CODE'] = str(init_code)
+    runtime.package()
+    result = runtime.prepare([probe_code])
+    assert result.returncode != 0 and diagnostic in result.stderr
+    assert 'Owned Wine cleanup failed:' not in result.stderr
+    assert not (runtime.overlay / 'admission.json').exists()
+    assert [call['server'] for call in runtime.calls() if 'server' in call] == [['-k'], ['-w']]
+
+
 def test_old_receipt_rejected_without_default_prefix_cleanup(runtime):
     runtime.package()
     assert runtime.prepare([0]).returncode == 0

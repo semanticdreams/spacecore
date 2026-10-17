@@ -15,6 +15,7 @@ import shutil
 import signal
 import stat
 import subprocess
+import sys
 import tempfile
 import uuid
 
@@ -287,10 +288,25 @@ def load_session(repo, identifier):
     return session
 
 
-def bounded(session, argv, kind, extra_env=None):
+def bounded(session, argv, kind, extra_env=None, *, stdout=None, stderr=None):
     # Inherit outer capture streams. Never communicate() on Wine-descendant pipes.
     return wait_leader(['timeout', '--kill-after=5s', f'{BOUNDS[kind]}s', *argv],
-                       cwd=session.repo, env=dict(session.environment(), **(extra_env or {})))
+                       cwd=session.repo, env=dict(session.environment(), **(extra_env or {})),
+                       stdout=stdout, stderr=stderr)
+
+
+def _server_output(flag, output, stderr):
+    """Observe regular files, relaying bounded control-safe diagnostics only."""
+    empty = True
+    for name, stream in [('stdout', output), ('stderr', stderr)]:
+        stream.seek(0)
+        raw = stream.read(4096)
+        count = os.fstat(stream.fileno()).st_size
+        if raw or count:
+            empty = False
+            print(f'Wine server {flag} {name}: bytes={count} excerpt={raw[:160]!r} '
+                  f'excerpt_truncated={count > 160}', file=getattr(sys, name), flush=True)
+    return empty
 
 
 def wait_leader(argv, **kwargs):
@@ -333,6 +349,7 @@ def cleanup_signals():
 
 @dataclass
 class CleanupResult:
+    """Command-level Wine CLI completion, not independently proven quiescence."""
     ok: bool
     stop_returncode: int | None
     wait_returncode: int | None
@@ -342,6 +359,7 @@ class CleanupResult:
 def stop_session(session, end):
     errors = []
     codes = []
+    silent = []
     with cleanup_signals():
         try:
             session.validate()
@@ -363,16 +381,27 @@ def stop_session(session, end):
             if already_stopped:
                 return CleanupResult(not errors, 0, 0, errors)
         for flag, kind in (('-k', 'stop'), ('-w', 'wait')):
+            code, empty = None, False
             try:
                 session.validate()  # Revalidate immediately before EACH destructive operation.
-                code = bounded(session, [session.owner['tools']['server']['executable'], flag], kind)
-                codes.append(code)
+                # Regular streams avoid descendant-held pipe waits. Retain the
+                # raw code even if observing/relaying its diagnostics then fails.
+                with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as stderr:
+                    code = bounded(session, [session.owner['tools']['server']['executable'], flag], kind,
+                                   stdout=output, stderr=stderr)
+                    empty = _server_output(flag, output, stderr)
+            except Exception as error:
+                errors.append(f'wineserver {flag}: {type(error).__name__}: {ascii(str(error)[:160])}')
+            codes.append(code)
+            silent.append(empty)
+        # Wine 9 -k can silently exit1 when the owner is already gone or races
+        # shutdown. Its silent -w=0 is CLI completion, not native lock/process proof.
+        completed = codes == [0, 0] or (codes == [1, 0] and all(silent))
+        if not completed:
+            for flag, code in zip(('-k', '-w'), codes):
                 if code:
                     errors.append(f'wineserver {flag} exit={code}')
-            except Exception as error:
-                codes.append(None)
-                errors.append(f'wineserver {flag}: {error}')
-        if state is not None and codes == [0, 0]:
+        if state is not None and completed and not errors:
             state['stopped_generation'] = state['generation']
             try:
                 session.save(state)

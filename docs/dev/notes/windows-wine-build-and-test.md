@@ -409,7 +409,8 @@ also terminate a live helper whose output pipes have already reached EOF.
 Case120/240-second policies, regression-child deadlines, assertions, module lists
 and Windows skips are unchanged. There is no idle watchdog.
 
-Admission establishes **quiescence**, not terminal shutdown: verified
+Admission acknowledges bounded **Wine CLI cleanup completion**, not independently
+proven native-process quiescence or terminal shutdown. An owned, acknowledged
 `stopped_generation == generation` permits a still-authorized one-shot consumer.
 Every launch increments the durable generation and invalidates that stopped
 generation. Full/smoke consumers revoke authorization before launching and own
@@ -417,12 +418,42 @@ terminal stop/wait in `finally`. Initialization/admission failures also stop the
 owned session, even without any admission receipt. The guarded parent retains
 the immutable owner and always runs one bounded terminal backstop in `finally`
 after acquisition, including interruption or evidence-storage failure. This
-retries failed helper cleanup once; a verified already-stopped current generation
+retries failed helper cleanup once; a previously acknowledged current generation
 needs no duplicate server operations, but still ends authorization. Mutable
 state corruption never authorizes execution and does not suppress cleanup using
 verified immutable ownership. Stop/wait codes and state errors are evidence, not
 an assumption of quiescence. Every server operation first verifies private roots,
 owner/nonce and pinned tools; root or symlink substitution refuses the operation.
+
+Cleanup preserves the raw selected-server `-k` and `-w` exit codes. The normal
+`0/0` pair remains accepted. The only additional accepted pair is **`1/0` with
+both stdout and stderr empty for both commands**, after verifying the same owned
+prefix before each operation and with no ownership, state, invocation or capture
+errors. Whitespace is output, not a recognized benign diagnostic. Diagnostic
+output in either command makes `1/0` fail; other kill statuses, failed waits,
+timeouts, signals and state/ownership errors remain failures. Server streams use
+regular temporary files and leader waits, with bounded reads and control-safe
+diagnostic excerpts relayed to the outer logger. Accepted CLI completion alone
+acknowledges the current generation; failed cleanup stays retryable. No new
+private Wine lockfile/process inspection, global server action or prefix pruning
+is used to strengthen that acknowledgment into a native-process claim.
+
+This narrow policy follows the public Wine 9.0 CLI, not an assumption that Unix
+exit1 uniquely means “no server.” In
+[`server/main.c`](https://github.com/wine-mirror/wine/blob/wine-9.0/server/main.c),
+`-k` exits with `!kill_lock_owner(...)`; no owner or a shutdown race can yield1,
+but silent failures can also yield1. In
+[`server/request.c`](https://github.com/wine-mirror/wine/blob/wine-9.0/server/request.c),
+the wait helper can return an `fcntl` error; `main.c` nevertheless exits0 without
+checking that return. Consequently even silent `1/0` is **not formal proof of
+native lock success or all-process quiescence**. The
+[`wineserver` manual](https://github.com/wine-mirror/wine/blob/wine-9.0/server/wineserver.man.in)
+documents normal default persistence of 3 seconds after the last client exits,
+so an already-gone server is a normal possibility, not a failure by itself.
+`CleanupResult.ok` means completion under this explicit CLI contract; it does not
+certify which silent internal Wine branch occurred or prove the full application
+suite completed. Actual guarded full 1800-second/session confirmation remains a
+separate post-review run.
 
 Root/build/session ownership locks stay with their owning parents; child FDs are
 closed, so an escaped descendant cannot retain these locks. The guarded parent
