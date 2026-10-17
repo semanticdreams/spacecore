@@ -23,8 +23,9 @@ or weaken security before the first structured error/mismatch fields are known.
 
 ## Bounded direction
 
-Implement two reviewed units: required binding validation, then failure-path
-diagnostics/isolation. Keep all tests/case budgets and the1800 full budget.
+Implement required binding validation, then independently reviewed failure-path
+diagnostic components (readable errors/metrics, owned roots/crash policy, and
+fatal capture). Keep all tests/case budgets and the1800 full budget.
 No global sol2 flag, input lifetime redesign, source DACL-policy change, new skip,
 application-feature disabling, arbitrary registry access or capability expansion.
 Fresh internal helper interfaces may be refactored with all repo callers migrated.

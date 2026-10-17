@@ -51,7 +51,7 @@ Run `build/windows-ci-repro/20261017T021559707002Z-290576cffcc94012a145d36380114
 
 - [ ] **2. Guard before unsafe extraction.** Require valid full userdata and `is<InputState>()` before reading native data; then extract InputState pointer, reject null, and only then form reference/construct adapter. No unchecked as-reference before check. No global sol2 configuration or ownership/lifetime behavior change; stale typed objects are not claimed detected.
 - [ ] **3. Retain the valid contract.** All four existing real-engine input/update cases remain unchanged and pass. Child assertions, not diagnostic-parent exit0 alone, establish rejection. Update SDK/subsystem error and caller-lifetime documentation.
-- [ ] **4. Validate and review.** Native rebuild, touched Fennel compile, constraints and complete test-dial-type. Retain actual old child signal/acceptance RED and post-fix completion markers. Independent review before checkpoint; no real Wine until Task3.
+- [ ] **4. Validate and review.** Native rebuild, touched Fennel compile, constraints and complete test-dial-type. Retain actual old child signal/acceptance RED and post-fix completion markers. Independent review before checkpoint; no real Wine until Task5 after every diagnostic component is reviewed.
 
 ### Task 2: Readable First Failures and Unchanged Security Metrics
 
