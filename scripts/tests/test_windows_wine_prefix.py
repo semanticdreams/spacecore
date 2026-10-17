@@ -78,6 +78,131 @@ def test_missing_matching_server_fails_before_boot(runtime):
     assert not [c for c in runtime.calls() if 'wine' in c]
 
 
+def relocate_tools(runtime, backend_name='wineserver'):
+    # Record actual exec paths, including the two existing identity queries.
+    # All executables remain inert host fixtures, not installed Wine tools.
+    for name in ('wine', 'wineserver'):
+        path = runtime.bin / name
+        path.write_text(path.read_text().replace(
+            "if sys.argv[1:] == ['--version']:",
+            "with open(os.environ['FIXTURE_LOG'], 'a') as f:\n"
+            "    f.write(json.dumps({'tool':sys.argv[0], 'args':sys.argv[1:], 'env':{k:os.environ.get(k) for k in\n"
+            "        ['WINEPREFIX','WINEARCH','WINESERVER']}})+'\\n')\n"
+            "if sys.argv[1:] == ['--version']:"))
+    wine = runtime.bin / 'wine-stable'
+    (runtime.bin / 'wine').rename(wine)
+    backend = runtime.bin.parent / 'lib/wine' / backend_name
+    backend.parent.mkdir(parents=True)
+    (runtime.bin / 'wineserver').rename(backend)
+    (runtime.bin / 'wineserver-stable').symlink_to(backend)
+    runtime.env['WINE_CMD'] = str(wine)
+    return wine, backend
+
+
+@pytest.mark.parametrize('backend_name', ['wineserver', 'wineserver64'])
+@pytest.mark.parametrize('selection', ['explicit', 'command', 'alias', 'default64'])
+def test_logical_sibling_server_can_resolve_to_backend(runtime, monkeypatch, backend_name, selection):
+    wine, server = relocate_tools(runtime, backend_name)
+    assert wine.is_file() and not wine.is_symlink()
+    assert (runtime.bin / 'wineserver-stable').is_symlink()
+    if selection == 'command':
+        runtime.env['WINE_CMD'] = 'wine-stable'
+    elif selection in ('alias', 'default64'):
+        alias = runtime.bin / ('wine' if selection == 'alias' else 'wine64')
+        alias.symlink_to(wine)
+        (runtime.bin / 'wineserver').symlink_to(server)
+        # A resolver that pairs beside the canonical launcher must not pass.
+        (runtime.bin / 'wineserver-stable').unlink()
+        if selection == 'alias':
+            runtime.env['WINE_CMD'] = str(alias)
+        else:
+            runtime.env.pop('WINE_CMD')
+            monkeypatch.delenv('WINE_CMD', raising=False)
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stderr
+    module, session = load_owned(runtime)
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    assert module.resolve_wine() == wine  # Preserve the canonical public contract.
+    assert session.owner['tools'] == {
+        name: {'executable': str(path), 'version': version,
+               'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+        for name, path, version in [('wine', wine, 'wine-9.0 (fixture)'),
+                                    ('server', server, 'Wine 9.0 (fixture)')]}
+    result = runtime.run('test-windows-under-wine.sh')
+    assert result.returncode == 0, result.stderr
+    calls = [c for c in runtime.calls() if 'tool' in c]
+    assert [(c['tool'], c['args']) for c in calls] == [
+        (str(wine), ['--version']), (str(server), ['--version']),
+        (str(wine), ['wineboot.exe', '--init']),
+        (str(wine), [str(runtime.overlay / 'process-prng-probe.exe')]),
+        (str(server), ['-k']), (str(server), ['-w']),
+        (str(wine), [str(runtime.overlay / 'space-cli.exe'), '-m', 'tests.fast:main']),
+        (str(server), ['-k']), (str(server), ['-w'])]
+    assert all(c['env'] == {'WINEPREFIX': str(session.prefix), 'WINEARCH': 'win64',
+                            'WINESERVER': str(server)} for c in calls)
+    state = session.state()
+    assert state['ended'] and not state['authorized']
+    assert state['stopped_generation'] == state['generation'] == 3
+    assert not Path(runtime.env['WINEPREFIX']).exists()
+
+
+@pytest.mark.parametrize('damage', ['missing', 'dangling', 'directory', 'non-executable', 'wrong-suffix'])
+@pytest.mark.parametrize('selection', ['explicit', 'alias'])
+def test_invalid_logical_server_never_falls_back_to_path(runtime, damage, selection):
+    wine, server = relocate_tools(runtime)
+    logical_server = wine.with_name('wineserver-stable')
+    if selection == 'alias':
+        selected = runtime.bin / 'selected'
+        selected.mkdir()
+        alias = selected / 'wine-custom'
+        alias.symlink_to(wine)
+        runtime.env['WINE_CMD'] = str(alias)
+        logical_server = selected / 'wineserver-custom'
+        # The canonical launcher's valid sibling also cannot replace the
+        # missing/invalid logical sibling of the selected alias.
+    else:
+        logical_server.unlink()
+    # A valid unrelated unsuffixed server is on PATH, but cannot substitute for
+    # the explicitly selected suffixed launcher's logical sibling.
+    (runtime.bin / 'wineserver').symlink_to(server)
+    if damage == 'dangling':
+        logical_server.symlink_to(server.with_name('missing'))
+    elif damage == 'directory':
+        logical_server.mkdir()
+    elif damage == 'non-executable':
+        logical_server.write_text('not executable')
+    elif damage == 'wrong-suffix':
+        logical_server.with_name('wineserver-other').symlink_to(server)
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    assert not [c for c in runtime.calls() if 'wine' in c or 'server' in c]
+
+
+@pytest.mark.parametrize('version', ['Wine 8.0', 'Wine 9.0', 'Wine 9.0 (Fixture)', 'unrecognized-release'])
+def test_release_failure_reports_captured_versions_and_both_path_pairs(runtime, version):
+    wine, server = relocate_tools(runtime)
+    # Distinct logical/canonical launcher as well as relocated server paths.
+    alias = runtime.bin / 'wine'
+    alias.symlink_to(wine)
+    logical_server = runtime.bin / 'wineserver'
+    logical_server.symlink_to(server)
+    runtime.env['WINE_CMD'] = str(alias)
+    server.write_text(server.read_text().replace('Wine 9.0 (fixture)', version))
+    runtime.package()
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    assert ('Unsupported Wine release identity' if version == 'unrecognized-release'
+            else 'Wine/wineserver release mismatch') in result.stderr
+    assert f"wine lookup={alias} canonical={wine} version='wine-9.0 (fixture)'" in result.stderr
+    assert f"wineserver lookup={logical_server} canonical={server} version={version!r}" in result.stderr
+    assert [(c['tool'], c['args']) for c in runtime.calls() if 'tool' in c] == [
+        (str(wine), ['--version']), (str(server), ['--version'])]
+    assert not [c for c in runtime.calls() if 'wine' in c or 'server' in c]
+
+
 def test_admission_failure_still_stops_owned_prefix(runtime):
     runtime.package()
     assert runtime.prepare([20]).returncode != 0
@@ -362,16 +487,9 @@ def test_launch_waits_leader_without_communicating_on_descendant_streams(runtime
     assert module.stop_session(session, end=True).ok
 
 
-@pytest.mark.parametrize('tool', ['wine', 'wineserver'])
-def test_mismatched_release_or_installation_fails_before_init(runtime, tool):
+def test_mismatched_release_fails_before_init(runtime):
     runtime.package()
-    if tool == 'wine':
-        runtime.write_executable('wineserver', '#!/bin/sh\nprintf "Wine 8.0\\n"\n')
-    else:
-        other = runtime.bin / 'other'
-        other.mkdir()
-        (runtime.bin / 'wineserver').rename(other / 'wineserver')
-        (runtime.bin / 'wineserver').symlink_to(other / 'wineserver')
+    runtime.write_executable('wineserver', '#!/bin/sh\nprintf "Wine 8.0\\n"\n')
     result = runtime.prepare([0])
     assert result.returncode != 0
     assert not [c for c in runtime.calls() if 'wine' in c]

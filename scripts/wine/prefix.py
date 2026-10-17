@@ -69,12 +69,16 @@ def write_control(path, value, exclusive=False):
         os.close(fd)
 
 
-def resolve_wine():
+def _wine_lookup():
     selected = os.environ.get('WINE_CMD') or shutil.which('wine64') or shutil.which('wine')
     executable = shutil.which(selected) if selected else None
     if not executable:
         raise ValueError('Missing required command: wine64 or wine (or selected WINE_CMD)')
-    return Path(executable).resolve(strict=True)
+    return Path(executable)
+
+
+def resolve_wine():
+    return _wine_lookup().resolve(strict=True)
 
 
 def tool_identity(path, env):
@@ -183,17 +187,26 @@ def create_session(repo):
     directory.mkdir(mode=0o700)
     (directory / 'prefix').mkdir(mode=0o700)
     # Even version queries use the private prefix, never HOME/.wine.
-    wine = resolve_wine()
-    match = re.fullmatch(r'wine(?:64)?(-[\w.-]+)?', wine.name)
+    wine_lookup = _wine_lookup()
+    match = re.fullmatch(r'wine(?:64)?(-[\w.-]+)?', wine_lookup.name)
     if not match:
-        raise ValueError(f'Unsupported selected Wine installation: {wine}')
-    server = wine.with_name('wineserver' + (match[1] or '')).resolve(strict=True)
-    if server.parent != wine.parent or server.name != 'wineserver' + (match[1] or ''):
-        raise ValueError('Wine/wineserver must share a canonical installation and suffix')
+        raise ValueError(f'Unsupported selected Wine installation: {wine_lookup}')
+    # Pair logical siblings first: distro server links may relocate both the
+    # directory and basename. Resolve only afterwards, without lexical abspath
+    # normalization that would change symlink/.. filesystem lookup semantics.
+    server_lookup = wine_lookup.with_name('wineserver' + (match[1] or ''))
+    wine = wine_lookup.resolve(strict=True)
+    server = server_lookup.resolve(strict=True)
     env = dict(os.environ, WINEPREFIX=str(directory / 'prefix'), WINEARCH='win64', WINESERVER=str(server))
     tools = {'wine': tool_identity(wine, env), 'server': tool_identity(server, env)}
-    if release(tools['wine']['version']) != release(tools['server']['version']):
-        raise ValueError('Wine/wineserver release mismatch')
+    try:
+        if release(tools['wine']['version']) != release(tools['server']['version']):
+            raise ValueError('Wine/wineserver release mismatch')
+    except ValueError as error:
+        raise ValueError(
+            f"{error}; wine lookup={wine_lookup} canonical={wine} version={tools['wine']['version']!r}; "
+            f"wineserver lookup={server_lookup} canonical={server} version={tools['server']['version']!r}"
+        ) from error
     owner = {'version': 2, 'id': identifier, 'nonce': uuid.uuid4().hex,
              'repo': str(repo), 'uid': os.geteuid(), 'bounds': BOUNDS, 'tools': tools}
     session = Session(repo, identifier, owner)
