@@ -35,6 +35,36 @@ static void hex_id(char *output, const uint8_t *input)
     output[64] = '\0';
 }
 
+static int publication_operation(PublicationCall call)
+{
+    SrpCall request = {0}, expected, observed;
+    unsigned char transport[4096] = {0};
+    uint64_t required;
+    int32_t status;
+    request.size = sizeof(request);
+    request.abi = SRP_ABI;
+    request.opcode = SRP_BEGIN;
+    request.event = SRP_START;
+    request.reply = SRP_CONTINUE;
+    request.transport_error.address = (uint64_t)(uintptr_t)transport;
+    request.transport_error.capacity = sizeof(transport);
+    expected = request;
+    status = call(SRP_ENTRY_OPERATION, &request);
+    fprintf(stderr, "Publication probe: phase=entry1 status=%" PRId32 "\n", status);
+    fflush(stderr);
+    required = request.transport_error.required;
+    observed = request;
+    observed.transport_error.required = 0;
+    /* Every other scalar/span must retain the fresh empty-BEGIN contract:
+     * no context/sequence/event progress, flags or primary/cleanup presence.
+     * Zeroed storage plus no NUL in the claimed bytes also refuses short writes.
+     */
+    if (status != SRP_INVALID_ARGUMENT || memcmp(&observed, &expected, sizeof(expected))
+            || !required || required > sizeof(transport) || memchr(transport, 0, (size_t)required))
+        return failure("publication operation admission");
+    return 0;
+}
+
 static int publication_identity(void)
 {
     HMODULE module, owner = NULL;
@@ -85,6 +115,7 @@ static int publication_identity(void)
             || memcmp(identity.pe_build_id, expected_build_id, sizeof(expected_build_id))
             || memcmp(identity.unix_build_id, expected_build_id, sizeof(expected_build_id)))
         return failure("publication identity roundtrip");
+    if (publication_operation(function.call) != 0) return 20;
     hex_id(pe, identity.pe_build_id);
     hex_id(unix_id, identity.unix_build_id);
     count = snprintf(report, sizeof(report),

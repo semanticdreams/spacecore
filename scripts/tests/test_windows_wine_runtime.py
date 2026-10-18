@@ -18,6 +18,11 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 MARKER = ".space-windows-artifact-v1.json"
+PUBLICATION_INPUTS = ('src/record_publication_wine_abi.h', 'src/record_publication_wine_authority.h',
+                      'src/record_publication_unix.h', 'src/record_publication_unix.cpp',
+                      'src/record_publication_operation.h', 'src/record_publication.h',
+                      'src/record_publication.cpp', 'scripts/wine/record_publication_bridge.c',
+                      'scripts/wine/record_publication_unix_entry.cpp', 'scripts/wine/build_publication.py')
 
 # Inert host implementation of the two fixed builtin setup utilities. Every call
 # remains visible in both argv inventories; no actual Wine or registry is used.
@@ -64,13 +69,15 @@ if len(sys.argv) > 1 and pathlib.Path(sys.argv[1]).name == 'process-prng-probe.e
     challenge = os.environ['SPACE_WINE_IDENTITY_CHALLENGE']
     value = dict(version=1, size=112, abi=1, challenge=challenge, echo=challenge,
                  pe_build_id=manifest['build_id'], unix_build_id=manifest['build_id'],
-                 module_device=info.st_dev, module_inode=info.st_ino, architecture=0x8664, features=1)
+                 module_device=info.st_dev, module_inode=info.st_ino, architecture=0x8664, features=3)
     damage = os.environ.get('FIXTURE_IDENTITY_DAMAGE')
     for kind, field in [('echo','echo'), ('pe-id','pe_build_id'), ('unix-id','unix_build_id')]:
         if damage == kind: value[field] = '0'*len(value[field])
     for kind, field in [('device','module_device'), ('inode','module_inode')]:
         if damage == kind: value[field] += 1
     if damage in ['size', 'abi', 'architecture', 'features']: value[damage] += 1
+    if damage == 'feature-old': value['features'] = 1
+    if damage == 'feature-extra': value['features'] = 7
     if damage == 'extra': value['unexpected'] = True
     raw = json.dumps(value)
     if damage == 'duplicate': raw = raw[:-1] + ',"abi":1}'
@@ -134,7 +141,8 @@ class Fixture:
         if (ROOT / "scripts/wine").exists():
             shutil.copytree(ROOT / "scripts/wine", scripts / "wine")
         (self.root / 'src').mkdir()
-        shutil.copy2(ROOT / 'src/record_publication_wine_abi.h', self.root / 'src')
+        for relative in PUBLICATION_INPUTS:
+            shutil.copy2(ROOT / relative, self.root / relative)
         shutil.copy2(ROOT / 'src/wine_owned_environment.h', self.root / 'src')
         shutil.copytree(ROOT / "external/date/tzdata", self.root / "external/date/tzdata")
         manifest = self.root / "external/temporal/libical/DEPENDENCY_MANIFEST.json"
@@ -943,6 +951,32 @@ def test_actual_probe_pair_failure_never_reaches_crypto(tmp_path, mode):
     assert 'fixture-request=' not in result.stdout
 
 
+@pytest.mark.parametrize('mode', ['operation-unsupported', 'operation-denied', 'operation-success',
+                                 'operation-flags', 'operation-context', 'operation-sequence', 'operation-event',
+                                 'operation-primary-state', 'operation-primary-required', 'operation-cleanup-required',
+                                 'operation-empty', 'operation-oversize', 'operation-short', 'operation-truncated',
+                                 'operation-size', 'operation-abi', 'operation-opcode', 'operation-reply',
+                                 'operation-reserved', 'operation-input', 'operation-buffer'])
+def test_actual_probe_requires_benign_operation_refusal_before_report_or_crypto(tmp_path, mode):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode), capture_output=True, text=True)
+    assert result.returncode == 20, result.stdout + result.stderr
+    assert 'fixture-entry1' in result.stdout and 'fixture-crypto-load' not in result.stdout
+    assert 'phase=entry1 status=' in result.stderr
+    assert (tmp_path / 'space-record-publication-identity.json').read_bytes() == b''
+    assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
+
+
+@pytest.mark.parametrize('features', [1, 7])
+def test_actual_probe_rejects_old_or_extra_pair_features_before_operation(tmp_path, features):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    mode = 'pair-old-features' if features == 1 else 'pair-extra-features'
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode), capture_output=True, text=True)
+    assert result.returncode == 20
+    assert 'fixture-entry1' not in result.stdout and 'fixture-crypto-load' not in result.stdout
+    assert (tmp_path / 'space-record-publication-identity.json').read_bytes() == b''
+
+
 @pytest.mark.parametrize('mode,error', [('pair-missing', 126), ('pair-bad-image', 193),
                                       ('pair-init-failed', 1114), ('pair-access-denied', 5)])
 def test_actual_probe_reports_numeric_publication_loader_error(tmp_path, mode, error):
@@ -987,8 +1021,9 @@ def test_actual_probe_writes_identity_before_crypto_in_same_process(tmp_path, mo
     assert value == dict(version=1, size=112, abi=1, challenge='0123456789abcdef',
                         echo='0123456789abcdef', pe_build_id='01' + '00'*31,
                         unix_build_id='01' + '00'*31, module_device=7, module_inode=19,
-                        architecture=0x8664, features=1)
+                        architecture=0x8664, features=3)
     assert result.stdout.index('fixture-entry0') < result.stdout.index('fixture-crypto-load')
+    assert result.stdout.index('fixture-entry0') < result.stdout.index('fixture-entry1') < result.stdout.index('fixture-crypto-load')
     report.unlink()
     again = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
     assert again.returncode == 20 and not report.exists()
@@ -1012,7 +1047,7 @@ def test_receipt_v3_binds_pair_and_fixed_loader_root(runtime):
 
 @pytest.mark.parametrize('code', [0, 10])
 @pytest.mark.parametrize('damage', ['missing', 'echo', 'pe-id', 'unix-id', 'device', 'inode',
-                                   'extra', 'duplicate', 'oversize', 'symlink', 'hardlink'])
+                                   'extra', 'duplicate', 'oversize', 'symlink', 'hardlink', 'feature-old', 'feature-extra'])
 def test_host_refuses_unproved_pair_even_when_crypto_claims_success_or_absence(runtime, damage, code):
     runtime.package()
     runtime.env['FIXTURE_IDENTITY_DAMAGE'] = damage

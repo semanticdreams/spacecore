@@ -652,7 +652,7 @@ def fixture_bridge_inventory(repo, session):
     info = (output / builder.PAIR[1]).stat()
     identity = dict(version=1, size=112, abi=1, challenge='0123456789abcdef', echo='0123456789abcdef',
                     pe_build_id=build_id, unix_build_id=build_id, module_device=info.st_dev,
-                    module_inode=info.st_ino, architecture=0x8664, features=1)
+                    module_inode=info.st_ino, architecture=0x8664, features=3)
     return dict(abi=1, build_id=build_id, toolchain=toolchain, files=files, identity=identity)
 
 
@@ -1430,7 +1430,7 @@ def test_ready_owned_binding_matches_actual_receipt_and_readonly_parent_metadata
     assert runtime.calls() == calls
 
 
-@pytest.mark.parametrize('damage', ['echo', 'inode', 'build-id', 'extra'])
+@pytest.mark.parametrize('damage', ['echo', 'inode', 'build-id', 'extra', 'feature-old', 'feature-extra'])
 def test_parent_metadata_refuses_unverified_bridge_receipt_without_wine_queries(tmp_path, damage):
     from test_windows_wine_runtime import Fixture
     runtime = Fixture(tmp_path)
@@ -1445,6 +1445,8 @@ def test_parent_metadata_refuses_unverified_bridge_receipt_without_wine_queries(
         value['bridge']['identity']['module_inode'] += 1
     elif damage == 'build-id':
         value['bridge']['build_id'] = '0'*64
+    elif damage in ('feature-old', 'feature-extra'):
+        value['bridge']['identity']['features'] = 1 if damage == 'feature-old' else 7
     else:
         value['bridge']['identity']['secret'] = 'do-not-copy'
     path.write_text(json.dumps(value))

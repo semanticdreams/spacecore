@@ -1,4 +1,4 @@
-"""Fixed identity-only Wine builtin pair builder. Never execute Wine or PE here."""
+"""Fixed operation/identity Wine builtin pair builder. Never execute Wine or PE here."""
 from __future__ import annotations
 
 import hashlib
@@ -23,7 +23,13 @@ PE_SOURCE = 'scripts/wine/record_publication_bridge.c'
 UNIX_SOURCE = 'scripts/wine/record_publication_unix_entry.cpp'
 BUILDER_SOURCE = 'scripts/wine/build_publication.py'
 AUTHORITY_HEADER = 'src/record_publication_wine_authority.h'
-INPUTS = (ABI_HEADER, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE, AUTHORITY_HEADER)
+UNIX_HEADER = 'src/record_publication_unix.h'
+UNIX_ADAPTER_SOURCE = 'src/record_publication_unix.cpp'
+OPERATION_HEADER = 'src/record_publication_operation.h'
+PUBLICATION_HEADER = 'src/record_publication.h'
+PUBLICATION_SOURCE = 'src/record_publication.cpp'
+INPUTS = (ABI_HEADER, AUTHORITY_HEADER, UNIX_HEADER, UNIX_ADAPTER_SOURCE, OPERATION_HEADER,
+          PUBLICATION_HEADER, PUBLICATION_SOURCE, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE)
 DIRECTORIES = ('modules', 'modules/x86_64-windows', 'modules/x86_64-unix')
 MAX_ARTIFACT = 64 * 1024 * 1024
 
@@ -234,7 +240,9 @@ def build_publication(repo: Path, session: prefix.Session) -> dict:
         tools = identity['tools']
         _compile([tools['host_cxx']['executable'], '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                   '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
-                  '-I', str(repo / 'src'), definition, str(repo / UNIX_SOURCE), '-o', str(unix), '-ldl'], stage)
+                  '-I', str(repo / 'src'), definition, str(repo / UNIX_SOURCE),
+                  str(repo / UNIX_ADAPTER_SOURCE), str(repo / PUBLICATION_SOURCE),
+                  '-pthread', '-o', str(unix), '-ldl'], stage)
         _compile([tools['mingw_cc']['executable'], '-std=c11', '-O2', '-Wall', '-Werror', '-shared', '-static-libgcc',
                   '-I', str(windows_headers), '-I', str(wine_headers), '-I', str(repo / 'src'), definition,
                   str(repo / PE_SOURCE), '-o', str(pe), '-ladvapi32'], stage)

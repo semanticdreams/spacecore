@@ -57,9 +57,53 @@ HMODULE LoadLibraryA(const char *name)
     }
     return (HMODULE)(uintptr_t)1;
 }
-static int32_t WINAPI fixture_identity(uint32_t entry, void *args)
+static int32_t fixture_operation(void *args)
+{
+    static const char diagnostic[] = "BEGIN requires a nonempty absolute NUL-free host path";
+    SrpCall *value = args;
+    SrpCall expected = {0};
+    unsigned char *transport;
+    size_t i, length = sizeof(diagnostic) - 1;
+    if (!value || !value->transport_error.address || value->transport_error.capacity != 4096) abort();
+    expected.size = 168;
+    expected.abi = SRP_ABI;
+    expected.opcode = SRP_BEGIN;
+    expected.event = SRP_START;
+    expected.reply = SRP_CONTINUE;
+    expected.transport_error.address = value->transport_error.address;
+    expected.transport_error.capacity = 4096;
+    if (memcmp(value, &expected, sizeof(expected))) abort();
+    transport = (unsigned char *)(uintptr_t)value->transport_error.address;
+    for (i = 0; i < 4096; ++i) if (transport[i]) abort();
+    puts("fixture-entry1");
+    if (is("operation-unsupported")) return SRP_UNSUPPORTED;
+    if (is("operation-denied")) return SRP_ACCESS_DENIED;
+    if (is("operation-success")) return SRP_SUCCESS;
+    memcpy(transport, diagnostic, length - is("operation-short"));
+    value->transport_error.required = length;
+    if (is("operation-flags")) value->flags = SRP_VALID;
+    if (is("operation-context")) value->context = 1;
+    if (is("operation-sequence")) value->sequence = 1;
+    if (is("operation-event")) value->event = SRP_BEFORE_WRITE;
+    if (is("operation-primary-state")) value->primary_state = SRP_PRIMARY_PRESENT;
+    if (is("operation-primary-required")) value->primary_error.required = 1;
+    if (is("operation-cleanup-required")) value->cleanup_error.required = 1;
+    if (is("operation-empty")) value->transport_error.required = 0;
+    if (is("operation-oversize")) value->transport_error.required = 4097;
+    if (is("operation-truncated")) value->flags = SRP_TRANSPORT_TRUNCATED;
+    if (is("operation-size")) value->size = 144;
+    if (is("operation-abi")) value->abi = 2;
+    if (is("operation-opcode")) value->opcode = SRP_ADVANCE;
+    if (is("operation-reply")) value->reply = SRP_FAILED;
+    if (is("operation-reserved")) value->reserved = 1;
+    if (is("operation-input")) value->path.size = 1;
+    if (is("operation-buffer")) ++value->transport_error.address;
+    return SRP_INVALID_ARGUMENT;
+}
+static int32_t WINAPI fixture_publication(uint32_t entry, void *args)
 {
     SrpIdentity *value = args;
+    if (entry == SRP_ENTRY_OPERATION) return fixture_operation(args);
     if (entry != SRP_ENTRY_IDENTITY || value->size != 112 || value->abi != SRP_ABI) abort();
     puts("fixture-entry0");
     if (is("pair-status")) return SRP_MODULE_UNAVAILABLE;
@@ -73,6 +117,8 @@ static int32_t WINAPI fixture_identity(uint32_t entry, void *args)
     value->module_inode = is("pair-inode") ? 0 : 19;
     value->architecture = is("pair-arch") ? 0 : SRP_ARCH_X86_64;
     value->features = is("pair-features") ? 0 : SRP_REQUIRED_FEATURES;
+    if (is("pair-old-features")) value->features = SRP_FEATURE_IDENTITY;
+    if (is("pair-extra-features")) value->features = SRP_REQUIRED_FEATURES | UINT32_C(4);
     return SRP_SUCCESS;
 }
 static BOOL WINAPI fixture_prng(PBYTE buffer, SIZE_T length)
@@ -97,7 +143,7 @@ FARPROC GetProcAddress(HMODULE module, const char *name)
     if (module == (HMODULE)(uintptr_t)3) {
         union { FARPROC generic; int32_t (WINAPI *call)(uint32_t, void *); } function;
         if (strcmp(name, "SpaceRecordPublicationCall")) abort();
-        function.call = fixture_identity;
+        function.call = fixture_publication;
         return is("pair-export") ? NULL : function.generic;
     }
     union { FARPROC generic; BOOL (WINAPI *prng)(PBYTE, SIZE_T); } function;
@@ -111,7 +157,7 @@ FARPROC GetProcAddress(HMODULE module, const char *name)
 }
 BOOL GetModuleHandleExA(DWORD flags, LPCSTR address, HMODULE *owner)
 {
-    if (address == (LPCSTR)fixture_identity) {
+    if (address == (LPCSTR)fixture_publication) {
         *owner = (HMODULE)(uintptr_t)(is("pair-owner") ? 4 : 3);
         return TRUE;
     }

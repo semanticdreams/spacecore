@@ -581,7 +581,7 @@ not establish later full-suite success, nor close the
 historical Linux native SIG investigation. Agents must use the existing guarded
 capability, not the manual shell examples above, for real reproduction.
 
-### Private publication operation ABI (native-only prerequisite)
+### Private publication operation ABI (source/host-model admission stage)
 
 The shared private header now defines the first operation frame: ABI1, **168 bytes**,
 with separate caller-owned primary, cleanup and transport byte buffers. Identity
@@ -606,14 +606,30 @@ ownership and per-context serialization prevent stale release from erasing newer
 work. Pointer spans must be caller-owned valid synchronous storage; integer ranges
 and incompatible overlap are checked, not arbitrary hostile addresses probed.
 
-This adapter is **excluded from the engine source glob on every platform** and is
-compiled only in Linux x86_64 native tests and host bridge recovery models. It is
-not a PE-callable host symbol. The actual Wine pair still advertises identity feature1 only; its Unix
-operation slot remains `SRP_UNSUPPORTED`. The PE now supports guarded entry1
-forwarding, but no host filesystem adapter/core is compiled into that slot yet.
-Production client, complete operation-pair admission and actual Windows/Wine
-operation proof remain later work; host models do not resolve the old strict
-Windows publisher failure.
+This adapter is **excluded from the engine source glob on every platform**. The
+fixed Unix SO builder now links the Unix entry, native adapter and existing phased
+publisher core with threading and dl linkage; native ABI tests and host recovery
+models use that same real adapter/core. Slot1 forwards `srp_unix_call`; it is not
+a PE-callable imported host symbol. Required and reported pair features now change
+together to identity|operation3, refusing old identity-only and extra flags.
+
+The existing60-second probe validates entry0 first, then makes a fresh zeroed
+168-byte BEGIN with context0/sequence0/START/CONTINUE, empty inputs, zero primary/
+cleanup capacities and a4096-byte transport buffer, before report writing/Crypto.
+The PE authority guard must allow the ordinary process before native validation.
+The probe requires INVALID_ARGUMENT, flags0/no context or sequence/event progress,
+primary ABSENT, zero primary/cleanup required counts and complete nonempty bounded
+transport text. Native empty-path refusal precedes any filesystem work or context
+creation. Unsupported, access denied, success or unexpected outputs are contract20
+without Crypto or fallback. Only fixed phase/raw status is logged, not diagnostics
+or payload data. Identity remains112 bytes and report/receipt schemas, temp/report
+origin proof, discovery/IDs/SO checks, generations and all deadlines are unchanged.
+
+This is benign routing/default-authority API evidence, not a real publication,
+filtering-history or token-security proof. Actual matched SDK pair execution and
+entry0/entry1 dispatch under Wine remain guarded supervisor work after source
+review/checkpoint. The Task6 C++ production client is not activated here; the old
+strict Windows publisher failure is not resolved or represented as a full-run PASS.
 
 #### Supported Wine9 represented-authority guard (source/host-model stage)
 
@@ -646,11 +662,15 @@ clears only safe inline state claims, never following unchecked diagnostic point
 callers retain their saved context ID for recovery. SNAPSHOT/CANCEL/RELEASE and
 actual BEFORE_CLEANUP advance remain callable after authority loss. Native exact
 phase/sequence validation rejects a forged cleanup event rather than resuming a
-commit. Entry0 retains its identity-only behavior and own-HMODULE opaque Wine9
+commit. Entry0 retains its112-byte identity roundtrip and own-HMODULE opaque Wine9
 dispatcher. Source/host WinAPI models and tiny header-only MinGW C/C++ compilation
-do not prove actual Wine token-query behavior; that remains Task5B2 validation.
-The builder hashes the authority header and links the PE to advapi32 using named
-fixed PE/Unix translation units, still without compiling the host operation core.
+do not prove actual Wine token-query behavior; that remains guarded Task5B2 runtime
+validation. The builder inventories all ten fixed pair source/header inputs: shared
+ABI/authority/native-entry/Operation/publication headers, adapter and publisher
+sources, PE/Unix bridge units and builder itself, excluding uncompiled probe/temp
+helpers. Named translation units select SO entry+adapter+publisher independently
+of input order; the PE remains its bridge alone linked to advapi32, with no native
+adapter/core symbol import.
 
 ### Bounded reproduction evidence
 

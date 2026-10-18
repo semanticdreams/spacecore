@@ -1,5 +1,5 @@
 // Wine9 unixlib_entry_t is NTSTATUS (*)(void *), using the native host ABI.
-// No Wine runtime is needed to compile/test this identity-only Unix library.
+// No Wine runtime is needed to compile/test this native operation/identity library.
 #include <cstdint>
 #include <cstring>
 #include <dlfcn.h>
@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "record_publication_wine_abi.h"
+#include "record_publication_unix.h"
 
 #ifndef SRP_BUILD_ID_BYTES
 #error "The fixed publication builder must supply SRP_BUILD_ID_BYTES"
@@ -49,7 +50,7 @@ NTSTATUS identity(void* args) noexcept
         result.module_device = info.st_dev;
         result.module_inode = info.st_ino;
         result.architecture = SRP_ARCH_X86_64;
-        result.features = SRP_FEATURE_IDENTITY;
+        result.features = SRP_REQUIRED_FEATURES;
         *input = result;
         return SRP_SUCCESS;
     } catch (...) {
@@ -57,13 +58,13 @@ NTSTATUS identity(void* args) noexcept
     }
 }
 
-NTSTATUS unsupported(void*) noexcept
+NTSTATUS operation(void* args) noexcept
 {
-    return SRP_UNSUPPORTED; // No publication stub or operation capability.
+    return srp_unix_call(static_cast<SrpCall*>(args));
 }
 } // namespace
 
 extern "C" {
 extern __attribute__((visibility("default"))) const uint8_t SpaceRecordPublicationUnixBuildId[32] = SRP_BUILD_ID_BYTES;
-extern __attribute__((visibility("default"))) const unixlib_entry_t __wine_unix_call_funcs[] = {identity, unsupported};
+extern __attribute__((visibility("default"))) const unixlib_entry_t __wine_unix_call_funcs[] = {identity, operation};
 }

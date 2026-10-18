@@ -7,7 +7,7 @@
 #define SRP_ABI UINT32_C(1)
 #define SRP_FEATURE_IDENTITY UINT32_C(1)
 #define SRP_FEATURE_OPERATION UINT32_C(2)
-#define SRP_REQUIRED_FEATURES SRP_FEATURE_IDENTITY
+#define SRP_REQUIRED_FEATURES (SRP_FEATURE_IDENTITY | SRP_FEATURE_OPERATION)
 #define SRP_ARCH_X86_64 UINT32_C(0x8664)
 #define SRP_ENTRY_IDENTITY UINT32_C(0)
 #define SRP_ENTRY_OPERATION UINT32_C(1)
@@ -29,7 +29,7 @@ typedef struct {
     uint32_t architecture, features;
 } SrpIdentity;
 
-/* Private operation protocol; not advertised by the identity-only Wine pair yet. */
+/* Private operation protocol; the complete pair requires both feature bits. */
 #define SRP_BEGIN UINT32_C(1)
 #define SRP_ADVANCE UINT32_C(2)
 #define SRP_SNAPSHOT UINT32_C(3)

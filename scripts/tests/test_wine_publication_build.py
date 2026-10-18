@@ -1127,7 +1127,11 @@ PE_SOURCE = 'scripts/wine/record_publication_bridge.c'
 UNIX_SOURCE = 'scripts/wine/record_publication_unix_entry.cpp'
 BUILDER_SOURCE = 'scripts/wine/build_publication.py'
 AUTHORITY_HEADER = 'src/record_publication_wine_authority.h'
-BUILD_INPUTS = (ABI_HEADER, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE, AUTHORITY_HEADER)
+ADAPTER_SOURCE = 'src/record_publication_unix.cpp'
+PUBLICATION_SOURCE = 'src/record_publication.cpp'
+BUILD_INPUTS = (ABI_HEADER, AUTHORITY_HEADER, 'src/record_publication_unix.h', ADAPTER_SOURCE,
+                'src/record_publication_operation.h', 'src/record_publication.h', PUBLICATION_SOURCE,
+                PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE)
 
 
 def builder_module():
@@ -1155,7 +1159,7 @@ ASSERT(offsetof(SrpIdentity, module_inode) == 96, "inode");
 ASSERT(offsetof(SrpIdentity, architecture) == 104, "architecture");
 ASSERT(offsetof(SrpIdentity, features) == 108, "features");
 ASSERT(SRP_ABI == 1 && SRP_FEATURE_IDENTITY == 1 && SRP_FEATURE_OPERATION == 2, "ABI/features");
-ASSERT(SRP_REQUIRED_FEATURES == SRP_FEATURE_IDENTITY, "identity only");
+ASSERT(SRP_REQUIRED_FEATURES == (SRP_FEATURE_IDENTITY | SRP_FEATURE_OPERATION), "complete pair");
 int main(void) { return 0; }
 '''
     result = subprocess.run([compiler, '-x', 'c++' if compiler == 'c++' else 'c', f'-std={standard}',
@@ -1172,7 +1176,7 @@ def test_publication_operation_layout_compiles_in_c_and_cpp(tmp_path, compiler, 
 #else
 #define ASSERT _Static_assert
 #endif
-ASSERT(sizeof(SrpIdentity) == 112 && SRP_REQUIRED_FEATURES == 1, "identity unchanged");
+ASSERT(sizeof(SrpIdentity) == 112 && SRP_REQUIRED_FEATURES == 3, "identity layout, complete features");
 ASSERT(sizeof(SrpSlice) == 16 && sizeof(SrpBuffer) == 24, "spans");
 ASSERT(sizeof(SrpCall) == 168, "first operation frame, no 144 alias");
 ASSERT(offsetof(SrpCall, context) == 16, "context");
@@ -1221,7 +1225,25 @@ class Identity(ctypes.Structure):
                 ('architecture', ctypes.c_uint32), ('features', ctypes.c_uint32)]
 
 
-def test_publication_real_host_so_identity_and_explicit_unsupported_entry(tmp_path):
+class Slice(ctypes.Structure):
+    _fields_ = [('address', ctypes.c_uint64), ('size', ctypes.c_uint64)]
+
+
+class Buffer(ctypes.Structure):
+    _fields_ = [('address', ctypes.c_uint64), ('capacity', ctypes.c_uint64), ('required', ctypes.c_uint64)]
+
+
+class OperationCall(ctypes.Structure):
+    _fields_ = [('size', ctypes.c_uint32), ('abi', ctypes.c_uint32),
+                ('opcode', ctypes.c_uint32), ('event', ctypes.c_uint32),
+                ('context', ctypes.c_uint64), ('sequence', ctypes.c_uint64),
+                ('path', Slice), ('payload', Slice), ('hook_error', Slice),
+                ('primary_error', Buffer), ('cleanup_error', Buffer), ('transport_error', Buffer),
+                ('reply', ctypes.c_uint32), ('flags', ctypes.c_uint32),
+                ('primary_state', ctypes.c_uint32), ('reserved', ctypes.c_uint32)]
+
+
+def test_publication_real_host_so_identity_and_operation_route(tmp_path):
     source = ROOT / UNIX_SOURCE
     assert source.is_file(), 'Unix identity entry is missing'
     expected = bytes(range(32))
@@ -1230,7 +1252,8 @@ def test_publication_real_host_so_identity_and_explicit_unsupported_entry(tmp_pa
     result = subprocess.run(['c++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fPIC', '-shared',
                              '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
                              '-I', str(ROOT / 'src'), definition, str(source),
-                             '-o', str(output), '-ldl'], capture_output=True, text=True, timeout=30)
+                             str(ROOT / ADAPTER_SOURCE), str(ROOT / PUBLICATION_SOURCE),
+                             '-pthread', '-o', str(output), '-ldl'], capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stderr
     assert 'libc.so.6' in builder_module()._elf_dependencies(output.read_bytes())
     library = ctypes.CDLL(str(output))  # Host ELF only; never Wine or PE.
@@ -1238,15 +1261,34 @@ def test_publication_real_host_so_identity_and_explicit_unsupported_entry(tmp_pa
     assert bytes(exported) == expected
     entries = (ctypes.c_void_p * 2).in_dll(library, '__wine_unix_call_funcs')
     call = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.c_void_p)
-    identify, unsupported = (call(entry) for entry in entries)
+    identify, operate = (call(entry) for entry in entries)
     value = Identity(size=112, abi=1, challenge=0x1122334455667788)
     value.pe_build_id[:] = bytes([0xA5]) * 32
     assert identify(ctypes.byref(value)) == 0
     info = output.stat()
-    assert value.echo == value.challenge and value.architecture == 0x8664 and value.features == 1
+    assert value.echo == value.challenge and value.architecture == 0x8664
     assert (value.module_device, value.module_inode) == (info.st_dev, info.st_ino)
     assert bytes(value.pe_build_id) == bytes([0xA5]) * 32 and bytes(value.unix_build_id) == expected
-    assert unsupported(ctypes.byref(value)) == ctypes.c_int32(0xC00000BB).value
+    assert ctypes.sizeof(OperationCall) == 168
+    transport = ctypes.create_string_buffer(4096)
+    request = OperationCall(size=168, abi=1, opcode=1,
+                            transport_error=Buffer(ctypes.addressof(transport), 4096, 0))
+    before = set(tmp_path.iterdir())
+    assert operate(ctypes.byref(request)) == ctypes.c_int32(0xC000000D).value
+    assert (request.context, request.sequence, request.event, request.flags, request.primary_state) == (0, 0, 0, 0, 0)
+    assert request.primary_error.required == request.cleanup_error.required == 0
+    assert 0 < request.transport_error.required <= 4096
+    assert b'nonempty absolute' in transport.raw[:request.transport_error.required]
+    assert set(tmp_path.iterdir()) == before
+    assert value.features == 3
+    # Empty-path refusal did not register a context or touch the filesystem.
+    path = ctypes.create_string_buffer(str(tmp_path / 'not-created').encode())
+    begin = OperationCall(size=168, abi=1, opcode=1, path=Slice(ctypes.addressof(path), len(path.value)))
+    assert operate(ctypes.byref(begin)) == 0 and begin.context == 1
+    assert set(tmp_path.iterdir()) == before
+    release = OperationCall(size=168, abi=1, opcode=5, context=begin.context)
+    assert operate(ctypes.byref(release)) == 0
+    assert set(tmp_path.iterdir()) == before
     assert identify(None) != 0
     for size, abi in [(111, 1), (113, 1), (112, 2)]:
         invalid = Identity(size=size, abi=abi)
@@ -1395,6 +1437,21 @@ def test_publication_builder_binds_source_header_and_tool_inputs(publication_fix
         first = next_manifest
 
 
+@pytest.mark.parametrize('relative', BUILD_INPUTS)
+def test_every_complete_pair_input_changes_build_id(publication_fixture, relative):
+    fixture, session = publication_fixture
+    module = builder_module()
+    first = module.build_publication(fixture.root, session)
+    path = fixture.root / relative
+    path.write_bytes(path.read_bytes() + b'\n/* changed fixed pair input */\n')
+    second = module.build_publication(fixture.root, session)
+    assert second['build_id'] != first['build_id'], relative
+
+
+def test_complete_pair_inventory_is_exact_not_identity_only():
+    assert tuple(builder_module().INPUTS) == BUILD_INPUTS
+
+
 def test_publication_builder_uses_named_units_and_links_authority_api(publication_fixture, monkeypatch):
     fixture, session = publication_fixture
     module = builder_module()
@@ -1406,8 +1463,9 @@ def test_publication_builder_uses_named_units_and_links_authority_api(publicatio
     pe = next(call for call in commands if Path(call[0]).name == 'x86_64-w64-mingw32-gcc-posix')
     assert str(fixture.root / UNIX_SOURCE) in host and str(fixture.root / PE_SOURCE) not in host
     assert str(fixture.root / PE_SOURCE) in pe and '-ladvapi32' in pe
-    assert all('record_publication_unix.cpp' not in arg and 'record_publication.cpp' not in arg
-               for call in commands for arg in call)
+    assert str(fixture.root / ADAPTER_SOURCE) in host and str(fixture.root / PUBLICATION_SOURCE) in host
+    assert '-pthread' in host and '-ldl' in host
+    assert all(str(fixture.root / relative) not in pe for relative in (UNIX_SOURCE, ADAPTER_SOURCE, PUBLICATION_SOURCE))
 
 
 @pytest.mark.parametrize('field,value', [('files', None), ('toolchain', None), ('runtime', None)])

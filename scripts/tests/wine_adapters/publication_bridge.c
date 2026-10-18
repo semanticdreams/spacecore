@@ -189,14 +189,14 @@ static NTSTATUS WINAPI unix_dispatch(uint64_t handle, unsigned entry, void *args
         identity->module_device = 7;
         identity->module_inode = 9;
         identity->architecture = SRP_ARCH_X86_64;
-        identity->features = is("identity-corrupt") ? SRP_FEATURE_OPERATION : SRP_FEATURE_IDENTITY;
+        identity->features = is("identity-corrupt") ? SRP_FEATURE_OPERATION : SRP_REQUIRED_FEATURES;
         return SRP_SUCCESS;
     }
     require(entry == SRP_ENTRY_OPERATION, "only the operation slot is forwarded");
 #ifdef SRP_MODEL_NATIVE
     return srp_unix_call(args);
 #else
-    return SRP_UNSUPPORTED; /* Actual production pair is still identity-only. */
+    return SRP_UNSUPPORTED; /* Pure authority/dispatch model; real native slot requires SRP_MODEL_NATIVE. */
 #endif
 }
 FARPROC GetProcAddress(HMODULE module, const char *name)
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
         const int32_t status = SpaceRecordPublicationCall(0, &identity);
         require(!threads && !processes && !queries, "entry0 remains independent of authority");
         if (is("identity-corrupt")) require(status == SRP_IDENTITY_MISMATCH && !memcmp(&identity, &saved, sizeof(saved)), "failed identity is readonly");
-        else require(status == 0 && identity.echo == 1234 && identity.features == 1, "identity-only entry unchanged");
+        else require(status == 0 && identity.echo == 1234 && identity.features == SRP_REQUIRED_FEATURES, "identity entry retains required pair features");
     } else if (is("unknown") || is("bad-header") || is("bad-opcode") || is("bad-event")) {
         SrpCall call = request(is("bad-opcode") ? 99 : SRP_ADVANCE);
         if (is("bad-header")) call.size = 144;

@@ -294,7 +294,7 @@ def validate_bridge_identity(manifest, identity, repo, challenge=None):
               'module_device', 'module_inode', 'architecture', 'features'}
     if not isinstance(identity, dict) or set(identity) != fields:
         raise ValueError('Invalid publication identity fields')
-    expected = dict(version=1, size=112, abi=manifest['abi'], architecture=0x8664, features=1)
+    expected = dict(version=1, size=112, abi=manifest['abi'], architecture=0x8664, features=3)
     if (any(type(identity[key]) is not int or identity[key] != value for key, value in expected.items())
             or not isinstance(identity['challenge'], str) or not re.fullmatch('[0-9a-f]{16}', identity['challenge'])
             or identity['echo'] != identity['challenge']
