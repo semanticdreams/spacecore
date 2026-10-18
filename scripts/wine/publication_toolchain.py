@@ -127,24 +127,25 @@ def _version(catalog, name, *, binary=None, source_version=None):
     raise ToolchainError(f'No exact matching trusted Ubuntu Wine9 package: {name}', [name])
 
 
-def _native_inventory_diagnostic(package, listed, regular, unique, observations):
-    def escaped_tail(value, limit):
-        # Keep complete JSON escape units, including Unicode surrogate pairs.
-        # A bounded suffix retains the useful module/package layout, not an
-        # unbounded private ancestor path. No path is inspected again here.
-        parts, size = [], 0
-        for char in reversed(value):
-            escaped = json.dumps(char, ensure_ascii=True)[1:-1]
-            if size + len(escaped) > limit - 3:
-                return '...' + ''.join(reversed(parts)), True
-            parts.append(escaped)
-            size += len(escaped)
-        return ''.join(reversed(parts)), False
+def _diagnostic_tail(value, limit):
+    # Keep complete JSON escape units, including Unicode surrogate pairs.
+    # A bounded suffix retains useful layout without dumping private ancestors.
+    # This helper only renders already-observed strings; it never inspects paths.
+    parts, size = [], 0
+    for char in reversed(value):
+        escaped = json.dumps(char, ensure_ascii=True)[1:-1]
+        if size + len(escaped) > limit - 3:
+            return '...' + ''.join(reversed(parts)), True
+        parts.append(escaped)
+        size += len(escaped)
+    return ''.join(reversed(parts)), False
 
-    package, truncated = escaped_tail(package, 32)
+
+def _native_inventory_diagnostic(package, listed, regular, unique, observations):
+    package, truncated = _diagnostic_tail(package, 32)
     rendered = []
     for path, is_file in observations:
-        path, clipped = escaped_tail(path, 40)
+        path, clipped = _diagnostic_tail(path, 40)
         truncated = truncated or clipped
         rendered.append(f'"{path}" is-file={str(is_file).lower()}')
     while True:
@@ -236,27 +237,56 @@ def _matched_package(repo, catalog, name, source_version):
     return package
 
 
+def _wine_tool_diagnostic(name, reason, selection, role, canonical, candidates):
+    fields, truncated = [], len(candidates) > 2
+    for label, value in [('wine-logical', selection['logical']),
+                         ('wine-canonical', selection['file']['executable']),
+                         ('tool-role', str(role)), ('tool-canonical', canonical or 'unavailable')]:
+        value, clipped = _diagnostic_tail(value, 40)
+        truncated = truncated or clipped
+        fields.append(f'{label}="{value}"')
+    entries = []
+    for candidate in sorted(candidates)[:2]:
+        value, clipped = _diagnostic_tail(str(candidate), 40)
+        truncated = truncated or clipped
+        entries.append(f'"{value}"')
+    # Two fixed tool names/reasons, four bounded fields and at most two profile
+    # candidates fit below480 ASCII bytes, including their truncation flag.
+    return (f'Wine tool membership refused: name={name} reason={reason} pkg-roles={len(candidates)} '
+            f'context-truncated={str(truncated).lower()} ' + ' '.join(fields)
+            + ' candidates=[' + ','.join(entries) + ']')
+
+
 def _wine_tool(repo, name, selection, package):
-    match = re.fullmatch(r'wine(?:64)?(-[\w.-]+)?', Path(selection['logical']).name)
-    if not match:
-        raise ToolchainError('Unsupported selected logical Wine tool name')
-    logical = Path(selection['logical']).with_name(name + (match[1] or ''))
-    files = _run(repo, ['dpkg-query', '-L', package['name']]).splitlines()
-    candidates = {str(Path(path).resolve()) for path in files
-                  if Path(path).name in (name, name + (match[1] or '')) and Path(path).is_file()}
-    if logical.exists() or logical.is_symlink():
-        if not logical.is_file():
-            raise ToolchainError(f'Missing {name}', [name])
-        candidate = str(logical.resolve())
-        if candidate not in candidates:
-            raise ToolchainError(f'Logical {name} does not belong to selected Wine tools')
-    elif len(candidates) == 1:
-        candidate = candidates.pop()
+    if name not in ('winegcc', 'winebuild'):
+        raise ToolchainError('Unsupported required Wine tool role')
+    if package['name'] != 'wine64-tools:amd64' or package['architecture'] != 'amd64':
+        raise ToolchainError('Unsupported Wine tools package architecture/identity')
+    selected = Path(selection['file']['executable'])
+    if selected.parts[-2:] == ('bin', 'wine-stable'):
+        role = selected.with_name(name + '-stable')
+        providers = {role, selected.parent.parent / 'lib/wine' / name}
+    elif selected.parts[-3:] == ('lib', 'wine', 'wine64'):
+        role = selected.with_name(name)
+        providers = {role}
     else:
-        raise ToolchainError(f'Missing or ambiguous {name}', [name])
-    if _package(repo, candidate) != package:
+        raise ToolchainError('Unsupported canonical Wine installation for tool roles')
+    files = {Path(path) for path in _run(repo, ['dpkg-query', '-L', package['name']]).splitlines()}
+    candidates = files & providers
+    if role not in files:
+        raise ToolchainError(_wine_tool_diagnostic(name, 'unlisted-role', selection, role, None, candidates))
+    if not role.is_file() or not os.access(role, os.X_OK):
+        raise ToolchainError(f'Missing/non-executable {name} role', [name])
+    canonical = str(role.resolve(strict=True))
+    if Path(canonical) not in candidates:
+        raise ToolchainError(_wine_tool_diagnostic(name, 'provider-not-in-role', selection, role, canonical, candidates))
+    # Canonical providers retain the requested C winegcc/winebuild argv0 role.
+    # C++ aliases are not supported roles, even when they share a canonical file.
+    if _package(repo, canonical) != package:
         raise ToolchainError(f'Wrong {name} package owner')
-    result = _file(candidate)
+    result = _file(canonical)
+    if result['executable'] != canonical:
+        raise ToolchainError(f'Canonical {name} role identity changed')
     result['version'] = _run(repo, [result['executable'], '--version']).strip()[:4096]
     return result
 

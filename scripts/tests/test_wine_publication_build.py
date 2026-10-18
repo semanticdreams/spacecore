@@ -179,7 +179,7 @@ def test_resolve_records_matched_stable_logical_pair_headers_and_host_identity(f
                if Path(call[0]).name in ('g++', 'winegcc', 'winebuild'))
 
 
-@pytest.mark.parametrize('damage', ['header', 'tool', 'tool-version', 'header-version', 'runtime', 'logical-pair'])
+@pytest.mark.parametrize('damage', ['header', 'tool', 'tool-version', 'header-version', 'runtime', 'tool-role'])
 def test_toolchain_verification_rejects_changed_pinned_files_or_package_mismatch(fixture, damage):
     module = fixture.resolver()
     identity = module.resolve_toolchain(fixture.root)
@@ -193,7 +193,9 @@ def test_toolchain_verification_rejects_changed_pinned_files_or_package_mismatch
     elif damage == 'runtime':
         (fixture.lib / 'wine64').write_text('changed selected runtime')
     else:
-        alias = fixture.bin / 'winegcc-stable'
+        # The selected Wine is canonical lib/wine/wine64 in this fixture, so
+        # corrupt its actual backend role, not an unrelated requested sibling.
+        alias = fixture.lib / 'winegcc'
         alias.unlink()
         alias.symlink_to(fixture.bin / 'g++')
     with pytest.raises((ValueError, OSError)):
@@ -410,6 +412,168 @@ def noble_native_inventory(regular_launcher_inventory):
     fixture.files['wine64:amd64'] = [str(fixture.lib / 'wine64'), str(bug), str(doc), str(metadata)]
     fixture.save()
     return fixture
+
+
+@pytest.fixture
+def noble_tool_roles(noble_native_inventory):
+    fixture = noble_native_inventory
+    fixture.executable('wine-stable', "raise AssertionError('Wine must never run')")
+    for name in ('winegcc', 'winebuild'):
+        (fixture.bin / (name + '-stable')).unlink()
+        fixture.executable(name + '-stable',
+                           f"assert pathlib.Path(sys.argv[0]).name == {name + '-stable'!r}\n"
+                           f"print('fixture {name} stable C-role')")
+        fixture.executable(name,
+                           f"assert pathlib.Path(sys.argv[0]).name == {name!r}\n"
+                           f"print('fixture {name} backend C-role')", fixture.lib)
+    alternatives = fixture.bin.parent / 'alternatives'
+    alternatives.mkdir()
+    for name in ('wine', 'winegcc', 'winebuild'):
+        stable = fixture.bin / ('wine-stable' if name == 'wine' else name + '-stable')
+        (alternatives / name).symlink_to(stable)
+        (fixture.bin / name).symlink_to(alternatives / name)
+    # Generic master/slave alternatives are not package payload paths. The
+    # package owns the regular stable wrappers and distinct native backends.
+    fixture.save()
+    return fixture
+
+
+@pytest.mark.parametrize('route', ['stable', 'generic', 'generic-wrong-slave', 'unstable-name',
+                                  'custom-directory', 'native', 'native-alias'])
+def test_canonical_wine_tools_select_correct_packaged_c_roles(noble_tool_roles, monkeypatch, route):
+    fixture = noble_tool_roles
+    canonical = fixture.bin / 'wine-stable'
+    selected = canonical
+    if route in ('generic', 'generic-wrong-slave'):
+        selected = fixture.bin / 'wine'
+        if route == 'generic-wrong-slave':
+            foreign = fixture.root / 'foreign'
+            foreign.mkdir()
+            fixture.executable('winegcc', "raise AssertionError('unrelated alternatives provider must not run')", foreign)
+            slave = fixture.bin.parent / 'alternatives/winegcc'
+            slave.unlink()
+            slave.symlink_to(foreign / 'winegcc')
+    elif route == 'unstable-name':
+        selected = fixture.bin / 'wine-unstable'
+        selected.symlink_to(canonical)
+        for name in ('winegcc', 'winebuild'):
+            fixture.executable(name + '-unstable', "raise AssertionError('unrelated sibling must not run')")
+    elif route in ('custom-directory', 'native-alias'):
+        directory = fixture.root / 'user-aliases'
+        directory.mkdir()
+        selected = directory / 'wine-stable'
+        if route == 'native-alias':
+            canonical = fixture.lib / 'wine64'
+        selected.symlink_to(canonical)
+        for name in ('winegcc', 'winebuild'):
+            for suffix in ('', '-stable'):
+                fixture.executable(name + suffix, "raise AssertionError('unrelated sibling must not run')", directory)
+    elif route == 'native':
+        selected = canonical = fixture.lib / 'wine64'
+    monkeypatch.setenv('WINE_CMD', str(selected))
+    runtime = dict(executable=str(canonical), version='wine-9.0 (fixture)',
+                   sha256=hashlib.sha256(canonical.read_bytes()).hexdigest())
+    module = fixture.resolver()
+    identity = module.resolve_toolchain(fixture.root, runtime)
+    backend = canonical == fixture.lib / 'wine64'
+    for name in ('winegcc', 'winebuild'):
+        expected = fixture.lib / name if backend else fixture.bin / (name + '-stable')
+        assert identity['tools'][name] == {
+            'executable': str(expected), 'sha256': hashlib.sha256(expected.read_bytes()).hexdigest(),
+            'version': f"fixture {name} {'backend' if backend else 'stable'} C-role"}
+    module.verify_toolchain(identity)
+    called = [Path(call[0]) for call in fixture.calls() if Path(call[0]).name.startswith(('winegcc', 'winebuild'))]
+    assert called and set(called) == {
+        fixture.lib / name if backend else fixture.bin / (name + '-stable') for name in ('winegcc', 'winebuild')}
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
+
+
+def test_canonical_wine_tools_refuse_cpp_alias_even_with_shared_canonical_file(noble_tool_roles):
+    fixture = noble_tool_roles
+    cpp = fixture.bin / 'wineg++-stable'
+    cpp.symlink_to(fixture.bin / 'winegcc-stable')
+    fixture.files['wine64-tools:amd64'].append(str(cpp))
+    fixture.save()
+    module = fixture.resolver()
+    catalog = module._catalog(fixture.root)
+    selection = module._selection(fixture.root, catalog)
+    package = module._matched_package(fixture.root, catalog, 'wine64-tools:amd64', fixture.version)
+    before = len(fixture.calls())
+    with pytest.raises(module.ToolchainError):
+        module._wine_tool(fixture.root, 'wineg++', selection, package)
+    assert not [call for call in fixture.calls()[before:] if Path(call[0]).name.startswith('wineg')]
+
+
+@pytest.mark.parametrize('damage', [
+    'unlisted-role', 'unlisted-canonical', 'missing-wrapper', 'non-executable',
+    'wrong-provider', 'cpp-provider', 'wrong-tool', 'runtime-provider', 'wrong-owner',
+    'wrong-source', 'wrong-source-version', 'wrong-origin', 'wrong-architecture'])
+def test_canonical_wine_tools_refuse_invalid_provider_or_provenance(noble_tool_roles, monkeypatch, damage):
+    fixture = noble_tool_roles
+    role = fixture.bin / 'winegcc-stable'
+    denied = set()
+    if damage == 'unlisted-role':
+        fixture.files['wine64-tools:amd64'].remove(str(role))
+        denied.add(role)
+    elif damage == 'unlisted-canonical':
+        role.unlink()
+        role.symlink_to(fixture.lib / 'winegcc')
+        fixture.files['wine64-tools:amd64'].remove(str(fixture.lib / 'winegcc'))
+        denied.add(fixture.lib / 'winegcc')
+    elif damage == 'missing-wrapper':
+        role.unlink()
+        denied.add(fixture.lib / 'winegcc')  # No unique-backend fallback for a missing frontend role.
+    elif damage == 'non-executable':
+        role.chmod(0o644)
+        denied.add(role)
+    elif damage in ('wrong-provider', 'cpp-provider'):
+        directory = fixture.root / ('x' * 100 + '\t\x1b\u202e') if damage == 'wrong-provider' else fixture.bin
+        directory.mkdir(exist_ok=True)
+        name = 'winegcc' if damage == 'wrong-provider' else 'wineg++-stable'
+        fixture.executable(name, "print('wrong provider 9.0')", directory)
+        target = directory / name
+        fixture.files['wine64-tools:amd64'].append(str(target))
+        role.unlink()
+        role.symlink_to(target)
+        denied.add(target)
+    elif damage == 'wrong-tool':
+        role = fixture.bin / 'winebuild-stable'
+        role.unlink()
+        role.symlink_to(fixture.bin / 'winegcc-stable')
+    elif damage == 'runtime-provider':
+        role.unlink()
+        role.symlink_to(fixture.bin / 'wine-stable')
+        denied.add(fixture.bin / 'wine-stable')
+    elif damage == 'wrong-owner':
+        query = fixture.bin / 'dpkg-query'
+        query.write_text(query.read_text().replace("if args[0] == '-S':",
+                         f"if args[0] == '-S' and args[1] == {str(role)!r}:\n print('libwine:amd64: ' + args[1]); sys.exit(0)\nif args[0] == '-S':"))
+        denied.add(role)
+    elif damage == 'wrong-source':
+        fixture.packages['wine64-tools:amd64']['source'] = 'wine-staging'
+    elif damage == 'wrong-source-version':
+        fixture.packages['wine64-tools:amd64']['source_version'] = '8.0'
+    elif damage == 'wrong-origin':
+        fixture.packages['wine64-tools:amd64']['origins'][0]['origin'] = 'WineHQ'
+    elif damage == 'wrong-architecture':
+        fixture.packages['wine64-tools:amd64']['architecture'] = 'i386'
+    fixture.save()
+    module = fixture.resolver()
+    queries = []
+    run = module._run
+    def observe(repo, args):
+        queries.append(list(args))
+        return run(repo, args)
+    monkeypatch.setattr(module, '_run', observe)
+    with pytest.raises(module.ToolchainError) as error:
+        module.resolve_toolchain(fixture.root)
+    assert not [args for args in queries if Path(args[0]) in denied and args[1:] == ['--version']]
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
+    if damage in ('unlisted-role', 'unlisted-canonical', 'wrong-provider', 'cpp-provider', 'wrong-tool', 'runtime-provider'):
+        message = str(error.value)
+        assert all(field in message for field in ('wine-logical=', 'wine-canonical=', 'tool-role=',
+                                                  'tool-canonical=', 'candidates=', 'context-truncated='))
+        assert len(message.encode('ascii')) <= 480 and all(' ' <= char < '\x7f' for char in message)
 
 
 @pytest.mark.parametrize('route', ['stable', 'generic', 'native', 'native-alias', 'role-alias'])
