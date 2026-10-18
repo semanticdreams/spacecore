@@ -118,6 +118,27 @@ capability-only. Independent review and exact checkpoint precede one guarded
 preflight, then first guarded reproduction if PASS. No provisioning retry, ABI
 fallback, new tool/API selector, native policy change or production integration.
 
+**Observed Windows-discovery refinement:** Actual public-SDK PE/SO build passed,
+but LoadLibrary basename returned NULL before entry0. Wine9's normal missing-file
+fallback is bootstrap-gated; external builtin directories alone do not supply the
+initial Windows-side discovery image. Combined bounded experiment allowlist:
+`scripts/wine/artifacts.py`, `scripts/wine/probe.c`,
+`scripts/tests/test_windows_wine_runtime.py`, `scripts/tests/wine_adapters/probe.c`,
+`scripts/tests/wine_adapters/windows.h`. First add meaningful RED for an owned
+overlay discovery copy and immediate phase/numeric-loader/entry-status diagnostics.
+Stage the verified pair PE as `space_record_publication.dll` beside the probe/app,
+verify exact digest against the pair before loading and in execution/readonly
+receipt consumers; retain builtin basename loading, fixed module root and all
+entry0/build-ID/Unix-identity requirements. No receipt alias, native-package helper,
+prefix/System32 copy, WINEDEBUG/registry change or fallback. Numeric evidence is
+new, not a claim about the first failed run. Test missing/tampered discovery copies,
+native-package separation, real production probe via adapters, bounded diagnostic
+status and no crypto after contract failure. Run compile/probe checks and the
+runtime/reproducer/publication-build host modules with1800000ms. Independent review,
+exact checkpoint, then one capability-only `reproduce --repo-root .` with14400000ms
+and fresh artifacts. Require actual entry0 and paired SO proof before Task4; no
+claim of full-run success while the old production publisher still rejects Wine.
+
 ### Task 4: Shared Phased Operation Without Backend Changes
 
 **Files:** Create `src/record_publication_operation.h`, `tests/test_record_publication_operation.cpp`; modify `src/record_publication.cpp`, `CMakeLists.txt`.

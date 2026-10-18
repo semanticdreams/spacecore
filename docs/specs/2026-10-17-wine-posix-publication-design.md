@@ -166,6 +166,24 @@ environment passthrough. Bind both artifacts, ABI/build identity and tool/runtim
 identity into overlay inventories/admission. Verify actual selected dispatch, not
 merely a filename. No installed Wine module is modified.
 
+Wine9 also requires a Windows-side discoverable image before ordinary basename
+loading reaches its builtin directories. Supply a byte-identical discovery copy of
+the verified publication PE beside the probe/application in the owned Wine overlay;
+keep the paired architecture directories and fixed WINEDLLPATH for Unix-library
+association. Verify the copy against the pair's PE digest at staging, admission,
+execution and readonly receipt inspection. This is not a System32/prefix install,
+an installed-Wine modification or an arbitrary DLL search path. Any loader-native
+fallback lacking paired Unix proof must still fail admission/client validation.
+Native packages remain helper-free. Test-support pairs need equivalent Wine-only
+discovery copies. A copy digest alone does not prove the module Wine loaded;
+entry0, both build IDs and actual Unix SO identity remain mandatory.
+
+Capture bounded immediate numeric loader errors and raw bridge-call status before
+formatting, preserving the primary code20/refusal and crypto-absence distinction.
+Do not enable broad Wine debug logging or inspect prefix drives/registries. The
+first actual null-load result lacked numeric error evidence: deployment correction
+and a successful later probe cannot retrospectively prove its exclusive cause.
+
 Build and run a fixed publication-focused native PE test through the existing
 guarded reproduction flow before the full suite. It must exercise the real bridge
 and host metadata. Keep existing public capability commands; do not introduce an
