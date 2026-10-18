@@ -1,11 +1,10 @@
 /* Wine9-only PE bridge. Initialization is explicit, outside DllMain.
- * The matched Wine headers supply MemoryWineUnixFuncs and unixlib_handle_t.
+ * Matched installed public headers supply NT types and MemoryWineUnixFuncs.
  */
 #define __WINESRC__
 #include <windef.h>
 #include <winbase.h>
 #include <winternl.h>
-#include <wine/unixlib.h>
 #include <string.h>
 
 #include "record_publication_wine_abi.h"
@@ -17,20 +16,30 @@
 #error "The publication PE module supports only win64 x86_64"
 #endif
 
-_Static_assert(sizeof(unixlib_handle_t) == 8, "Wine9 opaque Unix handle size");
+/* Minimal private contract from Wine 9.0, not a vendored internal header:
+ * https://github.com/wine-mirror/wine/blob/wine-9.0/include/wine/unixlib.h
+ * The source defines a UINT64 opaque handle and NTSTATUS WINAPI dispatch.
+ * Ubuntu intentionally does not install that private source header.
+ */
+typedef uint64_t SrpUnixHandle;
+typedef NTSTATUS (WINAPI *SrpUnixCall)(SrpUnixHandle, unsigned int, void*);
+_Static_assert(sizeof(SrpUnixHandle) == 8, "Wine9 opaque Unix handle size");
+_Static_assert(_Alignof(SrpUnixHandle) == 8, "Wine9 opaque Unix handle alignment");
 _Static_assert(sizeof(NTSTATUS) == 4, "Wine9 status width");
+_Static_assert(sizeof(SrpUnixCall) == 8 && _Alignof(SrpUnixCall) == 8, "Wine9 x64 dispatch pointer layout");
+_Static_assert(MemoryWineUnixFuncs == 1000, "Wine9 Unix function query class");
 static const uint8_t build_id[32] = SRP_BUILD_ID_BYTES;
 __declspec(dllexport) const uint8_t SpaceRecordPublicationPeBuildId[32] = SRP_BUILD_ID_BYTES;
 
 __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationCall(uint32_t entry, void* args)
 {
     HMODULE self = NULL, ntdll;
-    unixlib_handle_t handle = 0;
+    SrpUnixHandle handle = 0;
     NTSTATUS status;
     SrpIdentity result = {0};
     SrpIdentity* input = args;
     __typeof__(&NtQueryVirtualMemory) query;
-    __typeof__(&__wine_unix_call) dispatch;
+    SrpUnixCall dispatch;
     if (entry != SRP_ENTRY_IDENTITY) return SRP_UNSUPPORTED;
     if (!input || input->size != sizeof(*input) || input->abi != SRP_ABI) return SRP_INVALID_ARGUMENT;
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -38,7 +47,7 @@ __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationCall(uint32_t entry, 
     ntdll = GetModuleHandleW(L"ntdll.dll");
     if (!ntdll) return SRP_MODULE_UNAVAILABLE;
     query = (__typeof__(query))GetProcAddress(ntdll, "NtQueryVirtualMemory");
-    dispatch = (__typeof__(dispatch))GetProcAddress(ntdll, "__wine_unix_call");
+    dispatch = (SrpUnixCall)GetProcAddress(ntdll, "__wine_unix_call");
     if (!query || !dispatch) return SRP_MODULE_UNAVAILABLE;
     /* Wine9 checks the exact input length but does not set ReturnLength for
      * this class. Match winecrt0/unix_lib.c: NULL, not a fabricated length check.

@@ -291,6 +291,22 @@ def _wine_tool(repo, name, selection, package):
     return result
 
 
+def _public_sdk_roots(files):
+    """Derive includes only from one inventoried public Wine SDK namespace."""
+    required = {'winternl.h', 'windef.h', 'winbase.h'}
+    paths = {Path(path) for path in files}
+    roots = {path.parent for path in paths if path.name in required and path.parent.name == 'windows'}
+    if len(roots) != 1:
+        raise ToolchainError('Missing or incoherent inventoried Wine public SDK headers', ['libwine-dev'])
+    windows = roots.pop()
+    if (not windows.is_absolute() or windows.parent.name != 'wine'
+            or not {windows / name for name in required} <= paths):
+        raise ToolchainError('Missing or incoherent inventoried Wine public SDK headers', ['libwine-dev'])
+    # Noble: <prefix>/include/wine/wine/windows, plus <prefix>/include/wine
+    # for public #include <wine/...> references. Never search system SDK paths.
+    return windows, windows.parent.parent
+
+
 def resolve_toolchain(repo: Path, runtime: dict | None = None) -> dict:
     if sys.platform != 'linux' or platform.machine() not in ('x86_64', 'amd64'):
         raise ToolchainError('Only Linux x86_64 publication build architecture is supported')
@@ -324,8 +340,7 @@ def resolve_toolchain(repo: Path, runtime: dict | None = None) -> dict:
                                  f'token-truncated={str(truncated).lower()}')
     paths = _run(repo, ['dpkg-query', '-L', headers['name']]).splitlines()
     files = {entry['executable']: entry['sha256'] for path in paths if path.endswith('.h') for entry in [_file(path)]}
-    if not files or not any(path.endswith('/wine/unixlib.h') for path in files):
-        raise ToolchainError('Wine development headers missing', ['libwine-dev'])
+    _public_sdk_roots(files)
     return dict(version=1, repo=str(repo), runtime=runtime, installation=selection, tools=tools,
                 tool_package=package, headers=dict(package=headers, files=files))
 

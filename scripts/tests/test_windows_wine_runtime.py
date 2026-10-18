@@ -150,14 +150,15 @@ pathlib.Path(args[args.index('-o')+1]).write_text('fixture PE, not executable')
                                            SYNTHETIC_PAIR_COMPILER + "\npathlib.Path(args[args.index('-o')+1]).write_text"))
         self.write_executable('publication-cxx', cc.read_text())
         self.write_executable('winebuild', '#!/bin/sh\nexit 0\n')
-        headers = self.root / 'fixture-headers'
-        for relative in ('wine/unixlib.h', 'windows/winternl.h'):
+        headers = self.root / 'fixture-headers/wine/wine'
+        for relative in ('windows/winternl.h', 'windows/windef.h', 'windows/winbase.h'):
             path = headers / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('/* inert fixture header, not Wine ABI proof */\n')
-        # Replace package discovery only inside this fake checkout. The real
-        # builder/inventory and pinned file hash verification are still exercised.
-        (scripts / 'wine/publication_toolchain.py').write_text(f'''
+        # Override discovery only inside this fake checkout, retaining the real
+        # shared public-SDK root helper instead of copying its parser into a stub.
+        toolchain = scripts / 'wine/publication_toolchain.py'
+        toolchain.write_text(toolchain.read_text() + f'''
 import hashlib
 from pathlib import Path
 def resolve_toolchain(repo, runtime=None):

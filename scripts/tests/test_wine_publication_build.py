@@ -50,10 +50,13 @@ class ToolchainFixture:
             alias = self.bin / (name + '-stable')
             alias.symlink_to(self.lib / name)
             self.files['wine64-tools:amd64'].extend([str(alias), str(self.lib / name)])
-        header = path / 'include/wine/wine/unixlib.h'
-        header.parent.mkdir(parents=True)
-        header.write_text('/* inert Wine9 header fixture */\n')
-        self.files['libwine-dev:amd64'] = [str(header)]
+        windows = path / 'include/wine/wine/windows'
+        windows.mkdir(parents=True)
+        self.files['libwine-dev:amd64'] = []
+        for name in ('winternl.h', 'windef.h', 'winbase.h'):
+            header = windows / name
+            header.write_text('/* inert installed public Wine9 header fixture */\n')
+            self.files['libwine-dev:amd64'].append(str(header))
         for name in ('g++', 'x86_64-w64-mingw32-gcc-posix', 'x86_64-w64-mingw32-g++-posix'):
             self.tool(name, self.bin)
         for name in ('cmake', 'git', 'pkg-config', 'nasm', 'llvm-ml-14', 'curl', 'zip', 'pwsh',
@@ -177,6 +180,90 @@ def test_resolve_records_matched_stable_logical_pair_headers_and_host_identity(f
     assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
     assert all(call[1:] in (['--version'], ['-dumpversion'], ['-dumpmachine']) for call in fixture.calls()
                if Path(call[0]).name in ('g++', 'winegcc', 'winebuild'))
+
+
+def test_public_sdk_resolver_accepts_only_installed_public_headers(fixture):
+    module = fixture.resolver()
+    identity = module.resolve_toolchain(fixture.root)
+    files = identity['headers']['files']
+    windows = Path(fixture.files['libwine-dev:amd64'][0]).parent
+    assert set(files) == {str(windows / name) for name in ('winternl.h', 'windef.h', 'winbase.h')}
+    assert not any(path.endswith('/unixlib.h') for path in files)
+    assert builder_module()._headers(identity) == (windows, windows.parent.parent)
+    module.verify_toolchain(identity)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
+
+
+@pytest.mark.parametrize('damage', ['missing-winternl', 'missing-windef', 'missing-winbase',
+                                    'mixed-root', 'duplicate-root', 'system-mingw', 'wrong-source'])
+def test_public_sdk_resolver_and_builder_refuse_incomplete_or_mixed_inventory(fixture, damage):
+    paths = [Path(path) for path in fixture.files['libwine-dev:amd64']]
+    if damage.startswith('missing-'):
+        name = damage.removeprefix('missing-') + '.h'
+        fixture.files['libwine-dev:amd64'] = [str(path) for path in paths if path.name != name]
+    elif damage in ('mixed-root', 'duplicate-root'):
+        other = fixture.root / 'other/include/wine/wine/windows'
+        other.mkdir(parents=True)
+        copies = paths[-1:] if damage == 'mixed-root' else paths
+        for path in copies:
+            shutil.copy2(path, other / path.name)
+        retained = paths[:-1] if damage == 'mixed-root' else paths
+        fixture.files['libwine-dev:amd64'] = [str(path) for path in retained] + [str(other / path.name) for path in copies]
+    elif damage == 'system-mingw':
+        other = fixture.root / 'system-mingw/include'
+        other.mkdir(parents=True)
+        for path in paths:
+            shutil.copy2(path, other / path.name)
+        fixture.files['libwine-dev:amd64'] = [str(other / path.name) for path in paths]
+    else:
+        fixture.packages['libwine-dev:amd64']['source'] = 'other-sdk'
+    fixture.save()
+    with pytest.raises(ValueError):
+        fixture.resolver().resolve_toolchain(fixture.root)
+    if damage != 'wrong-source':
+        inventory = {path: hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                     for path in fixture.files['libwine-dev:amd64']}
+        with pytest.raises(ValueError):
+            builder_module()._headers(dict(headers=dict(files=inventory)))
+
+
+def test_public_sdk_all_header_hashes_remain_pinned(fixture):
+    windows = Path(fixture.files['libwine-dev:amd64'][0]).parent
+    extra = windows.parent / 'wine-public-extra.h'
+    extra.write_text('/* additional installed public SDK input */\n')
+    fixture.files['libwine-dev:amd64'].append(str(extra))
+    fixture.save()
+    module = fixture.resolver()
+    identity = module.resolve_toolchain(fixture.root)
+    assert identity['headers']['files'][str(extra)] == hashlib.sha256(extra.read_bytes()).hexdigest()
+    extra.write_text('/* modified installed SDK input */\n')
+    with pytest.raises(ValueError, match='changed'):
+        module.verify_toolchain(identity)
+
+
+def test_public_sdk_bridge_declarations_compile_as_host_abi_model(tmp_path):
+    # This checks the actual minimal C declaration/assertion block, NOT the PE
+    # or installed Wine SDK. No fake public/private Wine header is created.
+    bridge = (ROOT / 'scripts/wine/record_publication_bridge.c').read_text()
+    assert '#include <wine/unixlib.h>' not in bridge
+    assert 'wine-9.0/include/wine/unixlib.h' in bridge
+    assert '__typeof__(&__wine_unix_call)' not in bridge
+    start = bridge.index('typedef uint64_t SrpUnixHandle;')
+    end = bridge.index('static const uint8_t build_id', start)
+    source = '''#include <stdint.h>
+typedef int32_t NTSTATUS;
+#define WINAPI __attribute__((ms_abi))
+enum { MemoryWineUnixFuncs = 1000 };
+''' + bridge[start:end] + '''
+_Static_assert(__builtin_types_compatible_p(SrpUnixCall,
+    int32_t (WINAPI *)(uint64_t, unsigned int, void *)), "dispatch signature");
+_Static_assert(!__builtin_types_compatible_p(SrpUnixCall,
+    int32_t (*)(uint64_t, unsigned int, void *)), "dispatch must not become SysV");
+'''
+    result = subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-x', 'c', '-c',
+                             '-o', str(tmp_path / 'bridge-abi-model.o'), '-'],
+                            input=source, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
 
 
 COMPILER_ROLES = [('host_cxx', 'g++', 'x86_64-linux-gnu'),
@@ -354,7 +441,7 @@ def test_preflight_summarizes_large_header_inventory_without_response_growth(fix
     assert result['status'] == 'pass'
     assert len(json.dumps(result).encode()) <= 48 * 1024
     summary = result['evidence']['publication_toolchain']['headers']
-    assert summary['file_count'] == 1001 and len(summary['inventory_sha256']) == 64
+    assert summary['file_count'] == 1003 and len(summary['inventory_sha256']) == 64
     assert 'files' not in summary
 
 
@@ -985,12 +1072,6 @@ def publication_fixture(fixture):
         target = fixture.root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
-    windows = Path(fixture.files['libwine-dev:amd64'][0]).parents[1] / 'windows'
-    windows.mkdir()
-    for name in ['winternl.h', 'windef.h', 'winbase.h']:
-        path = windows / name
-        path.write_text('/* inert matched header: NOT a compilation/ABI proof */\n')
-        fixture.files['libwine-dev:amd64'].append(str(path))
     # Structurally sufficient synthetic ELF/PE files let the real fixed builder
     # check architecture/dependency inventories. They are NOT real tool outputs.
     compile_body = '''

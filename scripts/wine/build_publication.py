@@ -169,12 +169,7 @@ def _sources(repo):
 
 
 def _headers(identity):
-    files = identity['headers']['files']
-    unix = [Path(path) for path in files if path.endswith('/wine/unixlib.h')]
-    windows = [Path(path) for path in files if path.endswith('/windows/winternl.h')]
-    if len(unix) != 1 or len(windows) != 1:
-        raise BuildError('Missing/ambiguous matched Wine9 Unix/Windows headers')
-    return windows[0].parent, unix[0].parent.parent
+    return publication_toolchain._public_sdk_roots(identity['headers']['files'])
 
 
 def _compile(args, stage):
