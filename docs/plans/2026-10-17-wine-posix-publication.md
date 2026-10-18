@@ -332,18 +332,50 @@ probe/environment helpers. Keep existingmanifest schema/outputownership.
 - [ ] **4. Evidence limits:** this proves actualentry1route/defaultauthorityAPI, notpublication/filterhistory. No newopcode/process/stage/generation/schema/budgets; preserveoriginalreportpin/copy/IDs/SO proof andcrypto10 policy.
 - [ ] **5. GREEN:** pycompileaffectedPython, build/runtimefixtures, native3CPPtargets, thenEXACTsevenhostmodules1800000; diffcheck. Independentreview/exactcheckpoint `feat(wine): Admit the complete publication operation pair`. Capability-only ONEreproduce14400000 provesactualSDK/entry0+entry1beforeTask6; oldappfullfailure remainsunimplementedbackend, neverclaimgreen.
 
-### Task 6: PE Publication Client and Authority Checks
+### Task 6A: Platform-Neutral Synchronous Driver, No Activation
 
-**Files:** Create `src/record_publication_wine.h`, `src/record_publication_wine.cpp`, `src/record_publication_wine_driver.h`, `tests/test_record_publication_bridge_driver.cpp`; modify `src/record_publication.cpp`, `apps/space/main.cpp`, `CMakeLists.txt`, `docs/dev/notes/windows-wine-build-and-test.md`. Consume (do not redefine) the shared ABI and authority headers/PE export from5A/5B.
+**Files:** Create `src/record_publication_wine_driver.h`, `tests/test_record_publication_bridge_driver.cpp`; modify `CMakeLists.txt`, `docs/dev/notes/windows-wine-build-and-test.md`. Consume unchanged ABI/nativeadapter/core/authority contracts.
 
-**Interfaces:** `wine::detected()->bool`, `wine::publish(path,string_view,Hooks)->Result`. Private host-testable `drive(entry,host_path,payload,hooks,authority_check)->Result`; entry has `int32_t(uint32_t,void*)` semantics. Consume168-byteSrpCall with distinct NTSTATUS/primary presence/cleanup presence/transport text, START/seq rules and poison recovery. No public contract change.
+**Interfaces:** In `record_publication::wine::detail`:
+```cpp
+template<class Entry, class AuthorityCheck>
+Result drive(Entry&& entry, std::string_view host_path_bytes,
+             std::string_view payload, const Hooks& hooks,
+             AuthorityCheck&& authority_check);
+```
+Entry callable is int32_t(uint32_t,void*); authority returns uint32 error(0allowed).
+Raw hostbytes never PE filesystem paths. No platform-specific loader or public
+dispatch until6B. Every ordinary context explicitly retires; module lifetime is
+provided by its eventual caller.
 
-- [ ] **1. RED driver sequencing/nesting/cancel/postcommit recovery tests:** BEGIN returnsSTART/seq0; advanceSTART automatically with NOhook. Invokeonlyfour realhookevents. Emptyerrorsusepresence, notlength. Separatetransport/nativefailure; getlive diagnostics/currentsequence bySNAPSHOT, neverreplayBEGIN/ADVANCE. No-contexttruncationvisiblemarker/status withoutretry. Failed advance followed by committed snapshot must not become precommit error. Poison/authorityloss permitscleanupnotresume. Lostauthoritativecontextafterpotentialcommit is fatal ABIinconsistency, notnormalrecoverablenoncommit (testisolatedchildifneeded). Fake entry proves driver logic only.
-- [ ] **2. Detect supported Wine9/win64 from loaded NTDLL wine_get_version; require proven entry0 and exact identity|operation features3.** Native Windows never loads pair and keeps strict backend. Use proven basename lookup/identity, retain module through release; no unproved absolute-path association.
-  At the Wine application entry, apply the shared owned-environment helper before application-controlled temp/logging/runtime initialization. Native Windows does not call it; absent optional handoff outside the harness leaves the profile environment unchanged and establishes no owned-root claim.
-- [ ] **3. Map with CDECL wine_get_unix_file_name, copy host bytes, HeapFree result.** Reject NUL/reserved/ADS/device/remote inputs. Mapping is acquisition, not retained authority.
-- [ ] **4. Reuse shared supported-Wine9 authority helper before begin/afterhooks, not unsupported restriction queries.** PEexport alsoenforces. Snapshot/cancel/cleanup/release onrefusal withcurrentevent/seq, stickycommitretained. Hooks executelocally, never Unixcallback. Test constructortransportdetail/emptyerrors/poison/postcommit/deniedcontinuation/nesting/releasewithnopublication.
-- [ ] **5. GREEN native driver/ABI/operation tests.** CMake includes client in Windows engine and EVERY standalone target compiling publisher, including publication and operation tests; excludesUnixadapterengine andWindowsclientonPOSIX. No unresolvedclient symbols. Review/checkpoint `feat(engine): delegate Wine publication to the POSIX bridge`. Installed client/path/token behavior is deferred.
+- [ ] **1. RED real-adapter tests:** entry callable records/damages selected responses while delegating to actual srp_unix_call/Operation. Assert STARTseq0 without workspace/noHook, four ordered hooks once, binary/empty payload/nonUTF8host paths, constructor/preparation errors, nested calls and actual old/new destination bytes.
+- [ ] **2. Freshzero requests/correctchannels:** legalspans/context/event/seq;4096bytes/channel initial, one bounded growth max65536/channel via SNAPSHOT only. Countbytes, preserveemptyerrorpresence andvisibleproducer/capacity truncation. No liveCtx afterBEGINerror/retiringRELEASE =>no replayfortext. NTSTATUSnotNativeSuccess; precommitprimarythrows runtime_error matchingnativecontext, knowncommitreturnsResulttrue+explicitcleanup/transport lifecycle diagnostics. Latchcommit before textallocation.
+- [ ] **3. Authority/hooks:** checkbeforeBEGIN andpubcontinuations/afterpubhooks. Hookfailure/authorityloss at0..3 sends CANCEL notfailedADVANCE(whichPEguardwoulddeny); beforeCleanup mayfailedADVANCEincl emptyerror. No resume aftercancel/poison evenifauthorityreturns. Hooks executeonlycallercontext, no locks across.
+- [ ] **4. Recovery/retirement:** saveIDbeforecall(deniedPEclearsresponse); protocolerrorSNAPSHOTthenabort/cleanupnotreplaypub. ConsumeRELEASEfinalerrors. One snapshot-assisted cleanup-only release recovery; preserveoriginalfailure. Irrecoverableloststateafterpotentialcommit or unretirableownership afterboundedrecovery =>std::terminate, notfalse/notcommitted/newoutcome. Child-isolatefatal tests, no prodfatal-testhook. Ordinarynativecleanup_errorDONEstillvalidretiringresult.
+- [ ] **5. Negative matrix:** realadapter emptyerrors/threechannels/trunc/noCtx/staleseq/poison/postcommit/release/nesting; denialclearsresponse butsavedIDrecovered; destination/cache-relevant bytes andctx/workspace retired. Allocation/diagnosticfailurecan'treturnfalsecommittruth.
+- [ ] **6. GREEN:** Linuxx64driverCTest linksrealadapter/core/Threads (noengine). `make cmake`600000, `make build`14400000, explicitlybuildfourtargetsifneeded, `ctest --test-dir build -R '^test_record_publication(_operation|_abi|_bridge_driver)?$' --output-on-failure`. DocdriversemanticsNOTactivated. Independentreview/exactcheckpoint `feat(engine): Drive phased Wine publication synchronously`.
+
+### Task 6B: Validated Binding, Windows Client and Coherent Activation
+
+**Files:** Create `src/record_publication_wine.h`, `src/record_publication_wine.cpp`, `src/record_publication_wine_binding.h`, `scripts/tests/wine_adapters/publication_client.cpp`; modify `src/record_publication.cpp`(dispatchonly), `apps/space/main.cpp`, `CMakeLists.txt`, `scripts/wine/artifacts.py`, `scripts/tests/test_wine_publication_build.py`, `scripts/tests/test_windows_wine_runtime.py`, `scripts/tests/test_opencode_windows_ci_repro.py`, `scripts/tests/wine_adapters/windows.h`, `docs/dev/notes/windows-wine-build-and-test.md`.
+
+**Interfaces:** `wine::detected()->bool`, `initialize_process_environment()->void`,
+`wine::publish(const fs::path&,string_view,const Hooks&)->Result`. PrivateBinding
+has array<uint8_t,32>build_id,uint64module_device/module_inode;
+`parse_binding(string_view)->Binding`, `validate_identity(SrpIdentity,Binding,uint64challenge)->void`.
+Pythonconfiguration adds exact `SPACE_WINE_PUBLICATION_BINDING` key after existing
+validation; execute_admitted suppliesproducer-ownedvalue last, notgenericprefix
+restoration (cleanup must not depend on receipt). No schema/budget/newcommand.
+
+- [ ] **1. RED closedbindingcodec:** `<64lowerhex>:<uint64decimaldevice>:<uint64decimalinode>`, exactlytwo separators/max106ASCIIbytes. Decimal0orcanonicalnonzero(no sign/leadingzero), inode>0, overflowchecked. Rejectmissing/empty/uppercase/whitespace/nonASCII/extrafields/overflow/ino0. IndependentlycheckbothIDs/dev/ino/ABI1/size112/arch/exactfeatures3/challengeecho BEFOREBEGIN.
+- [ ] **2. Producerhandoff:** formatfromvalidatedmanifestBuildID+bridgeidentity afterallcurrentconfiguration/session/receipt/payload/copy/runtime checks. Overridehostileinheritedbinding onbothsmoke/full execution; testinvalidreceipt/pair/copy preventslaunch. No arbitraryhelper/path/backendselector; integrityhintnotcredential/sandbox.
+- [ ] **3. Loader/detection:** loadedNTDLLwine_get_versionexport absence=nativeWindows; anypresence=Wine (unsupportedversionnotfallbacknative). RequireWine9/win64. BoundedEnvread+closedcodec, onlyfixedbuiltinbasename viaadmittedoverlay/discovery/WINEDLLPATH. Checkexportownership, entry0againstcurrentbinding/challenge beforeEVERYBEGIN. Pinverifiedmoduleimmutableprocess-lifetime; no globalcurrentOp. Missing/stale/module/export/binding errors explicitprecommit.
+- [ ] **4. Mapping:** CDECLkernel32wine_get_unix_file_name(const wchar_t*) returnsrawhostbytes, copythenHeapFreeoriginalProcessHeapallocation includingexceptions BEFOREBEGIN. No PEfilesystempath/transcoding ofreturnedbytes. ValidateWindowsinputsyntax(NUL/reservedleaf/ADS/UNC/device/remotereject), supportrelative/localdrive/nonZ/missing-leaf. Useactualsharedauthorityhelper in6Adriver, no secondpolicy implementation.
+- [ ] **5. Earlytemp/dispatch:** Wine-onlyinitialize atbeginningmain beforeapplicationtemp/logging/CEF/runtime; sharedenvironmenthelperFALSEoptionaloutsideharness unchanged/noownedclaim, malformedprovidedhandofffails. NativeWindowsdoesnotcallit/loadhelpers. PublicpublishdispatchestoWinewhenDETECTED, nativecoreunchangedotherwise. Supportedpathisadmittedoverlay/launcher, notunpreparedinteractiveprefix.
+- [ ] **6. TestsproductionclienthostWin32models:** detectionnative/no load, Wineunsupported/no fallback, startuporder/error, modulepin/export/binding/mismatch, actualCDECLmapper/freeownership/failure, nonUTF8returnbytes+realNativeadapterpub. HostmodelsnotWin16/SDK/Wineproof; sourcecompile-only checkswhereappropriate, actualappcrossbuildcapONLY.
+- [ ] **7. CMake ALLdirectcoretargets:** Windowsengine+standalonepublic/operation tests linkclient+requiredWinlibs; POSIXexcludesclient, everyplatformexcludesUnixadapterengine. No undefinedclient symbols. Pythoncompile/focusedcodecclient/envtests, nativefourCpp targets; makebuildfirst, Fnlcompile->constraints->focusedexistingfs/persistence/string/link modules canonicalenv.
+- [ ] **8. Broadsourcegates:** exact7Pythonhostmodules1800000 +standardfullLinuxmake test14400000(startup/shareddispatch risk). Captureunexpectedfailures/systematicdiagnosis/reviewfix, no skipped-checkPASS. Docbinding/pinning/mapping/fatalboundary/handoffscope+pending actualproof; independentreview/exactcheckpoint `feat(wine): Delegate real publication to the POSIX bridge`.
+- [ ] **9. Earlyactualcapreproduce14400000 aftercheckpoint:** proveordinaryStorewritesnowreachrealhostpublication. Notreplacementfor7–9controlledumasks/freshread/grants. Independentconstraints120/otherremainingfailuresstillfinalblockers, notattributedall495tobackend. Currentorigin/main/PRCI remainlaterfinishinggates.
 
 ### Task 7: Real Host-Policy Cases and Fresh-Process Store Probe
 

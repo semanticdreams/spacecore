@@ -171,6 +171,26 @@ constructor/query failures without inventing an operation state when none exists
 An irrecoverably inconsistent ABI after a potentially committing call is fatal,
 not an ordinary recoverable not-committed result. No new public unknown outcome.
 
+The production consumer separates a platform-neutral synchronous driver from its
+Win32 loader/path adapter. Drive START without a hook, cancel rather than resume
+after hook/authority failure, and retrieve live diagnostics by snapshot only.
+Preserve present-empty errors and latch commit before diagnostic allocation.
+Bound diagnostic growth/recovery; unrecoverable post-dispatch state or unretirable
+ownership is fail-fast, not a new ordinary result. Pin verified module metadata
+immutably for process lifetime so no live context outlives its code.
+
+The existing validated Python configuration supplies private
+`SPACE_WINE_PUBLICATION_BINDING` as `buildid:device:inode` (64lowercase hex plus
+canonical checked uint64 decimals, inode nonzero, max106bytes). It carries no path
+or backend selector and is an integrity hint, not a credential. Assign it after
+receipt/package/pair validation and override inherited input. Before each BEGIN,
+the client compares entry0's independent IDs, actual SO identity and challenge
+with that expected binding. Missing/stale/malformed bindings fail explicitly.
+The supported Wine execution path remains the admitted overlay/launcher, not an
+arbitrary unprepared prefix. Raw mapped host pathname bytes never pass through a
+PE filesystem-path constructor or assumed UTF-8 conversion; HeapFree releases the
+Wine allocation before publication. Native Windows behavior remains unchanged.
+
 Resolve `kernel32!wine_get_unix_file_name` with the actual CDECL signature; free
 its result with `HeapFree`. Treat the returned host pathname as bytes rather than
 assuming UTF-8. Wine mapping is initial pathname acquisition, not authorization
