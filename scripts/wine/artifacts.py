@@ -250,6 +250,14 @@ def publication_manifest(session):
     return manifest
 
 
+def _verify_discovery_copy(manifest, overlay):
+    prefix.real_directory(overlay, True)
+    path = safe_path(overlay / Path(build_publication.PAIR[0]).name)
+    digest = hashlib.sha256(build_publication._regular(path)).hexdigest()
+    if digest != manifest['files'][build_publication.PAIR[0]]['sha256']:
+        raise ValueError('Publication discovery copy does not match the verified pair')
+
+
 def _unique_object(pairs):
     value = {}
     for key, item in pairs:
@@ -297,6 +305,13 @@ def validate_bridge_identity(manifest, identity, repo, challenge=None):
             for key in ('module_device', 'module_inode'))
             or identity['module_device'] != info.st_dev or identity['module_inode'] != info.st_ino):
         raise ValueError('Publication Unix module device/inode mismatch')
+    overlay = repo / 'build/wine/windows'
+    _verify_discovery_copy(manifest, overlay)
+    entries = verify(overlay, 'wine-overlay')
+    if 'admission.json' in entries:
+        receipt = json.loads((overlay / 'admission.json').read_text())
+        if receipt.get('payload') != {key: value for key, value in entries.items() if key != 'admission.json'}:
+            raise ValueError('Publication discovery copy/payload receipt binding changed')
     return {key: manifest[key] for key in ('abi', 'build_id', 'toolchain', 'files')} | {'identity': identity}
 
 
@@ -308,6 +323,7 @@ def _remove_identity_report(session, verified):
 
 
 def probe(session, backend, manifest):
+    _verify_discovery_copy(manifest, OVERLAY)
     before = verify(OVERLAY, "wine-overlay")
     report = session.tmp / IDENTITY_REPORT
     if report.exists() or report.is_symlink():
@@ -355,6 +371,13 @@ def _prepare_payload(session):
             copy_tree(item, stage / item.name) if item.is_dir() else shutil.copy2(item, stage / item.name)
         definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in bytes.fromhex(manifest['build_id'])) + '}'
         compiler("probe.c", stage / "process-prng-probe.exe", '-I', str(ROOT / 'src'), definition)
+        # Wine9 needs a Windows-side discovery image before basename loading
+        # reaches the builtin architecture pair through the fixed WINEDLLPATH.
+        source = BUILD / 'wine-publication' / build_publication.PAIR[0]
+        shutil.copy2(source, stage / source.name)
+        _verify_discovery_copy(manifest, stage)
+        if publication_manifest(session) != manifest:
+            raise ValueError('Publication pair changed while staging the discovery copy')
         seal(stage, "wine-overlay")
         install(stage, OVERLAY, "wine-overlay")
     backend = BUILTIN

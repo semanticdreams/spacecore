@@ -231,6 +231,100 @@ def runtime(tmp_path):
     return Fixture(tmp_path)
 
 
+def bind_discovery_fixture(runtime):
+    """Prepare valid discovery-copy inputs for consumer-negative tests only."""
+    from wine import artifacts, build_publication
+    source = runtime.root / 'build/wine-publication' / build_publication.PAIR[0]
+    copy = runtime.overlay / 'space_record_publication.dll'
+    shutil.copy2(source, copy)
+    receipt = runtime.overlay / 'admission.json'
+    value = json.loads(receipt.read_text())
+    value['payload'][copy.name] = hashlib.sha256(copy.read_bytes()).hexdigest()
+    receipt.write_text(json.dumps(value))
+    artifacts.seal(runtime.overlay, 'wine-overlay')
+    return copy
+
+
+def test_overlay_discovery_copy_is_owned_pair_identical_and_repeatable(runtime):
+    from wine import build_publication
+    # A stale helper in native build leftovers must never become the Wine copy.
+    (runtime.build / 'space_record_publication.dll').write_text('not the admitted pair')
+    runtime.package()
+    native_before = hashes(runtime.build), hashes(runtime.dist)
+    assert runtime.prepare([0]).returncode == 0
+    source = runtime.root / 'build/wine-publication' / build_publication.PAIR[0]
+    copy = runtime.overlay / 'space_record_publication.dll'
+    assert copy.is_file(), 'Wine basename discovery needs the verified overlay PE copy'
+    assert copy.read_bytes() == source.read_bytes()
+    info = copy.lstat()
+    assert info.st_uid == os.geteuid() and info.st_nlink == 1 and info.st_mode & 0o777 == 0o600
+    assert (info.st_dev, info.st_ino) != (source.stat().st_dev, source.stat().st_ino)
+    pair_before = hashes(source.parents[2])
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    digest = hashlib.sha256(copy.read_bytes()).hexdigest()
+    assert receipt['payload'][copy.name] == receipt['bridge']['files'][build_publication.PAIR[0]]['sha256'] == digest
+    assert not any(p.name.casefold() in {'space_record_publication.dll', 'space_record_publication.so'}
+                   for p in runtime.dist.rglob('*'))
+    assert runtime.prepare([0]).returncode == 0
+    assert hashes(source.parents[2]) == pair_before
+    assert copy.read_bytes() == source.read_bytes()
+    assert (hashes(runtime.build), hashes(runtime.dist)) == native_before
+
+
+@pytest.mark.parametrize('damage', ['missing', 'tampered', 'resealed', 'hardlink', 'symlink', 'mode'])
+def test_discovery_copy_damage_cannot_authorize_application(runtime, damage):
+    from wine import artifacts
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    copy = bind_discovery_fixture(runtime)
+    receipt = runtime.overlay / 'admission.json'
+    value = json.loads(receipt.read_text())
+    if damage == 'missing':
+        copy.unlink()
+        del value['payload'][copy.name]
+    elif damage in ('hardlink', 'symlink'):
+        # Keep the inventoried source pair valid: reject the copy's link, not
+        # merely a link-count change in the source artifact.
+        preserved = runtime.root / 'preserved-discovery-image'
+        shutil.copy2(copy, preserved)
+        copy.unlink()
+        os.link(preserved, copy) if damage == 'hardlink' else copy.symlink_to(preserved)
+    elif damage == 'mode':
+        copy.chmod(0o644)
+    else:
+        copy.write_bytes(b'wrong discovery image')
+        value['payload'][copy.name] = hashlib.sha256(copy.read_bytes()).hexdigest()
+    if damage not in ('tampered', 'symlink'):
+        receipt.write_text(json.dumps(value))
+        artifacts.seal(runtime.overlay, 'wine-overlay')
+    before = runtime.calls()
+    result = runtime.run('test-windows-under-wine.sh')
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert not [call for call in runtime.calls()[len(before):] if 'wine' in call]
+
+
+def test_probe_refuses_wrong_discovery_copy_before_any_launch(runtime, monkeypatch):
+    from wine import artifacts, prefix
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    copy = bind_discovery_fixture(runtime)
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    session = prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    artifacts._remove_identity_report(session, artifacts._identity_file(session))
+    copy.write_bytes(b'wrong discovery image')
+    artifacts.seal(runtime.overlay, 'wine-overlay')
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(artifacts, 'OVERLAY', runtime.overlay)
+    monkeypatch.setattr(artifacts, 'BUILD', runtime.root / 'build')
+    runtime.codes.write_text('[0]')
+    manifest = json.loads((runtime.root / 'build/wine-publication/build.json').read_text())
+    before = runtime.calls(), session.state()
+    with pytest.raises(ValueError, match='discovery'):
+        artifacts.probe(session, artifacts.BUILTIN, manifest)
+    assert (runtime.calls(), session.state()) == before
+
+
 def test_repeat_packaging_excludes_stale_helpers_and_wine_never_mutates_native(runtime):
     runtime.package()
     assert not any(p.name.casefold() == "bcryptprimitives.dll" for p in runtime.dist.rglob("*"))
@@ -458,6 +552,41 @@ def test_actual_probe_pair_failure_never_reaches_crypto(tmp_path, mode):
     assert result.returncode == 20, result.stdout + result.stderr
     assert 'fixture-crypto-load' not in result.stdout
     assert 'fixture-request=' not in result.stdout
+
+
+@pytest.mark.parametrize('mode,error', [('pair-missing', 126), ('pair-bad-image', 193),
+                                      ('pair-init-failed', 1114), ('pair-access-denied', 5)])
+def test_actual_probe_reports_numeric_publication_loader_error(tmp_path, mode, error):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode, TEMP=str(tmp_path),
+                            SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+                            WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b'),
+                            capture_output=True, text=True)
+    assert result.returncode == 20, result.stdout + result.stderr
+    lines = result.stderr.splitlines()
+    assert lines[0] == f'Publication probe: phase=load-library error={error}'
+    assert all(len(line.encode()) < 160 for line in lines)
+    assert 'fixture-entry0' not in result.stdout and 'fixture-crypto-load' not in result.stdout
+    assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
+    assert not (tmp_path / 'space-record-publication-identity.json').exists()
+
+
+@pytest.mark.parametrize('mode,status', [('pair-status', -1073741515),
+                                       ('pair-status--2147483648', -2147483648),
+                                       ('pair-status-2147483647', 2147483647),
+                                       ('pair-echo', 0)])
+def test_actual_probe_reports_raw_entry0_status_before_identity_failure(tmp_path, mode, status):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode, TEMP=str(tmp_path),
+                            SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+                            WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b'),
+                            capture_output=True, text=True)
+    assert result.returncode == 20, result.stdout + result.stderr
+    assert result.stderr.splitlines()[0] == f'Publication probe: phase=entry0 status={status}'
+    assert all(len(line.encode()) < 160 for line in result.stderr.splitlines())
+    assert 'fixture-entry0' in result.stdout and 'fixture-crypto-load' not in result.stdout
+    assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
+    assert not (tmp_path / 'space-record-publication-identity.json').exists()
 
 
 @pytest.mark.parametrize('mode,code', [('normal', 0), ('load-126', 10), ('export-127', 10)])

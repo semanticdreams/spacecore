@@ -46,6 +46,8 @@ static int publication_identity(void)
     char pe[65], unix_id[65], report[4096];
     WCHAR path[32768];
     DWORD length, written;
+    DWORD error;
+    int32_t status;
     HANDLE file;
     int count, ok;
     if (!challenge || strlen(challenge) != 16) return failure("missing publication challenge");
@@ -56,8 +58,14 @@ static int publication_identity(void)
     }
     /* Only basename loading uses Wine's builtin PE/Unix association. Neither an
      * absolute DLL load nor a logical System32 filename proves Unix dispatch. */
+    SetLastError(ERROR_SUCCESS);
     module = LoadLibraryA("space_record_publication.dll");
-    if (!module) return failure("publication builtin unavailable");
+    if (!module) {
+        error = GetLastError();
+        fprintf(stderr, "Publication probe: phase=load-library error=%" PRIu32 "\n", (uint32_t)error);
+        fflush(stderr);
+        return failure("publication builtin unavailable");
+    }
     function.generic = GetProcAddress(module, "SpaceRecordPublicationCall");
     if (!function.generic || !GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)function.call, &owner) || owner != module)
@@ -65,7 +73,11 @@ static int publication_identity(void)
     identity.size = sizeof(identity);
     identity.abi = SRP_ABI;
     identity.challenge = value;
-    if (function.call(SRP_ENTRY_IDENTITY, &identity) != SRP_SUCCESS || identity.size != sizeof(identity)
+    status = function.call(SRP_ENTRY_IDENTITY, &identity);
+    fprintf(stderr, "Publication probe: phase=entry0 status=%" PRId32 "\n", status);
+    fflush(stderr);
+    if (status != SRP_SUCCESS) return failure("publication entry0 failed");
+    if (identity.size != sizeof(identity)
             || identity.abi != SRP_ABI || identity.challenge != value || identity.echo != value
             || identity.architecture != SRP_ARCH_X86_64 || identity.features != SRP_REQUIRED_FEATURES
             || !identity.module_inode

@@ -15,8 +15,17 @@ void SetLastError(DWORD error) { last_error = error; }
 DWORD GetLastError(void) { return last_error; }
 HMODULE LoadLibraryA(const char *name)
 {
-    if (!strcmp(name, "space_record_publication.dll"))
-        return is("pair-missing") ? NULL : (HMODULE)(uintptr_t)3;
+    if (!strcmp(name, "space_record_publication.dll")) {
+        DWORD error = is("pair-missing") ? ERROR_MOD_NOT_FOUND :
+            is("pair-bad-image") ? ERROR_BAD_EXE_FORMAT :
+            is("pair-init-failed") ? ERROR_DLL_INIT_FAILED :
+            is("pair-access-denied") ? ERROR_ACCESS_DENIED : ERROR_SUCCESS;
+        if (error != ERROR_SUCCESS) {
+            last_error = error;
+            return NULL;
+        }
+        return (HMODULE)(uintptr_t)3;
+    }
     if (strcmp(name, "bcryptprimitives.dll")) abort();
     puts("fixture-crypto-load");
     if (!strncmp(mode(), "load-", 5)) {
@@ -31,6 +40,7 @@ static int32_t WINAPI fixture_identity(uint32_t entry, void *args)
     if (entry != SRP_ENTRY_IDENTITY || value->size != 112 || value->abi != SRP_ABI) abort();
     puts("fixture-entry0");
     if (is("pair-status")) return SRP_MODULE_UNAVAILABLE;
+    if (!strncmp(mode(), "pair-status-", 12)) return (int32_t)strtol(mode() + 12, NULL, 10);
     value->echo = value->challenge + is("pair-echo");
     value->pe_build_id[0] = is("pair-pe-id") ? 2 : 1;
     value->unix_build_id[0] = is("pair-unix-id") ? 2 : 1;

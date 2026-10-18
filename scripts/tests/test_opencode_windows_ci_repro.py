@@ -583,6 +583,8 @@ def reproduction_fixture(tmp_path, monkeypatch):
         fixture_script(repo, script, f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)")
     receipt = repo / "build/wine/windows/admission.json"
     receipt.parent.mkdir(parents=True)
+    receipt.parent.chmod(0o700)
+    shutil.copy2(repo / 'build/dist/windows/space-cli.exe', receipt.parent / 'space-cli.exe')
     receipt.write_text(json.dumps({"version": 3,
                                   "backend": "bcryptprimitives=b;advapi32,cryptbase=b",
                                   "payload": {"space-cli.exe": "b"*64}, "package": {"space-cli.exe": "b"*64},
@@ -594,7 +596,10 @@ def reproduction_fixture(tmp_path, monkeypatch):
             value = json.loads(receipt.read_text())
             value.update(ownedSession=session.binding(), tools=session.owner['tools'])
             value['bridge'] = fixture_bridge_inventory(root, session)
+            value['payload'] = {key: digest for key, digest in windows_ci_repro._artifacts.inventory(receipt.parent).items()
+                                if key != 'admission.json'}
             receipt.write_text(json.dumps(value))
+            windows_ci_repro._artifacts.seal(receipt.parent, 'wine-overlay')
         return session
     monkeypatch.setattr(windows_ci_repro._prefix, 'create_session', fixture_session)
     return repo
@@ -624,6 +629,7 @@ def fixture_bridge_inventory(repo, session):
     files = {name: builder._inventory(output / name, name, build_id) for name in builder.PAIR}
     manifest = dict(version=1, abi=1, runtime=runtime, toolchain=toolchain, build_id=build_id, files=files)
     windows_ci_repro._prefix.write_control(output / 'build.json', manifest)
+    shutil.copy2(output / builder.PAIR[0], repo / 'build/wine/windows/space_record_publication.dll')
     info = (output / builder.PAIR[1]).stat()
     identity = dict(version=1, size=112, abi=1, challenge='0123456789abcdef', echo='0123456789abcdef',
                     pe_build_id=build_id, unix_build_id=build_id, module_device=info.st_dev,
@@ -1371,7 +1377,7 @@ def test_admission_metadata_read_is_allowlisted_readonly_and_preserves_receipt(t
     metadata = result["evidence"]["metadata"]
     assert metadata["wine"]["version"] == "wine-9.0 (fixture)"
     assert metadata["wine"]["sha256"] == hashlib.sha256((repo / 'fixture-tools/wine').read_bytes()).hexdigest()
-    assert metadata["payload"]["space-cli.exe"] == "b"*64
+    assert metadata["payload"]["space-cli.exe"] == hashlib.sha256((repo / 'build/wine/windows/space-cli.exe').read_bytes()).hexdigest()
     payload = json.loads(before)["payload"]
     assert metadata["payload_inventory_sha256"] == hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
     assert metadata["prefix_selection"] == "generated-owned-session"
@@ -1427,6 +1433,37 @@ def test_parent_metadata_refuses_unverified_bridge_receipt_without_wine_queries(
     with pytest.raises(ValueError):
         windows_ci_repro._admitted_metadata(runtime.root, session)
     assert (path.read_bytes(), runtime.calls()) == before
+
+
+@pytest.mark.parametrize('damage', ['missing', 'tampered', 'resealed', 'payload-missing'])
+def test_readonly_metadata_refuses_discovery_damage_without_wine_or_writes(tmp_path, damage):
+    from test_windows_wine_runtime import Fixture, bind_discovery_fixture
+    runtime = Fixture(tmp_path)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    copy = bind_discovery_fixture(runtime)
+    receipt = runtime.overlay / 'admission.json'
+    value = json.loads(receipt.read_text())
+    session = windows_ci_repro._prefix.load_session(runtime.root, value['ownedSession']['id'])
+    if damage == 'missing':
+        copy.unlink()
+        del value['payload'][copy.name]
+    elif damage == 'payload-missing':
+        del value['payload'][copy.name]
+    else:
+        copy.write_bytes(b'wrong discovery image')
+        value['payload'][copy.name] = hashlib.sha256(copy.read_bytes()).hexdigest()
+    if damage != 'tampered':
+        receipt.write_text(json.dumps(value))
+        windows_ci_repro._artifacts.seal(runtime.overlay, 'wine-overlay')
+    def snapshot():
+        roots = [runtime.overlay, runtime.root / 'build/wine-publication', session.directory]
+        return {str(path): (path.read_bytes(), path.stat().st_mtime_ns, path.stat().st_ctime_ns)
+                for root in roots for path in root.rglob('*') if path.is_file()}
+    before = snapshot(), runtime.calls()
+    with pytest.raises((ValueError, OSError)):
+        windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert (snapshot(), runtime.calls()) == before
 
 
 def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_path):
