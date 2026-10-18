@@ -902,6 +902,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 8
     target_include_directories(test_record_publication_abi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_link_libraries(test_record_publication_abi PRIVATE Threads::Threads)
     add_test(NAME test_record_publication_abi COMMAND test_record_publication_abi)
+    add_executable(test_record_publication_bridge_driver
+        tests/test_record_publication_bridge_driver.cpp
+        src/record_publication_unix.cpp
+        src/record_publication.cpp
+    )
+    target_include_directories(test_record_publication_bridge_driver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(test_record_publication_bridge_driver PRIVATE Threads::Threads)
+    add_test(NAME test_record_publication_bridge_driver COMMAND test_record_publication_bridge_driver)
+    set_tests_properties(test_record_publication_bridge_driver PROPERTIES TIMEOUT 60)
 endif()
 
 add_executable(test_vector_buffer

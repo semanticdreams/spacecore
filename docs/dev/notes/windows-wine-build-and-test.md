@@ -631,6 +631,78 @@ entry0/entry1 dispatch under Wine remain guarded supervisor work after source
 review/checkpoint. The Task6 C++ production client is not activated here; the old
 strict Windows publisher failure is not resolved or represented as a full-run PASS.
 
+#### Inactive synchronous publication driver (Task6A host validation)
+
+`src/record_publication_wine_driver.h` provides the private platform-neutral
+`record_publication::wine::detail::drive(Entry&&, host_path_bytes, payload, hooks,
+AuthorityCheck&&) -> Result` template. Entry is the synchronous
+`int32_t(uint32_t, void*)` callable; authority returns a `uint32_t` error (zero
+allows). The eventual caller owns the validated binding/module lifetime. Paths
+are counted **raw host bytes**, not PE filesystem paths; binary and empty payloads
+are copied by the existing native adapter/core. No Windows loader, binding
+producer, public dispatch, native policy or ABI is changed or activated here.
+
+Each call uses a fresh zeroed frame and separate primary, cleanup and transport
+channels, initially4096 bytes each. Each channel may grow once, bounded at65536
+bytes, with **SNAPSHOT only** refilling it. Diagnostics use byte counts, not NUL
+termination. Empty error presence is retained, and capacity/producer truncation is
+explicit. A no-context BEGIN error and an already-retiring RELEASE cannot be
+replayed to obtain more text. NTSTATUS is never mistaken for native success.
+Precommit native primary errors throw `runtime_error` with the native publication
+context; known commit returns `Result{true, ...}` with any cleanup/transport
+lifecycle diagnostics instead of a false not-committed result.
+
+BEGIN captures START/sequence0 without workspace preparation or a hook. The four
+hooks execute once, in caller context and native order, with no driver lock held.
+Authority is checked before BEGIN, before publication continuations and after
+publication hooks. Publication hook failure or authority loss at START through
+BEFORE_COMMIT uses CANCEL, never a failed publication ADVANCE that the PE guard
+would deny. BEFORE_CLEANUP may send a failed ADVANCE, including a present empty
+error. Cancellation/poison never resumes publication, even if authority returns.
+
+The driver saves context identity independently of responses, latches scalar
+committed truth before allocating diagnostic text, and recovers protocol errors
+with SNAPSHOT followed only by cancellation/cleanup, not publication replay.
+Every ordinary context explicitly retires and consumes RELEASE's final errors.
+Retirement has at most two RELEASE attempts total, with one snapshot-assisted
+cleanup-only recovery; the first transport failure survives later poison.
+Ordinary native DONE with cleanup errors is still a valid retiring result.
+Unrecoverable state/ownership, or diagnostic failure after commit that prevents
+representing the truthful Result, calls `std::terminate` rather than inventing an
+outcome or throwing an apparent publication failure.
+
+Entry is a C++ callable and need not be `noexcept`: if forwarding completes before
+Entry bookkeeping throws, the driver harvests only coherent response ownership/
+commit scalars before unwinding, then snapshots and explicitly retires. A cleared
+denial cannot overwrite an already saved ID. After known commit and successful
+bounded retirement, a transient diagnostic allocation failure gets one attempt to
+construct a truthful committed Result with a lifecycle diagnostic, consuming the
+saved final RELEASE errors without another native call. Persistent allocation
+denial or unrecoverable state/ownership remains fatal; not every OOM is recoverable.
+Reconstruction routes its lifecycle marker through the bridge error channel so
+retained final native poison/transport details and truncation remain visible,
+including after a failed emergency RELEASE followed by successful retirement.
+
+The Linux x86_64 `test_record_publication_bridge_driver` target links the **real
+native adapter, phased publisher core and Threads**, not the engine. Filesystem
+effects, nested calls, authority loss, native poison, response/sequence faults,
+bounded diagnostics, release recovery and child-isolated fatal invariants are
+host tests, with no production fatal-test hook. Focused validation:
+
+```bash
+make cmake                         # timeout600000 ms
+make build                         # timeout14400000 ms
+cmake --build build --target test_record_publication test_record_publication_operation test_record_publication_abi test_record_publication_bridge_driver -j2
+ctest --test-dir build -R '^test_record_publication(_operation|_abi|_bridge_driver)?$' --output-on-failure
+```
+
+These are not actual Wine/PE/SDK execution, validated-binding or public delegation
+proof. Task5B2's approved routing/default-authority admission checkpoint does not
+activate publication. Production binding/dispatch and actual Wine publication
+remain deferred to later tasks and their independent review/runtime gates; strict
+Windows publication is unchanged. Task6A Phase1 itself remains uncommitted WIP
+until independent reviewer PASS and explicit Phase2 exact-file commit authority.
+
 #### Supported Wine9 represented-authority guard (source/host-model stage)
 
 `space_record_publication_check_authority` is shared C/C++ private code. Only
