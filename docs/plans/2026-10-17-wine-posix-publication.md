@@ -99,6 +99,24 @@ Shared constants: `SRP_ABI=1`, `SRP_FEATURE_IDENTITY=1`, `SRP_FEATURE_OPERATION=
 - [ ] **7. Capability-only actual preflight/diagnosed setup-host/reproduce**, tool14400000. Record revision/hashes/entry0/SO identity. Matching packages that require runtime replacement or an unapproved source are a human infrastructure decision.
 - [ ] **8. Reviewer consumes actual compatibility evidence before Task4.** Require actual Unix dispatch, not compilation/fixtures. Full Wine still exposes known old publisher failure; retain/diagnose it, never call the full run green. A different failure or absent pair proof must be investigated before production integration. No push/readiness claim.
 
+**Observed SDK repair subtask:** After guarded installation of matching Noble9.0
+development packages, preflight exposed the false requirement for noninstalled
+`wine/unixlib.h`. Coordinated allowlist: `scripts/wine/publication_toolchain.py`,
+`scripts/wine/build_publication.py`, `scripts/wine/record_publication_bridge.c`,
+`scripts/tests/test_wine_publication_build.py`. First RED a realistic installed
+public-header inventory without unixlib.h, plus missing/mixed-root refusal cases.
+Resolver/builder require one inventoried matching Windows SDK root containing
+winternl/windef/winbase, never weaken package/source/hash verification. PE removes
+the private include and declares only the exact Wine9 uint64 handle and WINAPI
+dispatch-pointer types; static-assert widths/alignment and guarded enum value1000,
+query ReturnLength NULL as already required. Unix entry/identity payload unchanged.
+Use a provenance comment, not wholesale LGPL header vendoring or source download.
+Run Python compile and the build/setup/reproducer three-module gate with1800000ms,
+native shared-layout checks and diff review; actual matching PE compile remains
+capability-only. Independent review and exact checkpoint precede one guarded
+preflight, then first guarded reproduction if PASS. No provisioning retry, ABI
+fallback, new tool/API selector, native policy change or production integration.
+
 ### Task 4: Shared Phased Operation Without Backend Changes
 
 **Files:** Create `src/record_publication_operation.h`, `tests/test_record_publication_operation.cpp`; modify `src/record_publication.cpp`, `CMakeLists.txt`.

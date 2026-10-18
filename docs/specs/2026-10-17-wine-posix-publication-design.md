@@ -123,6 +123,17 @@ eight-byte result, then dispatches through NTDLL's `__wine_unix_call`. The retur
 opaque table handle is not a directly callable PE function pointer. This is a
 versioned Wine-internal dependency with explicit compatibility checks.
 
+Ubuntu's matching SDK deliberately does not install `wine/unixlib.h`. Do not
+require or install that private source header. The PE bridge owns only the minimal
+Wine9 opaque-handle and dynamically resolved dispatch-pointer declarations, with
+source provenance and size/alignment/calling-convention assertions. Installed,
+package-verified `windows/winternl.h`, `windef.h` and `winbase.h` supply NT/Windows
+types and the guarded MemoryWineUnixFuncs enum; assert its Wine9 value1000. The Unix
+entry remains self-contained signed32-bit status/native calling convention. Select
+one coherent installed SDK root and retain all header/package/source identity
+checks; absence or mixed roots fail explicitly. No wholesale internal-header copy,
+source-tree dependency or system Wine modification.
+
 The shared private C layout uses fixed-width types, explicit sizes/offsets, version
 and request validation, with assertions in both builds. No C++ objects/exceptions,
 native long/size_t/bool/wchar_t, CRT allocation ownership or callbacks cross it.
