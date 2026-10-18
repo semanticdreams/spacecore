@@ -103,7 +103,8 @@ Shared constants: `SRP_ABI=1`, `SRP_FEATURE_IDENTITY=1`, `SRP_FEATURE_OPERATION=
 development packages, preflight exposed the false requirement for noninstalled
 `wine/unixlib.h`. Coordinated allowlist: `scripts/wine/publication_toolchain.py`,
 `scripts/wine/build_publication.py`, `scripts/wine/record_publication_bridge.c`,
-`scripts/tests/test_wine_publication_build.py`. First RED a realistic installed
+`scripts/tests/test_wine_publication_build.py`, and the actual sibling SDK-fixture
+consumer `scripts/tests/test_windows_wine_runtime.py`. First RED a realistic installed
 public-header inventory without unixlib.h, plus missing/mixed-root refusal cases.
 Resolver/builder require one inventoried matching Windows SDK root containing
 winternl/windef/winbase, never weaken package/source/hash verification. PE removes
@@ -111,7 +112,7 @@ the private include and declares only the exact Wine9 uint64 handle and WINAPI
 dispatch-pointer types; static-assert widths/alignment and guarded enum value1000,
 query ReturnLength NULL as already required. Unix entry/identity payload unchanged.
 Use a provenance comment, not wholesale LGPL header vendoring or source download.
-Run Python compile and the build/setup/reproducer three-module gate with1800000ms,
+Run Python compile and the build/setup/reproducer/runtime four-module gate with1800000ms,
 native shared-layout checks and diff review; actual matching PE compile remains
 capability-only. Independent review and exact checkpoint precede one guarded
 preflight, then first guarded reproduction if PASS. No provisioning retry, ABI
