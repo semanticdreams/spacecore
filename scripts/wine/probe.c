@@ -98,8 +98,13 @@ static int publication_identity(void)
     if (!length || length + wcslen(L"\\space-record-publication-identity.json") >= sizeof(path) / sizeof(path[0]))
         return failure("publication report TEMP");
     wcscat(path, L"\\space-record-publication-identity.json");
-    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (file == INVALID_HANDLE_VALUE) return failure("exclusive publication report create");
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) {
+        error = GetLastError();
+        fprintf(stderr, "Publication probe: phase=report-open error=%" PRIu32 "\n", (uint32_t)error);
+        fflush(stderr);
+        return failure("publication report open");
+    }
     written = 0;
     ok = WriteFile(file, report, (DWORD)count, &written, NULL) && written == (DWORD)count;
     if (!CloseHandle(file)) ok = 0;

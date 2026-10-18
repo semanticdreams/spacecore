@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -229,15 +230,16 @@ HANDLE CreateFileW(const WCHAR *path, DWORD access, DWORD sharing, void *securit
     const char *host = getenv("PROBE_HOST_TMP");
     size_t root_length = wcslen(owned_root);
     int count;
-    if (access != GENERIC_WRITE || sharing || security || disposition != CREATE_NEW
+    if (access != GENERIC_WRITE || sharing || security || disposition != OPEN_EXISTING
             || attributes != FILE_ATTRIBUTE_NORMAL || template) abort();
-    if (is("report-create")) return INVALID_HANDLE_VALUE;
+    if (is("report-open")) { last_error = ERROR_ACCESS_DENIED; return INVALID_HANDLE_VALUE; }
     /* Test-only fixed DOS-root/report mapping, never a production converter. */
     if (!host || wcsncmp(path, owned_root, root_length)
             || wcscmp(path + root_length, L"\\space-record-publication-identity.json")) abort();
     count = snprintf(name, sizeof(name), "%s/space-record-publication-identity.json", host);
     if (count < 0 || (size_t)count >= sizeof(name)) return INVALID_HANDLE_VALUE;
-    int fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    int fd = open(name, O_WRONLY | O_NOFOLLOW);
+    if (fd < 0) last_error = ERROR_FILE_NOT_FOUND;
     return fd < 0 ? INVALID_HANDLE_VALUE : (HANDLE)(intptr_t)fd;
 }
 BOOL WriteFile(HANDLE file, const void *data, DWORD length, DWORD *written, void *overlapped)

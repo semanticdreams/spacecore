@@ -8,6 +8,10 @@ import signal
 import subprocess
 import time
 import sys
+import errno
+import fcntl
+import importlib.util
+import stat
 
 import pytest
 
@@ -66,15 +70,31 @@ if len(sys.argv) > 1 and pathlib.Path(sys.argv[1]).name == 'process-prng-probe.e
         if damage == kind: value[field] = '0'*len(value[field])
     for kind, field in [('device','module_device'), ('inode','module_inode')]:
         if damage == kind: value[field] += 1
+    if damage in ['size', 'abi', 'architecture', 'features']: value[damage] += 1
     if damage == 'extra': value['unexpected'] = True
     raw = json.dumps(value)
     if damage == 'duplicate': raw = raw[:-1] + ',"abi":1}'
     if damage == 'oversize': raw += ' '*4096
+    if damage == 'partial': raw = raw[:31]
     report = pathlib.Path(os.environ['TMPDIR'])/'space-record-publication-identity.json'
+    initial = report.lstat()
+    assert stat.S_ISREG(initial.st_mode) and stat.S_IMODE(initial.st_mode) == 0o600
+    assert initial.st_uid == os.geteuid() and initial.st_nlink == 1 and initial.st_size == 0
+    for entry in pathlib.Path('/proc/self/fd').iterdir():
+        try: target = os.readlink(entry)
+        except FileNotFoundError: continue
+        assert target != str(report), 'native parent report descriptor leaked into child'
+    if damage in ['symlink', 'hardlink', 'replace', 'unlink']: report.unlink()
     if damage == 'symlink': report.symlink_to(so)
     elif damage == 'hardlink': os.link(so, report)
-    elif damage != 'missing':
+    elif damage == 'replace':
+        # Deliberate adversarial replacement: valid JSON/current challenge/0600,
+        # but a different inode while the parent still holds the original.
         fd = os.open(report, os.O_WRONLY|os.O_CREAT|os.O_EXCL, 0o600)
+        with os.fdopen(fd, 'w') as output: output.write(raw)
+    elif damage not in ['missing', 'unlink']:
+        if damage == 'wrong-mode': report.chmod(0o644)
+        fd = os.open(report, os.O_WRONLY|os.O_NOFOLLOW)
         with os.fdopen(fd, 'w') as output: output.write(raw)
 '''
 
@@ -230,6 +250,242 @@ os.execvp(args[1], args[1:])
 @pytest.fixture
 def runtime(tmp_path):
     return Fixture(tmp_path)
+
+
+def report_probe_context(runtime, monkeypatch, code=0):
+    from wine import artifacts, prefix
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    session = prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    artifacts._remove_identity_report(session, artifacts._identity_file(session))
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    for key, value in [('ROOT', runtime.root), ('BUILD', runtime.root / 'build'),
+                       ('PACKAGE', runtime.dist), ('OVERLAY', runtime.overlay)]:
+        monkeypatch.setattr(artifacts, key, value)
+    spec = importlib.util.spec_from_file_location('report_fixture_toolchain', runtime.root / 'scripts/wine/publication_toolchain.py')
+    fixture_toolchain = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture_toolchain)
+    monkeypatch.setattr(artifacts.publication_toolchain, 'verify_toolchain', fixture_toolchain.verify_toolchain)
+    runtime.codes.write_text(json.dumps([code]))
+    manifest = json.loads((runtime.root / 'build/wine-publication/build.json').read_text())
+    return artifacts, prefix, session, manifest
+
+
+def report_origin_fd(path):
+    info = path.stat()
+    matches = []
+    for entry in Path('/proc/self/fd').iterdir():
+        fd = int(entry.name)
+        try:
+            opened = os.fstat(fd)
+        except OSError:
+            continue
+        if ((opened.st_dev, opened.st_ino) == (info.st_dev, info.st_ino)
+                and fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_ACCMODE == os.O_WRONLY):
+            matches.append(fd)
+    assert len(matches) == 1, 'one retained native write-only report descriptor is required'
+    return matches[0]
+
+
+def test_parent_allocates_and_holds_private_report_through_real_child_and_validation(runtime, monkeypatch):
+    artifacts, prefix, session, manifest = report_probe_context(runtime, monkeypatch)
+    report = session.tmp / artifacts.IDENTITY_REPORT
+    launch = prefix.Session.launch
+    validate = artifacts.validate_bridge_identity
+    observed = {}
+    def launch_checked(self, *args, **kwargs):
+        assert report.is_file(), 'parent must allocate before Session.launch'
+        info = report.stat()
+        assert info.st_size == 0 and info.st_mode & 0o777 == 0o600
+        assert info.st_uid == os.geteuid() and info.st_nlink == 1
+        fd = report_origin_fd(report)
+        assert not os.get_inheritable(fd)
+        observed.update(fd=fd, origin=(info.st_dev, info.st_ino))
+        return launch(self, *args, **kwargs)
+    def validate_checked(*args, **kwargs):
+        info = os.fstat(observed['fd'])
+        assert (info.st_dev, info.st_ino) == observed['origin']
+        observed['validated'] = True
+        return validate(*args, **kwargs)
+    popen = prefix.subprocess.Popen
+    def child_umask(argv, **kwargs):
+        assert kwargs['close_fds'] and not kwargs.get('pass_fds')
+        kwargs['umask'] = 0o002  # Child only; never change the parent's umask.
+        return popen(argv, **kwargs)
+    monkeypatch.setattr(prefix.Session, 'launch', launch_checked)
+    monkeypatch.setattr(artifacts, 'validate_bridge_identity', validate_checked)
+    monkeypatch.setattr(prefix.subprocess, 'Popen', child_umask)
+    code, bridge, verified = artifacts.probe(session, artifacts.BUILTIN, manifest)
+    assert code == 0 and bridge and verified and observed['validated']
+    info = report.stat()
+    assert (info.st_dev, info.st_ino) == observed['origin'] and info.st_mode & 0o777 == 0o600
+    with pytest.raises(OSError) as closed:
+        os.fstat(observed['fd'])
+    assert closed.value.errno == errno.EBADF
+
+
+@pytest.mark.parametrize('raw', [0, 10])
+@pytest.mark.parametrize('damage', ['replace', 'wrong-mode', 'unlink', 'partial', 'oversize',
+                                   'size', 'abi', 'architecture', 'features'])
+def test_parent_report_origin_and_contract_cannot_be_replaced_by_child_status(runtime, monkeypatch, raw, damage):
+    artifacts, _, session, manifest = report_probe_context(runtime, monkeypatch, raw)
+    monkeypatch.setenv('FIXTURE_IDENTITY_DAMAGE', damage)
+    code, bridge, verified = artifacts.probe(session, artifacts.BUILTIN, manifest)
+    assert code == 20 and bridge is None and verified is None
+    if damage == 'replace':
+        # The substitute is otherwise valid, including current challenge and
+        # pair/copy/SO facts. Only the mandatory retained-origin proof refuses it.
+        value, facts = artifacts._identity_file(session)
+        assert facts[2] & 0o777 == 0o600 and facts[4] == 1
+        assert artifacts.validate_bridge_identity(manifest, value, session.repo)['identity'] == value
+    assert not any('process_prng_compat.c' in ' '.join(call.get('cc', [])) for call in runtime.calls())
+
+
+@pytest.mark.parametrize('outcome', ['success', 'absence', 'raw17', 'raw124', 'invalid', 'exception', 'interrupt'])
+@pytest.mark.parametrize('close_error', [False, True])
+def test_report_descriptor_closure_preserves_primary_and_never_qualifies_failed_close(
+        runtime, monkeypatch, capsys, outcome, close_error):
+    raw = {'absence': 10, 'raw17': 17, 'raw124': 124}.get(outcome, 0)
+    artifacts, prefix, session, manifest = report_probe_context(runtime, monkeypatch, raw)
+    if outcome == 'invalid':
+        monkeypatch.setenv('FIXTURE_IDENTITY_DAMAGE', 'partial')
+    launch = prefix.Session.launch
+    primary = KeyboardInterrupt('fixture launch interrupted') if outcome == 'interrupt' else ValueError('fixture launch failed')
+    observed = {'closes': 0}
+    def selected_launch(self, *args, **kwargs):
+        path = session.tmp / artifacts.IDENTITY_REPORT
+        assert path.is_file(), 'origin allocation must precede even exceptional launches'
+        observed['fd'] = report_origin_fd(path)
+        if outcome in ('exception', 'interrupt'):
+            raise primary
+        return launch(self, *args, **kwargs)
+    close = artifacts.os.close
+    def checked_close(fd):
+        if fd == observed.get('fd'):
+            observed['closes'] += 1
+            close(fd)
+            if close_error:
+                raise OSError(errno.EIO, 'fixture close failed after release')
+        else:
+            close(fd)
+    monkeypatch.setattr(prefix.Session, 'launch', selected_launch)
+    monkeypatch.setattr(artifacts.os, 'close', checked_close)
+    if outcome in ('exception', 'interrupt'):
+        with pytest.raises(type(primary)) as caught:
+            artifacts.probe(session, artifacts.BUILTIN, manifest)
+        assert caught.value is primary
+    else:
+        code, bridge, verified = artifacts.probe(session, artifacts.BUILTIN, manifest)
+        expected = 20 if outcome == 'invalid' or (close_error and raw in (0, 10)) else raw
+        assert code == expected
+        if code not in (0, 10):
+            assert bridge is None and verified is None
+    assert observed['closes'] == 1
+    with pytest.raises(OSError) as closed:
+        os.fstat(observed['fd'])
+    assert closed.value.errno == errno.EBADF
+    stderr = capsys.readouterr().err
+    if close_error:
+        assert stderr.count('Wine admission: phase=report-close errno=5') == 1
+    else:
+        assert 'phase=report-close' not in stderr
+
+
+@pytest.mark.parametrize('kind', ['empty', 'partial', 'mode', 'symlink', 'hardlink'])
+def test_parent_never_adopts_or_repairs_preexisting_report(runtime, monkeypatch, kind):
+    artifacts, _, session, manifest = report_probe_context(runtime, monkeypatch)
+    path = session.tmp / artifacts.IDENTITY_REPORT
+    target = runtime.root / 'preserved-report'
+    target.write_bytes(b'preserve')
+    if kind == 'symlink':
+        path.symlink_to(target)
+    elif kind == 'hardlink':
+        os.link(target, path)
+    else:
+        path.write_bytes(b'partial' if kind == 'partial' else b'')
+        path.chmod(0o644 if kind == 'mode' else 0o600)
+    before = path.lstat(), path.read_bytes(), target.read_bytes(), runtime.calls()
+    with pytest.raises(ValueError, match='already exists'):
+        artifacts.probe(session, artifacts.BUILTIN, manifest)
+    assert (path.lstat().st_ino, path.lstat().st_mode, path.read_bytes(), target.read_bytes(), runtime.calls()) == (
+        before[0].st_ino, before[0].st_mode, before[1], before[2], before[3])
+
+
+def test_parent_exclusive_open_refuses_a_racing_report(runtime, monkeypatch):
+    artifacts, _, session, manifest = report_probe_context(runtime, monkeypatch)
+    path = session.tmp / artifacts.IDENTITY_REPORT
+    open_fd = artifacts.os.open
+    observed = []
+    def race(name, flags, *args, **kwargs):
+        if Path(name) == path and flags & os.O_CREAT:
+            assert flags == os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC
+            assert args == (0o600,)
+            observed.append(True)
+            fd = open_fd(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            os.write(fd, b'preserve racing report')
+            os.close(fd)
+        return open_fd(name, flags, *args, **kwargs)
+    monkeypatch.setattr(artifacts.os, 'open', race)
+    before = runtime.calls()
+    with pytest.raises(FileExistsError):
+        artifacts.probe(session, artifacts.BUILTIN, manifest)
+    assert observed == [True] and path.read_bytes() == b'preserve racing report'
+    assert runtime.calls() == before
+
+
+def test_report_allocation_validates_owned_tmp_root_before_creation(runtime, monkeypatch):
+    artifacts, _, session, manifest = report_probe_context(runtime, monkeypatch)
+    preserved = session.tmp.with_name('preserved-tmp')
+    session.tmp.rename(preserved)
+    unowned = runtime.root / 'unowned-report-target'
+    unowned.mkdir(mode=0o700)
+    session.tmp.symlink_to(unowned, target_is_directory=True)
+    before = runtime.calls()
+    with pytest.raises((ValueError, OSError)):
+        artifacts.probe(session, artifacts.BUILTIN, manifest)
+    assert list(unowned.iterdir()) == [], 'origin ownership must be checked before creating a sink'
+    assert runtime.calls() == before and preserved.is_dir()
+
+
+@pytest.mark.parametrize('fault', ['nonempty', 'mode', 'hardlink', 'uid', 'type', 'inheritable'])
+def test_parent_refuses_invalid_initial_sink_facts_and_closes_without_launch(runtime, monkeypatch, fault):
+    artifacts, _, session, manifest = report_probe_context(runtime, monkeypatch)
+    path = session.tmp / artifacts.IDENTITY_REPORT
+    open_fd, fstat_fd = artifacts.os.open, artifacts.os.fstat
+    observed = {}
+    def altered_allocation(name, flags, *args, **kwargs):
+        fd = open_fd(name, flags, *args, **kwargs)
+        if Path(name) == path and flags & os.O_EXCL:
+            observed['fd'] = fd
+            if fault == 'nonempty':
+                os.write(fd, b'partial')
+            elif fault == 'mode':
+                path.chmod(0o644)  # Deliberate fixture fault, never a production repair.
+            elif fault == 'hardlink':
+                os.link(path, runtime.root / 'extra-report-link')
+            elif fault == 'inheritable':
+                os.set_inheritable(fd, True)
+        return fd
+    def altered_facts(fd):
+        info = fstat_fd(fd)
+        if fd == observed.get('fd') and fault in ('uid', 'type'):
+            fields = list(info)
+            if fault == 'uid':
+                fields[4] = os.geteuid() + 1
+            else:
+                fields[0] = stat.S_IFDIR | 0o600
+            return os.stat_result(fields)
+        return info
+    monkeypatch.setattr(artifacts.os, 'open', altered_allocation)
+    monkeypatch.setattr(artifacts.os, 'fstat', altered_facts)
+    before = runtime.calls()
+    assert artifacts.probe(session, artifacts.BUILTIN, manifest) == (20, None, None)
+    assert runtime.calls() == before and path.exists()
+    with pytest.raises(OSError) as closed:
+        fstat_fd(observed['fd'])
+    assert closed.value.errno == errno.EBADF
 
 
 def bind_discovery_fixture(runtime):
@@ -540,7 +796,13 @@ def compile_host(tmp_path, source, *extra):
     return output
 
 
-def owned_probe_environment(tmp_path, mode='normal', **overrides):
+def owned_probe_environment(tmp_path, mode='normal', *, preallocate=True, **overrides):
+    if preallocate:
+        # Direct C-unit fixtures supply the host-owned sink, not parent admission
+        # proof. Real retained-origin behavior is tested through artifacts.probe.
+        path = tmp_path / 'space-record-publication-identity.json'
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        os.close(fd)
     env = dict(os.environ, PROBE_FIXTURE=mode, PROBE_HOST_TMP=str(tmp_path),
                 SPACE_WINE_WINDOWS_TMP=r'Q:\owned\tmp',
                 SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
@@ -548,6 +810,32 @@ def owned_probe_environment(tmp_path, mode='normal', **overrides):
                 WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b')
     env.update(overrides)
     return env
+
+
+def test_actual_probe_opens_only_the_preallocated_report_without_create_or_truncate(tmp_path):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    path = tmp_path / 'space-record-publication-identity.json'
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    origin = os.fstat(fd)
+    try:
+        env = owned_probe_environment(tmp_path, preallocate=False)
+        result = subprocess.run([str(exe)], env=env,
+                                capture_output=True, text=True, umask=0o002)
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert path.stat().st_ino == origin.st_ino and path.stat().st_mode & 0o777 == 0o600
+        assert json.loads(path.read_text())['size'] == 112
+        # OPEN_EXISTING does not implement parent freshness or truncate an
+        # existing tail. Raw child0 here is not an admission/provenance claim.
+        path.write_bytes(b'X' * 4096)
+        stale = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
+        assert stale.returncode == 0 and path.stat().st_size == 4096
+        assert path.read_bytes().endswith(b'X')
+    finally:
+        os.close(fd)
+    path.unlink()
+    missing = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, preallocate=False), capture_output=True, text=True)
+    assert missing.returncode == 20 and not path.exists()
+    assert 'fixture-crypto-load' not in missing.stdout
 
 
 @pytest.mark.parametrize('case', ['missing', 'empty', 'oversize', 'truncated', 'relative', 'unc', 'device', 'mixed',
@@ -578,7 +866,7 @@ def test_required_owned_environment_failure_precedes_all_probe_work(tmp_path, ca
         assert 'fixture-set-temp' in result.stdout and 'fixture-set-tmp' not in result.stdout
     assert 'fixture-owned-before-load' not in result.stdout
     assert 'fixture-entry0' not in result.stdout and 'fixture-crypto-load' not in result.stdout
-    assert not (tmp_path / 'space-record-publication-identity.json').exists()
+    assert (tmp_path / 'space-record-publication-identity.json').read_bytes() == b''
     assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
     assert all(len(line.encode()) < 160 for line in result.stderr.splitlines())
 
@@ -612,7 +900,7 @@ int main(void) {
 }
 ''')
     exe = compile_host(tmp_path, 'probe', str(source))
-    env = owned_probe_environment(tmp_path, PROBE_ENV_CASE=case)
+    env = owned_probe_environment(tmp_path, preallocate=False, PROBE_ENV_CASE=case)
     if case == 'missing':
         env.pop('SPACE_WINE_WINDOWS_TMP')
     result = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
@@ -645,7 +933,7 @@ int main(void) { return space_wine_apply_owned_environment(FALSE) ? 1 : 0; }
 @pytest.mark.parametrize('mode', ['pair-missing', 'pair-export', 'pair-owner', 'pair-status',
                                  'pair-echo', 'pair-pe-id', 'pair-unix-id', 'pair-size',
                                  'pair-abi', 'pair-arch', 'pair-features', 'pair-inode',
-                                 'report-create', 'report-write', 'report-short', 'report-close'])
+                                 'report-open', 'report-write', 'report-short', 'report-close'])
 def test_actual_probe_pair_failure_never_reaches_crypto(tmp_path, mode):
     exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
     result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode),
@@ -667,7 +955,7 @@ def test_actual_probe_reports_numeric_publication_loader_error(tmp_path, mode, e
     assert all(len(line.encode()) < 160 for line in lines)
     assert 'fixture-entry0' not in result.stdout and 'fixture-crypto-load' not in result.stdout
     assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
-    assert not (tmp_path / 'space-record-publication-identity.json').exists()
+    assert (tmp_path / 'space-record-publication-identity.json').read_bytes() == b''
 
 
 @pytest.mark.parametrize('mode,status', [('pair-status', -1073741515),
@@ -683,7 +971,7 @@ def test_actual_probe_reports_raw_entry0_status_before_identity_failure(tmp_path
     assert all(len(line.encode()) < 160 for line in result.stderr.splitlines())
     assert 'fixture-entry0' in result.stdout and 'fixture-crypto-load' not in result.stdout
     assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
-    assert not (tmp_path / 'space-record-publication-identity.json').exists()
+    assert (tmp_path / 'space-record-publication-identity.json').read_bytes() == b''
 
 
 @pytest.mark.parametrize('mode,code', [('normal', 0), ('load-126', 10), ('export-127', 10)])
@@ -701,9 +989,9 @@ def test_actual_probe_writes_identity_before_crypto_in_same_process(tmp_path, mo
                         unix_build_id='01' + '00'*31, module_device=7, module_inode=19,
                         architecture=0x8664, features=1)
     assert result.stdout.index('fixture-entry0') < result.stdout.index('fixture-crypto-load')
-    before = report.read_bytes()
+    report.unlink()
     again = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
-    assert again.returncode == 20 and report.read_bytes() == before
+    assert again.returncode == 20 and not report.exists()
     assert 'fixture-crypto-load' not in again.stdout
 
 

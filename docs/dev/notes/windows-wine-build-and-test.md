@@ -470,17 +470,48 @@ verified Windows temp mapping and the fixed policy verification flag. Substitute
 roots fail before launching Wine. No parent chmod or global umask change is used.
 
 Every Wine child overrides inherited XDG_DATA_HOME/XDG_CACHE_HOME with the owned
-host `data/`/`cache/` paths and POSIX TMPDIR with the owned host `tmp/`. Before
-conversion is ready, Windows TEMP/TMP are `C:\windows\temp` **inside the fresh
-owned prefix**, Wine's bootstrap system-temp location; regular host capture files
-already use the private host `tmp/`. After wineboot, the selected Wine launches
+host `data/`/`cache/` paths and POSIX TMPDIR with the owned host `tmp/`. TEMP/TMP
+launch inputs use `C:\windows\temp` **inside the fresh owned prefix** until
+conversion is ready; regular host capture files already use the private host
+`tmp/`. Wine9 may skip Unix TEMP/TMP imports and reapply registry environment, so
+those inputs alone do not establish effective Windows process temp. After wineboot,
+the selected Wine launches
 builtin `C:\windows\system32\winepath.exe -w <owned-tmp>` then `-u <result>`.
 Only that one owned root can be converted. The result must be drive-absolute and
 roundtrip exactly to the owned host root. No `Z:` mapping is presumed or inspected.
-After verification TEMP and TMP both use that returned Windows path, so native
-temp operations and POSIX TMPDIR refer to the same owned directory. Windows
-profile data remains within the private prefix as well; old shared/home data is
-neither inspected nor cleaned. Data isolation is not claimed to fix a DACL mismatch.
+After verification, protected private `SPACE_WINE_WINDOWS_TMP` carries that exact
+Windows path; before mapping it carries the bootstrap path. Inherited and extra
+launch overrides cannot replace it. At entry the admission probe requires the
+generic `wine_owned_environment.h` initializer: validate bounded drive-absolute,
+traversal-free UTF-16, set TEMP then TMP, and read back both exactly after both
+sets, before publication/crypto DLL loading or report use. Missing required,
+empty/malformed/truncated, API or readback failures are fatal contract20 with only
+fixed-phase numeric diagnostics. Optional absence is a no-op only for a genuinely
+absent handoff; it establishes no owned-root claim. Server cleanup uses immutable
+bootstrap data without reading derived setup, including when setup is damaged.
+
+The parent exclusively allocates the fixed identity report in its owned host tmp
+with mode0600, nofollow and CLOEXEC, checking a current-UID, regular, single-linked,
+zero-length object. It retains the noninherited native descriptor through probe
+execution and all host validation. After process-local temp initialization the
+Windows child uses OPEN_EXISTING, checked WriteFile/CloseHandle, and no creation or
+truncation. Acceptance requires the path/read result and retained descriptor to
+match the original device/inode/mode/UID/link identity plus the unchanged bounded
+JSON/challenge/pair/SO proof. Legitimate writes may change size and timestamps,
+not that origin. Substitution or failed close proof cannot authorize0 or10; close
+errors are explicit and do not mask an already failed child or primary exception.
+Preexisting paths are never adopted/repaired/removed. Only a fully verified10
+permits existing verified removal and a fresh exclusive sink for the next probe;
+failed empty/partial reports can remain as evidence without admission.
+
+Application/test entry-point initialization remains future Tasks6/7 work: neither
+launch inputs nor probe initialization proves universal application startup.
+Actual Wine runtime correction remains unproved until the guarded experiment
+after source review/commit; host adapters and tiny PE compilation are not that
+proof. The prior missing report's effective Windows location was not observed and
+is not recovered by browsing prefix contents. Windows profile data remains within
+the private prefix; old shared/home data is neither inspected nor cleaned. Data
+isolation is not claimed to fix a DACL mismatch.
 
 Before the API probe, selected builtin `C:\windows\system32\reg.exe` sets only
 these three values, with `/f /reg:64`, then queries each exact `/v` name with

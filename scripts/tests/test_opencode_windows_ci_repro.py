@@ -456,6 +456,25 @@ def test_admission_failure_stops_before_full_suite(tmp_path, monkeypatch):
         {"backend": "builtin", "returncode": 20}]
 
 
+@pytest.mark.parametrize('raw', [0, 10])
+def test_reproducer_refuses_valid_json_substitution_of_parent_report(tmp_path, monkeypatch, raw):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    runtime.codes.write_text(json.dumps([raw, 0]))
+    monkeypatch.setenv('FIXTURE_IDENTITY_DAMAGE', 'replace')
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail'
+    data = result['evidence']
+    assert data['failing_step'] == 'wine-admission'
+    stage = data['stages'][-1]
+    assert stage['progress']['admission_phases'] == [{'backend': 'builtin', 'returncode': 20}]
+    assert stage['cleanup']['outcome'] == 'pass'
+    state = stage['cleanup']['after']['state']
+    assert state['ended'] and not state['authorized']
+    assert not (runtime.overlay / 'admission.json').exists()
+    assert not any(call.get('wine', [''])[0].endswith('space-cli.exe') for call in runtime.calls())
+    assert not any('process_prng_compat.c' in ' '.join(call.get('cc', [])) for call in runtime.calls())
+
+
 @pytest.mark.parametrize('code,outcome', [(17, 'nonzero_exit'), (124, 'timeout')])
 def test_builder_has_parent_session_before_any_initialization_and_failure_is_terminal(tmp_path, monkeypatch, code, outcome):
     repo = reproduction_fixture(tmp_path, monkeypatch)
@@ -2284,7 +2303,8 @@ def test_parent_terminal_backstop_ignores_damaged_setup_but_normal_handoffs_refu
                     'WINESERVER': session.owner['tools']['server']['executable'],
                     'XDG_DATA_HOME': str(session.directory / 'data'),
                     'XDG_CACHE_HOME': str(session.directory / 'cache'), 'TMPDIR': str(session.tmp),
-                    'TEMP': r'C:\windows\temp', 'TMP': r'C:\windows\temp'}
+                    'TEMP': r'C:\windows\temp', 'TMP': r'C:\windows\temp',
+                    'SPACE_WINE_WINDOWS_TMP': r'C:\windows\temp'}
     assert all(call['env'] == expected_env for call in servers)
     ledger = json.loads((runtime.root / data['ledger_path']).read_text())
     assert ledger['stages'][-1]['cleanup']['outcome'] == 'pass'

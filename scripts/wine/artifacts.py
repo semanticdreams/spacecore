@@ -17,6 +17,7 @@ import tempfile
 import signal
 import secrets
 import re
+import errno
 
 if __package__:
     from . import prefix, build_publication, publication_toolchain
@@ -323,34 +324,68 @@ def _remove_identity_report(session, verified):
 
 
 def probe(session, backend, manifest):
+    session.validate()
     _verify_discovery_copy(manifest, OVERLAY)
     before = verify(OVERLAY, "wine-overlay")
     report = session.tmp / IDENTITY_REPORT
     if report.exists() or report.is_symlink():
         raise ValueError('Publication report already exists; refusing unverified removal')
     challenge = secrets.token_hex(8)
-    print(f"Wine admission: probe backend={backend} deadline=60s kill-after=5s", flush=True)
-    code = session.launch([session.owner['tools']['wine']['executable'],
-                           str(OVERLAY / "process-prng-probe.exe")], 'probe', {
-                               'WINEDLLOVERRIDES': 'space_record_publication=b;' + backend,
-                               'WINEDLLPATH': str(BUILD / 'wine-publication/modules'),
-                               'SPACE_WINE_IDENTITY_CHALLENGE': challenge})
+    try:
+        fd = os.open(report, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+    except OSError as error:
+        print(f'Wine admission: phase=report-allocate errno={error.errno or errno.EIO}', file=sys.stderr, flush=True)
+        raise OSError(error.errno or errno.EIO, 'Publication report allocation refused') from None
+    code = 20
     bridge = verified = None
-    if code in (0, 10):
+    try:
         try:
-            verified = _identity_file(session)
-            if publication_manifest(session) != manifest:
-                raise ValueError('Publication pair changed during probe')
-            bridge = validate_bridge_identity(manifest, verified[0], session.repo, challenge)
-        except (OSError, ValueError, KeyError, TypeError) as error:
-            print(f'Wine admission: publication contract refused: {error}', flush=True)
-            code = 20
+            initial = os.fstat(fd)
+            origin = (initial.st_dev, initial.st_ino, initial.st_mode, initial.st_uid, initial.st_nlink)
+            if (not stat.S_ISREG(initial.st_mode) or stat.S_IMODE(initial.st_mode) != 0o600
+                    or initial.st_uid != os.geteuid() or initial.st_nlink != 1 or initial.st_size != 0
+                    or os.get_inheritable(fd)):
+                raise ValueError('Invalid fresh report origin')
+        except (OSError, ValueError) as error:
+            print(f'Wine admission: phase=report-allocate errno={getattr(error, "errno", None) or errno.EINVAL}',
+                  file=sys.stderr, flush=True)
+        else:
+            print(f"Wine admission: probe backend={backend} deadline=60s kill-after=5s", flush=True)
+            code = session.launch([session.owner['tools']['wine']['executable'],
+                                   str(OVERLAY / "process-prng-probe.exe")], 'probe', {
+                                       'WINEDLLOVERRIDES': 'space_record_publication=b;' + backend,
+                                       'WINEDLLPATH': str(BUILD / 'wine-publication/modules'),
+                                       'SPACE_WINE_IDENTITY_CHALLENGE': challenge})
+            if code in (0, 10):
+                try:
+                    verified = _identity_file(session)
+                    if publication_manifest(session) != manifest:
+                        raise ValueError('Publication pair changed during probe')
+                    bridge = validate_bridge_identity(manifest, verified[0], session.repo, challenge)
+                    held = os.fstat(fd)
+                    facts = (held.st_dev, held.st_ino, held.st_mode, held.st_uid, held.st_nlink,
+                             held.st_size, held.st_mtime_ns, held.st_ctime_ns)
+                    # Legitimate writes change size/times, never the original
+                    # dev/inode/type/mode/UID/link identity retained by this fd.
+                    if facts[:5] != origin or facts != verified[1]:
+                        raise ValueError('Publication report origin changed')
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    print(f'Wine admission: phase=report-verify errno={getattr(error, "errno", None) or errno.EINVAL}',
+                          file=sys.stderr, flush=True)
+                    code, bridge, verified = 20, None, None
+        if inventory(OVERLAY) != before:
+            raise ValueError("Probe modified the overlay; refusing to claim unknown output")
+    finally:
+        try:
+            os.close(fd)
+        except OSError as error:
+            print(f'Wine admission: phase=report-close errno={error.errno or errno.EIO}', file=sys.stderr, flush=True)
+            if code in (0, 10):
+                code, bridge, verified = 20, None, None
     detail = (" (admission timeout, not crypto absence)" if code == 124 else
               " (SIGKILL/forced admission timeout, not crypto absence)" if code in (137, -9) else "")
     print(f"Wine admission: probe exit={code}" +
           detail, flush=True)
-    if inventory(OVERLAY) != before:
-        raise ValueError("Probe modified the overlay; refusing to claim unknown output")
     return code, bridge, verified
 
 
