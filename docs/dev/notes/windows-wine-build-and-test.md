@@ -581,6 +581,39 @@ not establish later full-suite success, nor close the
 historical Linux native SIG investigation. Agents must use the existing guarded
 capability, not the manual shell examples above, for real reproduction.
 
+### Private publication operation ABI (native-only prerequisite)
+
+The shared private header now defines the first operation frame: ABI1, **168 bytes**,
+with separate caller-owned primary, cleanup and transport byte buffers. Identity
+remains ABI1/112 bytes. There is no 144-byte compatibility frame. Protocol NTSTATUS
+is separate from operation failure: `SRP_SUCCESS` can carry a primary or cleanup
+error, including a **present empty** error. `primary_state` and `CLEANUP_PRESENT`
+encode presence independently of byte counts. Buffers report complete required
+byte lengths and separate truncation flags; they never imply a NUL terminator.
+
+The native-only `record_publication_unix.h` entry owns opaque, nonrecycled context
+IDs and delegates all filesystem/security work to the unchanged phased Operation.
+BEGIN copies/constructs only (START/sequence0), without preparing a workspace.
+ADVANCE/CANCEL/RELEASE consume only an exact event/sequence; SNAPSHOT ignores stale
+event/sequence inputs and retrieves sticky state without allocation or native work.
+Release finalizes cleanup only, returns the final snapshot before retiring the ID,
+and does not invent cancellation errors for BEFORE_CLEANUP/DONE. Native DONE with
+cleanup errors is completed finalization: return its error-bearing snapshot and
+retire normally, not a false clean result. Unexpected contained live exceptions
+instead poison publication, retain a bounded diagnostic and recoverable ownership
+until finalization completes, and never clear committed truth. Shared registry
+ownership and per-context serialization prevent stale release from erasing newer
+work. Pointer spans must be caller-owned valid synchronous storage; integer ranges
+and incompatible overlap are checked, not arbitrary hostile addresses probed.
+
+This adapter is **excluded from the engine source glob on every platform** and is
+currently compiled only by the Linux x86_64 native ABI test. It is not a PE-callable
+host symbol. The actual Wine pair still advertises identity feature1 only; its Unix
+operation slot remains `SRP_UNSUPPORTED`. No operation forwarding, Wine authority
+validation, production client, or publication admission is activated here. Those
+are separate Tasks5B1/5B2 work; native host tests are not actual Windows/Wine operation
+proof and do not resolve the old strict Windows publisher failure.
+
 ### Bounded reproduction evidence
 
 The same `reproduce --repo-root .` action records these ordered stages:

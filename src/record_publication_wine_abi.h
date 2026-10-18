@@ -28,6 +28,41 @@ typedef struct {
     uint32_t architecture, features;
 } SrpIdentity;
 
+/* Private operation protocol; not advertised by the identity-only Wine pair yet. */
+#define SRP_BEGIN UINT32_C(1)
+#define SRP_ADVANCE UINT32_C(2)
+#define SRP_SNAPSHOT UINT32_C(3)
+#define SRP_CANCEL UINT32_C(4)
+#define SRP_RELEASE UINT32_C(5)
+#define SRP_CONTINUE UINT32_C(0)
+#define SRP_FAILED UINT32_C(1)
+#define SRP_START UINT32_C(0)
+#define SRP_BEFORE_WRITE UINT32_C(1)
+#define SRP_BEFORE_SECURITY UINT32_C(2)
+#define SRP_BEFORE_COMMIT UINT32_C(3)
+#define SRP_BEFORE_CLEANUP UINT32_C(4)
+#define SRP_DONE UINT32_C(5)
+#define SRP_VALID UINT32_C(1)
+#define SRP_COMMITTED UINT32_C(2)
+#define SRP_DONE_FLAG UINT32_C(4)
+#define SRP_PRIMARY_TRUNCATED UINT32_C(8)
+#define SRP_CLEANUP_TRUNCATED UINT32_C(16)
+#define SRP_CLEANUP_PRESENT UINT32_C(32)
+#define SRP_POISONED UINT32_C(64)
+#define SRP_TRANSPORT_TRUNCATED UINT32_C(128)
+#define SRP_PRIMARY_ABSENT UINT32_C(0)
+#define SRP_PRIMARY_PRESENT UINT32_C(1)
+
+typedef struct { uint64_t address, size; } SrpSlice;
+typedef struct { uint64_t address, capacity, required; } SrpBuffer;
+typedef struct {
+    uint32_t size, abi, opcode, event;
+    uint64_t context, sequence;
+    SrpSlice path, payload, hook_error;
+    SrpBuffer primary_error, cleanup_error, transport_error;
+    uint32_t reply, flags, primary_state, reserved;
+} SrpCall;
+
 #ifdef __cplusplus
 #define SRP_ASSERT static_assert
 #else
@@ -42,6 +77,21 @@ SRP_ASSERT(offsetof(SrpIdentity, module_device) == 88, "device offset");
 SRP_ASSERT(offsetof(SrpIdentity, module_inode) == 96, "inode offset");
 SRP_ASSERT(offsetof(SrpIdentity, architecture) == 104, "architecture offset");
 SRP_ASSERT(offsetof(SrpIdentity, features) == 108, "features offset");
+SRP_ASSERT(sizeof(SrpSlice) == 16, "SrpSlice size");
+SRP_ASSERT(sizeof(SrpBuffer) == 24, "SrpBuffer size");
+SRP_ASSERT(sizeof(SrpCall) == 168, "SrpCall size");
+SRP_ASSERT(offsetof(SrpCall, context) == 16, "context offset");
+SRP_ASSERT(offsetof(SrpCall, sequence) == 24, "sequence offset");
+SRP_ASSERT(offsetof(SrpCall, path) == 32, "path offset");
+SRP_ASSERT(offsetof(SrpCall, payload) == 48, "payload offset");
+SRP_ASSERT(offsetof(SrpCall, hook_error) == 64, "hook offset");
+SRP_ASSERT(offsetof(SrpCall, primary_error) == 80, "primary error offset");
+SRP_ASSERT(offsetof(SrpCall, cleanup_error) == 104, "cleanup error offset");
+SRP_ASSERT(offsetof(SrpCall, transport_error) == 128, "transport error offset");
+SRP_ASSERT(offsetof(SrpCall, reply) == 152, "reply offset");
+SRP_ASSERT(offsetof(SrpCall, flags) == 156, "flags offset");
+SRP_ASSERT(offsetof(SrpCall, primary_state) == 160, "primary state offset");
+SRP_ASSERT(offsetof(SrpCall, reserved) == 164, "reserved offset");
 #undef SRP_ASSERT
 
 #endif

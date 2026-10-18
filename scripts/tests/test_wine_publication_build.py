@@ -998,6 +998,55 @@ int main(void) { return 0; }
     assert result.returncode == 0, result.stderr
 
 
+@pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
+def test_publication_operation_layout_compiles_in_c_and_cpp(tmp_path, compiler, standard):
+    source = '''#include "record_publication_wine_abi.h"
+#ifdef __cplusplus
+#define ASSERT static_assert
+#else
+#define ASSERT _Static_assert
+#endif
+ASSERT(sizeof(SrpIdentity) == 112 && SRP_REQUIRED_FEATURES == 1, "identity unchanged");
+ASSERT(sizeof(SrpSlice) == 16 && sizeof(SrpBuffer) == 24, "spans");
+ASSERT(sizeof(SrpCall) == 168, "first operation frame, no 144 alias");
+ASSERT(offsetof(SrpCall, context) == 16, "context");
+ASSERT(offsetof(SrpCall, sequence) == 24, "sequence");
+ASSERT(offsetof(SrpCall, path) == 32, "path");
+ASSERT(offsetof(SrpCall, payload) == 48, "payload");
+ASSERT(offsetof(SrpCall, hook_error) == 64, "hook");
+ASSERT(offsetof(SrpCall, primary_error) == 80, "primary");
+ASSERT(offsetof(SrpCall, cleanup_error) == 104, "cleanup");
+ASSERT(offsetof(SrpCall, transport_error) == 128, "transport");
+ASSERT(offsetof(SrpCall, reply) == 152, "reply");
+ASSERT(offsetof(SrpCall, flags) == 156, "flags");
+ASSERT(offsetof(SrpCall, primary_state) == 160, "primary presence");
+ASSERT(offsetof(SrpCall, reserved) == 164, "reserved");
+ASSERT(SRP_BEGIN == 1 && SRP_ADVANCE == 2 && SRP_SNAPSHOT == 3 && SRP_CANCEL == 4 && SRP_RELEASE == 5, "opcodes");
+ASSERT(SRP_CONTINUE == 0 && SRP_FAILED == 1, "replies");
+ASSERT(SRP_START == 0 && SRP_BEFORE_WRITE == 1 && SRP_BEFORE_SECURITY == 2 && SRP_BEFORE_COMMIT == 3
+       && SRP_BEFORE_CLEANUP == 4 && SRP_DONE == 5, "events");
+ASSERT(SRP_VALID == 1 && SRP_COMMITTED == 2 && SRP_DONE_FLAG == 4 && SRP_PRIMARY_TRUNCATED == 8
+       && SRP_CLEANUP_TRUNCATED == 16 && SRP_CLEANUP_PRESENT == 32 && SRP_POISONED == 64
+       && SRP_TRANSPORT_TRUNCATED == 128, "flags");
+ASSERT(SRP_PRIMARY_ABSENT == 0 && SRP_PRIMARY_PRESENT == 1, "presence not status");
+int main(void) { return 0; }
+'''
+    result = subprocess.run([compiler, '-x', 'c++' if compiler == 'c++' else 'c', f'-std={standard}',
+                             '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'src'),
+                             '-o', str(tmp_path / 'operation-layout'), '-'],
+                            input=source, text=True, capture_output=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+
+
+def test_publication_operation_layout_native_header_refuses_pe_use(tmp_path):
+    result = subprocess.run(['c++', '-std=c++17', '-D_WIN32', '-I', str(ROOT / 'src'),
+                             '-x', 'c++', '-c', '-o', str(tmp_path / 'not-pe.o'), '-'],
+                            input='#include "record_publication_unix.h"\n',
+                            text=True, capture_output=True, timeout=30)
+    assert result.returncode != 0
+    assert 'requires native Linux x86_64' in result.stderr
+
+
 class Identity(ctypes.Structure):
     _fields_ = [('size', ctypes.c_uint32), ('abi', ctypes.c_uint32),
                 ('challenge', ctypes.c_uint64), ('echo', ctypes.c_uint64),

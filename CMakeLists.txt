@@ -436,6 +436,8 @@ endif()
 find_package(Boost CONFIG REQUIRED)
 
 file( GLOB SOURCES src/*.cpp src/*.c src/realtime/*.cpp )
+# The private native operation adapter is not an engine/PE entry on any platform.
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_unix.cpp)
 if(NOT SPACE_HAS_VTERM)
     list(REMOVE_ITEM SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/terminal.cpp
@@ -888,6 +890,19 @@ if(WIN32)
     target_link_libraries(test_record_publication_operation advapi32)
 endif()
 add_test(NAME test_record_publication_operation COMMAND test_record_publication_operation)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 8
+        AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+    find_package(Threads REQUIRED)
+    add_executable(test_record_publication_abi
+        tests/test_record_publication_abi.cpp
+        src/record_publication_unix.cpp
+        src/record_publication.cpp
+    )
+    target_include_directories(test_record_publication_abi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(test_record_publication_abi PRIVATE Threads::Threads)
+    add_test(NAME test_record_publication_abi COMMAND test_record_publication_abi)
+endif()
 
 add_executable(test_vector_buffer
     tests/test_vector_buffer.cpp
