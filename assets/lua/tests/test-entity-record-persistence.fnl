@@ -83,7 +83,8 @@
         (do (assert (= saved.value entity.value "after"))
             (assert (= saved.revision entity.revision))
             (assert (not= entity.revision revision)))
-        (do (assert (= saved.source-key entity.source-key "after"))
+        (do (assert (= saved.source-key entity.source-key))
+            (assert (= (store.identity-store:resolve-key saved.source-key) "after"))
             (assert (= saved.metadata.nested.value "after"))))
     (set observed.completed true)
     (when notification? (error "completion notification fault")))
@@ -194,7 +195,7 @@
   (assert (= (store:get-entity entity.id) cached))
   (assert (= bytes (Files.read! path)))
   (assert (= (length (fs.list-dir good.entities-dir false)) 1))
-  (good:delete-entity entity.id))
+  (good:retire-entity! entity.id))
 
 (test "native text publication faults leave the owning file cache and revision unchanged"
   (fn store-stage-faults []
@@ -361,7 +362,7 @@
         (expect-error :storage-failed (fn listing-failure [] (unlisted:scan-page {})))
         (Files.write-text! path (if (= (. spec 2) ".md")
                                    "---\nid: bad\ncreated-at: 1\n---\n\nbody"
-                                   "{\"id\":\"bad\",\"source-key\":\"x\",\"target-key\":\"y\",\"created-at\":1}"))
+                                    "{\"id\":\"bad\",\"source-key\":\"x\",\"target-key\":\"y\",\"created-at\":1,\"metadata\":false}"))
         (expect-error :corrupt-data (fn required-fields [] (store:scan-page {})))
         (Files.write-text! path (if (= (. spec 2) ".md")
                                    "---\nid: wrong\ncreated-at: 1\nupdated-at: 1\n---\n\nbody"
@@ -404,7 +405,7 @@
     (fn create-fault [] (store:create-entity {:id "failed-json" :source-key "a" :target-key "b"})))
   (assert (= (store:get-entity "failed-json") nil))
   (assert-clean-entries store.entities-dir [(.. entity.id ".json")])
-  (good:delete-entity entity.id))
+  (good:retire-entity! entity.id))
 
 (test "JSON staging verification security and commit faults preserve links and clean only attempt artifacts"
   (fn json-stage-faults []
@@ -433,8 +434,8 @@
       (assert (= (store:update-entity entity.id {:metadata replacement}) entity))
       (set replacement.nested.value "caller changed again")
       (local page (store:scan-page {:key "b"}))
-      (assert (= (. page.items 1 :source-key) "a"))
-      (assert (= (. page.items 1 :target-key) "b"))
+       (assert (= (store.identity-store:resolve-key (. page.items 1 :source-key)) "a"))
+       (assert (= (store.identity-store:resolve-key (. page.items 1 :target-key)) "b"))
       (set (. page.items 1 :metadata :nested :value) "page changed")
       (assert (= entity.metadata.nested.value "updated"))
       (local reopened (link-store root))
@@ -461,7 +462,7 @@
     (error "postcommit listener fault"))
   (signal:connect listener)
   (fn mutate []
-    (if (= operation :delete) (store:delete-entity entity.id)
+    (if (= operation :delete) (store:retire-entity! entity.id)
         snapshot? (store:replace-text entity.id "committed" revision)
         (store:update-entity entity.id (if (= factory string-store)
                                           {:value "committed"}
@@ -506,7 +507,7 @@
         (local signal (. store (. spec 2)))
         (fn listener [_record] (set seen.count (+ seen.count 1)))
         (signal:connect listener)
-        (local (ok err) (pcall store.delete-entity store entity.id))
+        (local (ok err) (pcall store.retire-entity! store entity.id))
         (signal:disconnect listener true)
         (assert (not ok))
         (assert (= err.code :storage-failed))
@@ -752,7 +753,7 @@
       (local entity (store:create-entity {:value "cached"}))
       (local revision entity.revision)
       (local reopened (string-store root))
-      (reopened:delete-entity entity.id)
+      (reopened:retire-entity! entity.id)
       (local err (expect-error :not-found
                   (fn replace-deleted [] (store:replace-text entity.id "resurrected" revision))))
       (assert (= err.outcome :not-committed))
@@ -933,6 +934,14 @@
     (when (= (string.sub package.config 1 1) "/")
       (with-root (fn workspace-root [root] (check-final-fault root :test-before-security :workspace))))))
 
+(fn assert-confined-cached-get [store entity kind]
+  (if (= kind :symbolic)
+      (do
+        (local err (expect-error :storage-failed (fn confined-get [] (store:get-entity entity.id))))
+        (assert (= err.outcome :not-committed))
+        (assert (string.find err.message "symlink unsupported" 1 true)))
+      (assert (= (store:get-entity entity.id) entity))))
+
 (test "unsafe destination links fail before publication without changing cache revision or referent"
   (fn unsafe-destinations []
     (when (= (string.sub package.config 1 1) "/")
@@ -951,9 +960,10 @@
           (local err (expect-error :storage-failed
             (fn linked-replacement [] (store:replace-text entity.id "after" revision))))
           (assert (= err.outcome :not-committed))
+          (assert-confined-cached-get store entity kind)
+          (assert (= (. store.cache entity.id) entity) "confinement rejection must preserve held cache identity")
           (assert (= entity.value "before"))
           (assert (= entity.revision revision))
-          (assert (= (store:get-entity entity.id) entity))
           (assert (= (fs.read-file referent) bytes))
           (assert (= (fs.read-file path) bytes))))))))
 
@@ -991,7 +1001,7 @@
   (assert (= entity.value "unconditional"))
   (assert (= (. (fs.stat text-file) :permissions) "rw-------"))
   (link:update-entity relation.id {:source-key "changed"})
-  (assert (= relation.source-key "changed"))
+  (assert (= (link.identity-store:resolve-key relation.source-key) "changed"))
   (assert (= (. (fs.stat link-file) :permissions) "rw-------"))
   (assert (= state.text-count 2))
   (assert (= state.json-count 1))
@@ -1013,7 +1023,7 @@
   (local entity (text:create-entity {:value "default userdata"}))
   (assert (= (. (text:read-text entity.id) :value) "default userdata"))
   (local relation (link:create-entity {:source-key "default:a" :target-key "default:b"}))
-  (assert (= (. (link:read-link relation.id) :source-key) "default:a"))
+  (assert (= (link.identity-store:resolve-key (. (link:read-link relation.id) :source-key)) "default:a"))
   (print "record privacy child: umask022, private intermediates and0600 replacements passed"))
 
 (fn exercise-production-stores [text link]
@@ -1026,7 +1036,7 @@
   (assert (= replaced.value " replacement 雪\r\n\n"))
   (link:update-entity relation.id {:source-key "changed"})
   (assert (= (. (text:read-text entity.id) :value) replaced.value))
-  (assert (= (. (link:read-link relation.id) :source-key) "changed"))
+  (assert (= (link.identity-store:resolve-key (. (link:read-link relation.id) :source-key)) "changed"))
   (assert (= (. (fs.stat (text-path text entity.id)) :permissions) "rw-------"))
   (assert (= (. (fs.stat (fs.join-path link.entities-dir (.. relation.id ".json"))) :permissions) "rw-------")))
 
@@ -1087,6 +1097,94 @@
 
 (test "RecordFiles writers preserve true first result and forward committed cleanup diagnostics"
   (fn writer-results [] (with-root results-root)))
+
+(test "legacy frozen text replay preserves absent revision and only reconciliation updates held objects"
+  (fn legacy-frozen []
+    (with-root (fn frozen-root [root]
+      (local store (string-store root))
+      (local held (store:create-entity {:id "frozen" :value "ordinary"}))
+      (local revision held.revision)
+      (local before (store:snapshot-entity held.id))
+      (local bytes "---\nupdated-at: 2\nid: frozen\ncreated-at: 1\n---\n\n  legacy\r\n\n")
+      (local decoded (store:decode-entity bytes))
+      (assert (= decoded.revision nil) "effective legacy tokens do not belong in owning records")
+      (assert (= (store:serialize-entity decoded) "---\nid: frozen\ncreated-at: 1\nupdated-at: 2\n---\n\n  legacy\r\n\n"))
+      (var emissions 0)
+      (fn observed [_] (set emissions (+ emissions 1)))
+      (local handler (store.string-entity-updated:connect observed))
+      (store:persist-entity! held.id bytes bytes)
+      (assert (= (fs.read-file before.path) bytes))
+      (assert (= held.value "ordinary"))
+      (assert (= held.revision revision))
+      (assert (= emissions 0) "frozen persistence must not publish cache or signals")
+      (store:reconcile-entity! held.id bytes before.check bytes)
+      (store.string-entity-updated:disconnect handler true)
+      (assert (= (store:get-entity held.id) held))
+      (assert (= held.revision nil) "reconciliation must clear an optional revision absent in the after-image")
+      (assert (= held.value "  legacy\r\n\n"))
+      (assert (= emissions 1))
+      (assert (= (. (store:read-text held.id) :revision) "legacy:frozen"))
+      (expect-error :conflict (fn stale [] (store:replace-text held.id "lost" revision)))
+      (store:update-entity held.id {:value "ordinary again"})
+      (assert (and held.revision (not= held.revision revision) (not= held.revision "legacy:frozen")))))))
+
+(test "frozen link persistence never normalizes endpoints or publishes before reconciliation"
+  (fn frozen-link []
+    (with-root (fn frozen-root [root]
+      (local store (link-store root))
+      (local held (store:create-entity {:id "frozen-link" :source-key "a" :target-key "b"}))
+      (local before (store:snapshot-entity held.id))
+      (local original held.source-key)
+      (local bytes (json.dumps {:id held.id :source-key "legacy:raw" :target-key "identity:missing"
+                               :created-at 123 :metadata {}}))
+      (local R (require :reference-lifecycle/record-utils))
+      (local check (R.check-bytes bytes "json"))
+      (local ensure store.identity-store.ensure-key)
+      (set store.identity-store.ensure-key (fn forbidden [& _] (error "frozen replay must not normalize")))
+      (local (ok err) (pcall store.persist-entity! store held.id bytes check))
+      (set store.identity-store.ensure-key ensure)
+      (assert ok (tostring err))
+      (assert (= (fs.read-file before.path) bytes) "persist the exact submitted frozen bytes")
+      (assert (= held.source-key original))
+      (store:reconcile-entity! held.id bytes before.check check)
+      (assert (= held.source-key "legacy:raw"))
+      (assert (= held.target-key "identity:missing"))
+      (assert (= (store:get-entity held.id) held))))))
+
+(fn check-invalid-link [store path bytes fragment]
+  (fs.write-file path bytes)
+  (each [_ operation (ipairs [(fn bounded-read [] (store:read-link "invalid"))
+                              (fn bounded-scan [] (store:scan-page {}))
+                              (fn owning-snapshot [] (store:snapshot-entity "invalid"))
+                              (fn ordinary-get [] (store:get-entity "invalid"))])]
+    (local err (expect-error :corrupt-data operation))
+    (assert (= err.outcome :not-committed))
+    (assert (string.find err.message path 1 true) "owning read failure must identify its path")
+    (assert (string.find err.message fragment 1 true) "owning read failure must identify its invalid field"))
+  (assert (= (. store.cache "invalid") nil))
+  (assert (= (fs.read-file path) bytes)))
+
+(test "link reads reject present false null wrong types and mismatched IDs with structured context"
+  (fn invalid-optional-link-fields []
+    (with-root (fn invalid-root [root]
+      (local store (link-store root))
+      (local path (fs.join-path store.entities-dir "invalid.json"))
+      (each [_ spec (ipairs [["source-key" "{}"] ["target-key" "3"]
+                             ["created-at" "\"bad\""] ["metadata" "\"bad\""]])]
+        (local field (. spec 1))
+        (each [_ raw (ipairs ["false" "null" (. spec 2)])]
+          (check-invalid-link store path (.. "{\"id\":\"invalid\",\"" field "\":" raw "}")
+                              (if (= raw "null") "null" field))))
+      (check-invalid-link store path "{\"id\":\"other\"}" "id")))))
+
+(test "lifecycle error assertions read raw scalar messages without table metamethods"
+  (fn raw-error-messages []
+    (local H (require :tests/test-reference-lifecycle-helpers))
+    (fn forbidden [& _] (error "error inspection must not invoke metamethods"))
+    (local err (setmetatable {:code :corrupt-data :message "raw field context" :result {}}
+                             {:__index forbidden :__tostring forbidden}))
+    (assert (= (H.assert-error "field context" (fn structured [] (error err))) "raw field context"))
+    (assert (= (H.assert-error "plain scalar" (fn scalar [] (error "plain scalar" 0))) "plain scalar"))))
 
 (fn main [] (runner.run-tests {:name "entity-record-persistence" :tests tests}))
 {:name "entity-record-persistence" :tests tests :main main

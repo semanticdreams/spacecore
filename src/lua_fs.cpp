@@ -728,9 +728,15 @@ std::string fs_read_file(const std::string& path)
     if (!file) {
         throw sol::error("fs.read_file: unable to open " + path);
     }
-    std::ostringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
+    std::string contents;
+    char buffer[8192];
+    while (file.read(buffer, sizeof(buffer)) || file.gcount() > 0) {
+        contents.append(buffer, static_cast<std::size_t>(file.gcount()));
+    }
+    if (file.bad() || !file.eof()) {
+        throw sol::error("fs.read_file: unable to read " + path);
+    }
+    return contents;
 }
 
 sol::table fs_read_text_window(sol::this_state ts,
@@ -861,6 +867,14 @@ void fs_write_file(const std::string& path, const std::string& contents)
         throw sol::error("fs.write_file: unable to write " + path);
     }
     file << contents;
+    file.flush();
+    if (!file) {
+        throw sol::error("fs.write_file: unable to flush " + path);
+    }
+    file.close();
+    if (!file) {
+        throw sol::error("fs.write_file: unable to close " + path);
+    }
 }
 
 void fs_append_file(const std::string& path, const std::string& contents)

@@ -36,8 +36,8 @@
   (local string-files (collect [key value (pairs RecordFiles)] (values key value)))
   (local link-files (collect [key value (pairs RecordFiles)] (values key value)))
   (local strings (Strings.StringEntityStore {:base-dir dir.path :files string-files}))
-  (local links (Links.LinkEntityStore {:base-dir dir.path :files link-files}))
   (local identities (Identities.IdentityStore {:base-dir dir.path}))
+  (local links (Links.LinkEntityStore {:base-dir dir.path :files link-files :identity-store identities}))
   (local options {:string-store strings :link-store links :identity-store identities
                   :code-store {} :list-store {} :dict-store {} :notebook-store {}
                   :entity-type-catalog {}})
@@ -113,9 +113,10 @@
   (assert (= (length related.items) 2))
   (each [_ item (ipairs related.items)] (assert (= item.source.key brief.key)))
   (local reopened-strings (Strings.StringEntityStore {:base-dir base-dir}))
-  (local reopened-links (Links.LinkEntityStore {:base-dir base-dir}))
+  (local reopened-identities (Identities.IdentityStore {:base-dir base-dir}))
+  (local reopened-links (Links.LinkEntityStore {:base-dir base-dir :identity-store reopened-identities}))
   (local reopened (Graph {:entity-events? false :string-store reopened-strings
-                         :link-store reopened-links :morphs {}}))
+                          :link-store reopened-links :identity-store reopened-identities :morphs {}}))
   (local access ((. (require :graph/capabilities/entities) :access-by-scheme)
                  {:string-store reopened-strings :link-store reopened-links}))
   (each [scheme provider (pairs access)]
@@ -298,13 +299,41 @@
   (local alias-key (.. "identity:" alias.id))
   (links:create-entity {:id "indirect" :source-key alias-key :target-key b.ref.key})
   (local direct (call! graph relations "relationships.create" {:source b.ref :target a.ref}))
+  (local duplicate (call! graph relations "relationships.create" {:source b.ref :target a.ref}))
+  (local link-bytes
+    (collect [_ ref (ipairs [{:key "link-entity:indirect"} direct.ref duplicate.ref])]
+      ref.key (fs.read-file (fs.join-path links.entities-dir (.. (string.sub ref.key 13) ".json")))))
   (local page (call! graph relations "relationships.list" {:subject a.ref}))
-  (assert (= (length page.items) 1) "no implicit identity traversal or collection membership")
-  (assert (= (. page.items 1 :ref :key) direct.ref.key))
-  (assert (= (. page.items 1 :source :key) b.ref.key))
+  (assert (= (length page.items) 3) "alias-inclusive incident matching keeps every directed link ID")
+  (local by-ref (collect [_ item (ipairs page.items)] item.ref.key item))
+  (assert (= (. by-ref direct.ref.key :source :key) b.ref.key))
+  (assert (= (. by-ref duplicate.ref.key :target :key) a.ref.key))
+  (assert (= (. by-ref "link-entity:indirect" :source :key) a.ref.key))
   (local raw-alias (call! graph relations "relationships.list" {:subject {:key alias-key}}))
-  (assert (= (length raw-alias.items) 1))
-  (assert (= (. raw-alias.items 1 :source :key) alias-key))
+  (assert (= (length raw-alias.items) 3))
+  (identities:update-entity "alias" {:target-key "terminal:retargeted"})
+  (local retargeted (call! graph relations "relationships.list" {:subject {:key "terminal:retargeted"}}))
+  (assert (= (length retargeted.items) 3) "all three links reuse the retargeted owner alias")
+  (local retargeted-by-ref (collect [_ item (ipairs retargeted.items)] item.ref.key item))
+  (each [_ spec (ipairs [["link-entity:indirect" "terminal:retargeted" b.ref.key]
+                         [direct.ref.key b.ref.key "terminal:retargeted"]
+                         [duplicate.ref.key b.ref.key "terminal:retargeted"]])]
+    (local item (assert (. retargeted-by-ref (. spec 1)) "exact retargeted link ID must survive"))
+    (assert (= item.source.key (. spec 2)) "retargeting must preserve source direction")
+    (assert (= item.target.key (. spec 3)) "retargeting must preserve target direction")
+    (assert (= (. link-bytes item.ref.key)
+               (fs.read-file (fs.join-path links.entities-dir (.. (string.sub item.ref.key 13) ".json"))))
+            "retargeting must not rewrite any of the three persisted links"))
+  (local description (value! (graph:describe {:key "link-entity:indirect"})))
+  (assert (string.find description.summary "terminal:retargeted" 1 true))
+  (assert (= (. link-bytes "link-entity:indirect") (fs.read-file (fs.join-path links.entities-dir "indirect.json")))
+          "read projection and identity retargeting never rewrite link bytes")
+  (local first (call! graph relations "relationships.list" {:subject b.ref :limit 1}))
+  (assert first.has-more)
+  (local equivalent-subject {:key (. (links:read-link (string.sub direct.ref.key 13)) :source-key)})
+  (assert (= (identities:resolve-key equivalent-subject.key) b.ref.key))
+  (error! (graph:invoke relations "relationships.list"
+                      {:subject equivalent-subject :cursor first.cursor} {}) :invalid-arguments :not-committed)
   (local (ok _err) (pcall Relationships.create! strings links {:key alias-key} b.ref))
   (assert (not ok) "shared domain boundary rejects unsupported endpoint independently of graph"))
 
@@ -352,7 +381,8 @@
     (assert (= link-error.result.source.key source.ref.key))
     (assert (= link-error.result.target.key other.ref.key))
     (set link-error.result.source.key "detached")
-    (assert (= (. (links:read-link (string.sub link-error.result.ref.key 13)) :source-key) source.ref.key))))
+    (assert (= (links.identity-store:resolve-key
+                 (. (links:read-link (string.sub link-error.result.ref.key 13)) :source-key)) source.ref.key))))
 
 (fn failures [graph strings links _identities base-dir string-files link-files]
   (forbid-visuals! graph)
@@ -519,11 +549,63 @@
   (assert (= reads.count 2) "failed description must not prime the legacy cache")
   (assert (= reads.unbounded 0)))
 
+(fn bounded-link-defaults [_graph _strings links _identities _base-dir _string-files link-files]
+  (local reads [])
+  (fn read [path maximum]
+    (table.insert reads maximum)
+    (RecordFiles.read! path maximum))
+  (set link-files.read! read)
+  (local path (fs.join-path links.entities-dir "defaults.json"))
+  (local bytes "{\"id\":\"defaults\"}")
+  (RecordFiles.write-text! path bytes)
+  (local expected (json.dumps {:id "defaults" :source-key "" :target-key "" :created-at 0 :metadata {}}))
+  (assert (= (json.dumps (links:decode-entity bytes)) expected))
+  (assert (= (json.dumps (links:read-link "defaults")) expected))
+  (local page (links:scan-page {}))
+  (assert (= (# page.items) 1))
+  (assert (= (json.dumps (. page.items 1)) expected))
+  (assert (= (# reads) 2))
+  (each [_ maximum (ipairs reads)] (assert (= maximum 131072)))
+  (assert (= (. links.cache "defaults") nil) "bounded reads must remain detached")
+  (assert (= (fs.read-file path) bytes) "decoding defaults must not rewrite legacy bytes"))
+
+(fn alias-dependencies [graph _strings links identities _base-dir]
+  (forbid-visuals! graph)
+  (identities:create-entity {:id "inner" :target-key "terminal:one"})
+  (identities:create-entity {:id "outer" :target-key "identity:inner"})
+  (links:create-entity {:id "chain" :source-key "identity:outer" :target-key "identity:missing"})
+  (local relations (provider! graph "relationships.list"))
+  (local page (call! graph relations "relationships.list" {:subject {:key "identity:inner"}}))
+  (assert (= (length page.items) 1) "inner dependency must find an upstream authored alias")
+  (assert (= (. page.items 1 :source :key) "terminal:one"))
+  (assert (= (. page.items 1 :target :key) "identity:missing") "unresolved endpoint stays opaque")
+  (local bytes (fs.read-file (fs.join-path links.entities-dir "chain.json")))
+  (identities:update-entity "inner" {:target-key "identity:outer"})
+  (error! (graph:invoke relations "relationships.list" {:subject {:key "identity:inner"}} {})
+          :internal-error :not-committed)
+  (error! (graph:describe {:key "link-entity:chain"}) :internal-error :not-committed)
+  (assert (= bytes (fs.read-file (fs.join-path links.entities-dir "chain.json")))))
+
+(fn alias-resolution-failures [graph _strings links identities _base-dir]
+  (forbid-visuals! graph)
+  (for [i 1 35]
+    (identities:create-entity {:id (.. "depth-" i)
+                              :target-key (if (= i 35) "terminal:deep" (.. "identity:depth-" (+ i 1)))}))
+  (links:create-entity {:id "deep" :source-key "identity:depth-1" :target-key "opaque:target"})
+  (error! (graph:describe {:key "link-entity:deep"}) :internal-error :not-committed)
+  (identities:create-entity {:id "unreadable" :target-key "terminal:read"})
+  (links:create-entity {:id "unreadable" :source-key "identity:unreadable" :target-key "opaque:target"})
+  (tset identities.cache "unreadable" nil)
+  (local H (require :tests/test-reference-lifecycle-helpers))
+  (fn describe-unreadable []
+    (error! (graph:describe {:key "link-entity:unreadable"}) :internal-error :not-committed))
+  (H.with-fs-failure :read-file (fs.join-path identities.entities-dir "unreadable.json") describe-unreadable))
+
 (table.insert tests {:name "family validates limits revisions detached metadata and supported endpoints"
                      :fn (fn boundaries [] (with-family true boundary-cases))})
 (table.insert tests {:name "bounded scans and closed scoped cursors advance past empty pages"
                      :fn (fn pages [] (with-family false bounded-pages))})
-(table.insert tests {:name "relationship listing preserves direct persisted direction without identity traversal"
+(table.insert tests {:name "relationship projection follows owner aliases without rewriting direction or distinct IDs"
                      :fn (fn direct [] (with-family true direct-links))})
 (table.insert tests {:name "owning faults and committed notifications map to declared detached outcomes"
                      :fn (fn faults [] (with-family true failures))})
@@ -537,6 +619,12 @@
                      :fn (fn corrupt-search [] (with-family false nonmatching-corrupt-text))})
 (table.insert tests {:name "cold link descriptions enforce stored-byte bounds before loading metadata"
                      :fn (fn bounded-description [] (with-family false bounded-link-description))})
+(table.insert tests {:name "bounded link reads and scans accept canonical absent optional defaults without rewriting"
+                     :fn (fn defaults [] (with-family false bounded-link-defaults))})
+(table.insert tests {:name "owner dependency matching and unresolved DTOs surface alias cycles without writes"
+                     :fn (fn dependencies [] (with-family false alias-dependencies))})
+(table.insert tests {:name "nonvisual relation descriptions surface identity depth and cold read failures"
+                     :fn (fn resolution-errors [] (with-family false alias-resolution-failures))})
 
 (table.insert tests {:name "discovered nonvisual workflow persists without visual adapters" :fn complete-workflow})
 

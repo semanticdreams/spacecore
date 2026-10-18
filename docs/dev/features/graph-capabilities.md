@@ -127,8 +127,9 @@ merge, automatic retry, or compensation of already committed work.
 ### Owning text and relationship stores
 
 `entities/string` owns Markdown text records; `entities/link` owns directed JSON
-relationship records. Their existing successful CRUD methods and signals remain
-available. Updates preserve cached record identity for existing subscribers, but
+relationship records. Ordinary create/update/get/list methods and signals remain
+available; physical deletion is the internal `retire-entity!` primitive, while
+frontend logical deletion delegates to reference lifecycle. Updates preserve cached record identity for existing subscribers, but
 write an independent staged record **before** publishing fields to that cache.
 
 The text store additionally provides:
@@ -142,8 +143,10 @@ The text store additionally provides:
 
 Every successful text update, including unconditional `update-entity`, same-value
 and metadata-only updates, persists a fresh UUID revision. Legacy Markdown files
-without a revision receive stable `legacy:<id>` tokens on reads, without file
-rewrites. Only format-owned frontmatter and one empty separator line are removed;
+without a revision receive stable `legacy:<id>` tokens on detached text reads,
+without file rewrites. Their owning decoded record and frozen serialized bytes
+continue to omit `revision`; reconciliation clears a held optional revision when
+the after-image lacks it. Only format-owned frontmatter and one empty separator line are removed;
 user body whitespace, CRLF, Unicode, blank lines, and delimiter-looking text are
 preserved byte-for-byte. IDs must be 1–256 ASCII letters/digits/underscore/hyphen;
 path traversal, record/filename identity mismatches, caller revision overrides,
@@ -160,7 +163,10 @@ Both stores expose `store:scan-page(opts) -> {items, examined, has-more, last-id
 - `limit`: 1–50, default 20; `examined-limit`: 1–200, default 200.
 - `after-id`: optional last **examined** filename ID, exclusive; IDs are sorted.
 - Text `query` is an optional case-sensitive literal substring, not a pattern.
-  Link `key` optionally matches either incident endpoint; direction is preserved.
+  Link `key` optionally matches either incident endpoint by exact authored key,
+  traversed identity dependency, or equal terminal meaning through the link
+  owner's exact IdentityStore. Aliases resolving to a concrete subject are included;
+  direction and distinct link IDs are preserved.
 - Items are detached owning records. Each decoded record is limited to 131072
   stored bytes. A page may have zero matches and still have `has-more: true`;
   continue from its `last-id`. The last examined ID is also returned on a final
@@ -173,7 +179,8 @@ Both stores expose `store:scan-page(opts) -> {items, examined, has-more, last-id
 
 Store methods raise structured Error records using the vocabulary above, rather
 than Result envelopes. Missing legacy CRUD lookup/update/delete still returns
-nil; missing `read-text`/`replace-text` raises `not-found`. After a write commits,
+nil (the physical delete method is `retire-entity!`); missing
+`read-text`/`replace-text` raises `not-found`. After an ordinary write commits,
 both stores publish the cache/revision (preserving cached identity), form a
 detached owning result, and attempt the existing notification exactly once before
 disclosing any postcommit diagnostics:
@@ -195,7 +202,13 @@ retry. The full and preview text editors distinguish notification-only failure
 (`Save committed; notification failed.`) from committed storage failure
 (`Save committed; post-save error.`), keep input, and advance their baseline from
 the committed result so the next save uses the correct revision. Delete behavior
-is unchanged.
+retains its committed-outcome reporting under the internal physical API.
+
+Prepared lifecycle persistence is deliberately different from ordinary authoring:
+it validates and publishes the exact frozen bytes through RecordFiles without
+normalizing endpoints or allocating identity, time or revision. It neither updates
+held cache objects nor emits domain notifications. The subsequent reconciliation
+phase verifies the durable after-image, updates held records, and notifies.
 
 `entities/record-files` is the local publication boundary. It exports
 `read!(path, max-bytes?)`, `write-text!(path, text)`, `write-json!(path, data)`,
@@ -339,13 +352,26 @@ subject key), and last **examined** ID. Unknown versions, malformed/extra fields
 invalid IDs, and mismatched scope are rejected. Limits may change between pages.
 A cursor is returned only with `has-more: true`. It is not an authorization token.
 
-Relationship listing returns only direct incident persisted links and preserves
-source/target direction. It does not traverse identities, inspect display edges,
-or invent collection membership. Creation currently accepts **existing text record
+Relationship listing returns incident persisted links, preserving source/target
+direction and every distinct link ID. Both incident matching and the `Relation`
+DTO use the link owner's exact `IdentityStore.resolve-key`: DTO endpoints project
+the current terminal keys, while persisted `source-key`/`target-key` remain
+owner-normalized stable references or explicit aliases. Retargeting an identity
+changes later read DTOs without rewriting link bytes. Missing identities/empty
+targets remain opaque unresolved keys; cycles, depth exhaustion and read failures
+fail explicitly through the existing provider error mapping. Link descriptions
+first perform the bounded detached `read-link`, then use the same DTO projection.
+No Graph/View/node loader, `get-entity` visual path or allocating `ensure-key` is
+used by these reads. Cursors bind the **submitted** subject, not its terminal key.
+There is no display-edge inspection or invented collection membership.
+Creation currently accepts **existing concrete text record
 endpoints only**, validated synchronously inside the context-free
 `entities/relationships.create!(string-store, link-store, source-ref, target-ref)`
 operation. Listing can report direct links to other bounded opaque references
-already stored by their owners; it does not make those endpoints executable.
+already stored by their owners; it does not make those endpoints executable or
+introduce an identity capability family. Authoring normalization remains the
+LinkEntityStore's responsibility. Graph and link fixtures, including reopened
+fixtures, share the same IdentityStore instance, not merely the same path.
 
 The family delegates creation/read/replacement to the owning string store and
 link creation to `relationships.create!`. Notification failures after persistence

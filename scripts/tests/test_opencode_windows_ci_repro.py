@@ -1461,10 +1461,17 @@ def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_pa
 
     cases = SCRIPT_ROOT.parent / "assets/lua/tests"
     runner = (cases / "runner.fnl").read_text()
-    assert "        parsed)\n      120))" in runner
-    assert "(local timeout test.timeout-seconds)" in runner
+    selector = runner.split("(fn select-test-timeout-seconds [raw case-budget]", 1)[1].split("\n(fn ", 1)[0]
+    # Nonempty explicit env wins (including 0); absent/empty env uses metadata or120.
+    assert selector.index("(if (and raw (> (# raw) 0))") < selector.index("(local parsed (tonumber raw))")
+    assert '(assert (>= parsed 0) "SPACE_TEST_CASE_TIMEOUT_SECONDS must be non-negative")' in selector
+    assert selector.index("        parsed)") < selector.index("(if (= case-budget nil) 120 case-budget)")
+    assert "test timeout-seconds must be a positive finite number" in selector
+    assert "(select-test-timeout-seconds raw-timeout test.timeout-seconds)" in runner
     assert ":override 240" in (cases / "runner-regression-cases.fnl").read_text()
-    assert ":timeout-seconds 240" in (cases / "test-hot-reload-integration.fnl").read_text()
+    reloads = (cases / "test-hot-reload-integration.fnl").read_text()
+    assert reloads.count(":timeout-seconds 300 :teardown root-support.teardown-root-fixture") == 3
+    assert ":timeout-seconds 240" not in reloads
     assert (cases / "test-runner.fnl").read_text().count(":timeout 120}") == 2
 
 

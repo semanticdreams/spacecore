@@ -264,8 +264,10 @@
                            :before-ms 120001 :after-ms 240001 :expires? false}
                           {:name "overrides default with caught timeout" :override 240
                            :before-ms 120001 :after-ms 240001 :seconds 240 :expires? true}
-                          {:name "overrides disabled global" :override 240 :configured-timeout "0"
-                           :before-ms 120001 :after-ms 240001 :seconds 240 :expires? true}])]
+                          {:name "explicit env0 disables larger metadata" :override 240 :configured-timeout "0"
+                           :before-ms 120001 :after-ms 240001 :expires? false}
+                          {:name "explicit env10 dominates larger metadata" :override 240 :configured-timeout "10"
+                           :before-ms 9000 :after-ms 10001 :seconds 10 :expires? true}])]
   (fn check [] (budget-case options))
   (table.insert tests {:name (.. "runner per-test budget " options.name)
                        :configured-timeout options.configured-timeout :fn check}))
@@ -281,7 +283,7 @@
       (pcall runner.run-tests {:tests [{:name "runner invalid budget" :fn body
                                         :timeout-seconds (. invalid-budgets variant)}]}))
     (assert (not ok) "invalid descriptor timeout must fail, not fall back")
-    (assert (contains? err ":timeout-seconds must be a positive finite number") (tostring err))
+    (assert (contains? err "timeout-seconds must be a positive finite number") (tostring err))
     (assert (not entered?) "invalid budget must be rejected before running the body")
     (assert (app.engine:is-shutdown) "invalid descriptor must still shut down its owned engine"))
   (isolated run))

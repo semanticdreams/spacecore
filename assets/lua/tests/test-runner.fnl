@@ -60,7 +60,7 @@
                     :timeout 120}))
     (assert-child result (.. "RUNNER_REGRESSION_OK " index "/" variant " " name))))
 
-(assert (= (# cases.names) 34) "retain the 15 original, six budget and thirteen readable-error regressions")
+(assert (= (# cases.names) 35) "retain the 15 original, seven budget and thirteen readable-error regressions")
 (each [index name (ipairs cases.names)]
   (fn invoke [] (run-case index name))
   (fn check [] (with-parent-runtime invoke))

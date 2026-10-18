@@ -84,6 +84,13 @@
                           (fn reveal [] (graph-map:load-by-key result.child-key))))
   result)
 
+(fn resolve-reference-lifecycle! [self]
+  (local mounted (and self.graph self.graph.reference-lifecycle))
+  (assert (or (not self.lifecycle) (not mounted) (= self.lifecycle mounted)) "reference lifecycle node/graph conflict")
+  (local service (assert (or self.lifecycle mounted) "node requires reference lifecycle"))
+  (assert (service:owns-store? SCHEME self.store) "reference lifecycle store ownership mismatch")
+  service)
+
 (fn StringEntityNode [opts]
   (local options (or opts {}))
   (local entity-id (assert options.entity-id "StringEntityNode requires entity-id"))
@@ -105,6 +112,8 @@
 
   (set node.entity-id entity-id)
   (set node.store store)
+  (set node.lifecycle options.lifecycle)
+  (set node.resolve-reference-lifecycle! resolve-reference-lifecycle!)
   (set node.entity-deleted (Signal))
   (set node.changed (Signal))
 
@@ -128,7 +137,8 @@
 
   (set node.delete-entity
        (fn [self]
-         (self.store:delete-entity self.entity-id)))
+         (local service (self:resolve-reference-lifecycle!))
+         (. (service:delete! self.key) :source-record)))
 
   (set node.create-child create-child)
 
@@ -176,8 +186,8 @@
 (local register-loader
   (KeyLoaderUtils.make-register-loader SCHEME
     StringEntityStore.get-default
-    (fn [entity-id store]
-      (StringEntityNode {:entity-id entity-id :store store}))))
+    (fn [entity-id store options]
+      (StringEntityNode {:entity-id entity-id :store store :lifecycle options.lifecycle}))))
 
 {:StringEntityNode StringEntityNode
  :register-loader register-loader}

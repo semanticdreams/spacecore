@@ -57,8 +57,12 @@
 (fn read-dto [entity]
   (when (> (length entity.value) 65536) (fail! :limit-exceeded "Text exceeds capability byte limit"))
   {:ref (ref-for "string-entity" entity.id) :text entity.value :revision entity.revision})
-(fn relation [entity]
-  {:ref (ref-for "link-entity" entity.id) :source {:key entity.source-key} :target {:key entity.target-key}})
+(fn relation [links entity]
+  ;; Project through the exact owner instance. Persisted stable keys and explicit
+  ;; aliases stay untouched; this read never asks Graph to adapt an endpoint.
+  {:ref (ref-for "link-entity" entity.id)
+   :source {:key (links.identity-store:resolve-key entity.source-key)}
+   :target {:key (links.identity-store:resolve-key entity.target-key)}})
 
 (fn failure [err write?]
   (if (and (= (type err) :table) err.code)
@@ -120,6 +124,7 @@
 (fn access-by-scheme [opts]
   (local strings (assert opts.string-store "Entity capabilities require string-store"))
   (local links (assert opts.link-store "Entity capabilities require link-store"))
+  (fn relation-dto [entity] (relation links entity))
   (local collection-ref {:key "string-entity-list"})
   (local relationships-ref {:key "link-entity-list"})
   (fn describe-collection [ref]
@@ -138,8 +143,8 @@
   (fn describe-link [ref]
     (local (ok result) (pcall (fn read-description []
                               (local entity (links:read-link (id! "link-entity" ref)))
-                              (Shapes.check! relation-shape (relation entity))
-                              {:ref ref :summary (summary! (.. entity.source-key " -> " entity.target-key)) :capabilities []})))
+                              (local dto (Shapes.check! relation-shape (relation-dto entity)))
+                              {:ref ref :summary (summary! (.. dto.source.key " -> " dto.target.key)) :capabilities []})))
     (if ok {:ok true :value result} (failure result false)))
   (fn list-texts [ref args _pre]
     (attempt false (page-shape entry-shape) identity
@@ -156,9 +161,9 @@
       (fn replace [] (strings:replace-text (id! "string-entity" ref) args.text pre.revision))))
   (fn list-relationships [ref args _pre]
     (attempt false (page-shape relation-shape) identity
-      (fn scan [] (page links "relationships.list" ref args args.subject.key :key relation))))
+      (fn scan [] (page links "relationships.list" ref args args.subject.key :key relation-dto))))
   (fn create-relationship [_ref args _pre]
-    (attempt true relation-shape relation
+    (attempt true relation-shape relation-dto
       (fn create [] (Relationships.create! strings links args.source args.target))))
   {:string-entity-list {:entry-points [{:ref collection-ref :summary "Stored texts"}]
                         :describe describe-collection

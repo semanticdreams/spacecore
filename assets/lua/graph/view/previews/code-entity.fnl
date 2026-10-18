@@ -91,11 +91,6 @@
              (run-signal:disconnect run-handler true))
            (when source-submitted-handler
              (source-input.submitted:disconnect source-submitted-handler true))
-           (source-input:drop)
-           (run-button:drop)
-           (result-label:drop)
-           (content-column:drop)
-           (controls-column:drop)
            (flex:drop)))
     view))
 

@@ -135,7 +135,7 @@
             (local IdentityStore (require :entities/identity))
             (local LinkEntityStore (require :entities/link))
             (local identity-store (IdentityStore.IdentityStore {:base-dir dir}))
-            (local link-store (LinkEntityStore.LinkEntityStore {:base-dir dir}))
+            (local link-store (LinkEntityStore.LinkEntityStore {:base-dir dir :identity-store identity-store}))
             (local identity (identity-store:create-entity {:id "id-link"
                                                            :target-key "a"}))
             (link-store:create-entity {:id "edge-1"
@@ -186,8 +186,8 @@
             (local Links (require :entities/link))
             (local Identities (require :entities/identity))
             (local strings (Strings.StringEntityStore {:base-dir dir}))
-            (local links (Links.LinkEntityStore {:base-dir dir}))
             (local identities (Identities.IdentityStore {:base-dir dir}))
+            (local links (Links.LinkEntityStore {:base-dir dir :identity-store identities}))
             (local graph (Graph {:string-store strings :link-store links :identity-store identities :morphs {}}))
             (fn tripwire [_key] (error "domain event must not invoke a loader"))
             (graph:register-key-loader "string-entity" tripwire)
@@ -212,7 +212,7 @@
             (assert (= (graph:edge-count) 0))
             (links:update-entity "edge" {:target-key "b"})
             (assert (= (graph:edge-count) 1))
-            (identities:delete-entity "alias")
+            (identities:retire-entity! "alias")
             (assert (= (graph:edge-count) 0))
             (assert (= (graph:node-count) 2))
             (graph:drop))))

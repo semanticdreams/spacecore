@@ -163,15 +163,18 @@ So the helper is a practical containment layer, not a fundamental redesign.
 A runner test descriptor may declare `:timeout-seconds` alongside `:name` and
 `:fn`. When present it must be a positive finite number; false, strings, zero,
 negative values, NaN and infinities are errors, not requests to inherit or disable
-the deadline. An absent field inherits `SPACE_TEST_CASE_TIMEOUT_SECONDS`, whose
-existing default is 120 seconds and whose global value 0 still disables deadlines
-for tests without an override. An explicit descriptor budget applies even when
-that inherited global value is 0. Test filtering is unchanged.
+the deadline. A nonempty explicit `SPACE_TEST_CASE_TIMEOUT_SECONDS` takes precedence
+over valid descriptor metadata, including 0 to disable deadlines. With an absent
+or empty environment value, valid descriptor metadata applies; an absent descriptor
+defaults to 120 seconds. Invalid metadata still fails even with an explicit
+environment override. Test filtering is unchanged.
 
-The `full app root reload roundtrips active world` integration case explicitly
-uses 240 seconds for its three actual app-root reloads. Other integration cases
-retain their inherited budgets. Expiry remains one-shot, permits protected
-cleanup/rollback, and still fails a case that catches the timeout exception.
+The three app-root reload integration descriptors use main's 300-second budget
+and explicit per-case root-fixture teardown. An explicit environment value still
+wins. Expiry remains one-shot, restores the exact prior debug hook before teardown,
+permits protected cleanup/rollback, and still fails a case that catches the timeout
+exception. Suite finalization captures the owned Engine before executing tests;
+replacing or clearing `app.engine` does not redirect its single shutdown attempt.
 
 ## What To Watch Out For
 
