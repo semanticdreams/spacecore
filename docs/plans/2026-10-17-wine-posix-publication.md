@@ -278,7 +278,7 @@ must be caller-owned valid synchronous storage, no hostile-memory-probing framew
 
 ### Task 5B1: Supported Wine9 Authority and Guarded PE Forwarding
 
-**Files:** Create `src/record_publication_wine_authority.h`, `scripts/tests/wine_adapters/publication_bridge.c`, `scripts/tests/wine_adapters/windef.h`, `scripts/tests/wine_adapters/winbase.h`, `scripts/tests/wine_adapters/winternl.h`; modify `scripts/wine/record_publication_bridge.c`, `scripts/wine/build_publication.py`, `scripts/tests/test_wine_publication_build.py`, `scripts/tests/wine_adapters/windows.h`, `docs/dev/notes/windows-wine-build-and-test.md`.
+**Files:** Create `src/record_publication_wine_authority.h`, `scripts/tests/wine_adapters/publication_bridge.c`, `scripts/tests/wine_adapters/windef.h`, `scripts/tests/wine_adapters/winbase.h`, `scripts/tests/wine_adapters/winternl.h`; modify `src/record_publication_wine_abi.h` (access-denied constant only), `scripts/wine/record_publication_bridge.c`, `scripts/wine/build_publication.py`, `scripts/tests/test_wine_publication_build.py`, `scripts/tests/wine_adapters/windows.h`, `docs/dev/notes/windows-wine-build-and-test.md`.
 
 **Interfaces:** Shared C/C++ `static inline DWORD space_record_publication_check_authority(void)` returns0 or meaningful nonzero Win32 error retained in LastError on denial. Add SRP_ACCESS_DENIED NTSTATUS0xc0000022. Keep features1/Unixslotunsupported: forwarding alone must not advertise filesystem support.
 
