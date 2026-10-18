@@ -388,6 +388,111 @@ def test_regular_arch_all_wine_stable_launcher_matches_native_implementation(fix
     assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
 
 
+@pytest.fixture
+def regular_launcher_inventory(fixture):
+    launcher = fixture.bin / 'wine-stable'
+    launcher.unlink()
+    launcher.write_text('#!/bin/sh\nexit 97 # regular fixture launcher; never execute\n')
+    launcher.chmod(0o755)
+    return fixture
+
+
+def inventory_refusal(fixture, monkeypatch):
+    module = fixture.resolver()
+    fixture.save()
+    catalog = module._catalog(fixture.root)
+    queries = []
+    original_run = module._run
+    def observe_query(repo, args):
+        queries.append(list(args))
+        return original_run(repo, args)
+    monkeypatch.setattr(module, '_run', observe_query)
+    # Observe the same native-candidate filesystem operations as the original
+    # filter/resolve comprehension. Formatting must not add even a re-stat.
+    events = []
+    for name in ('stat', 'lstat', 'open', 'readlink'):
+        original = getattr(os, name)
+        def observe(path, *args, _name=name, _original=original, **kwargs):
+            if not isinstance(path, int) and Path(path).name == 'wine64':
+                events.append((_name, os.fspath(path), args, kwargs))
+            return _original(path, *args, **kwargs)
+        monkeypatch.setattr(os, name, observe)
+    original_open = Path.open
+    def observe_open(path, *args, **kwargs):
+        if path.name == 'wine64':
+            events.append(('Path.open', str(path), args, kwargs))
+        return original_open(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', observe_open)
+    paths = fixture.files['wine64:amd64']
+    {str(Path(path).resolve()) for path in paths if Path(path).name == 'wine64' and Path(path).is_file()}
+    expected = list(events)
+    events.clear()
+    with pytest.raises(module.ToolchainError) as error:
+        module._selection(fixture.root, catalog)
+    assert events == expected, 'diagnostics must use prior observations without extra filesystem probes'
+    calls = fixture.calls()
+    expected_queries = [
+        ('dpkg-query', ['-S', str(fixture.bin / 'wine-stable')]),
+        ('dpkg-query', ['-W', '-f=${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\t${Architecture}\n', 'wine:all']),
+        ('dpkg-query', ['-W', '-f=${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\t${Architecture}\n', 'wine64:amd64']),
+        ('dpkg-query', ['-L', 'wine64:amd64'])]
+    assert [(Path(call[0]).name, call[1:]) for call in calls] == expected_queries
+    assert [(Path(call[0]).name, call[1:]) for call in queries] == expected_queries
+    assert not [call for call in calls if Path(call[0]).name in ('wine64', 'wine-stable')]
+    return str(error.value)
+
+
+@pytest.mark.parametrize('case,listed,regular,unique', [
+    ('zero-listed', 0, 0, 0), ('zero-regular', 2, 0, 0), ('multiple', 4, 3, 2)])
+def test_native_inventory_diagnostic_counts_without_extra_probes(regular_launcher_inventory, monkeypatch,
+                                                                 case, listed, regular, unique):
+    fixture = regular_launcher_inventory
+    ignored = fixture.lib / 'not-wine64'  # Must not be probed or counted.
+    missing = fixture.lib / 'missing/wine64'
+    directory = fixture.lib / 'directory/wine64'
+    directory.mkdir(parents=True)
+    paths = [ignored]
+    if case == 'zero-regular':
+        paths += [missing, directory]
+    elif case == 'multiple':
+        second = fixture.lib / 'second/wine64'
+        second.parent.mkdir()
+        shutil.copy2(fixture.lib / 'wine64', second)
+        alias = fixture.lib / 'alias/wine64'
+        alias.parent.mkdir()
+        alias.symlink_to(fixture.lib / 'wine64')
+        paths += [fixture.lib / 'wine64', second, alias, directory]
+    fixture.files['wine64:amd64'] = [str(path) for path in paths]
+    message = inventory_refusal(fixture, monkeypatch)
+    prefix = (f'Missing or ambiguous native Wine64 implementation: package=wine64:amd64 '
+              f'listed={listed} regular={regular} unique-resolved={unique} ')
+    assert message.startswith(prefix)
+    assert 'observations-truncated=false' in message
+    assert 'message-truncated=' in message and message.index('message-truncated=') < message.index('observations=[')
+    assert message.count('is-file=true') == regular and message.count('is-file=false') == listed - regular
+    assert len(message.encode('ascii')) <= 480
+    if case == 'zero-listed':
+        assert 'message-truncated=false' in message and 'observations=[]' in message
+
+
+def test_native_inventory_diagnostic_escapes_caps_and_flags_observations(regular_launcher_inventory, monkeypatch):
+    fixture = regular_launcher_inventory
+    paths = []
+    for index in range(6):
+        path = fixture.lib / ('x' * 140 + f'{index}\t\x1b\x7f\u202e') / 'wine64'
+        path.parent.mkdir()
+        shutil.copy2(fixture.lib / 'wine64', path)
+        paths.append(path)
+    fixture.files['wine64:amd64'] = [str(path) for path in paths]
+    message = inventory_refusal(fixture, monkeypatch)
+    assert 'package=wine64:amd64 listed=6 regular=6 unique-resolved=6 ' in message
+    assert 'observations-truncated=true' in message and 'message-truncated=true' in message
+    assert message.count('is-file=true') == 4 and 'is-file=false' not in message
+    assert all(escape in message for escape in ('\\t', '\\u001b', '\\u007f', '\\u202e'))
+    assert all(' ' <= char < '\x7f' for char in message) and len(message.encode('ascii')) <= 480
+    assert all(str(path) not in message for path in paths), 'do not dump complete long candidate paths'
+
+
 @pytest.mark.parametrize('reverse', [False, True])
 @pytest.mark.parametrize('foreign_installed', [False, True])
 def test_multiarch_catalog_preserves_native_resolution_and_every_runtime_pin(fixture, reverse, foreign_installed):

@@ -127,6 +127,39 @@ def _version(catalog, name, *, binary=None, source_version=None):
     raise ToolchainError(f'No exact matching trusted Ubuntu Wine9 package: {name}', [name])
 
 
+def _native_inventory_diagnostic(package, listed, regular, unique, observations):
+    def escaped_tail(value, limit):
+        # Keep complete JSON escape units, including Unicode surrogate pairs.
+        # A bounded suffix retains the useful module/package layout, not an
+        # unbounded private ancestor path. No path is inspected again here.
+        parts, size = [], 0
+        for char in reversed(value):
+            escaped = json.dumps(char, ensure_ascii=True)[1:-1]
+            if size + len(escaped) > limit - 3:
+                return '...' + ''.join(reversed(parts)), True
+            parts.append(escaped)
+            size += len(escaped)
+        return ''.join(reversed(parts)), False
+
+    package, truncated = escaped_tail(package, 32)
+    rendered = []
+    for path, is_file in observations:
+        path, clipped = escaped_tail(path, 40)
+        truncated = truncated or clipped
+        rendered.append(f'"{path}" is-file={str(is_file).lower()}')
+    while True:
+        message = (f'Missing or ambiguous native Wine64 implementation: package={package} '
+                   f'listed={listed} regular={regular} unique-resolved={unique} '
+                   f'observations-truncated={str(listed > len(rendered)).lower()} '
+                   f'message-truncated={str(truncated).lower()} observations=[' + '; '.join(rendered) + ']')
+        if len(message) <= 480:
+            return message
+        # Counts originate from this process's finite package list, so the
+        # count/flag prefix fits by itself. Drop whole observations, not escapes.
+        rendered.pop()
+        truncated = True
+
+
 def _selection(repo, catalog, runtime=None, *, provisioning=False):
     lookup = os.environ.get('WINE_CMD') or shutil.which('wine64') or shutil.which('wine')
     logical = shutil.which(lookup) if lookup else None
@@ -148,10 +181,22 @@ def _selection(repo, catalog, runtime=None, *, provisioning=False):
         implementation = file
     elif package['name'] == 'wine:all':
         paths = _run(repo, ['dpkg-query', '-L', native['name']]).splitlines()
-        candidates = {str(Path(path).resolve()) for path in paths
-                      if Path(path).name == 'wine64' and Path(path).is_file()}
+        candidates, observations = set(), []
+        listed, regular = 0, 0
+        for path in paths:
+            candidate = Path(path)
+            if candidate.name != 'wine64':
+                continue
+            listed += 1
+            is_file = candidate.is_file()
+            if is_file:
+                regular += 1
+                candidates.add(str(candidate.resolve()))
+            if len(observations) < 4:
+                observations.append((path, is_file))
         if len(candidates) != 1:
-            raise ToolchainError('Missing or ambiguous native Wine64 implementation')
+            raise ToolchainError(_native_inventory_diagnostic(native['name'], listed, regular,
+                                                              len(candidates), observations))
         implementation = _file(candidates.pop())
     else:
         raise ToolchainError('Unsupported distro Wine launcher package')
