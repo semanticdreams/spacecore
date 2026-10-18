@@ -29,10 +29,10 @@ _LOG_CAP = 16 * 1024 * 1024
 _TAIL_CAP = 4000
 _LINE_CAP = CLEANUP_LINE_BYTES
 _RESPONSE_CAP = 48 * 1024
-_LEDGER_CAP = 4 * 1024 * 1024  # Six bounded stages, including JSON-escaped markers/tails.
+_LEDGER_CAP = 4 * 1024 * 1024  # Seven bounded stages, including JSON-escaped markers/tails.
 _MARKER = ".space-windows-repro-v1.json"
 _STEPS = ("preflight", "build-windows-from-linux", "package-windows-runtime",
-          "verify-windows-outputs", "wine-admission", "wine-fast")
+          "verify-windows-outputs", "wine-publication-build", "wine-admission", "wine-fast")
 _RUN_NAME = re.compile(r"\d{8}T\d{12}Z-[0-9a-f]{32}")
 _FATAL_BANNER = re.compile(
     r'wine: Unhandled (?:page fault on (?:read|write|execute) access to [0-9A-Fa-f]{8,16}'

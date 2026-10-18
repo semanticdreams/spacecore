@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -84,6 +86,14 @@ def test_current_wine_notes_describe_owned_lifecycle_not_retired_default_prefix_
     assert '{runtime.sh,' not in text
 
 
+def assert_actual_reporter_evidence_limitations(text):
+    section = text.split('### Owned data roots and automatic crash reporting\n', 1)[1].split('\n##', 1)[0]
+    evidence = ' '.join(section.split())
+    assert 'neither observed a root native fatal' in evidence
+    assert ('Actual reporter/grace behavior therefore remains unexercised, not verified '
+            'fixed by either those runs or the host fixtures.') in evidence
+
+
 def test_wine_notes_describe_one_shot_root_fatal_reporting_and_status_authority():
     text = read('docs/dev/notes/windows-wine-build-and-test.md')
     for phrase in ('one30-second reporting grace', 'newline-terminated', 'wine-fast stderr',
@@ -92,4 +102,16 @@ def test_wine_notes_describe_one_shot_root_fatal_reporting_and_status_authority(
                    'never resets', '1800-second application hard deadline'):
         assert phrase in text
     assert 'launch-observation changes belong to the separate follow-up' not in text
-    assert 'Actual native reporting' in text
+    assert_actual_reporter_evidence_limitations(text)
+
+
+@pytest.mark.parametrize('limitation,overclaim', [
+    ('neither observed', 'both observed'),
+    ('remains unexercised, not verified', 'was exercised and verified'),
+    ('fixed by either those runs or the host fixtures.', 'verified by host fixtures alone.'),
+])
+def test_actual_reporter_evidence_guard_rejects_overclaims(limitation, overclaim):
+    text = read('docs/dev/notes/windows-wine-build-and-test.md')
+    assert limitation in text
+    with pytest.raises(AssertionError):
+        assert_actual_reporter_evidence_limitations(text.replace(limitation, overclaim, 1))

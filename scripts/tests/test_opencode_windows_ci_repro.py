@@ -416,9 +416,9 @@ def test_reproduce_runs_build_package_verify_and_wine_steps_in_order(tmp_path, m
     assert result["status"] == "pass"
     stages = result["evidence"]["stages"]
     assert [s["step"] for s in stages] == ["preflight", "build-windows-from-linux", "package-windows-runtime",
-                                                "verify-windows-outputs", "wine-admission", "wine-fast"]
-    assert [s["outcome"] for s in stages] == ["pass"] * 6
-    assert (repo / "dispatch").read_text().splitlines() == ["build", "package", "admission", "fast"]
+                                                "verify-windows-outputs", "wine-publication-build", "wine-admission", "wine-fast"]
+    assert [s["outcome"] for s in stages] == ["pass"] * 7
+    assert (repo / "dispatch").read_text().splitlines() == ["build", "package", "builder", "admission", "fast"]
     ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
     assert ledger["stages"] == stages
     assert ledger["complete"] is True
@@ -454,6 +454,44 @@ def test_admission_failure_stops_before_full_suite(tmp_path, monkeypatch):
     assert "fast" not in (repo / "dispatch").read_text()
     assert result["evidence"]["stages"][-1]["progress"]["admission_phases"] == [
         {"backend": "builtin", "returncode": 20}]
+
+
+@pytest.mark.parametrize('code,outcome', [(17, 'nonzero_exit'), (124, 'timeout')])
+def test_builder_has_parent_session_before_any_initialization_and_failure_is_terminal(tmp_path, monkeypatch, code, outcome):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, 'wine/build_publication.py', f'''
+import fcntl
+identifier = os.environ['SPACE_WINE_SESSION_ID']
+directory = pathlib.Path('build/wine/sessions')/identifier
+state = json.loads((directory/'state.json').read_text())
+assert state['generation'] == 0 and not state['authorized'] and not state['ended']
+assert os.environ['WINEPREFIX'] == str(directory.absolute()/'prefix')
+assert json.loads((directory/'setup.json').read_text())['windows_tmp'] is None
+fd = os.open('build', os.O_RDONLY | os.O_DIRECTORY)
+fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+os.close(fd)
+for path in pathlib.Path('/proc/self/fd').iterdir():
+    try: target = os.readlink(path)
+    except FileNotFoundError: continue
+    assert target not in [str(pathlib.Path('.').absolute()), str(directory.absolute()), str(pathlib.Path('build').absolute())]
+print('fixed builder failure', flush=True)
+sys.exit({code})
+''')
+    result = windows_ci_repro.reproduce(repo)
+    assert result['status'] == 'fail'
+    data = result['evidence']
+    assert data['failing_step'] == 'wine-publication-build'
+    assert [stage['step'] for stage in data['stages']] == [name for name, _ in windows_ci_repro._REPRO_STEPS][:5]
+    stage = data['stages'][-1]
+    assert stage['returncode'] == code and stage['outcome'] == outcome
+    assert stage['session_before']['state']['generation'] == 0
+    assert stage['cleanup']['outcome'] == 'pass'
+    assert stage['cleanup']['after']['state']['ended']
+    assert (repo / 'dispatch').read_text().splitlines() == ['build', 'package']
+    ledger = json.loads((repo / data['ledger_path']).read_text())
+    assert ledger['metadata']['bounds']['publication_build'] == 900
+    assert ledger['metadata']['bounds']['admission_outer'] == 480
+    assert data['sealed']
 
 
 def test_cli_invalid_repo_returns_structured_fail_json_without_traceback(tmp_path):
@@ -510,6 +548,8 @@ def test_direct_operations_return_structured_failures_for_invalid_repo(monkeypat
 # Never replace the fixed production argv table with a public command option.
 def fixture_script(repo, name, body):
     path = repo / "scripts" / name
+    if name == 'wine/build_publication.py':
+        body = "if __name__ == '__main__':\n" + '\n'.join('    ' + line for line in body.splitlines())
     path.write_text(f"#!{sys.executable}\nimport os, sys, time, pathlib, json\n" + body + "\n")
     path.chmod(0o755)
 
@@ -529,14 +569,21 @@ def reproduction_fixture(tmp_path, monkeypatch):
         tool.write_text(f'#!{sys.executable}\nimport sys\nif sys.argv[1:]==["--version"]: print({version!r})\n')
         tool.chmod(0o755)
     monkeypatch.setenv('WINE_CMD', str(tools / 'wine'))
-    for name in ('prefix.py', 'artifacts.py'):
+    for name in ('prefix.py', 'artifacts.py', 'publication_toolchain.py'):
         shutil.copy2(SCRIPT_ROOT / 'wine' / name, repo / 'scripts/wine' / name)
+    # Only this fake repository routes the new private bootstrap action to the
+    # existing inert stage body. Terminal-stop still uses actual cleanup code.
+    artifact = repo / 'scripts/wine/artifacts.py'
+    artifact.write_text("import sys, runpy\nif __name__ == '__main__' and sys.argv[1:] == ['prepare-bootstrap']:\n"
+                        "    runpy.run_path('scripts/prepare-windows-wine-runtime.sh', run_name='__main__')\n"
+                        "    sys.exit(0)\n" + artifact.read_text())
     for script, label in [("build-windows-from-linux.sh", "build"), ("package-windows-runtime.sh", "package"),
+                          ('wine/build_publication.py', 'builder'),
                           ("prepare-windows-wine-runtime.sh", "admission"), ("test-windows-under-wine.sh", "fast")]:
         fixture_script(repo, script, f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)")
     receipt = repo / "build/wine/windows/admission.json"
     receipt.parent.mkdir(parents=True)
-    receipt.write_text(json.dumps({"version": 2,
+    receipt.write_text(json.dumps({"version": 3,
                                   "backend": "bcryptprimitives=b;advapi32,cryptbase=b",
                                   "payload": {"space-cli.exe": "b"*64}, "package": {"space-cli.exe": "b"*64},
                                    "conditions": {"DISPLAY": "do-not-copy", "secret": "do-not-copy"}, "secret": "do-not-copy"}))
@@ -546,10 +593,42 @@ def reproduction_fixture(tmp_path, monkeypatch):
         if receipt.exists():
             value = json.loads(receipt.read_text())
             value.update(ownedSession=session.binding(), tools=session.owner['tools'])
+            value['bridge'] = fixture_bridge_inventory(root, session)
             receipt.write_text(json.dumps(value))
         return session
     monkeypatch.setattr(windows_ci_repro._prefix, 'create_session', fixture_session)
     return repo
+
+
+def fixture_bridge_inventory(repo, session):
+    """Synthetic pair bytes, not Wine dispatch; real parent inventory checks."""
+    from wine import build_publication as builder
+    from test_windows_wine_runtime import SYNTHETIC_PAIR_COMPILER
+    runtime = session.owner['tools']['wine']
+    toolchain = {'identity': {}, 'inputs': {}}
+    build_id = builder._build_id(runtime, toolchain)
+    output = repo / 'build/wine-publication'
+    output.mkdir(mode=0o700, exist_ok=True)
+    for directory in builder.DIRECTORIES:
+        (output / directory).mkdir(mode=0o700, exist_ok=True)
+    definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in bytes.fromhex(build_id)) + '}'
+    for name in builder.PAIR:
+        target = output / name
+        command = 'mingw-fixture' if name.endswith('.dll') else 'host-fixture'
+        result = subprocess.run([sys.executable, '-c', 'import os, sys, pathlib\nargs=sys.argv[1:]\n' +
+                                # The compiler fixture identifies PE vs ELF from argv0.
+                                f'sys.argv[0]={command!r}\n' + SYNTHETIC_PAIR_COMPILER,
+                                '-shared', definition, '-o', str(target)], capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        target.chmod(0o600)
+    files = {name: builder._inventory(output / name, name, build_id) for name in builder.PAIR}
+    manifest = dict(version=1, abi=1, runtime=runtime, toolchain=toolchain, build_id=build_id, files=files)
+    windows_ci_repro._prefix.write_control(output / 'build.json', manifest)
+    info = (output / builder.PAIR[1]).stat()
+    identity = dict(version=1, size=112, abi=1, challenge='0123456789abcdef', echo='0123456789abcdef',
+                    pe_build_id=build_id, unix_build_id=build_id, module_device=info.st_dev,
+                    module_inode=info.st_ino, architecture=0x8664, features=1)
+    return dict(abi=1, build_id=build_id, toolchain=toolchain, files=files, identity=identity)
 
 
 def run_build_fixture(repo, body):
@@ -771,7 +850,7 @@ def test_owning_helper_reports_application_launch_and_status_before_cleanup(tmp_
             os.close(write_fd)
     assert result.returncode == 0, result.stderr
     assert [entry['event'] for entry in observations] == ['launch', 'result']
-    assert observations[0]['hard_deadline_monotonic'] - observations[0]['launched_monotonic'] == 1800
+    assert observations[0]['hard_deadline_monotonic'] == observations[0]['launched_monotonic'] + 1800
     assert observations[1]['command_returncode'] == 0
 
 
@@ -784,6 +863,13 @@ def run_observed_owned_helper(runtime, monkeypatch, before_execute):
     session = prefix.load_session(runtime.root, receipt['ownedSession']['id'])
     for key, value in runtime.env.items():
         monkeypatch.setenv(key, value)
+    # Match the fake checkout's pinned compiler/header verifier when invoking
+    # real artifact code in-process rather than through that checkout's Python.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('fixture_toolchain', runtime.root / 'scripts/wine/publication_toolchain.py')
+    fixture_toolchain = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture_toolchain)
+    monkeypatch.setattr(artifacts.publication_toolchain, 'verify_toolchain', fixture_toolchain.verify_toolchain)
     for key, value in [('ROOT', runtime.root), ('PACKAGE', runtime.dist), ('OVERLAY', runtime.overlay)]:
         monkeypatch.setattr(artifacts, key, value)
     read_fd, write_fd = os.pipe()
@@ -1253,14 +1339,14 @@ def test_conflicting_inherited_selection_rejected_before_dispatch(tmp_path, monk
 def test_encoded_total_response_budget_with_real_controls_unicode_and_all_stages(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
     body = "os.write(1, ('\\x00😀' * 6000 + '\\n[PASS] final\\n').encode()); os.write(2, ('\\x01😀'*6000).encode())"
-    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
+    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", 'wine/build_publication.py', "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
         fixture_script(repo, script, body)
     monkeypatch.setenv("SECRET_TOKEN", "do-not-copy")
     result = windows_ci_repro.reproduce(repo)
     assert result["status"] == "pass"
     assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
     assert result["evidence"]["response_truncated"] is True
-    assert len(result["evidence"]["stages"]) == 6
+    assert len(result["evidence"]["stages"]) == 7
     assert "do-not-copy" not in json.dumps(result)
     ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
     assert len(ledger["stages"][1]["stdout"]["tail"]) == 4000
@@ -1319,6 +1405,30 @@ def test_ready_owned_binding_matches_actual_receipt_and_readonly_parent_metadata
     assert runtime.calls() == calls
 
 
+@pytest.mark.parametrize('damage', ['echo', 'inode', 'build-id', 'extra'])
+def test_parent_metadata_refuses_unverified_bridge_receipt_without_wine_queries(tmp_path, damage):
+    from test_windows_wine_runtime import Fixture
+    runtime = Fixture(tmp_path)
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    path = runtime.overlay / 'admission.json'
+    value = json.loads(path.read_text())
+    session = windows_ci_repro._prefix.load_session(runtime.root, value['ownedSession']['id'])
+    if damage == 'echo':
+        value['bridge']['identity']['echo'] = '0'*16
+    elif damage == 'inode':
+        value['bridge']['identity']['module_inode'] += 1
+    elif damage == 'build-id':
+        value['bridge']['build_id'] = '0'*64
+    else:
+        value['bridge']['identity']['secret'] = 'do-not-copy'
+    path.write_text(json.dumps(value))
+    before = path.read_bytes(), runtime.calls()
+    with pytest.raises(ValueError):
+        windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert (path.read_bytes(), runtime.calls()) == before
+
+
 def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_path):
     import ast
     from test_windows_wine_runtime import Fixture
@@ -1368,13 +1478,13 @@ def test_encoded_budget_with_all_marker_kinds_and_later_failure(tmp_path, monkey
     repo = reproduction_fixture(tmp_path, monkeypatch)
     body = "\n".join(f"print('[{kind}] ' + '\\x00' * 3800 + '😀' * 40, flush=True)"
                      for kind in ("LAUNCH", "BOOT", "LOAD", "RUN", "PASS", "FAIL", "TIME"))
-    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
+    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", 'wine/build_publication.py', "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
         fixture_script(repo, script, body + ("\nsys.exit(17)" if script == "test-windows-under-wine.sh" else ""))
     result = windows_ci_repro.reproduce(repo)
     assert result["status"] == "fail"
     assert result["evidence"]["failing_step"] == "wine-fast"
     assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
-    assert len(result["evidence"]["stages"]) == 6
+    assert len(result["evidence"]["stages"]) == 7
     assert result["evidence"]["stages"][-1]["returncode"] == 17
     assert result["evidence"]["stages"][-1]["progress"]["counts"]["fail"] == 1
     ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
@@ -1497,12 +1607,12 @@ def test_budget_retains_failure_context_with_extreme_metadata(tmp_path, monkeypa
     monkeypatch.setenv("WINEPREFIX", "/" + "😀" * 4000)
     body = "\n".join(f"print('[{kind}] ' + '\\x01' * 3800 + '😀' * 40, flush=True)"
                      for kind in ("LAUNCH", "BOOT", "LOAD", "RUN", "PASS", "TIME"))
-    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", "prepare-windows-wine-runtime.sh"):
+    for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", 'wine/build_publication.py', "prepare-windows-wine-runtime.sh"):
         fixture_script(repo, script, body)
     fixture_script(repo, "test-windows-under-wine.sh", body + "\nprint('[FAIL] important failure context: broken call', file=sys.stderr, flush=True)\nsys.exit(17)")
     result = windows_ci_repro.reproduce(repo)
     assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
-    assert len(result["evidence"]["stages"]) == 6
+    assert len(result["evidence"]["stages"]) == 7
     failure = result["evidence"]["stages"][-1]
     assert "important failure context: broken call" in failure["stderr"]["tail"]
     assert failure["returncode"] == 17
@@ -1568,7 +1678,7 @@ sys.exit({code})
     assert 'server:' in evidence['errors'][0] and reason in evidence['errors'][0]
     if reject_wine:
         assert 'wine: Unsupported Wine release identity' in evidence['errors'][0]
-    assert evidence['failing_step'] == 'wine-admission' and ledger['outcome'] == 'fail'
+    assert evidence['failing_step'] == 'wine-publication-build' and ledger['outcome'] == 'fail'
     assert not evidence['complete'] and not ledger['complete']
     assert evidence['sealed']
     expected_steps = ['preflight', 'build-windows-from-linux', 'package-windows-runtime', 'verify-windows-outputs']
@@ -1784,7 +1894,7 @@ def test_finalization_storage_failure_keeps_actual_status_and_complete_history(t
     result = windows_ci_repro.reproduce(repo)
     data = result["evidence"]
     assert result["status"] == "fail" and data["complete"] is False
-    assert len(data["stages"]) == 6
+    assert len(data["stages"]) == 7
     assert data["stages"][1]["stdout"]["tail"] == "successful build\n"
     stage = data["stages"][-1]
     assert stage["returncode"] == code
@@ -1935,7 +2045,7 @@ sys.exit(int(os.environ.get('FIXTURE_INIT_CODE' '''.rstrip()))
         assert stage['fatal_report']['first']['text'] == FATAL_BANNER
         assert stage['fatal_report']['termination'] == 'deadline_expired'
         assert stage['application']['command_returncode'] is None
-        assert stage['application']['hard_deadline_monotonic'] - stage['application']['launched_monotonic'] == 1800
+        assert stage['application']['hard_deadline_monotonic'] == stage['application']['launched_monotonic'] + 1800
         assert stage['capture_complete'] is False
         assert stage['cleanup']['outcome'] == 'pass'
         assert 'automatic trace stdout' in stage['stdout']['tail']
@@ -1967,10 +2077,20 @@ def test_inherited_private_session_handoff_rejected_before_any_execution(tmp_pat
 
 
 def test_wine_outer_vectors_are_exact_and_not_a_timeout_passthrough():
+    assert dict(windows_ci_repro._REPRO_STEPS)['wine-publication-build'] == (
+        'timeout', '--kill-after=5s', '900s', 'python3', 'scripts/wine/build_publication.py')
     assert dict(windows_ci_repro._REPRO_STEPS)['wine-admission'] == (
-        'timeout', '--kill-after=5s', '480s', 'scripts/prepare-windows-wine-runtime.sh')
+        'timeout', '--kill-after=5s', '480s', 'python3', 'scripts/wine/artifacts.py', 'prepare-bootstrap')
     assert dict(windows_ci_repro._REPRO_STEPS)['wine-fast'] == (
         'timeout', '--kill-after=5s', '1920s', 'scripts/test-windows-under-wine.sh')
+
+
+def test_seven_stage_table_and_log_inventory_are_migrated_together():
+    import _windows_repro_evidence as evidence
+    names = tuple(name for name, _ in windows_ci_repro._REPRO_STEPS)
+    assert names == evidence._STEPS == ('preflight', 'build-windows-from-linux',
+        'package-windows-runtime', 'verify-windows-outputs', 'wine-publication-build',
+        'wine-admission', 'wine-fast')
 
 
 @pytest.mark.parametrize('code', [0, 17, 124, 137])
@@ -2043,8 +2163,8 @@ def test_parent_backstop_survives_failed_capture_and_uses_immutable_owner(tmp_pa
     assert result['status'] == 'fail', result
     data = result['evidence']
     assert data['complete'] is False
-    assert len(data['stages']) == 5
-    assert all(s['outcome'] == 'pass' for s in data['stages'][:4])
+    assert len(data['stages']) == 6
+    assert all(s['outcome'] == 'pass' for s in data['stages'][:5])
     cleanup = data['stages'][-1]['cleanup']
     assert len(cleanup['attempts']) == 1
     servers = [c['server'] for c in runtime.calls() if 'server' in c]
@@ -2343,7 +2463,7 @@ def test_owned_cleanup_after_persistent_storage_failure_retains_prior_success_an
     assert stage['cleanup']['outcome'] == 'pass'
     assert stage['cleanup']['after']['state']['ended']
     if when == 'during-fast':
-        assert len(data['stages']) == 6
+        assert len(data['stages']) == 7
         assert stage['returncode'] == 137 and stage['outcome'] == 'nonzero_exit'
         assert stage['capture_complete'] is False
         assert stage['progress']['last_markers']['pass']['text'] == '[PASS] after storage failure'
@@ -2496,7 +2616,7 @@ def test_cleanup_marker_keeps_stop_wait_codes_for_missing_state_under_long_unico
     assert result['status'] == 'fail'
     assert len(json.dumps(result).encode()) <= 48 * 1024
     data = result['evidence']
-    assert len(data['stages']) == 6
+    assert len(data['stages']) == 7
     stage = data['stages'][-1]
     assert stage['returncode'] == 0 and stage['outcome'] == 'pass'
     cleanup = stage['cleanup']

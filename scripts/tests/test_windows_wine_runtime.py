@@ -7,10 +7,12 @@ import shutil
 import signal
 import subprocess
 import time
+import sys
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'scripts'))
 MARKER = ".space-windows-artifact-v1.json"
 
 # Inert host implementation of the two fixed builtin setup utilities. Every call
@@ -46,6 +48,56 @@ if _utility in ['winepath.exe', 'reg.exe']:
     sys.exit(0)
 '''
 
+# Inert report producer for dispatcher tests only. Actual probe C behavior is
+# exercised separately against the host API adapter, including report failures.
+IDENTITY_FIXTURE = '''
+if len(sys.argv) > 1 and pathlib.Path(sys.argv[1]).name == 'process-prng-probe.exe':
+    root = pathlib.Path(sys.argv[1]).parents[2]
+    assert os.environ['WINEDLLPATH'] == str(root/'wine-publication/modules')
+    manifest = json.loads((root/'wine-publication/build.json').read_text())
+    so = root/'wine-publication/modules/x86_64-unix/space_record_publication.so'
+    info = so.stat()
+    challenge = os.environ['SPACE_WINE_IDENTITY_CHALLENGE']
+    value = dict(version=1, size=112, abi=1, challenge=challenge, echo=challenge,
+                 pe_build_id=manifest['build_id'], unix_build_id=manifest['build_id'],
+                 module_device=info.st_dev, module_inode=info.st_ino, architecture=0x8664, features=1)
+    damage = os.environ.get('FIXTURE_IDENTITY_DAMAGE')
+    for kind, field in [('echo','echo'), ('pe-id','pe_build_id'), ('unix-id','unix_build_id')]:
+        if damage == kind: value[field] = '0'*len(value[field])
+    for kind, field in [('device','module_device'), ('inode','module_inode')]:
+        if damage == kind: value[field] += 1
+    if damage == 'extra': value['unexpected'] = True
+    raw = json.dumps(value)
+    if damage == 'duplicate': raw = raw[:-1] + ',"abi":1}'
+    if damage == 'oversize': raw += ' '*4096
+    report = pathlib.Path(os.environ['TMPDIR'])/'space-record-publication-identity.json'
+    if damage == 'symlink': report.symlink_to(so)
+    elif damage == 'hardlink': os.link(so, report)
+    elif damage != 'missing':
+        fd = os.open(report, os.O_WRONLY|os.O_CREAT|os.O_EXCL, 0o600)
+        with os.fdopen(fd, 'w') as output: output.write(raw)
+'''
+
+SYNTHETIC_PAIR_COMPILER = '''
+if '-shared' in args and any(a.startswith('-DSRP_BUILD_ID_BYTES=') for a in args):
+    import struct
+    definition = next(a for a in args if a.startswith('-DSRP_BUILD_ID_BYTES='))
+    identity = bytes(int(v, 16) for v in definition.split('=', 1)[1].strip('{}').split(','))
+    if 'mingw' in sys.argv[0]:
+        data = bytearray(1024)
+        data[:2] = b'MZ'; struct.pack_into('<I', data, 60, 128)
+        data[64:80] = b'Wine builtin DLL'
+        data[128:132] = b'PE\\0\\0'
+        struct.pack_into('<HHIIIHH', data, 132, 0x8664, 0, 0, 0, 0, 240, 0x2022)
+        struct.pack_into('<H', data, 152, 0x20b); data[-32:] = identity
+    else:
+        header = struct.pack('<16sHHIQQQIHHHHHH', b'\\x7fELF\\x02\\x01\\x01' + bytes(9),
+                             3, 62, 1, 0, 0, 64, 0, 64, 0, 0, 64, 1, 0)
+        data = header + bytes(64) + identity
+    pathlib.Path(args[args.index('-o')+1]).write_bytes(data)
+    sys.exit(0)
+'''
+
 
 def hashes(path):
     return {str(p.relative_to(path)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -61,6 +113,8 @@ class Fixture:
             shutil.copy2(source, scripts)
         if (ROOT / "scripts/wine").exists():
             shutil.copytree(ROOT / "scripts/wine", scripts / "wine")
+        (self.root / 'src').mkdir()
+        shutil.copy2(ROOT / 'src/record_publication_wine_abi.h', self.root / 'src')
         shutil.copytree(ROOT / "external/date/tzdata", self.root / "external/date/tzdata")
         manifest = self.root / "external/temporal/libical/DEPENDENCY_MANIFEST.json"
         manifest.parent.mkdir(parents=True)
@@ -91,6 +145,32 @@ if args[0].startswith('-print-file-name='):
 with open(os.environ['FIXTURE_LOG'], 'a') as f: f.write(json.dumps({'cc':args})+'\\n')
 pathlib.Path(args[args.index('-o')+1]).write_text('fixture PE, not executable')
 ''')
+        cc = self.bin / 'x86_64-w64-mingw32-gcc-posix'
+        cc.write_text(cc.read_text().replace("pathlib.Path(args[args.index('-o')+1]).write_text",
+                                           SYNTHETIC_PAIR_COMPILER + "\npathlib.Path(args[args.index('-o')+1]).write_text"))
+        self.write_executable('publication-cxx', cc.read_text())
+        self.write_executable('winebuild', '#!/bin/sh\nexit 0\n')
+        headers = self.root / 'fixture-headers'
+        for relative in ('wine/unixlib.h', 'windows/winternl.h'):
+            path = headers / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('/* inert fixture header, not Wine ABI proof */\n')
+        # Replace package discovery only inside this fake checkout. The real
+        # builder/inventory and pinned file hash verification are still exercised.
+        (scripts / 'wine/publication_toolchain.py').write_text(f'''
+import hashlib
+from pathlib import Path
+def resolve_toolchain(repo, runtime=None):
+    tools = {{key: dict(executable=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+             for key, path in {{'host_cxx': Path({str(self.bin / 'publication-cxx')!r}),
+                               'mingw_cc': Path({str(cc)!r}),
+                               'winebuild': Path({str(self.bin / 'winebuild')!r})}}.items()}}
+    files = {{str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in Path({str(headers)!r}).rglob('*.h')}}
+    return dict(version=1, repo=str(repo), runtime=runtime, tools=tools, headers=dict(files=files))
+def verify_toolchain(identity):
+    if identity != resolve_toolchain(Path(identity['repo']), identity['runtime']):
+        raise ValueError('Fixture pinned toolchain changed')
+''')
         self.write_executable("wineserver", '''#!/usr/bin/python3
 import json, os, sys
 if sys.argv[1:] == ['--version']:
@@ -106,7 +186,7 @@ if sys.argv[1:] == ['--version']:
     print('wine-9.0 (fixture)'); sys.exit(0)
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'wine':sys.argv[1:], 'env':{k:os.environ.get(k) for k in
-        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP']}})+'\\n')
+        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP','WINEDLLPATH']}})+'\\n')
 if pathlib.Path(sys.argv[1]).name == 'process-prng-probe.exe':
     p = pathlib.Path(os.environ['FIXTURE_CODES']); codes = json.loads(p.read_text())
     code = codes.pop(0); p.write_text(json.dumps(codes)); sys.exit(code)
@@ -124,7 +204,7 @@ os.execvp(args[1], args[1:])
     def write_executable(self, name, text):
         if name == 'wine':
             first, rest = text.split('\n', 1)
-            text = first + '\n' + SETUP_UTILITIES + '\n' + rest
+            text = first + '\nimport pathlib\n' + SETUP_UTILITIES + '\n' + IDENTITY_FIXTURE + '\n' + rest
         path = self.bin / name
         path.write_text(text)
         path.chmod(0o755)
@@ -213,7 +293,7 @@ def test_builtin_success_never_builds_bridge_and_app_uses_receipt(runtime):
     assert result.returncode == 0, result.stderr
     calls = runtime.calls()
     boot, probes, app = [c for c in calls if "wine" in c and not c.get('utility')]
-    assert probes["env"]["WINEDLLOVERRIDES"] == "bcryptprimitives=b;advapi32,cryptbase=b"
+    assert probes["env"]["WINEDLLOVERRIDES"] == "space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b"
     assert app["env"]["WINEDLLOVERRIDES"] == probes["env"]["WINEDLLOVERRIDES"]
     assert app["env"]["WINEPREFIX"] == probes["env"]["WINEPREFIX"]
     assert app["env"]["DISPLAY"] == ":fixture"
@@ -222,7 +302,7 @@ def test_builtin_success_never_builds_bridge_and_app_uses_receipt(runtime):
     assert app["env"]["SPACE_BIN"] == str(runtime.overlay / "space-cli.exe")
     assert str(runtime.overlay / "assets/lua") in app["env"]["FENNEL_PATH"]
     assert app["env"]["FENNEL_PATH"] == app["env"]["FENNEL_MACRO_PATH"]
-    assert [c["timeout"] for c in calls if "timeout" in c] == ["60s", "60s", "90s", *["30s"] * 8, "60s", "10s", "15s", "1800s", "10s", "15s"]
+    assert [c["timeout"] for c in calls if "timeout" in c] == ["60s", "60s", "900s", "480s", "90s", *["30s"] * 8, "60s", "10s", "15s", "1800s", "10s", "15s"]
     assert all(c["kill_after"] == "--kill-after=5s" for c in calls if "timeout" in c)
     assert not (runtime.overlay / "bcryptprimitives.dll").exists()
 
@@ -234,8 +314,8 @@ def test_compat_selection_is_fixed_and_receipt_is_not_shell(runtime):
     assert runtime.run("test-windows-under-wine.sh").returncode == 0
     wine = [c for c in runtime.calls() if "wine" in c and c['wine'][0] != 'wineboot.exe' and not c.get('utility')]
     assert [c["env"]["WINEDLLOVERRIDES"] for c in wine] == [
-        "bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b",
-        "bcryptprimitives=n;advapi32,cryptbase=b"]
+        "space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b", "space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b",
+        "space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b"]
     receipt = runtime.overlay / "admission.json"
     receipt.write_text('$(touch must-not-execute)')
     assert runtime.run("test-windows-under-wine.sh").returncode != 0
@@ -339,6 +419,7 @@ def test_real_mingw_compilation_of_tiny_bridge_and_probe(tmp_path):
         ("probe.c", [], "probe.exe"),
     ]:
         result = subprocess.run([cc, "-Wall", "-Wextra", "-Werror", "-o", str(tmp_path / output),
+                                 '-I', str(ROOT / 'src'), '-DSRP_BUILD_ID_BYTES={1}',
                                  str(ROOT / "scripts/wine" / source), *flags], capture_output=True, text=True)
         assert result.returncode == 0, result.stderr
         assert (tmp_path / output).read_bytes()[:2] == b"MZ"
@@ -357,9 +438,253 @@ def compile_host(tmp_path, source, *extra):
     subprocess.run(["cc", "-std=c11", "-Wall", "-Wextra", "-Werror",
                     "-I", str(ROOT / "scripts/tests/wine_adapters"),
                     "-I", str(ROOT / "scripts/wine"), *extra,
+                    "-I", str(ROOT / "src"), '-DSRP_BUILD_ID_BYTES={1}',
                     str(ROOT / "scripts/tests/wine_adapters" / f"{source}.c"),
                     "-o", str(output)], check=True, capture_output=True, text=True)
     return output
+
+
+@pytest.mark.parametrize('mode', ['pair-missing', 'pair-export', 'pair-owner', 'pair-status',
+                                 'pair-echo', 'pair-pe-id', 'pair-unix-id', 'pair-size',
+                                 'pair-abi', 'pair-arch', 'pair-features', 'pair-inode',
+                                 'report-create', 'report-write', 'report-short', 'report-close'])
+def test_actual_probe_pair_failure_never_reaches_crypto(tmp_path, mode):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode,
+                            TEMP=str(tmp_path), SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+                            WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b'),
+                            capture_output=True, text=True)
+    assert result.returncode == 20, result.stdout + result.stderr
+    assert 'fixture-crypto-load' not in result.stdout
+    assert 'fixture-request=' not in result.stdout
+
+
+@pytest.mark.parametrize('mode,code', [('normal', 0), ('load-126', 10), ('export-127', 10)])
+def test_actual_probe_writes_identity_before_crypto_in_same_process(tmp_path, mode, code):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    env = dict(os.environ, PROBE_FIXTURE=mode, TEMP=str(tmp_path),
+               SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+               WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b')
+    result = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
+    assert result.returncode == code, result.stdout + result.stderr
+    report = tmp_path / 'space-record-publication-identity.json'
+    assert report.is_file(), 'actual probe must emit identity, not just stdout'
+    assert report.stat().st_size <= 4096
+    value = json.loads(report.read_text())
+    assert value == dict(version=1, size=112, abi=1, challenge='0123456789abcdef',
+                        echo='0123456789abcdef', pe_build_id='01' + '00'*31,
+                        unix_build_id='01' + '00'*31, module_device=7, module_inode=19,
+                        architecture=0x8664, features=1)
+    assert result.stdout.index('fixture-entry0') < result.stdout.index('fixture-crypto-load')
+    before = report.read_bytes()
+    again = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
+    assert again.returncode == 20 and report.read_bytes() == before
+    assert 'fixture-crypto-load' not in again.stdout
+
+
+def test_receipt_v3_binds_pair_and_fixed_loader_root(runtime):
+    runtime.package()
+    result = runtime.prepare([10, 0])
+    assert result.returncode == 0, result.stdout + result.stderr
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['version'] == 3
+    assert set(receipt['bridge']) == {'abi', 'build_id', 'toolchain', 'files', 'identity'}
+    calls = [c for c in runtime.calls() if 'wine' in c and not c.get('utility')]
+    assert len(calls) == 3  # one initialization, two same-process capability probes
+    for call in calls[1:]:
+        assert call['env']['WINEDLLPATH'] == str(runtime.root / 'build/wine-publication/modules')
+        assert call['env']['WINEDLLOVERRIDES'].startswith('space_record_publication=b;')
+    assert len([c for c in runtime.calls() if c.get('utility')]) == 8
+
+
+@pytest.mark.parametrize('code', [0, 10])
+@pytest.mark.parametrize('damage', ['missing', 'echo', 'pe-id', 'unix-id', 'device', 'inode',
+                                   'extra', 'duplicate', 'oversize', 'symlink', 'hardlink'])
+def test_host_refuses_unproved_pair_even_when_crypto_claims_success_or_absence(runtime, damage, code):
+    runtime.package()
+    runtime.env['FIXTURE_IDENTITY_DAMAGE'] = damage
+    result = runtime.prepare([code, 0])
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert 'probe exit=20' in result.stdout
+    assert not (runtime.overlay / 'admission.json').exists()
+    assert not any('process_prng_compat.c' in ' '.join(c.get('cc', [])) for c in runtime.calls())
+
+
+def test_schema2_receipt_cannot_authorize_execution(runtime):
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    receipt = runtime.overlay / 'admission.json'
+    value = json.loads(receipt.read_text())
+    value['version'] = 2
+    receipt.write_text(json.dumps(value))
+    # Reseal only in fixture so rejection tests schema, not stale inventory.
+    marker = runtime.overlay / MARKER
+    seal = json.loads(marker.read_text())
+    seal['inventory']['admission.json'] = hashlib.sha256(receipt.read_bytes()).hexdigest()
+    marker.write_text(json.dumps(seal))
+    before = len([c for c in runtime.calls() if 'wine' in c])
+    result = runtime.run('test-windows-under-wine.sh')
+    assert result.returncode != 0
+    assert len([c for c in runtime.calls() if 'wine' in c]) == before
+
+
+@pytest.mark.parametrize('damage', ['missing-so', 'changed-so', 'extra-output', 'source', 'tool', 'identity', 'build-id'])
+def test_admitted_pair_bindings_are_rechecked_before_application(runtime, damage):
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    output = runtime.root / 'build/wine-publication'
+    so = output / 'modules/x86_64-unix/space_record_publication.so'
+    if damage == 'missing-so':
+        so.unlink()
+    elif damage == 'changed-so':
+        so.write_bytes(so.read_bytes() + b'changed')
+    elif damage == 'extra-output':
+        (output / 'foreign').write_text('keep')
+    elif damage == 'source':
+        (runtime.root / 'src/record_publication_wine_abi.h').write_text('changed source')
+    elif damage == 'tool':
+        with (runtime.bin / 'publication-cxx').open('a') as stream:
+            stream.write('\n# changed compiler\n')
+    else:
+        receipt = runtime.overlay / 'admission.json'
+        value = json.loads(receipt.read_text())
+        if damage == 'identity':
+            value['bridge']['identity']['module_inode'] += 1
+        else:
+            value['bridge']['build_id'] = '0'*64
+        receipt.write_text(json.dumps(value))
+        marker = runtime.overlay / MARKER
+        seal = json.loads(marker.read_text())
+        seal['inventory']['admission.json'] = hashlib.sha256(receipt.read_bytes()).hexdigest()
+        marker.write_text(json.dumps(seal))
+    before = len([c for c in runtime.calls() if 'wine' in c])
+    result = runtime.run('test-windows-under-wine.sh')
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert len([c for c in runtime.calls() if 'wine' in c]) == before
+
+
+def test_private_bootstrap_requires_parent_handoff_without_default_prefix(runtime):
+    runtime.package()
+    before = runtime.calls()
+    result = subprocess.run([sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), 'prepare-bootstrap'],
+                            cwd=runtime.root, env=runtime.env, capture_output=True, text=True)
+    assert result.returncode != 0 and 'requires owned parent Session handoff' in result.stderr
+    assert runtime.calls() == before
+    assert not (runtime.root / 'build/wine/sessions').exists()
+
+
+def test_composite_serializes_with_reproducer_without_holding_child_build_lock(runtime):
+    runtime.package()
+    compiler = runtime.bin / 'publication-cxx'
+    source = compiler.read_text()
+    check = '''
+import fcntl
+repo = pathlib.Path.cwd().parents[1]
+repo_fd = os.open(repo, os.O_RDONLY | os.O_DIRECTORY)
+try:
+    fcntl.flock(repo_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except BlockingIOError:
+    pass
+else:
+    sys.exit(77)
+os.close(repo_fd)
+build_fd = os.open(repo/'build', os.O_RDONLY | os.O_DIRECTORY)
+fcntl.flock(build_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+os.close(build_fd)
+'''
+    compiler.write_text(source.replace('args = sys.argv[1:]', 'args = sys.argv[1:]\n' + check))
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('stage', ['builder', 'bootstrap'])
+@pytest.mark.parametrize('code', [17, 124])
+def test_prepare_preserves_child_failure_with_one_failed_scoped_cleanup(runtime, stage, code):
+    runtime.env['FIXTURE_STOP_CODE'] = '37'
+    builder = runtime.root / 'scripts/wine/build_publication.py'
+    builder.write_text(f'''
+import json, os, sys
+if __name__ == '__main__':
+    with open(os.environ['FIXTURE_LOG'], 'a') as stream:
+        stream.write(json.dumps({{'prepare_child': 'builder'}}) + '\\n')
+    sys.exit({code if stage == 'builder' else 0})
+''')
+    # Only the fake checkout's bootstrap branch is inert. The parent executes
+    # actual public prepare/main, Session ownership and scoped stop/wait code.
+    artifact = runtime.root / 'scripts/wine/artifacts.py'
+    artifact.write_text(f'''
+import json, os, sys
+if __name__ == '__main__' and sys.argv[1:] == ['prepare-bootstrap']:
+    with open(os.environ['FIXTURE_LOG'], 'a') as stream:
+        stream.write(json.dumps({{'prepare_child': 'bootstrap'}}) + '\\n')
+    sys.exit({code})
+''' + artifact.read_text())
+    result = runtime.run('prepare-windows-wine-runtime.sh')
+    calls = runtime.calls()
+    servers = [call for call in calls if 'server' in call]
+    commands = [call['server'] for call in servers]
+    assert (result.returncode, commands) == (code, [['-k'], ['-w']]), (
+        f'primary={result.returncode}; scoped_cleanup={commands}; stderr={result.stderr}')
+    assert result.stderr.count('Owned Wine cleanup failed:') == 1
+    assert 'wineserver -k exit=37' in result.stderr
+    assert [call['prepare_child'] for call in calls if 'prepare_child' in call] == (
+        ['builder'] if stage == 'builder' else ['builder', 'bootstrap'])
+    assert [call['timeout'] for call in calls if 'timeout' in call] == (
+        ['60s', '60s', '900s'] + ([] if stage == 'builder' else ['480s']) + ['10s', '15s'])
+    prefix = Path(servers[0]['env']['WINEPREFIX'])
+    assert prefix.parent.parent == runtime.root / 'build/wine/sessions'
+    assert all(call['env']['WINEPREFIX'] == str(prefix) for call in servers)
+    state = json.loads((prefix.parent / 'state.json').read_text())
+    assert state['ended'] and not state['authorized'] and state['stopped_generation'] is None
+    assert not Path(runtime.env['WINEPREFIX']).exists()
+
+
+@pytest.mark.parametrize('error_type', [ValueError, KeyboardInterrupt])
+def test_prepare_execution_exception_cleans_once_and_rethrows_original(runtime, monkeypatch, capsys, error_type):
+    from wine import artifacts, prefix
+    runtime.env['FIXTURE_STOP_CODE'] = '37'
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    session = prefix.create_session(runtime.root)
+    primary = error_type('fixture composite execution failure')
+    environment = prefix.Session.environment
+    def failed_environment(self):
+        if self is session:
+            raise primary
+        return environment(self)
+    monkeypatch.setattr(prefix.Session, 'environment', failed_environment)
+    with pytest.raises(error_type) as caught:
+        artifacts.prepare(session)
+    assert caught.value is primary
+    servers = [call for call in runtime.calls() if 'server' in call]
+    assert [call['server'] for call in servers] == [['-k'], ['-w']]
+    assert all(call['env']['WINEPREFIX'] == str(session.prefix) for call in servers)
+    stderr = capsys.readouterr().err
+    assert stderr.count('Owned Wine cleanup failed:') == 1
+    assert 'wineserver -k exit=37' in stderr
+
+
+def test_retry_refuses_changed_or_unowned_fixed_report_without_deleting_it(runtime):
+    from wine import artifacts, prefix
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    session = prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    verified = artifacts._identity_file(session)
+    path = session.tmp / artifacts.IDENTITY_REPORT
+    value = verified[0] | {'echo': '0'*16}
+    path.write_text(json.dumps(value))
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match='retry report changed'):
+        artifacts._remove_identity_report(session, verified)
+    assert path.read_bytes() == before
+    path.unlink()
+    target = runtime.root / 'sentinel'
+    target.write_text('preserve')
+    path.symlink_to(target)
+    with pytest.raises((ValueError, OSError)):
+        artifacts._remove_identity_report(session, verified)
+    assert path.is_symlink() and target.read_text() == 'preserve'
 
 
 @pytest.mark.parametrize("mode,code,chunks", [
@@ -401,7 +726,8 @@ def test_bridge_never_returns_if_hard_termination_unexpectedly_returns(tmp_path)
 def test_real_probe_logic_with_host_api_adapter(tmp_path, mode, code):
     exe = compile_host(tmp_path, "probe", str(ROOT / "scripts/wine/probe.c"))
     result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode,
-                                                WINEDLLOVERRIDES="bcryptprimitives=b;advapi32,cryptbase=b"),
+                                                TEMP=str(tmp_path), SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+                                                WINEDLLOVERRIDES="space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b"),
                             capture_output=True, text=True)
     assert result.returncode == code, result.stdout + result.stderr
     if code == 0:
@@ -413,7 +739,8 @@ def test_real_probe_logic_with_host_api_adapter(tmp_path, mode, code):
 def test_probe_compat_identity_uses_own_overlay_directory(tmp_path):
     exe = compile_host(tmp_path, "probe", str(ROOT / "scripts/wine/probe.c"))
     result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE="normal",
-                                                WINEDLLOVERRIDES="bcryptprimitives=n;advapi32,cryptbase=b"),
+                                                TEMP=str(tmp_path), SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+                                                WINEDLLOVERRIDES="space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b"),
                             capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -598,8 +925,9 @@ def test_unowned_arbitrary_package_argument_is_not_removed(runtime, tmp_path):
     assert (output / "sentinel").read_text() == "keep"
 
 
-def test_forbidden_helper_in_packaged_assets_fails_final_verification(runtime):
-    (runtime.root / "assets/BCryptPrimitives.DLL").write_text("hidden helper")
+@pytest.mark.parametrize('name', ['BCryptPrimitives.DLL', 'space_record_publication.dll', 'space_record_publication.so'])
+def test_forbidden_helper_in_packaged_assets_fails_final_verification(runtime, name):
+    (runtime.root / 'assets' / name).write_text("hidden helper")
     assert runtime.run("package-windows-runtime.sh").returncode != 0
     assert not runtime.dist.exists()
 
@@ -620,7 +948,7 @@ def test_workflow_smoke_executes_admitted_overlay_under_same_configuration(runti
         assert result.returncode == 0, result.stderr
         app = [c for c in runtime.calls() if "wine" in c][-1]
         assert app["wine"] == [str(runtime.overlay / "space-cli.exe"), "--help"]
-        assert app["env"]["WINEDLLOVERRIDES"] == "bcryptprimitives=n;advapi32,cryptbase=b"
+        assert app["env"]["WINEDLLOVERRIDES"] == "space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b"
         assert Path(app["env"]["WINEPREFIX"]).parent.parent == runtime.root / 'build/wine/sessions'
         assert app["env"]["SPACE_ASSETS_PATH"] == str(runtime.overlay / "assets")
         assert [c for c in runtime.calls() if "timeout" in c][-3]["timeout"] == "60s"

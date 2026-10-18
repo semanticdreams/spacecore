@@ -3,6 +3,7 @@
 #define SPACE_TEST_WINDOWS_H
 #include <stddef.h>
 #include <stdint.h>
+#include <wchar.h>
 #define WINAPI
 #define __declspec(attribute)
 #define TRUE 1
@@ -23,6 +24,15 @@ typedef void *PVOID;
 typedef const char *LPCSTR;
 typedef void *HMODULE;
 typedef void *HANDLE;
+typedef wchar_t WCHAR;
+#define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
+#define GENERIC_WRITE 0x40000000
+#define CREATE_NEW 1
+#define FILE_ATTRIBUTE_NORMAL 0x80
+DWORD GetEnvironmentVariableW(const WCHAR *, WCHAR *, DWORD);
+HANDLE CreateFileW(const WCHAR *, DWORD, DWORD, void *, DWORD, DWORD, HANDLE);
+BOOL WriteFile(HANDLE, const void *, DWORD, DWORD *, void *);
+BOOL CloseHandle(HANDLE);
 typedef intptr_t (*FARPROC)(void);
 HANDLE WINAPI GetCurrentProcess(void);
 BOOL WINAPI TerminateProcess(HANDLE, UINT);

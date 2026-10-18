@@ -3,6 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+#include <wchar.h>
+#include "record_publication_wine_abi.h"
+
+#ifndef SRP_BUILD_ID_BYTES
+#error "The capability probe must be bound to the inventoried publication build"
+#endif
+
+typedef int32_t (WINAPI *PublicationCall)(uint32_t, void *);
+static const uint8_t expected_build_id[32] = SRP_BUILD_ID_BYTES;
 
 typedef BOOL (WINAPI *ProcessPrngFn)(PBYTE, SIZE_T);
 
@@ -13,17 +23,90 @@ static int failure(const char *message)
     return 20;
 }
 
+static void hex_id(char *output, const uint8_t *input)
+{
+    static const char digits[] = "0123456789abcdef";
+    size_t i;
+    for (i = 0; i < 32; ++i) {
+        output[2 * i] = digits[input[i] >> 4];
+        output[2 * i + 1] = digits[input[i] & 15];
+    }
+    output[64] = '\0';
+}
+
+static int publication_identity(void)
+{
+    HMODULE module, owner = NULL;
+    union { FARPROC generic; PublicationCall call; } function;
+    SrpIdentity identity = {0};
+    static const char digits[] = "0123456789abcdef";
+    const char *challenge = getenv("SPACE_WINE_IDENTITY_CHALLENGE");
+    uint64_t value = 0;
+    size_t i;
+    char pe[65], unix_id[65], report[4096];
+    WCHAR path[32768];
+    DWORD length, written;
+    HANDLE file;
+    int count, ok;
+    if (!challenge || strlen(challenge) != 16) return failure("missing publication challenge");
+    for (i = 0; i < 16; ++i) {
+        const char *digit = strchr(digits, challenge[i]);
+        if (!digit) return failure("invalid publication challenge");
+        value = (value << 4) | (uint64_t)(digit - digits);
+    }
+    /* Only basename loading uses Wine's builtin PE/Unix association. Neither an
+     * absolute DLL load nor a logical System32 filename proves Unix dispatch. */
+    module = LoadLibraryA("space_record_publication.dll");
+    if (!module) return failure("publication builtin unavailable");
+    function.generic = GetProcAddress(module, "SpaceRecordPublicationCall");
+    if (!function.generic || !GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)function.call, &owner) || owner != module)
+        return failure("publication entry ownership");
+    identity.size = sizeof(identity);
+    identity.abi = SRP_ABI;
+    identity.challenge = value;
+    if (function.call(SRP_ENTRY_IDENTITY, &identity) != SRP_SUCCESS || identity.size != sizeof(identity)
+            || identity.abi != SRP_ABI || identity.challenge != value || identity.echo != value
+            || identity.architecture != SRP_ARCH_X86_64 || identity.features != SRP_REQUIRED_FEATURES
+            || !identity.module_inode
+            || memcmp(identity.pe_build_id, expected_build_id, sizeof(expected_build_id))
+            || memcmp(identity.unix_build_id, expected_build_id, sizeof(expected_build_id)))
+        return failure("publication identity roundtrip");
+    hex_id(pe, identity.pe_build_id);
+    hex_id(unix_id, identity.unix_build_id);
+    count = snprintf(report, sizeof(report),
+        "{\"version\":1,\"size\":112,\"abi\":%" PRIu32 ",\"challenge\":\"%s\",\"echo\":\"%016" PRIx64
+        "\",\"pe_build_id\":\"%s\",\"unix_build_id\":\"%s\",\"module_device\":%" PRIu64
+        ",\"module_inode\":%" PRIu64 ",\"architecture\":%" PRIu32 ",\"features\":%" PRIu32 "}\n",
+        identity.abi, challenge, identity.echo, pe, unix_id, identity.module_device, identity.module_inode,
+        identity.architecture, identity.features);
+    if (count <= 0 || (size_t)count >= sizeof(report)) return failure("publication report size");
+    length = GetEnvironmentVariableW(L"TEMP", path, (DWORD)(sizeof(path) / sizeof(path[0])));
+    if (!length || length + wcslen(L"\\space-record-publication-identity.json") >= sizeof(path) / sizeof(path[0]))
+        return failure("publication report TEMP");
+    wcscat(path, L"\\space-record-publication-identity.json");
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) return failure("exclusive publication report create");
+    written = 0;
+    ok = WriteFile(file, report, (DWORD)count, &written, NULL) && written == (DWORD)count;
+    if (!CloseHandle(file)) ok = 0;
+    if (!ok) return failure("publication report write/close");
+    puts("Publication identity: entry0 report written; host identity comparison required");
+    fflush(stdout);
+    return 0;
+}
+
 static int expected_module_path(char *path)
 {
     const char *backend = getenv("WINEDLLOVERRIDES");
     DWORD length;
     char *base;
-    if (backend && strcmp(backend, "bcryptprimitives=b;advapi32,cryptbase=b") == 0) {
+    if (backend && strcmp(backend, "space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b") == 0) {
         length = GetSystemDirectoryA(path, MAX_PATH);
         if (length == 0 || length >= MAX_PATH) return failure("system directory identity");
         if (length + strlen("\\bcryptprimitives.dll") >= MAX_PATH) return failure("long system path");
         strcat(path, "\\bcryptprimitives.dll");
-    } else if (backend && strcmp(backend, "bcryptprimitives=n;advapi32,cryptbase=b") == 0) {
+    } else if (backend && strcmp(backend, "space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b") == 0) {
         length = GetModuleFileNameA(NULL, path, MAX_PATH);
         if (length == 0 || length >= MAX_PATH) return failure("probe executable identity");
         base = strrchr(path, '\\');
@@ -81,6 +164,7 @@ int main(void)
     BYTE zero[3] = {0x31, 0x47, 0x59};
     DWORD error;
     DWORD path_length;
+    if (publication_identity() != 0) return 20;
     puts("ProcessPrng probe: loading bcryptprimitives.dll");
     fflush(stdout);
     SetLastError(ERROR_SUCCESS);

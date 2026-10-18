@@ -15,11 +15,14 @@ import subprocess
 import sys
 import tempfile
 import signal
+import secrets
+import re
 
 if __package__:
-    from . import prefix
+    from . import prefix, build_publication, publication_toolchain
 else:
-    import prefix
+    sys.path.insert(0, str(Path(__file__).absolute().parents[1]))
+    from wine import prefix, build_publication, publication_toolchain
 
 ROOT = Path(__file__).absolute().parents[2]
 BUILD = ROOT / "build"
@@ -27,6 +30,11 @@ PACKAGE = BUILD / "dist/windows"
 OVERLAY = BUILD / "wine/windows"
 MARKER = ".space-windows-artifact-v1.json"
 FORBIDDEN = "bcryptprimitives.dll"
+PAIR_NAMES = {'space_record_publication.dll', 'space_record_publication.so'}
+IDENTITY_REPORT = 'space-record-publication-identity.json'
+IDENTITY_LIMIT = 4096
+PUBLICATION_BUILD = ('timeout', '--kill-after=5s', '900s', 'python3', 'scripts/wine/build_publication.py')
+BOOTSTRAP = ('timeout', '--kill-after=5s', '480s', 'python3', 'scripts/wine/artifacts.py', 'prepare-bootstrap')
 BUILTIN = "bcryptprimitives=b;advapi32,cryptbase=b"
 COMPAT = "bcryptprimitives=n;advapi32,cryptbase=b"
 # Producer and capture parser share the encoded, newline-excluding line budget.
@@ -79,7 +87,7 @@ def verify(path, kind):
 
 def clean_native(path):
     entries = verify(path, "native-package")
-    if any(Path(name).name.casefold() == FORBIDDEN for name in entries):
+    if any(Path(name).name.casefold() in {FORBIDDEN, *PAIR_NAMES} for name in entries):
         raise ValueError(f"Forbidden Wine helper in native package: {path}")
     for name in ("space.exe", "space-cli.exe", "assets"):
         if name not in entries:
@@ -190,7 +198,7 @@ def package(destination):
             dest.mkdir(parents=True)
             shutil.copy2(manifest, dest / manifest.name)
         for dll in source.iterdir():
-            if dll.suffix.casefold() == ".dll" and dll.name.casefold() != FORBIDDEN:
+            if dll.suffix.casefold() == ".dll" and dll.name.casefold() not in {FORBIDDEN, *PAIR_NAMES}:
                 safe_path(dll)
                 if not dll.is_file():
                     raise ValueError(f"Invalid native DLL: {dll}")
@@ -229,21 +237,109 @@ def launch_conditions():
     return {key: os.environ.get(key) for key in ("DISPLAY", "WAYLAND_DISPLAY")}
 
 
-def probe(session, backend):
+def publication_manifest(session):
+    session.validate()
+    recognized = build_publication._recognized_output(session.repo / 'build/wine-publication')
+    if recognized is None:
+        raise ValueError('Missing owned publication builtin pair')
+    manifest = recognized[1]
+    if (manifest['runtime'] != session.owner['tools']['wine']
+            or manifest['toolchain']['inputs'] != build_publication._sources(session.repo)):
+        raise ValueError('Publication runtime/source binding changed')
+    publication_toolchain.verify_toolchain(manifest['toolchain']['identity'])
+    return manifest
+
+
+def _unique_object(pairs):
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError('Duplicate publication identity field')
+        value[key] = item
+    return value
+
+
+def _identity_file(session):
+    session.validate()
+    path = session.tmp / IDENTITY_REPORT
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
+    try:
+        info = os.fstat(fd)
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid() or info.st_nlink != 1
+                or info.st_size > IDENTITY_LIMIT or info.st_mode & 0o022):
+            raise ValueError('Unsafe publication identity report')
+        def stable(value):
+            return (value.st_dev, value.st_ino, value.st_mode, value.st_uid, value.st_nlink,
+                    value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+        raw = os.read(fd, IDENTITY_LIMIT + 1)
+        if (len(raw) != info.st_size or len(raw) > IDENTITY_LIMIT
+                or stable(os.fstat(fd)) != stable(info) or stable(path.lstat()) != stable(info)):
+            raise ValueError('Publication identity report changed')
+    finally:
+        os.close(fd)
+    return json.loads(raw, object_pairs_hook=_unique_object), stable(info)
+
+
+def validate_bridge_identity(manifest, identity, repo, challenge=None):
+    fields = {'version', 'size', 'abi', 'challenge', 'echo', 'pe_build_id', 'unix_build_id',
+              'module_device', 'module_inode', 'architecture', 'features'}
+    if not isinstance(identity, dict) or set(identity) != fields:
+        raise ValueError('Invalid publication identity fields')
+    expected = dict(version=1, size=112, abi=manifest['abi'], architecture=0x8664, features=1)
+    if (any(type(identity[key]) is not int or identity[key] != value for key, value in expected.items())
+            or not isinstance(identity['challenge'], str) or not re.fullmatch('[0-9a-f]{16}', identity['challenge'])
+            or identity['echo'] != identity['challenge']
+            or (challenge is not None and identity['challenge'] != challenge)
+            or identity['pe_build_id'] != manifest['build_id'] or identity['unix_build_id'] != manifest['build_id']):
+        raise ValueError('Publication identity ABI/challenge/build mismatch')
+    info = (repo / 'build/wine-publication' / build_publication.PAIR[1]).lstat()
+    if (any(type(identity[key]) is not int or not 0 <= identity[key] < 2**64
+            for key in ('module_device', 'module_inode'))
+            or identity['module_device'] != info.st_dev or identity['module_inode'] != info.st_ino):
+        raise ValueError('Publication Unix module device/inode mismatch')
+    return {key: manifest[key] for key in ('abi', 'build_id', 'toolchain', 'files')} | {'identity': identity}
+
+
+def _remove_identity_report(session, verified):
+    value, info = _identity_file(session)
+    if (value, info) != verified:
+        raise ValueError('Publication retry report changed; refusing removal')
+    (session.tmp / IDENTITY_REPORT).unlink()
+
+
+def probe(session, backend, manifest):
     before = verify(OVERLAY, "wine-overlay")
+    report = session.tmp / IDENTITY_REPORT
+    if report.exists() or report.is_symlink():
+        raise ValueError('Publication report already exists; refusing unverified removal')
+    challenge = secrets.token_hex(8)
     print(f"Wine admission: probe backend={backend} deadline=60s kill-after=5s", flush=True)
     code = session.launch([session.owner['tools']['wine']['executable'],
-                           str(OVERLAY / "process-prng-probe.exe")], 'probe', {"WINEDLLOVERRIDES": backend})
+                           str(OVERLAY / "process-prng-probe.exe")], 'probe', {
+                               'WINEDLLOVERRIDES': 'space_record_publication=b;' + backend,
+                               'WINEDLLPATH': str(BUILD / 'wine-publication/modules'),
+                               'SPACE_WINE_IDENTITY_CHALLENGE': challenge})
+    bridge = verified = None
+    if code in (0, 10):
+        try:
+            verified = _identity_file(session)
+            if publication_manifest(session) != manifest:
+                raise ValueError('Publication pair changed during probe')
+            bridge = validate_bridge_identity(manifest, verified[0], session.repo, challenge)
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            print(f'Wine admission: publication contract refused: {error}', flush=True)
+            code = 20
     detail = (" (admission timeout, not crypto absence)" if code == 124 else
               " (SIGKILL/forced admission timeout, not crypto absence)" if code in (137, -9) else "")
     print(f"Wine admission: probe exit={code}" +
           detail, flush=True)
     if inventory(OVERLAY) != before:
         raise ValueError("Probe modified the overlay; refusing to claim unknown output")
-    return code
+    return code, bridge, verified
 
 
 def _prepare_payload(session):
+    manifest = publication_manifest(session)
     package_before = clean_native(PACKAGE)
     check_replace(OVERLAY, "wine-overlay")
     conditions = launch_conditions()
@@ -257,24 +353,26 @@ def _prepare_payload(session):
             if item.name == MARKER:
                 continue
             copy_tree(item, stage / item.name) if item.is_dir() else shutil.copy2(item, stage / item.name)
-        compiler("probe.c", stage / "process-prng-probe.exe")
+        definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in bytes.fromhex(manifest['build_id'])) + '}'
+        compiler("probe.c", stage / "process-prng-probe.exe", '-I', str(ROOT / 'src'), definition)
         seal(stage, "wine-overlay")
         install(stage, OVERLAY, "wine-overlay")
     backend = BUILTIN
-    code = probe(session, backend)
+    code, bridge, report = probe(session, backend, manifest)
     if code == 10:
+        _remove_identity_report(session, report)
         print("Wine admission: confirmed absence; building Wine-only bridge", flush=True)
         with owned_file_write(OVERLAY, FORBIDDEN):
             build_compat(OVERLAY)
         backend = COMPAT
-        code = probe(session, backend)
+        code, bridge, report = probe(session, backend, manifest)
     if code != 0:
         raise ValueError(f"Wine API admission failed: probe exit={code}; no fallback/retry authorized")
     if clean_native(PACKAGE) != package_before:
         raise ValueError("Native package changed during Wine admission")
     cleanup = prefix.stop_session(session, end=False)
     require_cleanup(cleanup)
-    receipt = {"version": 2, "ownedSession": session.binding(),
+    receipt = {"version": 3, "ownedSession": session.binding(), 'bridge': bridge,
                "tools": session.owner["tools"], "conditions": conditions,
                "backend": backend, "package": package_before,
                "payload": verify(OVERLAY, "wine-overlay")}
@@ -298,18 +396,24 @@ def configuration(session):
     receipt = json.loads((OVERLAY / "admission.json").read_text())
     backend = receipt.get("backend")
     payload = {k: v for k, v in entries.items() if k != "admission.json"}
-    if (receipt.get("version") != 2 or backend not in (BUILTIN, COMPAT)
+    if (type(receipt.get('version')) is not int or receipt.get("version") != 3 or backend not in (BUILTIN, COMPAT)
             or receipt.get("ownedSession") != session.binding()
             or receipt.get("tools") != session.owner['tools']
             or receipt.get("payload") != payload or receipt.get("package") != native
             or receipt.get("conditions") != launch_conditions()):
         raise ValueError("Wine admission receipt does not match payload/package/launch conditions")
+    manifest = publication_manifest(session)
+    bridge = receipt.get('bridge')
+    if (not isinstance(bridge, dict) or set(bridge) != {'abi', 'build_id', 'toolchain', 'files', 'identity'}
+            or bridge != validate_bridge_identity(manifest, bridge['identity'], session.repo)):
+        raise ValueError('Wine admission bridge binding changed')
     identity = session.owner['tools']['wine']
     if os.environ.get("WINE_CMD") and str(prefix.resolve_wine()) != identity["executable"]:
         raise ValueError("WINE_CMD differs from admitted Wine")
     if (backend == COMPAT) != (FORBIDDEN in payload):
         raise ValueError("Backend does not match overlay helper inventory")
-    return {'wine': identity['executable'], 'backend': backend}
+    return {'wine': identity['executable'], 'backend': backend,
+            'WINEDLLPATH': str(BUILD / 'wine-publication/modules')}
 
 
 def require_cleanup(result):
@@ -354,6 +458,29 @@ def owning_operation(session, operation):
 
 
 def prepare(session):
+    """Public composite: independently bounded children, no held build inode lock."""
+    def composite():
+        env = dict(session.environment(), SPACE_WINE_SESSION_ID=session.id)
+        for args in (PUBLICATION_BUILD, BOOTSTRAP):
+            code = prefix.wait_leader(list(args), cwd=ROOT, env=env)
+            if code:
+                return code
+        return 0
+    try:
+        code = composite()
+    except BaseException:
+        result = prefix.stop_session(session, end=True)
+        if not result.ok:
+            print('Owned Wine cleanup failed: ' + '; '.join(result.errors), file=sys.stderr, flush=True)
+        raise
+    if code:
+        result = prefix.stop_session(session, end=True)
+        if not result.ok:
+            print('Owned Wine cleanup failed: ' + '; '.join(result.errors), file=sys.stderr, flush=True)
+    return code
+
+
+def prepare_bootstrap(session):
     try:
         return _prepare_payload(session)
     except BaseException:
@@ -382,7 +509,8 @@ def execute_admitted(session, mode):
         session.save(state)
         assets = str(OVERLAY / 'assets')
         fennel = f'{assets}/lua/?.fnl;{assets}/lua/?/init.fnl'
-        env = {'WINEDLLOVERRIDES': config['backend'], 'SPACE_BIN': str(OVERLAY / 'space-cli.exe'),
+        env = {'WINEDLLOVERRIDES': 'space_record_publication=b;' + config['backend'], 'WINEDLLPATH': config['WINEDLLPATH'],
+               'SPACE_BIN': str(OVERLAY / 'space-cli.exe'),
                'SPACE_ASSETS_PATH': assets, 'FENNEL_PATH': fennel, 'FENNEL_MACRO_PATH': fennel}
         args = ['--help']
         if mode == 'fast1800':
@@ -421,24 +549,37 @@ def selected_session():
     identifier = os.environ.get('SPACE_WINE_SESSION_ID')
     if identifier:
         return prefix.load_session(ROOT, identifier)
-    # Without a private handoff, only a schema-2 receipt can identify a session.
+    # Without a private handoff, only a schema-3 receipt can identify a session.
     # Old receipts are evidence only. Never reinterpret their default prefix.
     safe_path(OVERLAY / 'admission.json')
     receipt = json.loads((OVERLAY / 'admission.json').read_text())
-    if receipt.get('version') != 2:
-        raise ValueError('Unsupported Wine admission receipt (owned session schema 2 required)')
+    if type(receipt.get('version')) is not int or receipt.get('version') != 3:
+        raise ValueError('Unsupported Wine admission receipt (owned session schema 3 required)')
     return prefix.load_session(ROOT, receipt['ownedSession']['id'])
 
 
 def main():
     action, *args = sys.argv[1:]
+    if action == 'prepare' and not args:
+        # Same repo-inode serialization as the reproducer. Child helpers may
+        # acquire build/ themselves; no build lock/FD crosses that handoff.
+        fd = os.open(ROOT, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            with locked_build():
+                session = (prefix.load_session(ROOT, os.environ['SPACE_WINE_SESSION_ID'])
+                           if os.environ.get('SPACE_WINE_SESSION_ID') else prefix.create_session(ROOT))
+            return prepare(session)
+        finally:
+            os.close(fd)
     with locked_build():
         if action == "package" and len(args) <= 1:
             package(Path(args[0]).absolute() if args else PACKAGE)
-        elif action == "prepare" and not args:
-            session = (prefix.load_session(ROOT, os.environ['SPACE_WINE_SESSION_ID'])
-                       if os.environ.get('SPACE_WINE_SESSION_ID') else prefix.create_session(ROOT))
-            return prepare(session)
+        elif action == 'prepare-bootstrap' and not args:
+            identifier = os.environ.get('SPACE_WINE_SESSION_ID')
+            if not identifier:
+                raise ValueError('prepare-bootstrap requires owned parent Session handoff')
+            return prepare_bootstrap(prefix.load_session(ROOT, identifier))
         elif action in ('smoke60', 'fast1800') and not args:
             return execute_admitted(selected_session(), action)
         elif action == 'terminal-stop' and not args:

@@ -18,6 +18,7 @@ from typing import Sequence
 import _windows_repro_evidence as _evidence
 from wine import prefix as _prefix
 from wine import publication_toolchain as _publication_toolchain
+from wine import artifacts as _artifacts, build_publication as _build_publication
 from opencode_capabilities import CapabilityError, CommandResult, ensure_space_repo, failure, human_decision, run_command, success
 
 
@@ -45,6 +46,10 @@ REQUIRED_SCRIPTS = (
     "scripts/wine/prefix.py",
     "scripts/wine/artifacts.py",
     "scripts/wine/publication_toolchain.py",
+    "scripts/wine/build_publication.py",
+    "scripts/wine/record_publication_bridge.c",
+    "scripts/wine/record_publication_unix_entry.cpp",
+    "src/record_publication_wine_abi.h",
     "scripts/wine/probe.c",
     "scripts/wine/process_prng_compat.c",
     "scripts/test-windows-under-wine.sh",
@@ -353,7 +358,8 @@ _REPRO_STEPS = (
     ("build-windows-from-linux", ("scripts/build-windows-from-linux.sh",)),
     ("package-windows-runtime", ("scripts/package-windows-runtime.sh",)),
     ("verify-windows-outputs", ()),
-    ("wine-admission", ("timeout", "--kill-after=5s", "480s", "scripts/prepare-windows-wine-runtime.sh")),
+    ("wine-publication-build", ("timeout", "--kill-after=5s", "900s", "python3", "scripts/wine/build_publication.py")),
+    ("wine-admission", ("timeout", "--kill-after=5s", "480s", "python3", "scripts/wine/artifacts.py", "prepare-bootstrap")),
     ("wine-fast", ("timeout", "--kill-after=5s", "1920s", "scripts/test-windows-under-wine.sh")),
 )
 _TERMINAL_STOP = ("timeout", "--kill-after=5s", "45s", "python3", "scripts/wine/artifacts.py", "terminal-stop")
@@ -375,7 +381,7 @@ def _selection_conflicts() -> list[str]:
 
 def _launch_metadata(repo: Path) -> dict[str, object]:
     return {"module": "tests.fast:main", "deadline_seconds": 1800, "admission_deadline_seconds": 60,
-            "bounds": dict(_prefix.BOUNDS, admission_outer=480, fast_outer=1920, cleanup_backstop=45),
+            "bounds": dict(_prefix.BOUNDS, publication_build=900, admission_outer=480, fast_outer=1920, cleanup_backstop=45),
             "case_deadline_seconds": 120, "case_deadline_policy": "existing per-case overrides unchanged",
             "diagnostics": {"TEST_VERBOSE": "1", "SPACE_TEST_TIMINGS": "1"}, "skip_keyring_tests": True,
             "prefix_selection": "generated-owned-session", "effective_prefix": None,
@@ -395,15 +401,29 @@ def _admitted_metadata(repo: Path, session: _prefix.Session) -> dict[str, object
         receipt = _evidence._read_json(repo / "build/wine/windows/admission.json", 16 * 1024 * 1024)
         tools = receipt["tools"]
         payload = receipt["payload"]
-        if (receipt["version"] != 2 or not isinstance(tools, dict) or not isinstance(payload, dict)
+        bridge = receipt.get('bridge')
+        if (type(receipt['version']) is not int or receipt["version"] != 3
+                or not isinstance(bridge, dict) or set(bridge) != {'abi', 'build_id', 'toolchain', 'files', 'identity'}
+                or type(bridge['abi']) is not int or bridge['abi'] != 1
+                or not isinstance(bridge['build_id'], str) or len(bridge['build_id']) != 64
+                or not isinstance(bridge['toolchain'], dict) or not isinstance(bridge['files'], dict)
+                or not isinstance(bridge['identity'], dict)
+                or not isinstance(tools, dict) or not isinstance(payload, dict)
                 or tools != session.owner['tools'] or receipt['ownedSession'] != session.binding()
                 or not all(isinstance(identity[key], str) and len(identity[key]) <= 4096
                            for identity in tools.values() for key in ("executable", "version", "sha256"))
                 or receipt["backend"] not in ("bcryptprimitives=b;advapi32,cryptbase=b", "bcryptprimitives=n;advapi32,cryptbase=b")):
             raise ValueError("Invalid admission metadata")
+        recognized = _build_publication._recognized_output(repo / 'build/wine-publication')
+        if (recognized is None or recognized[1]['runtime'] != session.owner['tools']['wine']
+                or bridge != _artifacts.validate_bridge_identity(recognized[1], bridge['identity'], repo)):
+            raise ValueError('Invalid admission bridge metadata')
         return {"owned_session": session.binding(),
                 "wine": {key: tools['wine'][key] for key in ("executable", "version", "sha256")},
                 "backend": receipt["backend"],
+                'bridge': {'abi': bridge['abi'], 'build_id': bridge['build_id'], 'identity': bridge['identity'],
+                           'inventory_sha256': hashlib.sha256(json.dumps(bridge['files'], sort_keys=True).encode()).hexdigest(),
+                           'toolchain_sha256': hashlib.sha256(json.dumps(bridge['toolchain'], sort_keys=True).encode()).hexdigest()},
                 "payload": {name: payload[name] for name in ("space.exe", "space-cli.exe") if name in payload},
                 "payload_inventory_sha256": hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()}
     finally:
@@ -420,7 +440,7 @@ def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str],
     # internal stage table can supply argv; CLI accepts no command/env/profile.
     if (step, tuple(args)) not in _REPRO_STEPS:
         raise ValueError("Not a fixed Windows reproduction command")
-    if step in ('wine-admission', 'wine-fast'):
+    if step in ('wine-publication-build', 'wine-admission', 'wine-fast'):
         if not isinstance(session, _prefix.Session) or session.repo != repo:
             raise ValueError("Wine stage requires the generated owned session")
         session.validate()
@@ -500,19 +520,19 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
         _evidence._save(repo, run_dir, ledger)
         for step, args in _REPRO_STEPS:
             record = _run_repro_step(repo, run_dir, step, args,
-                                     session if step in ('wine-admission', 'wine-fast') else None)
+                                     session if step in ('wine-publication-build', 'wine-admission', 'wine-fast') else None)
             # Keep the known history in memory, including the current record.
             # A stale disk checkpoint is never the recovery source of truth.
             ledger["stages"].append(record)
-            if session is not None and step in ('wine-admission', 'wine-fast'):
+            if session is not None and step in ('wine-publication-build', 'wine-admission', 'wine-fast'):
                 record['session_after'] = _session_state(session)
             if record["outcome"] != "pass":
                 failed = step
                 break
             if step == 'verify-windows-outputs':
                 # Output verification has succeeded. Ownership/metadata failures
-                # belong to admission, never rewrite that earlier success.
-                step = 'wine-admission'
+                # belong to the builder, never rewrite that earlier success.
+                step = 'wine-publication-build'
                 build_fd = os.open(repo / 'build', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
                 try:
                     fcntl.flock(build_fd, fcntl.LOCK_EX)
@@ -555,12 +575,13 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
             with _prefix.cleanup_signals():
                 try:
                     stage = ledger['stages'][-1]
-                    # Ownership can precede wine-admission's first checkpoint.
-                    # Use its fixed log names, without adding a seventh stage.
-                    if stage['step'] not in ('wine-admission', 'wine-fast'):
-                        stage = _evidence._record('wine-admission', dict(_REPRO_STEPS)['wine-admission'])
+                    # Ownership can precede the builder's first checkpoint.
+                    # Use the next fixed stage's logs, never an extra stage.
+                    if stage['step'] != step:
+                        pending = step if step in ('wine-publication-build', 'wine-admission', 'wine-fast') else 'wine-publication-build'
+                        stage = _evidence._record(pending, dict(_REPRO_STEPS)[pending])
                         for name in ('stdout', 'stderr'):
-                            path = run_dir / f'wine-admission.{name}.log'
+                            path = run_dir / f'{pending}.{name}.log'
                             stage[name] = _evidence._stream_info(path.relative_to(repo).as_posix())
                             try:
                                 _evidence._exclusive(path).close()
