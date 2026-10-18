@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "record_publication_wine_abi.h"
+#include "record_publication_wine_authority.h"
 
 #ifndef SRP_BUILD_ID_BYTES
 #error "The fixed publication builder must supply SRP_BUILD_ID_BYTES"
@@ -40,8 +41,33 @@ __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationCall(uint32_t entry, 
     SrpIdentity* input = args;
     __typeof__(&NtQueryVirtualMemory) query;
     SrpUnixCall dispatch;
-    if (entry != SRP_ENTRY_IDENTITY) return SRP_UNSUPPORTED;
-    if (!input || input->size != sizeof(*input) || input->abi != SRP_ABI) return SRP_INVALID_ARGUMENT;
+    if (entry == SRP_ENTRY_IDENTITY) {
+        if (!input || input->size != sizeof(*input) || input->abi != SRP_ABI) return SRP_INVALID_ARGUMENT;
+    } else if (entry == SRP_ENTRY_OPERATION) {
+        SrpCall *call = args;
+        if (!call || call->size != sizeof(*call) || call->abi != SRP_ABI) return SRP_INVALID_ARGUMENT;
+        if (call->opcode < SRP_BEGIN || call->opcode > SRP_RELEASE
+            || (call->opcode == SRP_ADVANCE && call->event > SRP_BEFORE_CLEANUP)) return SRP_INVALID_ARGUMENT;
+        if (call->opcode == SRP_BEGIN || (call->opcode == SRP_ADVANCE && call->event <= SRP_BEFORE_COMMIT)) {
+            /* Authority precedes native payload/range validation. Recovery routes
+             * remain callable after loss; native exact phase/sequence rejects lies. */
+            const DWORD error = space_record_publication_check_authority();
+            if (error) {
+                call->context = call->sequence = 0;
+                call->event = SRP_START;
+                call->flags = 0;
+                call->primary_state = SRP_PRIMARY_ABSENT;
+                call->primary_error.required = call->cleanup_error.required = call->transport_error.required = 0;
+                call->path = call->payload = call->hook_error = (SrpSlice){0};
+                call->reply = SRP_CONTINUE;
+                call->reserved = 0;
+                /* Only the checked control frame is writable here. Never follow
+                 * caller text pointers before native range validation. */
+                SetLastError(error);
+                return SRP_ACCESS_DENIED;
+            }
+        }
+    } else return SRP_UNSUPPORTED;
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             (LPCWSTR)(uintptr_t)&SpaceRecordPublicationCall, &self)) return SRP_MODULE_UNAVAILABLE;
     ntdll = GetModuleHandleW(L"ntdll.dll");
@@ -56,6 +82,7 @@ __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationCall(uint32_t entry, 
     status = query(GetCurrentProcess(), self, MemoryWineUnixFuncs, &handle, sizeof(handle), NULL);
     if (status != 0) return status;
     if (!handle) return SRP_MODULE_UNAVAILABLE;
+    if (entry == SRP_ENTRY_OPERATION) return dispatch(handle, SRP_ENTRY_OPERATION, args);
     result.size = sizeof(result);
     result.abi = SRP_ABI;
     result.challenge = input->challenge;

@@ -266,6 +266,168 @@ _Static_assert(!__builtin_types_compatible_p(SrpUnixCall,
     assert result.returncode == 0, result.stderr
 
 
+@pytest.fixture(scope='module')
+def publication_bridge_model(tmp_path_factory):
+    directory = tmp_path_factory.mktemp('publication-bridge-model')
+    output = directory / 'bridge-model'
+    definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(['1'] * 32) + '}'
+    result = subprocess.run(['cc', '-std=c11', '-Wall', '-Werror', '-D_WIN64', definition,
+                             '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                             str(ROOT / 'scripts/wine/record_publication_bridge.c'),
+                             str(ROOT / 'scripts/tests/wine_adapters/publication_bridge.c'), '-o', str(output)],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    return output
+
+
+@pytest.mark.parametrize('case', ['thread', 'close-thread', 'thread-error', 'thread-zero-error', 'process-error',
+    'process-zero-error', 'close-zero-error', 'close-process', 'close-preserve', 'deny-disabled', 'deny-enabled', 'groups-oversized', 'groups-tiny',
+    'groups-count', 'groups-short', 'sid-null', 'sid-before', 'sid-header', 'sid-short', 'sid-unaligned',
+    'sid-revision', 'sid-count', 'sid-extent', 'priv-count', 'priv-short', 'duplicate', 'extra',
+    'limited', 'elevation-unknown', 'elevation-size', 'ordinary', 'default', 'groups-max', 'identity',
+    'identity-corrupt', 'unknown', 'bad-header', 'bad-opcode', 'bad-event', 'snapshot', 'cancel', 'release',
+    'cleanup', 'self-error', 'ntdll-error', 'export-error', 'zero-handle', 'module-query-error'])
+def test_publication_direct_bridge_authority(publication_bridge_model, case):
+    result = subprocess.run([str(publication_bridge_model), case], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == 'publication bridge host model passed\n'
+
+
+@pytest.mark.parametrize('case,count', [('missing', 21), ('high', 21), ('unknown-low', 21), ('removed', 21),
+                                      ('unknown-attributes', 21), ('attributes', 4), ('authority-event', 4),
+                                      ('size-error', 3), ('size-success', 3), ('size-zero', 3),
+                                      ('read-error', 3), ('read-zero', 3), ('read-overflow', 3),
+                                      ('size-zero-error', 3), ('read-zero-error', 3)])
+def test_publication_direct_bridge_authority_matrix(publication_bridge_model, case, count):
+    for index in range(count):
+        result = subprocess.run([str(publication_bridge_model), case, str(index)],
+                                capture_output=True, text=True, timeout=10)
+        assert result.returncode == 0, f'{case}/{index}: {result.stderr}'
+
+
+@pytest.mark.parametrize('compiler,standard', [('x86_64-w64-mingw32-gcc-posix', 'c11'),
+                                             ('x86_64-w64-mingw32-g++-posix', 'c++17')])
+def test_publication_authority_header_windows_width_compile_only(tmp_path, compiler, standard):
+    cc = shutil.which(compiler)
+    assert cc, 'tiny header-only MinGW C/C++ compilation is required, no PE execution'
+    source = '''#include "record_publication_wine_authority.h"
+DWORD callable(void) { return space_record_publication_check_authority(); }
+'''
+    result = subprocess.run([cc, '-x', 'c++' if standard == 'c++17' else 'c', f'-std={standard}',
+                             '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'src'), '-c',
+                             '-o', str(tmp_path / 'authority.o'), '-'],
+                            input=source, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+
+
+def test_publication_direct_bridge_real_native_cleanup_cannot_resume_commit(tmp_path):
+    definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(['1'] * 32) + '}'
+    objects = []
+    for name, relative in [('bridge', 'scripts/wine/record_publication_bridge.c'),
+                           ('model', 'scripts/tests/wine_adapters/publication_bridge.c')]:
+        obj = tmp_path / (name + '.o')
+        result = subprocess.run(['cc', '-std=c11', '-Wall', '-Werror', '-D_WIN64', '-DSRP_MODEL_NATIVE', definition,
+                                 '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                                 '-c', str(ROOT / relative), '-o', str(obj)], capture_output=True, text=True, timeout=60)
+        assert result.returncode == 0, result.stderr
+        objects.append(str(obj))
+    executable = tmp_path / 'native-bridge-model'
+    result = subprocess.run(['c++', '-std=c++17', '-pthread', '-I', str(ROOT / 'src'), *objects,
+                             str(ROOT / 'src/record_publication_unix.cpp'), str(ROOT / 'src/record_publication.cpp'),
+                             '-o', str(executable)], capture_output=True, text=True, timeout=120)
+    assert result.returncode == 0, result.stderr
+    destination = tmp_path / 'record'
+    result = subprocess.run([str(executable), 'native-recovery', str(destination)],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == 'native bridge recovery passed\n'
+    assert destination.read_bytes() == b'native guarded bytes'
+    assert not list((tmp_path / '.space-publication').iterdir())
+
+
+@pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
+def test_publication_authority_optimized_raw_records(tmp_path, compiler, standard):
+    objects = []
+    definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(['1'] * 32) + '}'
+    for name, relative in [('bridge', PE_SOURCE), ('model', 'scripts/tests/wine_adapters/publication_bridge.c')]:
+        obj = tmp_path / (name + '.o')
+        result = subprocess.run(['cc', '-std=c11', '-O2', '-fstrict-aliasing', '-Wall', '-Werror',
+                                 '-D_WIN64', definition, '-Dmain=publication_model_main',
+                                 '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                                 '-c', str(ROOT / relative), '-o', str(obj)],
+                                capture_output=True, text=True, timeout=60)
+        assert result.returncode == 0, result.stderr
+        objects.append(str(obj))
+    source = '''#include "record_publication_wine_authority.h"
+#include <stdlib.h>
+#ifdef __cplusplus
+extern "C" void publication_model_configure(const char *);
+#else
+void publication_model_configure(const char *);
+#endif
+int main(int argc, char **argv) {
+    if (argc != 3) return 2;
+    publication_model_configure(argv[1]);
+    return space_record_publication_check_authority() == (DWORD)strtoul(argv[2], NULL, 10) ? 0 : 1;
+}
+'''
+    obj = tmp_path / 'authority.o'
+    result = subprocess.run([compiler, f'-std={standard}', '-O2', '-fstrict-aliasing', '-Wall', '-Werror',
+                             '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                             '-x', 'c++' if standard == 'c++17' else 'c', '-c', '-o', str(obj), '-'],
+                            input=source, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    executable = tmp_path / 'optimized-authority-model'
+    result = subprocess.run([compiler, '-O2', '-fstrict-aliasing', *objects, str(obj), '-o', str(executable)],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    cases = [(case, 0) for case in ['ordinary', 'default', 'groups-max']]
+    cases += [(case, 5) for case in ['deny-disabled', 'deny-enabled', 'missing', 'extra', 'duplicate',
+                                   'high', 'unknown-low', 'removed', 'unknown-attributes', 'limited', 'elevation-unknown']]
+    cases += [(case, 13) for case in ['groups-count', 'groups-short', 'sid-short', 'sid-revision',
+                                    'sid-count', 'sid-extent', 'priv-count', 'priv-short']]
+    for case, error in cases:
+        result = subprocess.run([str(executable), case, str(error)], capture_output=True, text=True, timeout=10)
+        assert result.returncode == 0, f'{case}: {result.stderr}'
+        assert not result.stdout and not result.stderr
+
+
+def test_publication_authority_cpp_runtime_rejects_unknown_scalar_without_enum_ub(tmp_path):
+    objects = []
+    definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(['1'] * 32) + '}'
+    for name, relative in [('bridge', PE_SOURCE), ('model', 'scripts/tests/wine_adapters/publication_bridge.c')]:
+        obj = tmp_path / (name + '.o')
+        result = subprocess.run(['cc', '-std=c11', '-Wall', '-Werror', '-D_WIN64', definition,
+                                 '-Dmain=publication_model_main', '-I', str(ROOT / 'scripts/tests/wine_adapters'),
+                                 '-I', str(ROOT / 'src'), '-c', str(ROOT / relative), '-o', str(obj)],
+                                capture_output=True, text=True, timeout=60)
+        assert result.returncode == 0, result.stderr
+        objects.append(str(obj))
+    source = '''#include "record_publication_wine_authority.h"
+extern "C" void publication_model_configure(const char *);
+int main(int argc, char **argv) {
+    if (argc != 2) return 2;
+    publication_model_configure(argv[1]);
+    const DWORD error = space_record_publication_check_authority();
+    return error == (argv[1][0] == 'o' ? 0 : ERROR_ACCESS_DENIED) ? 0 : 1;
+}
+'''
+    obj = tmp_path / 'cpp.o'
+    result = subprocess.run(['c++', '-std=c++17', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
+                             '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                             '-x', 'c++', '-c', '-o', str(obj), '-'], input=source,
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    executable = tmp_path / 'cpp-authority-model'
+    result = subprocess.run(['c++', '-fsanitize=undefined', *objects, str(obj), '-o', str(executable)],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    for case in ['ordinary', 'elevation-unknown']:
+        result = subprocess.run([str(executable), case], capture_output=True, text=True, timeout=10)
+        assert result.returncode == 0, result.stderr
+        assert not result.stdout and not result.stderr
+
+
 COMPILER_ROLES = [('host_cxx', 'g++', 'x86_64-linux-gnu'),
                   ('mingw_cc', 'x86_64-w64-mingw32-gcc-posix', 'x86_64-w64-mingw32'),
                   ('mingw_cxx', 'x86_64-w64-mingw32-g++-posix', 'x86_64-w64-mingw32')]
@@ -960,18 +1122,22 @@ if any(arg.startswith('wine32:i386=') for arg in sys.argv):
 
 PAIR = ('modules/x86_64-windows/space_record_publication.dll',
         'modules/x86_64-unix/space_record_publication.so')
-BUILD_INPUTS = ('src/record_publication_wine_abi.h', 'scripts/wine/record_publication_bridge.c',
-                'scripts/wine/record_publication_unix_entry.cpp', 'scripts/wine/build_publication.py')
+ABI_HEADER = 'src/record_publication_wine_abi.h'
+PE_SOURCE = 'scripts/wine/record_publication_bridge.c'
+UNIX_SOURCE = 'scripts/wine/record_publication_unix_entry.cpp'
+BUILDER_SOURCE = 'scripts/wine/build_publication.py'
+AUTHORITY_HEADER = 'src/record_publication_wine_authority.h'
+BUILD_INPUTS = (ABI_HEADER, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE, AUTHORITY_HEADER)
 
 
 def builder_module():
-    assert (ROOT / BUILD_INPUTS[-1]).is_file(), 'fixed publication builder is missing'
+    assert (ROOT / BUILDER_SOURCE).is_file(), 'fixed publication builder is missing'
     return importlib.import_module('wine.build_publication')
 
 
 @pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
 def test_publication_identity_layout_compiles_in_c_and_cpp(tmp_path, compiler, standard):
-    header = ROOT / BUILD_INPUTS[0]
+    header = ROOT / ABI_HEADER
     assert header.is_file(), 'shared publication ABI header is missing'
     source = '''#include "record_publication_wine_abi.h"
 #ifdef __cplusplus
@@ -1056,7 +1222,7 @@ class Identity(ctypes.Structure):
 
 
 def test_publication_real_host_so_identity_and_explicit_unsupported_entry(tmp_path):
-    source = ROOT / BUILD_INPUTS[2]
+    source = ROOT / UNIX_SOURCE
     assert source.is_file(), 'Unix identity entry is missing'
     expected = bytes(range(32))
     definition = '-DSRP_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in expected) + '}'
@@ -1219,12 +1385,29 @@ def test_publication_builder_binds_source_header_and_tool_inputs(publication_fix
     fixture, session = publication_fixture
     module = builder_module()
     first = module.build_publication(fixture.root, session)
-    for path in [fixture.root / BUILD_INPUTS[0], Path(fixture.files['libwine-dev:amd64'][0]), fixture.lib / 'winebuild']:
+    assert set(first['toolchain']['inputs']) == set(BUILD_INPUTS)
+    for path in [fixture.root / ABI_HEADER, fixture.root / AUTHORITY_HEADER,
+                 Path(fixture.files['libwine-dev:amd64'][0]), fixture.lib / 'winebuild']:
         with path.open('a') as stream:
             stream.write('\n# changed identity input\n' if path.name == 'winebuild' else '\n/* changed identity input */\n')
         next_manifest = module.build_publication(fixture.root, session)
         assert next_manifest['build_id'] != first['build_id']
         first = next_manifest
+
+
+def test_publication_builder_uses_named_units_and_links_authority_api(publication_fixture, monkeypatch):
+    fixture, session = publication_fixture
+    module = builder_module()
+    monkeypatch.setattr(module, 'INPUTS', tuple(reversed(module.INPUTS)))
+    module.build_publication(fixture.root, session)
+    commands = [call for call in fixture.calls() if '-o' in call]
+    assert len(commands) == 2
+    host = next(call for call in commands if Path(call[0]).name == 'g++')
+    pe = next(call for call in commands if Path(call[0]).name == 'x86_64-w64-mingw32-gcc-posix')
+    assert str(fixture.root / UNIX_SOURCE) in host and str(fixture.root / PE_SOURCE) not in host
+    assert str(fixture.root / PE_SOURCE) in pe and '-ladvapi32' in pe
+    assert all('record_publication_unix.cpp' not in arg and 'record_publication.cpp' not in arg
+               for call in commands for arg in call)
 
 
 @pytest.mark.parametrize('field,value', [('files', None), ('toolchain', None), ('runtime', None)])
@@ -1282,7 +1465,7 @@ def test_publication_builder_checks_images_before_installing(publication_fixture
 
 def test_publication_builder_cli_loads_existing_immutable_session_without_wine(publication_fixture):
     fixture, session = publication_fixture
-    result = subprocess.run([sys.executable, str(fixture.root / BUILD_INPUTS[-1])],
+    result = subprocess.run([sys.executable, str(fixture.root / BUILDER_SOURCE)],
                             env=dict(fixture.env, SPACE_WINE_SESSION_ID=session.id),
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
@@ -1293,7 +1476,7 @@ def test_publication_builder_cli_loads_existing_immutable_session_without_wine(p
 
 @pytest.mark.parametrize('arguments,session_id', [(['extra'], None), ([], None), ([], 'not-a-session')])
 def test_publication_builder_cli_refuses_arguments_or_missing_owned_handoff(tmp_path, arguments, session_id):
-    script = ROOT / BUILD_INPUTS[-1]
+    script = ROOT / BUILDER_SOURCE
     assert script.is_file(), 'fixed publication builder is missing'
     env = dict(os.environ)
     env.pop('SPACE_WINE_SESSION_ID', None)

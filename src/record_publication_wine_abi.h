@@ -15,6 +15,7 @@
 /* NTSTATUS is a Windows 32-bit signed value, including on the LP64 host. */
 #define SRP_SUCCESS INT32_C(0)
 #define SRP_INVALID_ARGUMENT ((int32_t)UINT32_C(0xc000000d))
+#define SRP_ACCESS_DENIED ((int32_t)UINT32_C(0xc0000022))
 #define SRP_UNSUPPORTED ((int32_t)UINT32_C(0xc00000bb))
 #define SRP_UNSUCCESSFUL ((int32_t)UINT32_C(0xc0000001))
 #define SRP_MODULE_UNAVAILABLE ((int32_t)UINT32_C(0xc0000135))

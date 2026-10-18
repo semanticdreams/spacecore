@@ -607,12 +607,50 @@ work. Pointer spans must be caller-owned valid synchronous storage; integer rang
 and incompatible overlap are checked, not arbitrary hostile addresses probed.
 
 This adapter is **excluded from the engine source glob on every platform** and is
-currently compiled only by the Linux x86_64 native ABI test. It is not a PE-callable
-host symbol. The actual Wine pair still advertises identity feature1 only; its Unix
-operation slot remains `SRP_UNSUPPORTED`. No operation forwarding, Wine authority
-validation, production client, or publication admission is activated here. Those
-are separate Tasks5B1/5B2 work; native host tests are not actual Windows/Wine operation
-proof and do not resolve the old strict Windows publisher failure.
+compiled only in Linux x86_64 native tests and host bridge recovery models. It is
+not a PE-callable host symbol. The actual Wine pair still advertises identity feature1 only; its Unix
+operation slot remains `SRP_UNSUPPORTED`. The PE now supports guarded entry1
+forwarding, but no host filesystem adapter/core is compiled into that slot yet.
+Production client, complete operation-pair admission and actual Windows/Wine
+operation proof remain later work; host models do not resolve the old strict
+Windows publisher failure.
+
+#### Supported Wine9 represented-authority guard (source/host-model stage)
+
+`space_record_publication_check_authority` is shared C/C++ private code. Only
+OpenThreadToken failure with ERROR_NO_TOKEN permits process-token inspection; any
+thread token or other thread-query error denies. Process TOKEN_QUERY acquisition
+and supported TokenGroups, TokenPrivileges and TokenElevationType sizing/readback
+must succeed with bounded, structurally valid data. One aligned64KiB buffer is
+reused. SID pointer extent, revision and subauthority count are checked before
+reading, and deny-only groups reject **even when disabled**. Elevation must be
+Default1 or Full2. Privileges must be exactly21 unique LUIDs with HighPart0 and
+LowPart `[5,7,8,9,10,11,12,13,14,15,17,18,19,20,22,23,24,25,28,29,30]`.
+Enabled/default-enable changes are allowed; removed or other attributes, duplicate,
+missing and extra LUIDs reject. All API/close failures deny, handles close once,
+and a primary captured Win32 error survives cleanup. Denial returns a meaningful
+nonzero DWORD and retains it in LastError; stale LastError on success is ignored.
+No token, SID or group data is logged.
+
+This matches the represented stock-admin lineage in public Wine9
+[`server/token.c` token_create_admin/admin_privs](https://github.com/wine-mirror/wine/blob/wine-9.0/server/token.c).
+It deliberately does not call unsupported TokenHasRestrictions/IsTokenRestricted
+or accept a failed query as unrestricted. It detects the represented reductions
+above, **not** arbitrary filtering history, ignored restriction-SID requests, a
+foreign host UID, or a sandbox boundary. Native Windows strict publication and
+host filesystem privacy policies are unchanged.
+
+Direct PE entry1 BEGIN and ADVANCE START through BEFORE_COMMIT run this guard
+before native payload validation/dispatch. Denial returns SRP_ACCESS_DENIED and
+clears only safe inline state claims, never following unchecked diagnostic pointers;
+callers retain their saved context ID for recovery. SNAPSHOT/CANCEL/RELEASE and
+actual BEFORE_CLEANUP advance remain callable after authority loss. Native exact
+phase/sequence validation rejects a forged cleanup event rather than resuming a
+commit. Entry0 retains its identity-only behavior and own-HMODULE opaque Wine9
+dispatcher. Source/host WinAPI models and tiny header-only MinGW C/C++ compilation
+do not prove actual Wine token-query behavior; that remains Task5B2 validation.
+The builder hashes the authority header and links the PE to advapi32 using named
+fixed PE/Unix translation units, still without compiling the host operation core.
 
 ### Bounded reproduction evidence
 

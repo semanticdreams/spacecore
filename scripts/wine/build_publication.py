@@ -18,8 +18,12 @@ from wine import prefix, publication_toolchain
 
 PAIR = ('modules/x86_64-windows/space_record_publication.dll',
         'modules/x86_64-unix/space_record_publication.so')
-INPUTS = ('src/record_publication_wine_abi.h', 'scripts/wine/record_publication_bridge.c',
-          'scripts/wine/record_publication_unix_entry.cpp', 'scripts/wine/build_publication.py')
+ABI_HEADER = 'src/record_publication_wine_abi.h'
+PE_SOURCE = 'scripts/wine/record_publication_bridge.c'
+UNIX_SOURCE = 'scripts/wine/record_publication_unix_entry.cpp'
+BUILDER_SOURCE = 'scripts/wine/build_publication.py'
+AUTHORITY_HEADER = 'src/record_publication_wine_authority.h'
+INPUTS = (ABI_HEADER, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE, AUTHORITY_HEADER)
 DIRECTORIES = ('modules', 'modules/x86_64-windows', 'modules/x86_64-unix')
 MAX_ARTIFACT = 64 * 1024 * 1024
 
@@ -230,10 +234,10 @@ def build_publication(repo: Path, session: prefix.Session) -> dict:
         tools = identity['tools']
         _compile([tools['host_cxx']['executable'], '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                   '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
-                  '-I', str(repo / 'src'), definition, str(repo / INPUTS[2]), '-o', str(unix), '-ldl'], stage)
+                  '-I', str(repo / 'src'), definition, str(repo / UNIX_SOURCE), '-o', str(unix), '-ldl'], stage)
         _compile([tools['mingw_cc']['executable'], '-std=c11', '-O2', '-Wall', '-Werror', '-shared', '-static-libgcc',
                   '-I', str(windows_headers), '-I', str(wine_headers), '-I', str(repo / 'src'), definition,
-                  str(repo / INPUTS[1]), '-o', str(pe)], stage)
+                  str(repo / PE_SOURCE), '-o', str(pe), '-ladvapi32'], stage)
         _compile([tools['winebuild']['executable'], '--builtin', str(pe)], stage)
         for path in (unix, pe):
             _regular(path, private=False)
