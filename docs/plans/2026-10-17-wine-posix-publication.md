@@ -139,6 +139,54 @@ exact checkpoint, then one capability-only `reproduce --repo-root .` with1440000
 and fresh artifacts. Require actual entry0 and paired SO proof before Task4; no
 claim of full-run success while the old production publisher still rejects Wine.
 
+**Observed Windows-temp/report refinement:** The next actual run reached entry0
+status0 and Crypto success, but the host report was absent at its designated path.
+Wine9 skips Unix TEMP/TMP and reapplies registry environment, so launch inputs do
+not establish effective Windows temp. The old report location is unknown; do not
+browse prefix contents. No registry change, new process or budget is authorized.
+
+E1 independently reviewed checkpoint: create `src/wine_owned_environment.h`; modify
+`scripts/wine/prefix.py`, `scripts/wine/probe.c`, the two probe adapter files,
+`scripts/tests/test_windows_wine_prefix.py`, `scripts/tests/test_windows_wine_runtime.py`.
+Protect canonical private `SPACE_WINE_WINDOWS_TMP` in the same ownership/environment
+restoration path, bootstrap until mapping exists, immutable bootstrap for cleanup.
+Header C/C++ function `static inline DWORD space_wine_apply_owned_environment(BOOL required)`
+uses generic Win32 APIs only. Genuine absent optional handoff leaves environment
+unchanged; missing required, empty, malformed, truncation, API/readback failures
+return nonzero. Clear last-error before retrieval to distinguish absence/empty.
+Validate bounded drive-absolute/no traversal/device/UNC/mixed separators/control
+characters and well-formed UTF-16 (including paired surrogates), without conversion,
+normalization or forced drive. Set both TEMP/TMP then read back both exactly. Probe
+requires initialization before publication/crypto DLL loading. Log only fixed phase
+and numeric failure. Tests start with different simulated registry temp, prove
+initialization before first load, missing/set/read faults, non-Z/Unicode handling,
+protected inherited/extra-env inputs, and damaged-setup-independent cleanup. Host
+wide-character models are not Windows proof; real MinGW C/C++ compile is separate.
+
+E2 independently reviewed checkpoint: modify `scripts/wine/artifacts.py`, probe and
+adapters, runtime and reproducer fixture tests; update the canonical Wine note only
+for this implemented scope. Parent exclusively allocates fixed report with
+O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC and0600, validates initial ownership/type/
+link/mode/zero size, retains noninherited fd through launch and verification. Child
+uses OPEN_EXISTING checked write/close, not create/truncate. Mandatory origin match
+in probe compares returned file identity to original held fd before accepting0/10;
+retain all existing bounds/JSON/challenge/module/stability checks. No optional pin
+bypass or JSON/owner/receipt schema change. Existing verified removal/retry gets a
+fresh parent-exclusive sink. Failed empty/partial artifacts cannot authorize/retry.
+Test all descriptor-closure paths, valid-looking inode substitution, missing/linked/
+stale/partial files and actual child umask0002 preserving0600; never chmod/umask-parent.
+Fake producers write the preallocated inode and model damage deliberately rather
+than silently replacing it. Copy the new header into fake checkouts.
+
+E1/E2 compile first, focused prefix/production-probe/report tests next; after E2 run
+all seven host modules with1800000ms (canonical six plus publication-build).
+Preserve60/480/900/1800/1920/45 bounds, eight setup launches and three debug registry
+values. Every source checkpoint uses independent review then exact commit. One
+capability-only reproduce14400000 with fresh artifacts must prove host file origin,
+process temp correction, entry0/IDs/SO identity and Crypto admission before Task4.
+Future Task6 application entry and Task7 test entry must apply the same initializer
+before their own temp use; do not claim application-wide integration already exists.
+
 ### Task 4: Shared Phased Operation Without Backend Changes
 
 **Files:** Create `src/record_publication_operation.h`, `tests/test_record_publication_operation.cpp`; modify `src/record_publication.cpp`, `CMakeLists.txt`.
@@ -195,12 +243,13 @@ Size144; offsets context16/sequence24/path32/primary_error80/reply128. Constants
 
 ### Task 6: PE Publication Client and Authority Checks
 
-**Files:** Create `src/record_publication_wine.h`, `src/record_publication_wine.cpp`, `src/record_publication_wine_driver.h`, `tests/test_record_publication_bridge_driver.cpp`; modify `src/record_publication.cpp`, `scripts/wine/record_publication_bridge.c`, `CMakeLists.txt`.
+**Files:** Create `src/record_publication_wine.h`, `src/record_publication_wine.cpp`, `src/record_publication_wine_driver.h`, `tests/test_record_publication_bridge_driver.cpp`; modify `src/record_publication.cpp`, `scripts/wine/record_publication_bridge.c`, `apps/space/main.cpp`, `CMakeLists.txt`.
 
 **Interfaces:** `wine::detected()->bool`, `wine::publish(path,string_view,Hooks)->Result`. Private host-testable `drive(entry,host_path,payload,hooks,authority_check)->Result`; entry has `int32_t(uint32_t,void*)` semantics. No public contract change.
 
 - [ ] **1. RED driver sequencing/nesting/cancel/postcommit recovery tests:** failed advance followed by committed snapshot must not become precommit error. Fake entry proves driver logic only.
 - [ ] **2. Detect supported Wine9/win64 from loaded NTDLL wine_get_version; require proven entry0 and feature2.** Native Windows never loads pair and keeps strict backend. Use proven basename lookup/identity, retain module through release; no unproved absolute-path association.
+  At the Wine application entry, apply the shared owned-environment helper before application-controlled temp/logging/runtime initialization. Native Windows does not call it; absent optional handoff outside the harness leaves the profile environment unchanged and establishes no owned-root claim.
 - [ ] **3. Map with CDECL wine_get_unix_file_name, copy host bytes, HeapFree result.** Reject NUL/reserved/ADS/device/remote inputs. Mapping is acquisition, not retained authority.
 - [ ] **4. Reject thread impersonation/restricted primary token/query failure before begin and after hooks.** Cancellation/cleanup on refusal, sticky commit retained. Hooks execute locally, never through Unix callback. Unrecoverable ABI corruption cannot fabricate recoverable noncommit.
 - [ ] **5. GREEN native driver/ABI/operation tests.** CMake includes client in Windows engine and standalone target, excludes it on POSIX; direct publisher linking must resolve correctly. Review/checkpoint `feat(engine): delegate Wine publication to the POSIX bridge`. Installed client/path/token behavior is deferred.
@@ -212,6 +261,7 @@ Size144; offsets context16/sequence24/path32/primary_error80/reply128. Constants
 **Interfaces:** Separate test-only `space_record_publication_tests.dll/.so` pair, fixture-relative host inspection/mutation only. Fixed Fennel `write()/read()` no path arguments. C++ fixed `<TEMP>/space-record-publication-report.json` schema1: backend/build ID/Unix dev-inode, category statuses common/host-policy/mapping-authority and native-windows:not-exercised; foreign UID probe not-configured or passed.
 
 - [ ] **1. RED backend-aware selection:** run common cases through production public API; Wine uses actual host-policy assertions, not `_WIN32` DACL assumptions. Preserve native NT tests, explicitly unexercised under Wine.
+  The controlled Wine C++ test entry requires the shared owned-environment initializer before any Fixture or std::filesystem::temp_directory_path call; native Windows behavior remains unchanged.
 - [ ] **2. Separate test module observes actual modes at hooks:** before-write anchor/workspace0700, record0600/size0; after-write0600/exact bytes. Reject unchanged0750/0770 anchors; test descriptor ambiguity, UID/GID/mode preservation, unsupported metadata, links, final mutation and retained parents. No fixture commands enter production ABI.
 - [ ] **3. Exercise binary/empty/NUL/multichunk/Unicode/long paths, mapping/missing-parent/reserved forms, hook/cancel/nested/release/committed cleanup, missing/bad modules and token changes.** Bad-module fixtures are owned copies, never mutate admitted overlay. Foreign UID proof requires configured actual identities/positive controls; otherwise not-configured, never fake PASS or sudo.
 - [ ] **4. Actual store writer:** use normal StringEntityStore/LinkEntityStore constructors, fixed IDs, ordinary persistent defaults. Capture old revision before in-place mutation; listeners assert updated cache/revision before one notification. Exact method contracts must match current canonical modules.
@@ -270,6 +320,7 @@ Component deadlines120/120/30/30, umasks0022/0002/0002/0002; publication outer42
   ```
 - [ ] **2. Fixed child umask:** private Session.launch child_umask option accepts only these fixed launches; subprocess child support, never parent mutation. Five-second command escalation and stop/wait10/15 plus escalation give355 seconds, fitting420 with65 overhead. Preserve480/1800/1920/45, one wineboot/setup cycle.
 - [ ] **3. No-argument helper requires owned handoff, consumes authorization durably, emits actual private launch/result data and removes observer FD from PE environment.** Validate fixed C++ reports as bounded owned regular files with current IDs/dev-inode; verified stale reports removed before next component. No stdout authority.
+  Each C++ report uses a fresh parent-exclusive0600 sink retained/pinned through that component, with the child opening the existing file. Preserve mode/origin under both child umasks; no post-write repair or relaxed report guard.
 - [ ] **4. Both entry paths:** reproducer captures new stage then authorizes; public prepare owns separately bounded builder900/bootstrap480/publication420, uses same checks then authorizes. Failures end session/backstop45; no composite inside480 or1920 and no lock reacquisition deadlock.
 - [ ] **5. Complete state/receipt/bounds/table/log/metadata/summary/fixture migrations together.** Generations follow actual launches, not historical11. New stages are only the two named fixed additions; no public selectors/capability changes.
 - [ ] **6. GREEN full prefix/runtime/reproducer fixtures including storage failure/unrelated-session survival; review/checkpoint:** `feat(wine): require purpose-bound real publication validation`.

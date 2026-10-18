@@ -184,6 +184,35 @@ Do not enable broad Wine debug logging or inspect prefix drives/registries. The
 first actual null-load result lacked numeric error evidence: deployment correction
 and a successful later probe cannot retrospectively prove its exclusive cause.
 
+Wine9 skips Unix TEMP/TMP imports and reapplies registry environment at bootstrap;
+WINETEMP/WINETMP can also be overwritten. A path roundtrip plus launch inputs do
+not establish the Windows process's effective temporary directory. Carry the
+verified mapping in protected private `SPACE_WINE_WINDOWS_TMP`. A small generic
+Win32 C/C++ header applies and reads back both TEMP and TMP after bootstrap, before
+application-controlled DLL loading or temporary-file use. Validate bounded
+drive-absolute, traversal-free, well-formed UTF-16 without normalizing or forcing
+a drive. Missing required, empty, malformed, set/read failure or mismatch is fatal;
+diagnostics contain fixed phases/numeric errors, not environment values.
+
+The admission probe requires this initialization. Future Wine application/test
+entry points use the same header before their own temporary work. Native Windows
+does not apply the private Wine handoff; a normal Wine launch without an optional
+handoff leaves its profile environment unchanged and establishes no owned-root
+claim. Probe integration does not by itself prove application-wide initialization.
+Keep server cleanup independent of derived setup and preserve all registry/budgets.
+
+The host, not the Windows child, exclusively allocates the fixed identity report
+with nofollow/CLOEXEC, mode0600, regular/current-UID/single-link/zero-length checks,
+and holds its noninherited descriptor through execution/validation. The child uses
+OPEN_EXISTING after temp initialization, with complete write/close checks and no
+create/truncate/adopt behavior. Host acceptance compares the original held object
+and post-write path device/inode/mode/UID/link identity, in addition to all bounded
+read/JSON/challenge/module checks. Legitimate writes change size/timestamps, not
+origin identity. No optional pin bypass or report-schema change. This remains
+private under child umask0002 without chmod or post-create repair. Failed probes
+may retain owned empty/partial evidence but cannot authorize or retry; only fully
+verified crypto absence permits verified removal and fresh exclusive allocation.
+
 Build and run a fixed publication-focused native PE test through the existing
 guarded reproduction flow before the full suite. It must exercise the real bridge
 and host metadata. Keep existing public capability commands; do not introduce an
