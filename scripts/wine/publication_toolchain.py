@@ -313,9 +313,15 @@ def resolve_toolchain(repo: Path, runtime: dict | None = None) -> dict:
         if not valid:
             raise ToolchainError(f'Unsupported build tool target: {command}: {target}')
         tools[key]['target'] = target
-        major = _run(repo, [path, '-dumpversion']).strip().split('.')[0]
-        if not major.isdecimal() or int(major) < 7:
-            raise ToolchainError(f'GCC C++17-capable toolchain required: {command}')
+        raw_version = _run(repo, [path, '-dumpversion'])
+        grammar = r'([0-9]+)(?:\.[0-9]+)*'
+        if key in ('mingw_cc', 'mingw_cxx'):
+            grammar += r'(?:-posix)?'
+        version = re.fullmatch(grammar, raw_version.strip()) if len(raw_version.splitlines()) == 1 else None
+        if version is None or int(version[1]) < 7:
+            token, truncated = _diagnostic_tail(raw_version, 80)
+            raise ToolchainError(f'GCC C++17-capable toolchain required: {command}; dumpversion="{token}" '
+                                 f'token-truncated={str(truncated).lower()}')
     paths = _run(repo, ['dpkg-query', '-L', headers['name']]).splitlines()
     files = {entry['executable']: entry['sha256'] for path in paths if path.endswith('.h') for entry in [_file(path)]}
     if not files or not any(path.endswith('/wine/unixlib.h') for path in files):

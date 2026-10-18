@@ -179,6 +179,80 @@ def test_resolve_records_matched_stable_logical_pair_headers_and_host_identity(f
                if Path(call[0]).name in ('g++', 'winegcc', 'winebuild'))
 
 
+COMPILER_ROLES = [('host_cxx', 'g++', 'x86_64-linux-gnu'),
+                  ('mingw_cc', 'x86_64-w64-mingw32-gcc-posix', 'x86_64-w64-mingw32'),
+                  ('mingw_cxx', 'x86_64-w64-mingw32-g++-posix', 'x86_64-w64-mingw32')]
+
+
+def compiler_version_fixture(fixture, command, token, target):
+    fixture.executable(command,
+                       f"print({target!r} if '-dumpmachine' in sys.argv else "
+                       f"{token!r} if '-dumpversion' in sys.argv else 'fixture compiler --version')")
+
+
+@pytest.mark.parametrize('cc,cxx', [('13-posix', '13.2.0'), ('13.2.0', '13-posix'),
+                                  ('13-posix', '13-posix'), ('7-posix', '7.2-posix'),
+                                  ('13.2.0-posix', '13.2-posix')])
+def test_mingw_dumpversion_accepts_scoped_posix_versions(fixture, cc, cxx):
+    for (_, command, target), token in zip(COMPILER_ROLES, ['13', cc, cxx]):
+        compiler_version_fixture(fixture, command, token, target)
+    module = fixture.resolver()
+    identity = module.resolve_toolchain(fixture.root)
+    for key, command, target in COMPILER_ROLES:
+        assert set(identity['tools'][key]) == {'executable', 'sha256', 'version', 'target'}
+        assert identity['tools'][key]['target'] == target
+        assert identity['tools'][key]['version'] == 'fixture compiler --version'
+    module.verify_toolchain(identity)
+    dumped = [Path(call[0]).name for call in fixture.calls() if call[1:] == ['-dumpversion']]
+    assert all(dumped.count(command) == 2 for _, command, _ in COMPILER_ROLES)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
+
+
+@pytest.mark.parametrize('key,command,target', COMPILER_ROLES)
+@pytest.mark.parametrize('token', ['7', '13', '13.2', '13.2.0'])
+def test_mingw_dumpversion_preserves_supported_numeric_versions(fixture, key, command, target, token):
+    compiler_version_fixture(fixture, command, token, target)
+    identity = fixture.resolver().resolve_toolchain(fixture.root)
+    assert identity['tools'][key]['target'] == target
+
+
+@pytest.mark.parametrize('key,command,target', COMPILER_ROLES)
+@pytest.mark.parametrize('token', ['6', '6.9.0', '6-posix', '13-win32', '13.2-win32',
+                                  'garbage', '13junk', '13.bad', '13.2junk', '13.2-posix-junk', '13.2\n14',
+                                  '13\n\n', 'True', 'False'])
+def test_mingw_dumpversion_rejects_old_or_malformed_tokens(fixture, key, command, target, token):
+    compiler_version_fixture(fixture, command, token, target)
+    with pytest.raises(ValueError, match='GCC C\\+\\+17-capable toolchain required'):
+        fixture.resolver().resolve_toolchain(fixture.root)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
+
+
+@pytest.mark.parametrize('token', ['13-posix', '13.2-posix', '13.2.0-posix'])
+def test_mingw_dumpversion_never_allows_posix_suffix_for_host(fixture, token):
+    compiler_version_fixture(fixture, 'g++', token, 'x86_64-linux-gnu')
+    with pytest.raises(ValueError, match='GCC C\\+\\+17-capable toolchain required: g\\+\\+'):
+        fixture.resolver().resolve_toolchain(fixture.root)
+
+
+def test_mingw_dumpversion_error_bounds_and_escapes_raw_token(fixture):
+    token = 'x' * 200 + '\t\x1b\u202eFalse'
+    compiler_version_fixture(fixture, COMPILER_ROLES[1][1], token, COMPILER_ROLES[1][2])
+    with pytest.raises(ValueError) as error:
+        fixture.resolver().resolve_toolchain(fixture.root)
+    message = str(error.value)
+    assert 'dumpversion=' in message and 'token-truncated=true' in message
+    assert all(escape in message for escape in ('\\t', '\\u001b', '\\u202e'))
+    assert all(' ' <= char < '\x7f' for char in message) and len(message.encode('ascii')) <= 240
+
+
+def test_mingw_dumpversion_posix_does_not_bypass_target_check(fixture):
+    command = COMPILER_ROLES[2][1]
+    compiler_version_fixture(fixture, command, '13-posix', 'i686-w64-mingw32')
+    with pytest.raises(ValueError, match='Unsupported build tool target'):
+        fixture.resolver().resolve_toolchain(fixture.root)
+    assert not [call for call in fixture.calls() if Path(call[0]).name == command and call[1:] == ['-dumpversion']]
+
+
 @pytest.mark.parametrize('damage', ['header', 'tool', 'tool-version', 'header-version', 'runtime', 'tool-role'])
 def test_toolchain_verification_rejects_changed_pinned_files_or_package_mismatch(fixture, damage):
     module = fixture.resolver()
