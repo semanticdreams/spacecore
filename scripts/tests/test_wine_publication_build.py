@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 
@@ -13,6 +14,174 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
+
+
+def test_publication_closed_binding_codec_and_identity(tmp_path):
+    source = r'''
+#include "record_publication_wine_binding.h"
+#include <cassert>
+#include <string>
+using namespace record_publication::wine::detail;
+int main() {
+    const std::string id(64, 'a');
+    const auto binding = parse_binding(id + ":0:18446744073709551615");
+    assert(binding.build_id[0] == 0xaa && binding.module_device == 0 && binding.module_inode == UINT64_MAX);
+    const auto maximum = parse_binding(id + ":18446744073709551615:18446744073709551615");
+    assert(maximum.module_device == UINT64_MAX && maximum.module_inode == UINT64_MAX);
+    const std::string invalid[] = {"", id, id+":1", id+":1:1:1", id+":01:1", id+":1:01",
+        id+":+1:1", id+":-1:1", id+": 1:1", id+":1:0", id+":1:", id+"::1",
+        id+":18446744073709551616:1", id+":1:18446744073709551616", std::string(64, 'A')+":1:1",
+        std::string(63, 'a')+":1:1", id+":1:1\n", id+":1:1\xc2\xa0", id+std::string(107, '0'),
+        std::string(1, '\0')+id.substr(1)+":1:1", " "+id+":1:1", id+":1: 1"};
+    for (const auto& input : invalid) {
+        bool rejected = false;
+        try { parse_binding(input); } catch (const std::exception&) { rejected = true; }
+        assert(rejected);
+    }
+    SrpIdentity identity {};
+    identity.size = 112; identity.abi = 1; identity.challenge = identity.echo = 42;
+    for (unsigned i = 0; i < 32; ++i) identity.pe_build_id[i] = identity.unix_build_id[i] = 0xaa;
+    identity.module_inode = UINT64_MAX; identity.architecture = SRP_ARCH_X86_64; identity.features = 3;
+    validate_identity(identity, binding, 42);
+    for (int field = 0; field < 11; ++field) {
+        auto bad = identity;
+        switch (field) {
+        case 0: ++bad.size; break; case 1: ++bad.abi; break;
+        case 2: ++bad.challenge; break; case 3: ++bad.echo; break;
+        case 4: ++bad.pe_build_id[31]; break; case 5: ++bad.unix_build_id[0]; break;
+        case 6: ++bad.module_device; break; case 7: --bad.module_inode; break;
+        case 8: ++bad.architecture; break; case 9: bad.features = 1; break; case 10: bad.features = 7; break;
+        }
+        bool rejected = false;
+        try { validate_identity(bad, binding, 42); } catch (const std::exception&) { rejected = true; }
+        assert(rejected);
+    }
+}
+'''
+    result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'src'),
+                             '-x', 'c++', '-', '-o', str(tmp_path / 'codec')], input=source,
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(tmp_path / 'codec')], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+
+
+def compile_publication_client_model(output, client_source):
+    result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-D_WIN64', '-pthread',
+                             '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                             str(ROOT / 'scripts/tests/wine_adapters/publication_client.cpp'),
+                             str(client_source),
+                             str(ROOT / 'src/record_publication_unix.cpp'), str(ROOT / 'src/record_publication.cpp'),
+                             '-o', str(output)], capture_output=True, text=True, timeout=120)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.fixture(scope='module')
+def publication_client_model(tmp_path_factory):
+    output = tmp_path_factory.mktemp('publication-client') / 'client'
+    compile_publication_client_model(output, ROOT / 'src/record_publication_wine.cpp')
+    return output
+
+
+@pytest.fixture(scope='module', params=[('fullpath', 'changed'), ('fullpath', 'dropped'),
+                                      ('mapper', 'changed'), ('mapper', 'dropped')],
+                ids=['fullpath-changed', 'fullpath-dropped', 'mapper-changed', 'mapper-dropped'])
+def publication_client_path_mutant(tmp_path_factory, request):
+    stage, mutation = request.param
+    directory = tmp_path_factory.mktemp(f'publication-client-{stage}-{mutation}')
+    source = (ROOT / 'src/record_publication_wine.cpp').read_text()
+    leaf = r'Q:\\wrong-leaf' if mutation == 'changed' else 'Q:\\\\'
+    argument = 'L"' + leaf + '"'
+    if stage == 'mapper':
+        argument = f'(static_cast<void>(path), {argument})'
+    original, replacement = (("GetFullPathNameW(input.c_str(),", f"GetFullPathNameW({argument},")
+                             if stage == 'fullpath' else
+                             ("mapper(path.c_str())", f"mapper({argument})"))
+    assert source.count(original) == 1
+    # Temporary test-only copy: no production fault hook or source edit.
+    mutant = directory / 'client-mutated.cpp'
+    mutant.write_text(source.replace(original, replacement))
+    output = directory / 'client'
+    compile_publication_client_model(output, mutant)
+    return output, stage
+
+
+@pytest.mark.parametrize('case', ['normal', 'relative', 'drive-relative', 'dotfile'])
+def test_publication_actual_client_path_oracle_rejects_leaf_mutation(publication_client_path_mutant, tmp_path, case):
+    executable, stage = publication_client_path_mutant
+    path = tmp_path / 'mutant-destination'
+    result = subprocess.run([str(executable), case, str(path)], capture_output=True, text=True, timeout=15)
+    assert result.returncode == -signal.SIGABRT, f'{case}/{stage}: {result.returncode}: {result.stderr}'
+    assertion = 'value == expected_input' if stage == 'fullpath' else 'std::wstring(path) == expected_resolved'
+    assert assertion in result.stderr
+    assert not path.exists(), 'path corruption must fail before host publication'
+
+
+@pytest.mark.parametrize('case', ['native', 'unsupported', 'normal', 'relative', 'dotfile', 'drive-relative', 'raw-bytes',
+    'pin-once', 'load-fail', 'export-missing', 'export-foreign', 'owner-fail', 'pin-fail', 'mapper-missing',
+    'binding-missing', 'binding-empty', 'binding-long', 'binding-wide', 'fresh-binding', 'fresh-identity',
+    'identity-status', 'identity-size', 'identity-abi', 'identity-challenge', 'identity-echo', 'identity-pe',
+    'identity-unix', 'identity-device', 'identity-inode', 'identity-arch', 'identity-features', 'identity-extra-feature',
+    'map-null', 'copy-oom', 'free-fail', 'random-fail', 'remote', 'fullpath-fail', 'fullpath-long',
+    'nul', 'reserved', 'reserved-parent', 'reserved-spaced', 'ads', 'unc', 'device', 'slash-unc', 'trailing-dot', 'wildcard',
+    'authority', 'hook-denial', 'temp-valid', 'temp-empty', 'temp-malformed', 'temp-set-fail', 'temp-readback'])
+def test_publication_actual_client_host_model(publication_client_model, tmp_path, case):
+    root = tmp_path / ('root-' + ('\udcff' if case == 'raw-bytes' else 'ascii'))
+    (root / 'base').mkdir(parents=True)
+    path = root / ('base/record' if case in ('relative', 'drive-relative') else '.record' if case == 'dotfile' else 'missing-leaf')
+    result = subprocess.run([str(publication_client_model), case, str(root)], capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, f'{case}: {result.stdout} {result.stderr}'
+    assert not result.stdout and not result.stderr
+    if case in ('normal', 'relative', 'dotfile', 'drive-relative', 'raw-bytes', 'pin-once', 'temp-valid', 'fresh-binding', 'fresh-identity'):
+        assert path.read_bytes() == (b'second publication' if case == 'pin-once' else b'raw host publication')
+        assert path.stat().st_mode & 0o777 == 0o600
+        assert not list((path.parent / '.space-publication').iterdir())
+        if case in ('normal', 'relative', 'drive-relative', 'dotfile', 'raw-bytes'):
+            second = root / ('base/other-record' if case in ('relative', 'drive-relative') else '.other-record' if case == 'dotfile' else 'other-leaf')
+            assert second != path and second.read_bytes() == b'second destination'
+            assert second.stat().st_mode & 0o777 == 0o600
+            assert not list((second.parent / '.space-publication').iterdir())
+    else:
+        assert not path.exists()
+
+
+def test_publication_activation_and_all_direct_core_target_wiring():
+    # Source gate only; an actual Windows application cross-build is capability-owned.
+    source = (ROOT / 'src/record_publication.cpp').read_text()
+    dispatch = source[source.index('Result publish('):]
+    assert dispatch.index('if (wine::detected())') < dispatch.index('detail::Operation operation')
+    early = dispatch[:dispatch.index('detail::Operation operation')]
+    assert '#ifdef _WIN32' in early and '#endif' in early
+    assert 'return wine::publish(destination, expected_bytes, hooks);' in early
+    cmake = (ROOT / 'CMakeLists.txt').read_text()
+    assert 'if(NOT WIN32)\n    list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_wine.cpp)\nendif()' in cmake
+    for target in ('test_record_publication', 'test_record_publication_operation'):
+        assert f'target_sources({target} PRIVATE src/record_publication_wine.cpp)' in cmake
+        assert f'target_link_libraries({target} advapi32)' in cmake
+    assert 'list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_unix.cpp)' in cmake
+
+
+def test_publication_windows_reserved_component_pure_model(tmp_path):
+    # Linux fs::path::wstring cannot model native Windows UTF16. Compile the
+    # actual pure production predicate for BMP device digits, not another policy.
+    client = (ROOT / 'src/record_publication_wine.cpp').read_text()
+    predicate = client[client.index('bool component_valid('):client.index('std::wstring windows_path(')]
+    source = '#include "wine_owned_environment.h"\n#include <string>\n#include <cassert>\n' + predicate + r'''
+int main() {
+    for (const auto* value : {L"COM\u00b9.txt", L"lpt\u00b2", L"COM\u00b3 .txt", L"CON .txt",
+                             L"NUL", L"PRN.log", L"AUX", L"CONIN$", L"CONOUT$", L"LPT9", L"name.", L"name "})
+        assert(!component_valid(value));
+    for (const auto* value : {L".record", L"ordinary", L"com10", L"COM0", L"com1-extra", L"report\u00b9.txt"})
+        assert(component_valid(value));
+}
+'''
+    result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror',
+                             '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                             '-x', 'c++', '-', '-o', str(tmp_path / 'components')], input=source,
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(tmp_path / 'components')], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
 
 
 class ToolchainFixture:

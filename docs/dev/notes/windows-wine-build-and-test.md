@@ -703,6 +703,63 @@ remain deferred to later tasks and their independent review/runtime gates; stric
 Windows publication is unchanged. Task6A Phase1 itself remains uncommitted WIP
 until independent reviewer PASS and explicit Phase2 exact-file commit authority.
 
+#### Production publication client activation (Task6B WIP source checkpoint)
+
+Task6B adds the production Windows client and public Wine dispatch on top of the
+unchanged Task6A driver/ABI/native core. Presence of `wine_get_version` in already
+loaded NTDLL selects Wine even if unsupported: only Wine9/win64 is admitted, with
+explicit errors instead of native-Windows fallback. Native Windows retains the
+strict native policy and neither loads the bridge nor applies the private temp
+handoff. POSIX engine targets exclude the Windows client; every engine excludes
+the Unix adapter. Both Windows standalone public-core test targets link the client
+and advapi32 as well.
+
+The existing validated configuration now emits `SPACE_WINE_PUBLICATION_BINDING`
+only after receipt/session/package/payload/pair/discovery-copy/runtime checks:
+`<64lowercase-buildid>:<canonical-uint64-device>:<canonical-uint64-inode>`, at most
+106 ASCII bytes, inode nonzero. Both smoke and full application launches supply
+this producer-owned value last, replacing hostile inherited input. It is an
+integrity hint, not a credential, selector, sandbox or cleanup prerequisite.
+Server cleanup remains based on immutable owned-session metadata, not a receipt.
+
+The client loads only the fixed `space_record_publication.dll` builtin basename
+through the admitted overlay/discovery copy and fixed owned WINEDLLPATH. It checks
+export ownership and independent PE/Unix build IDs, actual Unix module device and
+inode, ABI1/112-byte identity, x86_64, exact feature bits3 and fresh challenge echo.
+Verified module/function metadata is immutable and pinned for process lifetime;
+there is no global current operation. A fresh entry0 call checks the **current**
+binding before every BEGIN. Missing, malformed or stale handoffs fail precommit.
+
+Windows syntax validation rejects NUL, reserved components, alternate streams,
+UNC/device and remote-drive forms. Local relative and drive paths (not just Z:),
+including missing leaves, use `kernel32!wine_get_unix_file_name` with its CDECL
+signature. Its ProcessHeap allocation is copied as raw host bytes and HeapFree'd
+before BEGIN, also on copy exceptions. Returned bytes never traverse a PE
+filesystem-path or UTF-8 conversion. Mapping is acquisition, not authorization:
+the real shared authority helper and unchanged driver enforce represented-token
+checks around hooks, and the host native publisher owns all retained-handle and
+filesystem policy. Unrecoverable post-dispatch state/retirement remains fatal;
+committed results and explicit diagnostics retain Task6A's truth boundary.
+
+At the beginning of Windows `main`, before path capture, dotenv, logging, CEF or
+runtime work, Wine-only initialization calls `space_wine_apply_owned_environment`
+with FALSE: genuinely absent optional handoff leaves the environment unchanged
+and makes no owned-root claim; malformed **provided** handoff fails startup.
+Native Windows does not inspect it. Supported Wine execution remains the admitted
+launcher/overlay, not an arbitrary unprepared interactive prefix.
+
+Host tests compile the actual client, shared authority, driver and real native
+adapter/core with inert Win32 models, including non-UTF8 host bytes and actual
+filesystem publication. These are **not** Windows-width/SDK/Wine execution proof.
+This activation source gate is an unfinished review checkpoint, not ready-to-merge
+or all-feature completion. Actual application cross-build and guarded Wine
+reproduction must be dispatched to `windows-ci-reproducer` by the supervisor
+after independent review and the exact checkpoint commit. Proving ordinary Store
+writes reach host publication does not replace later controlled umask/fresh-read/
+grant checks. The previously observed495 failures are not asserted to share one
+cause; independent whole-repository constraint timeout and remaining failures
+still block final validation. Current-origin/main and PR CI gates remain later.
+
 #### Supported Wine9 represented-authority guard (source/host-model stage)
 
 `space_record_publication_check_authority` is shared C/C++ private code. Only

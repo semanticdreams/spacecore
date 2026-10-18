@@ -471,7 +471,10 @@ def configuration(session):
     if (backend == COMPAT) != (FORBIDDEN in payload):
         raise ValueError("Backend does not match overlay helper inventory")
     return {'wine': identity['executable'], 'backend': backend,
-            'WINEDLLPATH': str(BUILD / 'wine-publication/modules')}
+            'WINEDLLPATH': str(BUILD / 'wine-publication/modules'),
+            'SPACE_WINE_PUBLICATION_BINDING': (f"{manifest['build_id']}:"
+                                               f"{bridge['identity']['module_device']}:"
+                                               f"{bridge['identity']['module_inode']}")}
 
 
 def require_cleanup(result):
@@ -591,6 +594,9 @@ def execute_admitted(session, mode):
             observe('launch', launched_monotonic=at,
                     hard_deadline_monotonic=at + prefix.BOUNDS[mode])
         try:
+            # Producer-owned handoff LAST, after all receipt/session/pair/copy/
+            # runtime checks. Never restore inherited input in prefix cleanup.
+            env['SPACE_WINE_PUBLICATION_BINDING'] = config['SPACE_WINE_PUBLICATION_BINDING']
             code = session.launch([config['wine'], str(OVERLAY / 'space-cli.exe'), *args], mode, env,
                                   on_launch=launched if fd is not None else None)
             observe('result', command_returncode=code)

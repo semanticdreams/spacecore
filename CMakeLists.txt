@@ -438,6 +438,9 @@ find_package(Boost CONFIG REQUIRED)
 file( GLOB SOURCES src/*.cpp src/*.c src/realtime/*.cpp )
 # The private native operation adapter is not an engine/PE entry on any platform.
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_unix.cpp)
+if(NOT WIN32)
+    list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_wine.cpp)
+endif()
 if(NOT SPACE_HAS_VTERM)
     list(REMOVE_ITEM SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/terminal.cpp
@@ -877,6 +880,7 @@ add_executable(test_record_publication
 )
 target_include_directories(test_record_publication PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(WIN32)
+    target_sources(test_record_publication PRIVATE src/record_publication_wine.cpp)
     target_link_libraries(test_record_publication advapi32)
 endif()
 add_test(NAME test_record_publication COMMAND test_record_publication)
@@ -887,6 +891,7 @@ add_executable(test_record_publication_operation
 )
 target_include_directories(test_record_publication_operation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(WIN32)
+    target_sources(test_record_publication_operation PRIVATE src/record_publication_wine.cpp)
     target_link_libraries(test_record_publication_operation advapi32)
 endif()
 add_test(NAME test_record_publication_operation COMMAND test_record_publication_operation)

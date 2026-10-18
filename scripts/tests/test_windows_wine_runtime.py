@@ -216,7 +216,7 @@ if sys.argv[1:] == ['--version']:
     print('wine-9.0 (fixture)'); sys.exit(0)
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'wine':sys.argv[1:], 'env':{k:os.environ.get(k) for k in
-        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP','WINEDLLPATH']}})+'\\n')
+        ['WINEDLLOVERRIDES','WINEPREFIX','WINEARCH','WINESERVER','DISPLAY','SPACE_ASSETS_PATH','SPACE_BIN','FENNEL_PATH','FENNEL_MACRO_PATH','XDG_DATA_HOME','XDG_CACHE_HOME','TMPDIR','TEMP','TMP','WINEDLLPATH','SPACE_WINE_PUBLICATION_BINDING']}})+'\\n')
 if pathlib.Path(sys.argv[1]).name == 'process-prng-probe.exe':
     p = pathlib.Path(os.environ['FIXTURE_CODES']); codes = json.loads(p.read_text())
     code = codes.pop(0); p.write_text(json.dumps(codes)); sys.exit(code)
@@ -1045,6 +1045,33 @@ def test_receipt_v3_binds_pair_and_fixed_loader_root(runtime):
     assert len([c for c in runtime.calls() if c.get('utility')]) == 8
 
 
+@pytest.mark.parametrize('mode', ['smoke60', 'fast1800'])
+def test_admitted_execution_overrides_hostile_publication_binding_last(runtime, mode):
+    runtime.env['SPACE_WINE_PUBLICATION_BINDING'] = 'hostile:inherited:input'
+    runtime.package()
+    assert runtime.prepare([0]).returncode == 0
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    bridge = receipt['bridge']
+    expected = f"{bridge['build_id']}:{bridge['identity']['module_device']}:{bridge['identity']['module_inode']}"
+    result = subprocess.run([sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), mode],
+                            cwd=runtime.root, env=runtime.env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    app = [call for call in runtime.calls() if 'wine' in call][-1]
+    assert app['env']['SPACE_WINE_PUBLICATION_BINDING'] == expected
+    assert app['wine'][1:] == (['--help'] if mode == 'smoke60' else ['-m', 'tests.fast:main'])
+
+
+def test_application_owned_temp_initialization_precedes_all_startup_work():
+    main = (ROOT / 'apps/space/main.cpp').read_text()
+    body = main[main.index('int main('):]
+    initialize = body.index('record_publication::wine::initialize_process_environment();')
+    assert initialize < body.index('executable_path::resolve') < body.index('log_init(')
+    assert initialize < body.index('dotenv::load_dotenv_file')
+    assert body.index('#ifdef _WIN32') < initialize < body.index('#endif')
+    early = body[:body.index('executable_path::resolve')]
+    assert 'catch (const std::exception&' in early and 'return 1;' in early
+
+
 @pytest.mark.parametrize('code', [0, 10])
 @pytest.mark.parametrize('damage', ['missing', 'echo', 'pe-id', 'unix-id', 'device', 'inode',
                                    'extra', 'duplicate', 'oversize', 'symlink', 'hardlink', 'feature-old', 'feature-extra'])
@@ -1076,8 +1103,9 @@ def test_schema2_receipt_cannot_authorize_execution(runtime):
     assert len([c for c in runtime.calls() if 'wine' in c]) == before
 
 
-@pytest.mark.parametrize('damage', ['missing-so', 'changed-so', 'extra-output', 'source', 'tool', 'identity', 'build-id'])
-def test_admitted_pair_bindings_are_rechecked_before_application(runtime, damage):
+@pytest.mark.parametrize('mode', ['smoke60', 'fast1800'])
+@pytest.mark.parametrize('damage', ['missing-so', 'changed-so', 'extra-output', 'source', 'tool', 'identity', 'build-id', 'discovery-copy'])
+def test_admitted_pair_bindings_are_rechecked_before_application(runtime, damage, mode):
     runtime.package()
     assert runtime.prepare([0]).returncode == 0
     output = runtime.root / 'build/wine-publication'
@@ -1093,6 +1121,8 @@ def test_admitted_pair_bindings_are_rechecked_before_application(runtime, damage
     elif damage == 'tool':
         with (runtime.bin / 'publication-cxx').open('a') as stream:
             stream.write('\n# changed compiler\n')
+    elif damage == 'discovery-copy':
+        (runtime.overlay / 'space_record_publication.dll').write_bytes(b'foreign discovery copy')
     else:
         receipt = runtime.overlay / 'admission.json'
         value = json.loads(receipt.read_text())
@@ -1106,7 +1136,8 @@ def test_admitted_pair_bindings_are_rechecked_before_application(runtime, damage
         seal['inventory']['admission.json'] = hashlib.sha256(receipt.read_bytes()).hexdigest()
         marker.write_text(json.dumps(seal))
     before = len([c for c in runtime.calls() if 'wine' in c])
-    result = runtime.run('test-windows-under-wine.sh')
+    result = subprocess.run([sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), mode],
+                            cwd=runtime.root, env=runtime.env, capture_output=True, text=True)
     assert result.returncode != 0, result.stdout + result.stderr
     assert len([c for c in runtime.calls() if 'wine' in c]) == before
 

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <wchar.h>
 #define WINAPI
+#define __cdecl
 #define __declspec(attribute)
 #define TRUE 1
 #define FALSE 0
@@ -31,6 +32,14 @@
 #define SID_MAX_SUB_AUTHORITIES 15
 #define GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS 4
 #define GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT 2
+#define GET_MODULE_HANDLE_EX_FLAG_PIN 1
+#define DRIVE_UNKNOWN 0
+#define DRIVE_NO_ROOT_DIR 1
+#define DRIVE_REMOVABLE 2
+#define DRIVE_FIXED 3
+#define DRIVE_REMOTE 4
+#define DRIVE_CDROM 5
+#define DRIVE_RAMDISK 6
 typedef uint8_t BYTE, BOOLEAN;
 typedef int32_t BOOL;
 typedef uint32_t ULONG, DWORD;
@@ -82,6 +91,12 @@ BOOL WINAPI TerminateProcess(HANDLE, UINT);
 void SetLastError(DWORD);
 DWORD GetLastError(void);
 HMODULE LoadLibraryA(const char *);
+BOOL FreeLibrary(HMODULE);
+DWORD GetFullPathNameW(LPCWSTR, DWORD, WCHAR *, WCHAR **);
+UINT GetDriveTypeW(LPCWSTR);
+HANDLE GetProcessHeap(void);
+BOOL HeapFree(HANDLE, DWORD, void *);
+BOOLEAN WINAPI SystemFunction036(PVOID, ULONG);
 FARPROC GetProcAddress(HMODULE, const char *);
 BOOL GetModuleHandleExA(DWORD, LPCSTR, HMODULE *);
 BOOL GetModuleHandleExW(DWORD, LPCWSTR, HMODULE *);

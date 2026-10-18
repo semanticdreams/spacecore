@@ -2046,6 +2046,24 @@ def owned_reproduction_fixture(tmp_path, monkeypatch):
     return runtime
 
 
+def test_reproducer_supplies_validated_publication_binding_and_receipt_free_cleanup(tmp_path, monkeypatch):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    monkeypatch.setenv('SPACE_WINE_PUBLICATION_BINDING', 'hostile:inherited:input')
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'pass', result
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    bridge = receipt['bridge']
+    expected = f"{bridge['build_id']}:{bridge['identity']['module_device']}:{bridge['identity']['module_inode']}"
+    applications = [c for c in runtime.calls() if 'wine' in c and Path(c['wine'][0]).name == 'space-cli.exe']
+    assert len(applications) == 1
+    assert applications[0]['env']['SPACE_WINE_PUBLICATION_BINDING'] == expected
+    assert result['evidence']['stages'][-1]['cleanup']['outcome'] == 'pass'
+    # Cleanup authority stays in immutable ownership; binding is not promoted to
+    # prefix PRIVATE_ENV_KEYS and cannot become a receipt prerequisite for stop.
+    from wine import prefix
+    assert 'SPACE_WINE_PUBLICATION_BINDING' not in prefix.PRIVATE_ENV_KEYS
+
+
 @pytest.mark.parametrize("fault,code", [("success", 0), ("init", 42), ("admission", 20),
                                          ("app", 124), ("app", 137)])
 def test_parent_owns_session_before_init_and_terminally_cleans_without_receipt(tmp_path, monkeypatch, fault, code):

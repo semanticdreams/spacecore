@@ -1,5 +1,8 @@
 #include "record_publication.h"
 #include "record_publication_operation.h"
+#ifdef _WIN32
+#include "record_publication_wine.h"
+#endif
 
 #include <array>
 #include <atomic>
@@ -1215,6 +1218,9 @@ Phase Operation::cancel(std::string_view reason)
 
 Result publish(const fs::path& destination, std::string_view expected_bytes, const Hooks& hooks)
 {
+#ifdef _WIN32
+    if (wine::detected()) return wine::publish(destination, expected_bytes, hooks);
+#endif
     detail::Operation operation(destination, expected_bytes);
     auto phase = operation.advance({detail::Phase::start, false, {}});
     while (phase != detail::Phase::done) {
