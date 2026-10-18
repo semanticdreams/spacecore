@@ -397,100 +397,188 @@ def regular_launcher_inventory(fixture):
     return fixture
 
 
-def inventory_refusal(fixture, monkeypatch):
-    module = fixture.resolver()
+@pytest.fixture
+def noble_native_inventory(regular_launcher_inventory):
+    fixture = regular_launcher_inventory
+    share = fixture.bin.parent / 'share'
+    bug, doc = share / 'bug/wine64', share / 'doc/wine64'
+    bug.mkdir(parents=True)
+    doc.mkdir(parents=True)
+    metadata = share / 'lintian/overrides/wine64'
+    metadata.parent.mkdir(parents=True)
+    metadata.write_text('# regular lintian package metadata, not a native loader\n')
+    fixture.files['wine64:amd64'] = [str(fixture.lib / 'wine64'), str(bug), str(doc), str(metadata)]
     fixture.save()
-    catalog = module._catalog(fixture.root)
-    queries = []
-    original_run = module._run
-    def observe_query(repo, args):
-        queries.append(list(args))
-        return original_run(repo, args)
-    monkeypatch.setattr(module, '_run', observe_query)
-    # Observe the same native-candidate filesystem operations as the original
-    # filter/resolve comprehension. Formatting must not add even a re-stat.
-    events = []
-    for name in ('stat', 'lstat', 'open', 'readlink'):
-        original = getattr(os, name)
-        def observe(path, *args, _name=name, _original=original, **kwargs):
-            if not isinstance(path, int) and Path(path).name == 'wine64':
-                events.append((_name, os.fspath(path), args, kwargs))
-            return _original(path, *args, **kwargs)
-        monkeypatch.setattr(os, name, observe)
-    original_open = Path.open
-    def observe_open(path, *args, **kwargs):
-        if path.name == 'wine64':
-            events.append(('Path.open', str(path), args, kwargs))
-        return original_open(path, *args, **kwargs)
-    monkeypatch.setattr(Path, 'open', observe_open)
-    paths = fixture.files['wine64:amd64']
-    {str(Path(path).resolve()) for path in paths if Path(path).name == 'wine64' and Path(path).is_file()}
-    expected = list(events)
-    events.clear()
-    with pytest.raises(module.ToolchainError) as error:
-        module._selection(fixture.root, catalog)
-    assert events == expected, 'diagnostics must use prior observations without extra filesystem probes'
-    calls = fixture.calls()
-    expected_queries = [
-        ('dpkg-query', ['-S', str(fixture.bin / 'wine-stable')]),
-        ('dpkg-query', ['-W', '-f=${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\t${Architecture}\n', 'wine:all']),
-        ('dpkg-query', ['-W', '-f=${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\t${Architecture}\n', 'wine64:amd64']),
-        ('dpkg-query', ['-L', 'wine64:amd64'])]
-    assert [(Path(call[0]).name, call[1:]) for call in calls] == expected_queries
-    assert [(Path(call[0]).name, call[1:]) for call in queries] == expected_queries
-    assert not [call for call in calls if Path(call[0]).name in ('wine64', 'wine-stable')]
-    return str(error.value)
+    return fixture
+
+
+@pytest.mark.parametrize('route', ['stable', 'generic', 'native', 'native-alias', 'role-alias'])
+def test_native_loader_role_accepts_real_noble_inventory(noble_native_inventory, monkeypatch, route):
+    fixture = noble_native_inventory
+    role = fixture.lib / 'wine64'
+    selected = fixture.bin / 'wine-stable'
+    canonical = selected
+    if route == 'generic':
+        selected = fixture.bin / 'wine'
+        selected.symlink_to(canonical)
+    elif route == 'native':
+        selected = canonical = role
+    elif route == 'native-alias':
+        selected = fixture.bin / 'wine64'
+        selected.symlink_to(role)
+        canonical = role
+        fixture.files['wine64:amd64'] += [str(selected), str(role)]
+    elif route == 'role-alias':
+        merged = fixture.bin.parent / 'merged'
+        merged.mkdir()
+        (merged / 'lib').symlink_to(fixture.lib.parent, target_is_directory=True)
+        selected = merged / 'lib/wine/wine64'
+        canonical = role
+        fixture.files['wine64:amd64'] += [str(selected), str(role)]
+    monkeypatch.setenv('WINE_CMD', str(selected))
+    fixture.save()
+    runtime = dict(executable=str(canonical), version='wine-9.0 (fixture)',
+                   sha256=hashlib.sha256(canonical.read_bytes()).hexdigest())
+    module = fixture.resolver()
+    identity = module.resolve_toolchain(fixture.root, runtime)
+    assert identity['installation']['file']['executable'] == str(canonical)
+    assert identity['installation']['implementation']['file'] == {
+        'executable': str(role), 'sha256': hashlib.sha256(role.read_bytes()).hexdigest()}
+    assert identity['installation']['implementation']['package']['name'] == 'wine64:amd64'
+    module.verify_toolchain(identity)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
+
+
+@pytest.mark.parametrize('damage', [
+    'direct-metadata', 'unsupported-native-layout', 'unsupported-launcher-layout',
+    'missing-role-inventory', 'missing-role-file', 'directory-role', 'non-executable-role', 'non-executable-wrapper',
+    'role-symlink-metadata', 'wrapper-symlink-metadata', 'native-alias-metadata',
+    'wrong-owner', 'wrong-source', 'wrong-origin', 'wrong-architecture', 'conflicting-role'])
+def test_native_loader_role_refuses_invalid_provenance(noble_native_inventory, monkeypatch, damage):
+    fixture = noble_native_inventory
+    role = fixture.lib / 'wine64'
+    launcher = fixture.bin / 'wine-stable'
+    metadata = fixture.bin.parent / 'share/lintian/overrides/wine64'
+    metadata.chmod(0o755)  # Executability alone must never confer the loader role.
+    if damage == 'direct-metadata':
+        monkeypatch.setenv('WINE_CMD', str(metadata))
+    elif damage == 'unsupported-native-layout':
+        other = fixture.lib / 'other/wine64'
+        other.parent.mkdir()
+        shutil.copy2(role, other)
+        fixture.files['wine64:amd64'].append(str(other))
+        monkeypatch.setenv('WINE_CMD', str(other))
+    elif damage == 'unsupported-launcher-layout':
+        other = fixture.bin.parent / 'unsupported/wine-stable'
+        other.parent.mkdir()
+        launcher.rename(other)
+        fixture.files['wine:all'] = [str(other)]
+        monkeypatch.setenv('WINE_CMD', str(other))
+    elif damage == 'missing-role-inventory':
+        fixture.files['wine64:amd64'].remove(str(role))
+    elif damage == 'missing-role-file':
+        role.unlink()
+    elif damage == 'directory-role':
+        role.unlink()
+        role.mkdir()
+    elif damage == 'non-executable-role':
+        role.chmod(0o644)
+        fixture.files['wine64:amd64'].remove(str(metadata))
+    elif damage == 'non-executable-wrapper':
+        launcher.chmod(0o644)
+    elif damage == 'role-symlink-metadata':
+        role.unlink()
+        role.symlink_to(metadata)
+    elif damage == 'wrapper-symlink-metadata':
+        launcher.unlink()
+        launcher.symlink_to(metadata)
+    elif damage == 'native-alias-metadata':
+        alias = fixture.bin / 'wine64'
+        alias.symlink_to(metadata)
+        fixture.files['wine64:amd64'].append(str(alias))
+        monkeypatch.setenv('WINE_CMD', str(alias))
+    elif damage == 'wrong-owner':
+        query = fixture.bin / 'dpkg-query'
+        query.write_text(query.read_text().replace("if args[0] == '-S':",
+                         f"if args[0] == '-S' and args[1] == {str(role)!r}:\n print('libwine:amd64: ' + args[1]); sys.exit(0)\nif args[0] == '-S':"))
+    elif damage == 'wrong-source':
+        fixture.packages['wine64:amd64']['source'] = 'wine-stable'
+    elif damage == 'wrong-origin':
+        fixture.packages['wine64:amd64']['origins'][0]['origin'] = 'WineHQ'
+    elif damage == 'wrong-architecture':
+        fixture.packages['wine64:amd64']['architecture'] = 'i386'
+    elif damage == 'conflicting-role':
+        other = fixture.bin.parent / 'unsupported/lib/wine/wine64'
+        other.parent.mkdir(parents=True)
+        shutil.copy2(role, other)
+        fixture.files['wine64:amd64'].append(str(other))
+    fixture.save()
+    module = fixture.resolver()
+    with pytest.raises(module.ToolchainError):
+        module._selection(fixture.root, module._catalog(fixture.root))
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
 
 
 @pytest.mark.parametrize('case,listed,regular,unique', [
-    ('zero-listed', 0, 0, 0), ('zero-regular', 2, 0, 0), ('multiple', 4, 3, 2)])
-def test_native_inventory_diagnostic_counts_without_extra_probes(regular_launcher_inventory, monkeypatch,
-                                                                 case, listed, regular, unique):
-    fixture = regular_launcher_inventory
-    ignored = fixture.lib / 'not-wine64'  # Must not be probed or counted.
-    missing = fixture.lib / 'missing/wine64'
-    directory = fixture.lib / 'directory/wine64'
-    directory.mkdir(parents=True)
-    paths = [ignored]
-    if case == 'zero-regular':
-        paths += [missing, directory]
-    elif case == 'multiple':
-        second = fixture.lib / 'second/wine64'
-        second.parent.mkdir()
-        shutil.copy2(fixture.lib / 'wine64', second)
-        alias = fixture.lib / 'alias/wine64'
-        alias.parent.mkdir()
-        alias.symlink_to(fixture.lib / 'wine64')
-        paths += [fixture.lib / 'wine64', second, alias, directory]
-    fixture.files['wine64:amd64'] = [str(path) for path in paths]
-    message = inventory_refusal(fixture, monkeypatch)
-    prefix = (f'Missing or ambiguous native Wine64 implementation: package=wine64:amd64 '
-              f'listed={listed} regular={regular} unique-resolved={unique} ')
-    assert message.startswith(prefix)
-    assert 'observations-truncated=false' in message
-    assert 'message-truncated=' in message and message.index('message-truncated=') < message.index('observations=[')
+    ('unlisted-role', 0, 0, 0), ('nonregular-role', 1, 0, 0), ('conflicting-role', 2, 2, 2)])
+def test_native_loader_role_refusal_diagnostics(noble_native_inventory, monkeypatch, case, listed, regular, unique):
+    fixture = noble_native_inventory
+    role = fixture.lib / 'wine64'
+    if case == 'unlisted-role':
+        fixture.files['wine64:amd64'].remove(str(role))
+    elif case == 'nonregular-role':
+        role.unlink()
+        role.mkdir()
+    else:
+        # An unsupported second-prefix claim is refused, not tolerated as a
+        # hypothetical second legitimate loader or selected by inventory order.
+        foreign = fixture.bin.parent / 'unsupported/lib/wine/wine64'
+        foreign.parent.mkdir(parents=True)
+        shutil.copy2(role, foreign)
+        fixture.files['wine64:amd64'].append(str(foreign))
+    fixture.save()
+    inspected = []
+    original = Path.is_file
+    def observe(path):
+        if path.name == 'wine64':
+            inspected.append(path)
+        return original(path)
+    monkeypatch.setattr(Path, 'is_file', observe)
+    module = fixture.resolver()
+    with pytest.raises(module.ToolchainError) as error:
+        module._selection(fixture.root, module._catalog(fixture.root))
+    message = str(error.value)
+    assert message.startswith(f'Missing or conflicting native Wine64 role: package=wine64:amd64 '
+                              f'listed={listed} regular={regular} unique-resolved={unique} ')
+    assert all(path.parts[-3:] == ('lib', 'wine', 'wine64') for path in inspected)
+    assert 'observations-truncated=false' in message and 'message-truncated=' in message
     assert message.count('is-file=true') == regular and message.count('is-file=false') == listed - regular
     assert len(message.encode('ascii')) <= 480
-    if case == 'zero-listed':
-        assert 'message-truncated=false' in message and 'observations=[]' in message
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable', 'wine')]
 
 
-def test_native_inventory_diagnostic_escapes_caps_and_flags_observations(regular_launcher_inventory, monkeypatch):
-    fixture = regular_launcher_inventory
-    paths = []
-    for index in range(6):
-        path = fixture.lib / ('x' * 140 + f'{index}\t\x1b\x7f\u202e') / 'wine64'
-        path.parent.mkdir()
-        shutil.copy2(fixture.lib / 'wine64', path)
-        paths.append(path)
-    fixture.files['wine64:amd64'] = [str(path) for path in paths]
-    message = inventory_refusal(fixture, monkeypatch)
+def test_native_inventory_diagnostic_escapes_caps_and_flags_observations(monkeypatch):
+    # Formatting remains string-only; synthetic observations exercise encoding,
+    # not an obsolete rule that every regular basename is a candidate loader.
+    module = importlib.import_module('wine.publication_toolchain')
+    def unexpected_probe(*args, **kwargs):
+        pytest.fail('diagnostic formatting must not probe paths or packages')
+    for name in ('is_file', 'resolve'):
+        original = getattr(Path, name)
+        def observe(path, *args, _original=original, **kwargs):
+            if path.name == 'wine64':
+                unexpected_probe()
+            return _original(path, *args, **kwargs)
+        monkeypatch.setattr(Path, name, observe)
+    monkeypatch.setattr(module, '_run', unexpected_probe)
+    paths = ['/' + 'x' * 140 + f'{index}\t\x1b\x7f\u202e/wine64' for index in range(6)]
+    message = module._native_inventory_diagnostic('wine64:amd64', 6, 6, 6, [(path, True) for path in paths[:4]])
     assert 'package=wine64:amd64 listed=6 regular=6 unique-resolved=6 ' in message
     assert 'observations-truncated=true' in message and 'message-truncated=true' in message
     assert message.count('is-file=true') == 4 and 'is-file=false' not in message
     assert all(escape in message for escape in ('\\t', '\\u001b', '\\u007f', '\\u202e'))
     assert all(' ' <= char < '\x7f' for char in message) and len(message.encode('ascii')) <= 480
-    assert all(str(path) not in message for path in paths), 'do not dump complete long candidate paths'
+    assert all(path not in message for path in paths), 'do not dump complete long candidate paths'
 
 
 @pytest.mark.parametrize('reverse', [False, True])

@@ -148,7 +148,7 @@ def _native_inventory_diagnostic(package, listed, regular, unique, observations)
         truncated = truncated or clipped
         rendered.append(f'"{path}" is-file={str(is_file).lower()}')
     while True:
-        message = (f'Missing or ambiguous native Wine64 implementation: package={package} '
+        message = (f'Missing or conflicting native Wine64 role: package={package} '
                    f'listed={listed} regular={regular} unique-resolved={unique} '
                    f'observations-truncated={str(listed > len(rendered)).lower()} '
                    f'message-truncated={str(truncated).lower()} observations=[' + '; '.join(rendered) + ']')
@@ -177,29 +177,46 @@ def _selection(repo, catalog, runtime=None, *, provisioning=False):
         raise ToolchainError('Selected installation is not supported distro Wine9')
     _version(catalog, package['name'], binary=package['version'], source_version=package['source_version'])
     native = _matched_package(repo, catalog, 'wine64:amd64', package['source_version'])
+    if native['name'] != 'wine64:amd64' or native['architecture'] != 'amd64':
+        raise ToolchainError('Unsupported native Wine64 package architecture/identity')
+    selected = Path(file['executable'])
     if package['name'] == 'wine64:amd64':
-        implementation = file
+        if selected.parts[-3:] != ('lib', 'wine', 'wine64'):
+            raise ToolchainError('Unsupported Wine9 native-loader layout')
+        installation = selected.parents[2]
     elif package['name'] == 'wine:all':
-        paths = _run(repo, ['dpkg-query', '-L', native['name']]).splitlines()
-        candidates, observations = set(), []
-        listed, regular = 0, 0
-        for path in paths:
-            candidate = Path(path)
-            if candidate.name != 'wine64':
-                continue
-            listed += 1
-            is_file = candidate.is_file()
-            if is_file:
-                regular += 1
-                candidates.add(str(candidate.resolve()))
-            if len(observations) < 4:
-                observations.append((path, is_file))
-        if len(candidates) != 1:
-            raise ToolchainError(_native_inventory_diagnostic(native['name'], listed, regular,
-                                                              len(candidates), observations))
-        implementation = _file(candidates.pop())
+        if selected.parts[-2:] != ('bin', 'wine-stable'):
+            raise ToolchainError('Unsupported Wine9 launcher layout')
+        installation = selected.parent.parent
     else:
         raise ToolchainError('Unsupported distro Wine launcher package')
+    # This distro profile has one native role, not every regular basename in
+    # the package (which also owns a regular lintian override named wine64).
+    role = installation / 'lib/wine/wine64'
+    paths = _run(repo, ['dpkg-query', '-L', native['name']]).splitlines()
+    candidates, observations = set(), []
+    listed, regular = 0, 0
+    role_listed = False
+    for path in paths:
+        candidate = Path(path)
+        if candidate.parts[-3:] != ('lib', 'wine', 'wine64'):
+            continue
+        role_listed = role_listed or candidate == role
+        listed += 1
+        is_file = candidate.is_file()
+        if is_file:
+            regular += 1
+            candidates.add(str(candidate.resolve()))
+        if len(observations) < 4:
+            observations.append((path, is_file))
+    if not role_listed or regular != listed or candidates != {str(role)}:
+        raise ToolchainError(_native_inventory_diagnostic(native['name'], listed, regular,
+                                                          len(candidates), observations))
+    if not os.access(role, os.X_OK):
+        raise ToolchainError('Native Wine64 role is not executable')
+    implementation = _file(role)
+    if package['name'] == 'wine64:amd64' and file != implementation:
+        raise ToolchainError('Selected native Wine64 role identity changed')
     if _package(repo, implementation['executable']) != native:
         raise ToolchainError('Wine64 implementation does not match native package')
     if runtime is not None:
