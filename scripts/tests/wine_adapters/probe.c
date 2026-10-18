@@ -7,14 +7,36 @@
 #include <unistd.h>
 #include "record_publication_wine_abi.h"
 
-static DWORD last_error;
+/* Host wchar_t storage is not Win16 execution. Unicode inputs below are explicit
+ * UTF-16 units; real Windows-width C/C++ header compilation is a separate test. */
+static DWORD last_error = ERROR_ACCESS_DENIED;
 static unsigned int calls;
+static WCHAR owned_root[32768];
+static WCHAR process_temp[32768] = L"C:\\registry\\temp";
+static WCHAR process_tmp[32768] = L"D:\\registry\\tmp";
+static unsigned int env_sets, env_reads, loads;
 static const char *mode(void) { return getenv("PROBE_FIXTURE"); }
 static int is(const char *value) { return !strcmp(mode(), value); }
+static int env_case(const char *value)
+{
+    const char *selected = getenv("PROBE_ENV_CASE");
+    return selected && !strcmp(selected, value);
+}
+int fixture_environment_unchanged(void)
+{
+    return !env_sets && !wcscmp(process_temp, L"C:\\registry\\temp")
+        && !wcscmp(process_tmp, L"D:\\registry\\tmp");
+}
 void SetLastError(DWORD error) { last_error = error; }
 DWORD GetLastError(void) { return last_error; }
 HMODULE LoadLibraryA(const char *name)
 {
+    if (env_sets != 2 || env_reads != 3 || wcscmp(process_temp, owned_root) || wcscmp(process_tmp, owned_root)) {
+        puts("fixture-load-before-owned-environment");
+        last_error = ERROR_INVALID_DATA;
+        return NULL;
+    }
+    if (!loads++) puts("fixture-owned-before-load");
     if (!strcmp(name, "space_record_publication.dll")) {
         DWORD error = is("pair-missing") ? ERROR_MOD_NOT_FOUND :
             is("pair-bad-image") ? ERROR_BAD_EXE_FORMAT :
@@ -118,22 +140,103 @@ unsigned int GetSystemDirectoryA(char *path, unsigned int length)
 }
 int lstrcmpiA(const char *a, const char *b) { return strcasecmp(a, b); }
 
+static unsigned int hex_digit(char value)
+{
+    if (value >= '0' && value <= '9') return (unsigned int)(value - '0');
+    if (value >= 'a' && value <= 'f') return (unsigned int)(value - 'a' + 10);
+    abort();
+}
+static DWORD copy_environment_value(const WCHAR *value, WCHAR *output, DWORD capacity)
+{
+    size_t length = wcslen(value);
+    if (length >= capacity) return (DWORD)length + 1;
+    wmemcpy(output, value, length + 1);
+    return (DWORD)length;
+}
 DWORD GetEnvironmentVariableW(const WCHAR *name, WCHAR *output, DWORD capacity)
 {
-    if (wcscmp(name, L"TEMP")) abort();
-    const char *value = getenv("TEMP");
-    if (!value) return 0;
-    size_t count = mbstowcs(output, value, capacity);
-    return count == (size_t)-1 ? 0 : (DWORD)count;
+    if (!wcscmp(name, L"SPACE_WINE_WINDOWS_TMP")) {
+        const char *value = getenv("SPACE_WINE_WINDOWS_TMP");
+        const char *units = getenv("PROBE_HANDOFF_UTF16");
+        size_t length, i;
+        if (last_error != ERROR_SUCCESS) abort(); /* Caller must clear stale error. */
+        if (env_case("api-read")) { last_error = ERROR_ACCESS_DENIED; return 0; }
+        if (!value) { last_error = ERROR_ENVVAR_NOT_FOUND; return 0; }
+        if (env_case("oversize")) return capacity + 1;
+        if (env_case("truncated")) return capacity;
+        if (units) {
+            length = strlen(units);
+            if (length % 4 || length / 4 >= 32768) abort();
+            for (i = 0; i < length / 4; ++i)
+                owned_root[i] = (WCHAR)(hex_digit(units[4*i]) * 16 + hex_digit(units[4*i+1])
+                    + (hex_digit(units[4*i+2]) * 16 + hex_digit(units[4*i+3])) * 256);
+            owned_root[length / 4] = 0;
+        } else {
+            length = strlen(value);
+            if (length >= 32768) abort();
+            for (i = 0; i <= length; ++i) owned_root[i] = (WCHAR)(unsigned char)value[i];
+        }
+        if (env_case("empty")) owned_root[0] = 0;
+        if (env_case("relative")) wcscpy(owned_root, L"relative");
+        if (env_case("drive-digit")) wcscpy(owned_root, L"1:\\owned");
+        if (env_case("dos-device")) wcscpy(owned_root, L"Q:\\NUL.txt");
+        if (env_case("ads")) wcscpy(owned_root, L"Q:\\owned:stream");
+        if (env_case("trailing-dot")) wcscpy(owned_root, L"Q:\\owned.");
+        if (env_case("trailing-space")) wcscpy(owned_root, L"Q:\\owned ");
+        if (env_case("unc")) wcscpy(owned_root, L"\\\\host\\tmp");
+        if (env_case("device")) wcscpy(owned_root, L"\\\\?\\Q:\\tmp");
+        if (env_case("mixed")) wcscpy(owned_root, L"Q:\\owned/tmp");
+        if (env_case("traversal")) wcscpy(owned_root, L"Q:\\owned\\..\\tmp");
+        if (env_case("control")) wcscpy(owned_root, L"Q:\\own\ned");
+        if (env_case("high-surrogate") || env_case("low-surrogate")) {
+            wcscpy(owned_root, L"Q:\\private\\");
+            length = wcslen(owned_root);
+            owned_root[length] = (WCHAR)(env_case("high-surrogate") ? 0xd800 : 0xdc00);
+            owned_root[length + 1] = 0;
+        }
+        return copy_environment_value(owned_root, output, capacity);
+    }
+    if (!wcscmp(name, L"TEMP") || !wcscmp(name, L"TMP")) {
+        int temp = !wcscmp(name, L"TEMP");
+        if (env_sets == 2) {
+            if (env_case(temp ? "read-temp" : "read-tmp")) { last_error = ERROR_ACCESS_DENIED; return 0; }
+            if (env_case(temp ? "read-temp-truncated" : "read-tmp-truncated")) return capacity;
+            env_reads |= temp ? 1 : 2;
+            puts(temp ? "fixture-read-temp" : "fixture-read-tmp");
+        }
+        return copy_environment_value(temp ? process_temp : process_tmp, output, capacity);
+    }
+    abort();
+}
+BOOL SetEnvironmentVariableW(const WCHAR *name, const WCHAR *value)
+{
+    int temp = !wcscmp(name, L"TEMP");
+    if (!temp && wcscmp(name, L"TMP")) abort();
+    if (env_case(temp ? "set-temp" : "set-tmp")) { last_error = ERROR_ACCESS_DENIED; return FALSE; }
+    if (env_case(temp ? "set-temp-no-error" : "set-tmp-no-error")) return FALSE;
+    if (wcslen(value) >= 32768) abort();
+    wcscpy(temp ? process_temp : process_tmp, value);
+    ++env_sets;
+    puts(temp ? "fixture-set-temp" : "fixture-set-tmp");
+    if (!temp && env_case("mismatch-temp")) process_temp[0] = L'X';
+    if (!temp && env_case("mismatch-tmp")) process_tmp[0] = L'X';
+    return TRUE;
 }
 HANDLE CreateFileW(const WCHAR *path, DWORD access, DWORD sharing, void *security,
                    DWORD disposition, DWORD attributes, HANDLE template)
 {
     char name[4096];
+    const char *host = getenv("PROBE_HOST_TMP");
+    size_t root_length = wcslen(owned_root);
+    int count;
     if (access != GENERIC_WRITE || sharing || security || disposition != CREATE_NEW
             || attributes != FILE_ATTRIBUTE_NORMAL || template) abort();
-    if (is("report-create") || wcstombs(name, path, sizeof(name)) >= sizeof(name)) return INVALID_HANDLE_VALUE;
-    for (char *p = name; *p; ++p) if (*p == '\\') *p = '/';
+    if (is("report-create")) return INVALID_HANDLE_VALUE;
+    /* Test-only fixed DOS-root/report mapping, never a production converter. */
+    if (!host || wcsncmp(path, owned_root, root_length)
+            || wcscmp(path + root_length, L"\\space-record-publication-identity.json")) abort();
+    count = snprintf(name, sizeof(name), "%s/space-record-publication-identity.json", host);
+    if (count < 0 || (size_t)count >= sizeof(name)) return INVALID_HANDLE_VALUE;
     int fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0600);
     return fd < 0 ? INVALID_HANDLE_VALUE : (HANDLE)(intptr_t)fd;
 }

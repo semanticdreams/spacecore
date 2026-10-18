@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <wchar.h>
 #include "record_publication_wine_abi.h"
+#include "wine_owned_environment.h"
 
 #ifndef SRP_BUILD_ID_BYTES
 #error "The capability probe must be bound to the inventoried publication build"
@@ -176,6 +177,12 @@ int main(void)
     BYTE zero[3] = {0x31, 0x47, 0x59};
     DWORD error;
     DWORD path_length;
+    error = space_wine_apply_owned_environment(TRUE);
+    if (error != ERROR_SUCCESS) {
+        fprintf(stderr, "Owned Wine environment: phase=apply error=%" PRIu32 "\n", (uint32_t)error);
+        fflush(stderr);
+        return 20;
+    }
     if (publication_identity() != 0) return 20;
     puts("ProcessPrng probe: loading bcryptprimitives.dll");
     fflush(stdout);

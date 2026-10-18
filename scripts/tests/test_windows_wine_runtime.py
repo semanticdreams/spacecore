@@ -115,6 +115,7 @@ class Fixture:
             shutil.copytree(ROOT / "scripts/wine", scripts / "wine")
         (self.root / 'src').mkdir()
         shutil.copy2(ROOT / 'src/record_publication_wine_abi.h', self.root / 'src')
+        shutil.copy2(ROOT / 'src/wine_owned_environment.h', self.root / 'src')
         shutil.copytree(ROOT / "external/date/tzdata", self.root / "external/date/tzdata")
         manifest = self.root / "external/temporal/libical/DEPENDENCY_MANIFEST.json"
         manifest.parent.mkdir(parents=True)
@@ -178,7 +179,7 @@ if sys.argv[1:] == ['--version']:
     print('Wine 9.0 (fixture)'); sys.exit(0)
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'server':sys.argv[1:], 'env':{k:os.environ.get(k) for k in
-        ['WINEPREFIX','WINEARCH','WINESERVER']}})+'\\n')
+        ['WINEPREFIX','WINEARCH','WINESERVER'] + ['SPACE_WINE_WINDOWS_TMP']}})+'\\n')
 sys.exit(int(os.environ.get('FIXTURE_STOP_CODE', '0')) if sys.argv[1:] == ['-k'] else 0)
 ''')
         self.write_executable("wine", '''#!/usr/bin/python3
@@ -539,15 +540,115 @@ def compile_host(tmp_path, source, *extra):
     return output
 
 
+def owned_probe_environment(tmp_path, mode='normal', **overrides):
+    env = dict(os.environ, PROBE_FIXTURE=mode, PROBE_HOST_TMP=str(tmp_path),
+                SPACE_WINE_WINDOWS_TMP=r'Q:\owned\tmp',
+                SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
+                TEMP='C:\\registry\\temp', TMP='D:\\registry\\tmp',
+                WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b')
+    env.update(overrides)
+    return env
+
+
+@pytest.mark.parametrize('case', ['missing', 'empty', 'oversize', 'truncated', 'relative', 'unc', 'device', 'mixed',
+                                 'drive-digit', 'dos-device', 'ads', 'trailing-dot', 'trailing-space',
+                                 'traversal', 'control', 'high-surrogate', 'low-surrogate',
+                                 'api-read', 'set-temp', 'set-tmp', 'set-temp-no-error', 'set-tmp-no-error',
+                                 'read-temp', 'read-tmp', 'read-temp-truncated', 'read-tmp-truncated',
+                                 'mismatch-temp', 'mismatch-tmp'])
+def test_required_owned_environment_failure_precedes_all_probe_work(tmp_path, case):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    env = owned_probe_environment(tmp_path, PROBE_ENV_CASE=case)
+    if case == 'missing':
+        env.pop('SPACE_WINE_WINDOWS_TMP')
+    result = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
+    assert result.returncode == 20, result.stdout + result.stderr
+    assert result.stderr.startswith('Owned Wine environment: phase=apply error=')
+    error = result.stderr.strip().removeprefix('Owned Wine environment: phase=apply error=')
+    assert error.isdecimal() and 0 < int(error) < 2**32
+    expected = {'missing': 203, 'empty': 87, 'oversize': 122, 'truncated': 122,
+                'api-read': 5, 'set-temp': 5, 'set-tmp': 5, 'read-temp': 5, 'read-tmp': 5,
+                'set-temp-no-error': 31, 'set-tmp-no-error': 31,
+                'read-temp-truncated': 122, 'read-tmp-truncated': 122,
+                'mismatch-temp': 13, 'mismatch-tmp': 13}
+    assert int(error) == expected.get(case, 87)
+    if case.startswith('set-temp'):
+        assert 'fixture-set-tmp' not in result.stdout
+    if case.startswith('set-tmp'):
+        assert 'fixture-set-temp' in result.stdout and 'fixture-set-tmp' not in result.stdout
+    assert 'fixture-owned-before-load' not in result.stdout
+    assert 'fixture-entry0' not in result.stdout and 'fixture-crypto-load' not in result.stdout
+    assert not (tmp_path / 'space-record-publication-identity.json').exists()
+    assert '0123456789abcdef' not in result.stderr and str(tmp_path) not in result.stderr
+    assert all(len(line.encode()) < 160 for line in result.stderr.splitlines())
+
+
+@pytest.mark.parametrize('root', [r'R:\private\tmp', r'S:\private' + '\\雪', r'T:\private' + '\\' + '\U0001f680'])
+def test_actual_probe_applies_and_verifies_distinct_registry_temp_before_first_load(tmp_path, root):
+    exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
+    # Explicit UTF-16 units, not host wchar_t's Unicode-code-point representation.
+    units = root.encode('utf-16-le').hex()
+    env = owned_probe_environment(tmp_path, PROBE_HANDOFF_UTF16=units)
+    result = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    lines = result.stdout.splitlines()
+    assert lines[:5] == ['fixture-set-temp', 'fixture-set-tmp', 'fixture-read-temp',
+                         'fixture-read-tmp', 'fixture-owned-before-load']
+    assert lines.index('fixture-owned-before-load') < lines.index('fixture-entry0')
+    assert (tmp_path / 'space-record-publication-identity.json').is_file()
+
+
+@pytest.mark.parametrize('case,expected', [('missing', 0), ('empty', 20), ('relative', 20), ('api-read', 20)])
+def test_optional_owned_environment_only_genuine_absence_is_a_noop(tmp_path, case, expected):
+    header = ROOT / 'src/wine_owned_environment.h'
+    assert header.is_file(), 'private generic Win32 initializer header is required'
+    source = tmp_path / 'optional.c'
+    source.write_text('''#include "wine_owned_environment.h"
+extern int fixture_environment_unchanged(void);
+int main(void) {
+    DWORD result = space_wine_apply_owned_environment(FALSE);
+    if (!fixture_environment_unchanged()) return 77;
+    return result == ERROR_SUCCESS ? 0 : 20;
+}
+''')
+    exe = compile_host(tmp_path, 'probe', str(source))
+    env = owned_probe_environment(tmp_path, PROBE_ENV_CASE=case)
+    if case == 'missing':
+        env.pop('SPACE_WINE_WINDOWS_TMP')
+    result = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
+    assert result.returncode == expected, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('compiler,standard', [('x86_64-w64-mingw32-gcc-posix', 'c11'),
+                                             ('x86_64-w64-mingw32-g++-posix', 'c++17')])
+def test_owned_environment_header_compiles_with_real_win16_c_and_cpp(tmp_path, compiler, standard):
+    header = ROOT / 'src/wine_owned_environment.h'
+    assert header.is_file(), 'private generic Win32 initializer header is required'
+    cc = shutil.which(compiler)
+    assert cc, 'tiny MinGW C/C++ compilation is required; no PE execution'
+    source = '''#include "wine_owned_environment.h"
+#ifdef __cplusplus
+static_assert(sizeof(WCHAR) == 2, "Windows UTF-16 units");
+#else
+_Static_assert(sizeof(WCHAR) == 2, "Windows UTF-16 units");
+#endif
+int main(void) { return space_wine_apply_owned_environment(FALSE) ? 1 : 0; }
+'''
+    output = tmp_path / 'owned-environment.exe'
+    result = subprocess.run([cc, '-x', 'c++' if standard == 'c++17' else 'c', f'-std={standard}',
+                             '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'src'), '-o', str(output), '-'],
+                            input=source, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert output.read_bytes()[:2] == b'MZ'
+
+
 @pytest.mark.parametrize('mode', ['pair-missing', 'pair-export', 'pair-owner', 'pair-status',
                                  'pair-echo', 'pair-pe-id', 'pair-unix-id', 'pair-size',
                                  'pair-abi', 'pair-arch', 'pair-features', 'pair-inode',
                                  'report-create', 'report-write', 'report-short', 'report-close'])
 def test_actual_probe_pair_failure_never_reaches_crypto(tmp_path, mode):
     exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
-    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode,
-                            TEMP=str(tmp_path), SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
-                            WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b'),
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode),
                             capture_output=True, text=True)
     assert result.returncode == 20, result.stdout + result.stderr
     assert 'fixture-crypto-load' not in result.stdout
@@ -558,9 +659,7 @@ def test_actual_probe_pair_failure_never_reaches_crypto(tmp_path, mode):
                                       ('pair-init-failed', 1114), ('pair-access-denied', 5)])
 def test_actual_probe_reports_numeric_publication_loader_error(tmp_path, mode, error):
     exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
-    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode, TEMP=str(tmp_path),
-                            SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
-                            WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b'),
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode),
                             capture_output=True, text=True)
     assert result.returncode == 20, result.stdout + result.stderr
     lines = result.stderr.splitlines()
@@ -577,9 +676,7 @@ def test_actual_probe_reports_numeric_publication_loader_error(tmp_path, mode, e
                                        ('pair-echo', 0)])
 def test_actual_probe_reports_raw_entry0_status_before_identity_failure(tmp_path, mode, status):
     exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
-    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode, TEMP=str(tmp_path),
-                            SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
-                            WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b'),
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode),
                             capture_output=True, text=True)
     assert result.returncode == 20, result.stdout + result.stderr
     assert result.stderr.splitlines()[0] == f'Publication probe: phase=entry0 status={status}'
@@ -592,9 +689,7 @@ def test_actual_probe_reports_raw_entry0_status_before_identity_failure(tmp_path
 @pytest.mark.parametrize('mode,code', [('normal', 0), ('load-126', 10), ('export-127', 10)])
 def test_actual_probe_writes_identity_before_crypto_in_same_process(tmp_path, mode, code):
     exe = compile_host(tmp_path, 'probe', str(ROOT / 'scripts/wine/probe.c'))
-    env = dict(os.environ, PROBE_FIXTURE=mode, TEMP=str(tmp_path),
-               SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
-               WINEDLLOVERRIDES='space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b')
+    env = owned_probe_environment(tmp_path, mode)
     result = subprocess.run([str(exe)], env=env, capture_output=True, text=True)
     assert result.returncode == code, result.stdout + result.stderr
     report = tmp_path / 'space-record-publication-identity.json'
@@ -855,9 +950,7 @@ def test_bridge_never_returns_if_hard_termination_unexpectedly_returns(tmp_path)
 ])
 def test_real_probe_logic_with_host_api_adapter(tmp_path, mode, code):
     exe = compile_host(tmp_path, "probe", str(ROOT / "scripts/wine/probe.c"))
-    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE=mode,
-                                                TEMP=str(tmp_path), SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
-                                                WINEDLLOVERRIDES="space_record_publication=b;bcryptprimitives=b;advapi32,cryptbase=b"),
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path, mode),
                             capture_output=True, text=True)
     assert result.returncode == code, result.stdout + result.stderr
     if code == 0:
@@ -868,9 +961,8 @@ def test_real_probe_logic_with_host_api_adapter(tmp_path, mode, code):
 
 def test_probe_compat_identity_uses_own_overlay_directory(tmp_path):
     exe = compile_host(tmp_path, "probe", str(ROOT / "scripts/wine/probe.c"))
-    result = subprocess.run([str(exe)], env=dict(os.environ, PROBE_FIXTURE="normal",
-                                                TEMP=str(tmp_path), SPACE_WINE_IDENTITY_CHALLENGE='0123456789abcdef',
-                                                WINEDLLOVERRIDES="space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b"),
+    result = subprocess.run([str(exe)], env=owned_probe_environment(tmp_path,
+                            WINEDLLOVERRIDES="space_record_publication=b;bcryptprimitives=n;advapi32,cryptbase=b"),
                             capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
 

@@ -31,13 +31,15 @@ CRASH_POLICY = [
     (r'HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug', 'Auto', 'REG_SZ', '1'),
     (r'HKCU\Software\Wine\WineDbg', 'ShowCrashDialog', 'REG_DWORD', '0'),
 ]
-PRIVATE_ENV_KEYS = ('WINEPREFIX', 'WINEARCH', 'WINESERVER', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'TMPDIR', 'TEMP', 'TMP')
+PRIVATE_ENV_KEYS = ('WINEPREFIX', 'WINEARCH', 'WINESERVER', 'XDG_DATA_HOME', 'XDG_CACHE_HOME',
+                    'TMPDIR', 'TEMP', 'TMP', 'SPACE_WINE_WINDOWS_TMP')
 
 
 def _owned_environment(directory, server, windows_tmp):
     return dict(os.environ, WINEPREFIX=str(directory / 'prefix'), WINEARCH='win64', WINESERVER=server,
                 XDG_DATA_HOME=str(directory / 'data'), XDG_CACHE_HOME=str(directory / 'cache'),
-                TMPDIR=str(directory / 'tmp'), TEMP=windows_tmp, TMP=windows_tmp)
+                TMPDIR=str(directory / 'tmp'), TEMP=windows_tmp, TMP=windows_tmp,
+                SPACE_WINE_WINDOWS_TMP=windows_tmp)
 
 
 def _windows_absolute(value):

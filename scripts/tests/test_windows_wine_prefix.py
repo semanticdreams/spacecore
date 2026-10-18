@@ -63,6 +63,34 @@ def test_owned_roots_are_private_isolated_and_override_inherited_data(runtime, m
     assert sentinel.read_text() == 'leave old shared data alone'
 
 
+def test_windows_tmp_handoff_is_protected_from_inherited_and_extra_env(runtime, monkeypatch):
+    runtime.package()
+    runtime.env['SPACE_WINE_WINDOWS_TMP'] = r'X:\unowned-inherited'
+    assert runtime.prepare([0]).returncode == 0
+    module, session = load_owned(runtime)
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    mapped = session.setup()['windows_tmp']
+    assert session.environment().get('SPACE_WINE_WINDOWS_TMP') == mapped
+    assert session._server_environment().get('SPACE_WINE_WINDOWS_TMP') == module.BOOTSTRAP_TEMP
+    assert 'SPACE_WINE_WINDOWS_TMP' in module.PRIVATE_ENV_KEYS
+    fresh = module.create_session(runtime.root)
+    assert fresh.environment()['SPACE_WINE_WINDOWS_TMP'] == module.BOOTSTRAP_TEMP
+    captured = []
+    def observe(argv, **kwargs):
+        captured.append((argv, kwargs['env']))
+        return 0
+    monkeypatch.setattr(module, 'wait_leader', observe)
+    for kind, expected in [('init', mapped), ('probe', mapped), ('smoke60', mapped),
+                           ('fast1800', mapped), ('setup', mapped),
+                           ('stop', module.BOOTSTRAP_TEMP), ('wait', module.BOOTSTRAP_TEMP)]:
+        assert module.bounded(session, ['fixed-fixture'], kind,
+                              {'SPACE_WINE_WINDOWS_TMP': r'Y:\unowned-extra'}) == 0
+        argv, env = captured[-1]
+        assert env['SPACE_WINE_WINDOWS_TMP'] == env['TEMP'] == env['TMP'] == expected
+        assert argv[:3] == ['timeout', '--kill-after=5s', f'{module.BOUNDS[kind]}s']
+
+
 def test_stale_ended_owner_is_rejected_without_adopting_or_cleaning_it(runtime, monkeypatch):
     module = prefix_module()
     for key, value in runtime.env.items():
@@ -176,9 +204,12 @@ def test_setup_observation_damage_blocks_launch_not_immutable_owned_cleanup(runt
     with pytest.raises((OSError, ValueError)):
         module.initialize(session)
     assert runtime.calls() == before
+    assert session._server_environment().get('SPACE_WINE_WINDOWS_TMP') == module.BOOTSTRAP_TEMP
     result = module.stop_session(session, end=True)
     assert result.ok, result.errors
     assert [call['server'] for call in runtime.calls()[len(before):] if 'server' in call] == [['-k'], ['-w']]
+    assert all(call['env'].get('SPACE_WINE_WINDOWS_TMP') == module.BOOTSTRAP_TEMP
+               for call in runtime.calls()[len(before):] if 'server' in call)
     assert session.state()['ended'] and not session.state()['authorized']
 
 
