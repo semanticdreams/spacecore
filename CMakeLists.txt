@@ -879,6 +879,16 @@ if(WIN32)
 endif()
 add_test(NAME test_record_publication COMMAND test_record_publication)
 
+add_executable(test_record_publication_operation
+    tests/test_record_publication_operation.cpp
+    src/record_publication.cpp
+)
+target_include_directories(test_record_publication_operation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if(WIN32)
+    target_link_libraries(test_record_publication_operation advapi32)
+endif()
+add_test(NAME test_record_publication_operation COMMAND test_record_publication_operation)
+
 add_executable(test_vector_buffer
     tests/test_vector_buffer.cpp
 )

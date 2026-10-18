@@ -1,4 +1,5 @@
 #include "record_publication.h"
+#include "record_publication_operation.h"
 
 #include <array>
 #include <atomic>
@@ -1117,37 +1118,129 @@ private:
 
 } // namespace
 
+namespace detail {
+
+struct Operation::Impl {
+    Impl(const fs::path& destination, std::string_view bytes)
+        : payload(bytes), attempt(destination) {}
+
+    Phase finish_cleanup()
+    {
+        try {
+            const auto error = attempt.cleanup();
+            if (error) append_error(state.cleanup_error, *error);
+        } catch (...) { append_error(state.cleanup_error, current_error()); }
+        state.phase = Phase::done;
+        return state.phase;
+    }
+
+    Phase enter_cleanup()
+    {
+        if (!attempt.owns_workspace()) return finish_cleanup();
+        state.phase = Phase::before_cleanup;
+        return state.phase;
+    }
+
+    const std::string payload;
+    Attempt attempt;
+    State state;
+};
+
+Operation::Operation(const fs::path& destination, std::string_view payload)
+    : impl_(std::make_unique<Impl>(destination, payload)) {}
+
+Operation::~Operation() = default;
+
+const State& Operation::state() const noexcept
+{
+    return impl_->state;
+}
+
+Phase Operation::advance(const Reply& reply)
+{
+    auto& operation = *impl_;
+    auto& state = operation.state;
+    if (state.phase == Phase::done || reply.phase != state.phase)
+        fail("invalid operation reply phase");
+    if (state.phase == Phase::before_cleanup) {
+        if (reply.failed) append_error(state.cleanup_error, reply.error);
+        return operation.finish_cleanup();
+    }
+    if (reply.failed) {
+        state.failure = reply.error;
+        return operation.enter_cleanup();
+    }
+    try {
+        switch (state.phase) {
+        case Phase::start:
+            operation.attempt.prepare();
+            state.phase = Phase::before_write;
+            return state.phase;
+        case Phase::before_write:
+            operation.attempt.write(operation.payload);
+            state.phase = Phase::before_security;
+            return state.phase;
+        case Phase::before_security:
+            operation.attempt.secure(operation.payload);
+            state.phase = Phase::before_commit;
+            return state.phase;
+        case Phase::before_commit:
+            operation.attempt.validate(operation.payload);
+            operation.attempt.commit();
+            state.committed = true; // Irreversible latch: no callback/adapter work before assignment.
+            break;
+        default:
+            fail("invalid operation phase");
+        }
+    } catch (...) {
+        state.failure = current_error();
+    }
+    return operation.enter_cleanup();
+}
+
+Phase Operation::cancel(std::string_view reason)
+{
+    auto& operation = *impl_;
+    auto& state = operation.state;
+    if (state.phase == Phase::done) return Phase::done;
+    if (state.phase == Phase::before_cleanup) {
+        append_error(state.cleanup_error, std::string(reason));
+        return operation.finish_cleanup();
+    }
+    state.failure = std::string(reason);
+    return operation.enter_cleanup();
+}
+
+} // namespace detail
+
 Result publish(const fs::path& destination, std::string_view expected_bytes, const Hooks& hooks)
 {
-    Attempt attempt(destination);
-    Result result;
-    std::optional<std::string> failure;
-    try {
-        attempt.prepare();
-        if (hooks.before_write) hooks.before_write();
-        attempt.write(expected_bytes);
-        if (hooks.before_security) hooks.before_security();
-        attempt.secure(expected_bytes);
-        if (hooks.before_commit) hooks.before_commit();
-        attempt.validate(expected_bytes);
-        attempt.commit();
-        result.committed = true; // Irreversible latch: no Lua/fallible work before this assignment.
-    } catch (...) {
-        failure = current_error();
+    detail::Operation operation(destination, expected_bytes);
+    auto phase = operation.advance({detail::Phase::start, false, {}});
+    while (phase != detail::Phase::done) {
+        const std::function<void()>* hook = nullptr;
+        switch (phase) {
+        case detail::Phase::before_write: hook = &hooks.before_write; break;
+        case detail::Phase::before_security: hook = &hooks.before_security; break;
+        case detail::Phase::before_commit: hook = &hooks.before_commit; break;
+        case detail::Phase::before_cleanup: hook = &hooks.before_cleanup; break;
+        default: fail("unexpected publication hook phase");
+        }
+        detail::Reply reply {phase, false, {}};
+        try { if (*hook) (*hook)(); }
+        catch (...) {
+            reply.failed = true;
+            reply.error = current_error();
+        }
+        phase = operation.advance(reply);
     }
-    if (attempt.owns_workspace() && hooks.before_cleanup) {
-        try { hooks.before_cleanup(); }
-        catch (...) { append_error(result.cleanup_error, current_error()); }
+    const auto& state = operation.state();
+    if (state.failure) {
+        auto failure = *state.failure;
+        if (state.cleanup_error) failure.append("; cleanup: " + *state.cleanup_error);
+        fail(failure);
     }
-    try {
-        const auto cleanup = attempt.cleanup();
-        if (cleanup) append_error(result.cleanup_error, *cleanup);
-    } catch (...) { append_error(result.cleanup_error, current_error()); }
-    if (failure) {
-        if (result.cleanup_error) failure->append("; cleanup: " + *result.cleanup_error);
-        fail(*failure);
-    }
-    return result;
+    return {state.committed, state.cleanup_error};
 }
 
 } // namespace record_publication
