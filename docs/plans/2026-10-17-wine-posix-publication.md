@@ -208,11 +208,11 @@ before their own temp use; do not claim application-wide integration already exi
 - [ ] **3. Native publish drives operation inline:** local Hooks, no locks across hooks, cancellation cannot resume publication, explicit cleanup reports errors; destructor is safeguard only.
 - [ ] **4. GREEN:** `make build`; `ctest --test-dir build -R '^test_record_publication(_operation)?$' --output-on-failure`. Register focused target. Review/checkpoint `refactor(engine): make record publication explicitly phased`.
 
-### Task 5: Production Operation ABI and Native Adapter
+### Task 5A: Portable Operation ABI and Native Context Adapter
 
-**Files:** Modify `src/record_publication_wine_abi.h`, `scripts/wine/record_publication_unix_entry.cpp`, `scripts/wine/build_publication.py`, `CMakeLists.txt`; create `src/record_publication_unix.cpp`, `tests/test_record_publication_abi.cpp`.
+**Files:** Modify `src/record_publication_wine_abi.h`, `CMakeLists.txt`, `scripts/tests/test_wine_publication_build.py`, `docs/dev/notes/windows-wine-build-and-test.md`; create `src/record_publication_unix.h`, `src/record_publication_unix.cpp`, `tests/test_record_publication_abi.cpp`.
 
-**Interfaces:** Preserve entry0. Entry1 consumes ABI1:
+**Interfaces:** Consume actual Task4 Operation unchanged. Declare only in native-only private header `extern "C" int32_t srp_unix_call(SrpCall*) noexcept`; PE never includes/calls that header/symbol. Keep required features1 and Unix operation slot unsupported throughout5A.
 ```c
 typedef struct { uint64_t address, size; } SrpSlice;
 typedef struct { uint64_t address, capacity, required; } SrpBuffer;
@@ -220,39 +220,130 @@ typedef struct {
     uint32_t size, abi, opcode, event;
     uint64_t context, sequence;
     SrpSlice path, payload, hook_error;
-    SrpBuffer primary_error, cleanup_error;
-    uint32_t reply, flags, status, reserved;
+    SrpBuffer primary_error, cleanup_error, transport_error;
+    uint32_t reply, flags, primary_state, reserved;
 } SrpCall;
 ```
-Size144; offsets context16/sequence24/path32/primary_error80/reply128. Constants `SRP_BEGIN=1`, `SRP_ADVANCE=2`, `SRP_SNAPSHOT=3`, `SRP_CANCEL=4`, `SRP_RELEASE=5`; `SRP_CONTINUE=0`, `SRP_FAILED=1`; flags `SRP_VALID=1`, `SRP_COMMITTED=2`, `SRP_DONE=4`, `SRP_PRIMARY_TRUNCATED=8`, `SRP_CLEANUP_TRUNCATED=16`. `int32_t srp_unix_call(SrpCall*) noexcept`. No Wine headers in portable core.
+First operation ABI1 size168, no144alias; identityABI1/112unchanged. Assert offsets
+context16/sequence24/path32/payload48/hook_error64/primary80/cleanup104/transport128/
+reply152/flags156/primary_state160/reserved164 in C and C++. Opcodes BEGIN1/ADVANCE2/
+SNAPSHOT3/CANCEL4/RELEASE5; replies CONTINUE0/FAILED1; events START0/BEFORE_WRITE1/
+BEFORE_SECURITY2/BEFORE_COMMIT3/BEFORE_CLEANUP4/DONE5. Existing flags VALID1/COMMITTED2/
+DONE4/PRIMARY_TRUNCATED8/CLEANUP_TRUNCATED16, plus CLEANUP_PRESENT32/POISONED64/
+TRANSPORT_TRUNCATED128. Prefix all names `SRP_`. PRIMARY_ABSENT0/PRESENT1 encode
+operation failure presence independent of required bytes (empty errors matter).
 
-- [ ] **1. RED host ABI tests:** layout/version/length/reserved errors, invalid IDs, stale sequences, double release, multiple contexts, cancellation, tiny buffers, sticky postcommit snapshot.
-  ```cpp
-  // The test's successful begin/phase replies reach before-cleanup after commit.
-  call.opcode = SRP_ADVANCE;
-  call.event = 3; // before-commit, with the current valid sequence
-  check(srp_unix_call(&call) == 0);
-  check(call.flags & SRP_COMMITTED);
-  call.opcode = SRP_SNAPSHOT;
-  check(srp_unix_call(&call) == 0 && (call.flags & SRP_COMMITTED));
-  ```
-- [ ] **2. Implement module-owned validated context handles:** copy begin inputs, exact phase/sequence continuations, allocation-free/nonadvancing snapshot. Release cancels/finalizes without resuming, returns sticky state, destroys within originating module.
-- [ ] **3. Catch every exception:** publish committed flags before diagnostics; bounded copies set required lengths/truncation, fixed fallback text on allocation failure. Never replay work for an error. No hook registration or fixture/fault commands in ABI.
-- [ ] **4. SO compiles existing POSIX publisher and adapter; entry1 forwards and feature2 activates.** Change the single header constant SRP_REQUIRED_FEATURES to identity|operation so all newly built probes/clients require both. Exclude adapter from engine source glob; link only into Unix module/native ABI test.
-- [ ] **5. GREEN build/publication-operation-ABI CTest; review/checkpoint:** `feat(engine): implement publication operation Unix ABI`. Actual new operation dispatch remains deferred.
+Return value is protocol NTSTATUS, not operation success. Accepted native/hook
+failure returns SRP_SUCCESS with valid state/primary presence. Validation/stale
+requests return INVALID_ARGUMENT and no operation mutation; include live snapshot
+if safely resolved. Unexpected contained errors return UNSUCCESSFUL; never erase
+commit. Transport text is separate: preserve constructor what() even without a live
+context. No-context output is context0/seq0/eventSTART/primaryABSENT/primary+cleanup
+required0/flags0 except transport truncation. Wrong-size/version/null has no usable
+output contract; never access outside validated header.
+
+All buffers count bytes, no implicit NUL; copy at most capacity, required is complete
+response length, distinct truncation bits. Publish scalar state before text. Empty
+primary uses PRESENT/required0; empty cleanup uses CLEANUP_PRESENT/required0.
+Normal validation transport text is response-only. Unexpected live exceptions latch
+a bounded512byte transport diagnostic with explicit producer truncation marker and
+POISONED; snapshot retrieves it without allocation. Poison prevents more publication,
+not snapshot/cancel/cleanup/release; it never manufactures primary failure after a
+known commit. No-context truncated text cannot be retrieved by replaying BEGIN.
+
+| Opcode | Exact continuation/lifetime contract |
+|---|---|
+| BEGIN | context0/seq0/eventSTART/CONTINUE, nonempty absolute NUL-free host path; copy/construct only, return nonzero ID/START/seq0, no implicit prepare |
+| ADVANCE | exact live event/seq and valid reply; consume seq once including contained invocation error; DONE rejects |
+| CANCEL | exact event/seq; consume once, use hook_error reason (may be empty); DONE native no-op allowed |
+| SNAPSHOT | live ID; stale input event/seq ignored for recovery; no allocation/advance/native work |
+| RELEASE | exact event/seq; cancel unfinished work, finalize ONLYcleanup, copy sticky state before retiring ID; BEFORE_CLEANUP finishes directly without inventing cancel error; DONE just retires |
+
+Never recycle IDs or wrap sequences. Failed finalization retains recoverable poisoned
+context, not erased ownership. Shared registry ownership + per-context mutex/retired
+check; release registry lock before context/IO. No lock spans a PE hook. Invalid,
+stale/double/wrong-op requests cannot destroy newer work. Non-BEGIN path/payload
+sizes0; successful ADVANCE has empty hook_error; SNAPSHOT/RELEASE empty error and
+CONTINUE. Output flags/primary_state/required may contain prior output; reserved0.
+After capturing inputs, valid responses clear input slices/reset replyCONTINUE.
+Recommend fresh zeroed requests with saved ID/event/seq each time. Validate used
+length/address/range overflow and incompatible overlap before mutation; pointers
+must be caller-owned valid synchronous storage, no hostile-memory-probing framework.
+
+- [ ] **1. RED layout/channel tests:** actual C/C++168offsets, malformed header/op/reserved/ranges, present-empty errors, constructor transport detail, independent truncation and no-context clearing. Use real Operation/FS, not parser mocks.
+- [ ] **2. RED/implement context lifecycle:** START without workspace; exact phase/seq, copied binary payload, cancellation/release every phase, stale snapshot recovery, stale release/double ID, overlapping/nested contexts; destination and cleanup assertions.
+- [ ] **3. Catch all exceptions and prove recovery:** allocation-disabled postcommit snapshot all3channels; test-only allocator failures poison publication but allow cleanup and preservecommit. No ABI fault opcodes. Same-context ADVANCE/RELEASE race: winner serializes, stale release cannot erase newer state; independent contexts remain independent.
+- [ ] **4. CMake:** exclude Unixadapter CPP from engine glob ALLplatforms; Linuxx64 test target uses adapter+record_publication.cpp/source includes/Threads::Threads. No wholeengine link. Document private protocol/feature1-only status.
+- [ ] **5. GREEN:** `make cmake`600000; `make build`14400000; explicitly build new test targets asneeded; `ctest --test-dir build -R '^test_record_publication(_operation|_abi)?$' --output-on-failure`; `python3 -m pytest -q scripts/tests/test_wine_publication_build.py -k layout`; diffcheck. Independentreview/exactcheckpoint `feat(engine): Add the publication operation Unix ABI`.
+
+### Task 5B1: Supported Wine9 Authority and Guarded PE Forwarding
+
+**Files:** Create `src/record_publication_wine_authority.h`, `scripts/tests/wine_adapters/publication_bridge.c`, `scripts/tests/wine_adapters/windef.h`, `scripts/tests/wine_adapters/winbase.h`, `scripts/tests/wine_adapters/winternl.h`; modify `scripts/wine/record_publication_bridge.c`, `scripts/wine/build_publication.py`, `scripts/tests/test_wine_publication_build.py`, `scripts/tests/wine_adapters/windows.h`, `docs/dev/notes/windows-wine-build-and-test.md`.
+
+**Interfaces:** Shared C/C++ `static inline DWORD space_record_publication_check_authority(void)` returns0 or meaningful nonzero Win32 error retained in LastError on denial. Add SRP_ACCESS_DENIED NTSTATUS0xc0000022. Keep features1/Unixslotunsupported: forwarding alone must not advertise filesystem support.
+
+Do NOT call unsupported Wine9 TokenHasRestrictions/IsTokenRestricted or treat their
+failure as unrestricted. Supported cooperative state: no OpenThreadToken success
+(only NO_TOKEN failure allows continuation), process TOKEN_QUERY open success,
+valid TokenGroups/Privileges/ElevationType. No deny-only groups even when disabled;
+elevation Default1/Full2 only. Exactly21 unique privilege LUIDs High0/Low
+`[5,7,8,9,10,11,12,13,14,15,17,18,19,20,22,23,24,25,28,29,30]`; ignore enabled/default
+enable state, reject removed/unknown attributes, duplicates/missing/extra IDs.
+This is stockWine9 admin lineage's represented-state guard, not ever-filtered,
+restriction-SID, sandbox or foreign-host-UID proof. NativeWindows/HostFS privacy
+unchanged. Source provenance Wine9server/token.c token_create_admin/admin_privs.
+
+Use reused aligned64KiB buffer; check sizing/readback API success, exact scalar
+widths, counts/arithmetic and each SID range/revision/subauthority extent before
+reading. No SID fingerprint or credential framework. All query/structural/close
+failures deny; close handles once/preserve primary error, never allow on failure.
+Supported reported state is explicit, not a fallback from an unsupported query.
+
+PEentry0 remains readonly. Entry1 BEGIN/ADVANCE START..BEFORE_COMMIT require authority
+BEFOREnative payload validation/dispatch. Snapshot/cancel/release/BEFORE_CLEANUP
+advance remain available after authority loss; native phase/sequence prevents
+disguising writes as cleanup. On denial return ACCESS_DENIED, clear state claim
+for valid header and preserve meaningful LastError; do not write unchecked caller
+transport buffers before native range validation. Caller saves ID beforecall.
+
+- [ ] **1. RED actualPEbridge-host models:** normalfull21, everythread/process/query/close error, deny-only disabled groups, malformed SID/count/length/elevation, each missingpriv/duplicate/extra/highpart/removed/unknownattrs; enabled toggles allowed. No mocked acceptance; no SID output.
+- [ ] **2. Implement guarded forwarding via existing own-HMODULE opaque dispatcher, no direct host call.** Directentry1 cannot bypassguard; cleanup routes continue afterloss. Validguard currentlyreceives UNSUPPORTED from unchanged Unixslot.
+- [ ] **3. Builder:** named fixed PE/Unix sources instead of positional INPUTS indices; PE linkadvapi32 and include authorityheader in source hash assoonused (old4+header), but do NOTcompileadapter/core yet. Migrate actualfixturecopies/argv tests.
+- [ ] **4. GREEN:** pycompilebuilder/buildtests; `python3 -m pytest -q scripts/tests/test_wine_publication_build.py`; realhostC/header/bridge-model compilation; diffcheck. Independentreview/exactcheckpoint `feat(wine): Guard direct publication bridge calls`. Installed SDK/Wine proof remains5B2.
+
+### Task 5B2: Complete Operation Pair and Capability Admission
+
+**Files:** Modify `src/record_publication_wine_abi.h`, `scripts/wine/record_publication_unix_entry.cpp`, `scripts/wine/build_publication.py`, `scripts/wine/probe.c`, `scripts/wine/artifacts.py`, `scripts/tests/test_wine_publication_build.py`, `scripts/tests/test_windows_wine_runtime.py`, `scripts/tests/test_opencode_windows_ci_repro.py`, `scripts/tests/wine_adapters/probe.c`, `docs/dev/notes/windows-wine-build-and-test.md`.
+
+**Interfaces:** Unixslot1 forwards srp_unix_call; required/reported features3 enable
+together onlynow. SOsources entry+adapter+existingpubcore withthread/linkflags.
+Exact pair inputs: `src/record_publication_wine_abi.h`,
+`src/record_publication_wine_authority.h`, `src/record_publication_unix.h`,
+`src/record_publication_unix.cpp`, `src/record_publication_operation.h`,
+`src/record_publication.h`, `src/record_publication.cpp`,
+`scripts/wine/record_publication_bridge.c`,
+`scripts/wine/record_publication_unix_entry.cpp`, `scripts/wine/build_publication.py`.
+Hash eachcompiled source/header, not uncompiled
+probe/environment helpers. Keep existingmanifest schema/outputownership.
+
+- [ ] **1. RED allinputs/route/feature consumers:** everyinput mutation changesBuildID, fakecheckouts/hostSO compile/argv/dependency tests fullymigrate. NeverPE-import nativehostsymbol. Manualreportfixturesfeatures1→3; rejectold/extra flags.
+- [ ] **2. Connect realoperation+feature3 atomically:** header,Unixidentity, artifacts expectedfeature (currentlyhardcoded1), allruntime/reproducerfixtureproducers samecontract. PairPEguardalready5B1.
+- [ ] **3. Same60secondprobe afterentry0 before report/Crypto:** freshzeroed168-byteBEGIN context0seq0STARTCONTINUE emptyinputs, primary/cleanupcapacity0, transportbuffer4096. Expect INVALID_ARGUMENT, no valid/commit/other flags, ctx0seq0START primaryABSENT/primary+cleanuprequired0 and complete nonemptybounded transporttext. Guardmustpassfirst; nativeempty-path refusal occursBEFOREfilesystem/ctx creation. Unsupported/accessdenied/success/anyunexpectedoutput =>20/noCrypto/fallback.
+- [ ] **4. Evidence limits:** this proves actualentry1route/defaultauthorityAPI, notpublication/filterhistory. No newopcode/process/stage/generation/schema/budgets; preserveoriginalreportpin/copy/IDs/SO proof andcrypto10 policy.
+- [ ] **5. GREEN:** pycompileaffectedPython, build/runtimefixtures, native3CPPtargets, thenEXACTsevenhostmodules1800000; diffcheck. Independentreview/exactcheckpoint `feat(wine): Admit the complete publication operation pair`. Capability-only ONEreproduce14400000 provesactualSDK/entry0+entry1beforeTask6; oldappfullfailure remainsunimplementedbackend, neverclaimgreen.
 
 ### Task 6: PE Publication Client and Authority Checks
 
-**Files:** Create `src/record_publication_wine.h`, `src/record_publication_wine.cpp`, `src/record_publication_wine_driver.h`, `tests/test_record_publication_bridge_driver.cpp`; modify `src/record_publication.cpp`, `scripts/wine/record_publication_bridge.c`, `apps/space/main.cpp`, `CMakeLists.txt`.
+**Files:** Create `src/record_publication_wine.h`, `src/record_publication_wine.cpp`, `src/record_publication_wine_driver.h`, `tests/test_record_publication_bridge_driver.cpp`; modify `src/record_publication.cpp`, `apps/space/main.cpp`, `CMakeLists.txt`, `docs/dev/notes/windows-wine-build-and-test.md`. Consume (do not redefine) the shared ABI and authority headers/PE export from5A/5B.
 
-**Interfaces:** `wine::detected()->bool`, `wine::publish(path,string_view,Hooks)->Result`. Private host-testable `drive(entry,host_path,payload,hooks,authority_check)->Result`; entry has `int32_t(uint32_t,void*)` semantics. No public contract change.
+**Interfaces:** `wine::detected()->bool`, `wine::publish(path,string_view,Hooks)->Result`. Private host-testable `drive(entry,host_path,payload,hooks,authority_check)->Result`; entry has `int32_t(uint32_t,void*)` semantics. Consume168-byteSrpCall with distinct NTSTATUS/primary presence/cleanup presence/transport text, START/seq rules and poison recovery. No public contract change.
 
-- [ ] **1. RED driver sequencing/nesting/cancel/postcommit recovery tests:** failed advance followed by committed snapshot must not become precommit error. Fake entry proves driver logic only.
-- [ ] **2. Detect supported Wine9/win64 from loaded NTDLL wine_get_version; require proven entry0 and feature2.** Native Windows never loads pair and keeps strict backend. Use proven basename lookup/identity, retain module through release; no unproved absolute-path association.
+- [ ] **1. RED driver sequencing/nesting/cancel/postcommit recovery tests:** BEGIN returnsSTART/seq0; advanceSTART automatically with NOhook. Invokeonlyfour realhookevents. Emptyerrorsusepresence, notlength. Separatetransport/nativefailure; getlive diagnostics/currentsequence bySNAPSHOT, neverreplayBEGIN/ADVANCE. No-contexttruncationvisiblemarker/status withoutretry. Failed advance followed by committed snapshot must not become precommit error. Poison/authorityloss permitscleanupnotresume. Lostauthoritativecontextafterpotentialcommit is fatal ABIinconsistency, notnormalrecoverablenoncommit (testisolatedchildifneeded). Fake entry proves driver logic only.
+- [ ] **2. Detect supported Wine9/win64 from loaded NTDLL wine_get_version; require proven entry0 and exact identity|operation features3.** Native Windows never loads pair and keeps strict backend. Use proven basename lookup/identity, retain module through release; no unproved absolute-path association.
   At the Wine application entry, apply the shared owned-environment helper before application-controlled temp/logging/runtime initialization. Native Windows does not call it; absent optional handoff outside the harness leaves the profile environment unchanged and establishes no owned-root claim.
 - [ ] **3. Map with CDECL wine_get_unix_file_name, copy host bytes, HeapFree result.** Reject NUL/reserved/ADS/device/remote inputs. Mapping is acquisition, not retained authority.
-- [ ] **4. Reject thread impersonation/restricted primary token/query failure before begin and after hooks.** Cancellation/cleanup on refusal, sticky commit retained. Hooks execute locally, never through Unix callback. Unrecoverable ABI corruption cannot fabricate recoverable noncommit.
-- [ ] **5. GREEN native driver/ABI/operation tests.** CMake includes client in Windows engine and standalone target, excludes it on POSIX; direct publisher linking must resolve correctly. Review/checkpoint `feat(engine): delegate Wine publication to the POSIX bridge`. Installed client/path/token behavior is deferred.
+- [ ] **4. Reuse shared supported-Wine9 authority helper before begin/afterhooks, not unsupported restriction queries.** PEexport alsoenforces. Snapshot/cancel/cleanup/release onrefusal withcurrentevent/seq, stickycommitretained. Hooks executelocally, never Unixcallback. Test constructortransportdetail/emptyerrors/poison/postcommit/deniedcontinuation/nesting/releasewithnopublication.
+- [ ] **5. GREEN native driver/ABI/operation tests.** CMake includes client in Windows engine and EVERY standalone target compiling publisher, including publication and operation tests; excludesUnixadapterengine andWindowsclientonPOSIX. No unresolvedclient symbols. Review/checkpoint `feat(engine): delegate Wine publication to the POSIX bridge`. Installed client/path/token behavior is deferred.
 
 ### Task 7: Real Host-Policy Cases and Fresh-Process Store Probe
 

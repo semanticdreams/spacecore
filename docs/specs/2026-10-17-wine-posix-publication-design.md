@@ -63,10 +63,25 @@ missing/incompatible support fail explicitly, never fall back to relaxed native
 Windows checks. Runtime detection is compatibility selection, not authentication
 against an attacker able to replace the application/runtime.
 
-Reject caller thread impersonation and restricted primary-token contexts before
-delegation; token-query errors also reject. Recheck authority after hooks before
-resuming publication. Authority refusal cancels/cleans instead of continuing; it
-cannot clear a committed latch. Host metadata is authoritative, not Wine tokens.
+Reject caller thread impersonation and unsupported reported primary-token states
+before delegation; query/close failures reject. Wine9 does not implement
+TokenHasRestrictions or the underlying IsTokenRestricted query, so neither may be
+interpreted as an unrestricted report or used as a fallback. The supported-state
+guard uses implemented TokenGroups/TokenPrivileges/TokenElevationType queries:
+no deny-only groups; Default/Full elevation; exactly the21 unique HighPart0 stock
+Wine9 admin privilege LUIDs5,7,8,9,10,11,12,13,14,15,17,18,19,20,22,23,24,25,28,29,30
+present, with no removed/unknown attributes. Enabled/default-enabled attributes
+may vary. Check lengths, counts and SID structure with bounded aligned storage.
+This detects represented group-disable/privilege-delete reductions of the stock
+Wine9 admin lineage, not arbitrary token provenance, filter history or Wine-ignored
+restriction-SID requests. It is a cooperative supported-API guard, not a sandbox
+or foreign-host-UID proof. Host POSIX metadata remains the actual privacy boundary.
+
+Enforce the same guard at the PE operation export and in its application driver.
+Recheck after hooks before resuming publication. Snapshot/cancel/release and actual
+cleanup continuations remain available after authority loss; authoritative native
+phase/sequence checks prevent a caller disguising publication as cleanup. Refusal
+cannot clear commit truth. Native Windows behavior is unchanged.
 
 ## Shared phased operation
 
@@ -142,6 +157,19 @@ operation-owned data. Opaque contexts are destroyed by their creating module.
 Every Unix entry contains C++ exceptions. Bounded diagnostics include explicit
 truncation/buffer failure; retrieving an error must never replay publication.
 Commit fields must be recoverable without allocating after commit.
+
+Identity remains ABI1/112bytes. The first implemented private operation frame is
+ABI1/168bytes with distinct primary, cleanup and transport buffers; do not accept
+the never-implemented144byte prototype as an alias. Protocol NTSTATUS is separate
+from operation failure presence, including empty errors. Begin captures only and
+returns START/sequence0; mutation consumes exact event/sequence, snapshot is
+nonadvancing/nonallocating, and release finalizes cleanup only before retiring its
+ID. IDs never recycle; per-context serialization/liveness prevents stale release
+from erasing newer work. Unexpected live exceptions poison further publication
+but preserve snapshot/cleanup and sticky commit truth. Transport text must preserve
+constructor/query failures without inventing an operation state when none exists.
+An irrecoverably inconsistent ABI after a potentially committing call is fatal,
+not an ordinary recoverable not-committed result. No new public unknown outcome.
 
 Resolve `kernel32!wine_get_unix_file_name` with the actual CDECL signature; free
 its result with `HeapFree`. Treat the returned host pathname as bytes rather than
