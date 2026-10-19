@@ -75,6 +75,57 @@ The Make target is the normal repository workflow. The runner can also be invoke
 
 Use neutral absolute paths for external unit, app, or file targets. Production modules should not import or call constraint modules.
 
+## Injected Pipeline Observer
+
+`Runner.run-target(target, opts?)` accepts an optional `opts.observer(event) -> nil`.
+It forwards that callback to `Source.discover(target, observer?)` and
+`Facts.extract(records, observer?)`; all existing return values and one-argument
+calls are unchanged. This is inactive diagnostic instrumentation, not a timeout
+fix or a measured explanation of the Wine full-repository timeout.
+
+The constraints pipeline owns this event schema. Every event is a fresh table
+containing only these scalar fields (optional fields are omitted when unavailable):
+
+| Field | Values / meaning |
+| --- | --- |
+| `edge` | `begin` or `end` |
+| `phase` | `discover`, `facts`, `select`, `rule`, `baseline`, `summarize` |
+| `subphase` | Optional `scan`, `read`, `parse` (discover) or `extract`, `recover`, `span` (facts) |
+| `file` | Optional safe forward-slash relative file; never an absolute-path fallback |
+| `index` | Optional 1-based file index in discovery/record order, or selected-rule index |
+| `rule-id` | Registered rule identifier on rule events |
+| `count` | Nonnegative count: discovered files, extracted files, selected rules, rule diagnostics, post-baseline diagnostics or summarized diagnostics, according to phase |
+| `definitions`, `calls` | Nonnegative file-fact counts on facts subphase end events |
+
+Runner emits discover → facts → select, one begin/end pair per selected rule in
+registry order, then baseline → summarize. Source emits scan around collection,
+sorting, deduplication and module-root normalization, then read/parse per sorted
+file. Parse ends when `ts.parse` returns; existing root/metadata projection follows.
+Facts emits extract → recover → span for each record, including the existing
+recovery call on non-ERROR trees and span correction on every file. Baseline
+events also bracket the disabled-policy path; no policy is applied in that path.
+
+File metadata rejects empty, absolute, drive/UNC, backslash, control-character,
+empty-segment, dot-segment and trailing-slash spellings. Unsafe or unavailable
+relative metadata uses the index alone, without changing any record/fact path
+projection. Events never contain source text, ASTs, diagnostics, result/status
+payloads, timestamps or absolute paths.
+
+Begin is delivered before its work; end only after that work returns normally.
+Escaping workload errors leave unmatched begins. A rule's existing guarded
+execution can return crash/interruption diagnostics; that is a returned rule
+operation and has an end event, not a claim that the rule passed. Observer calls
+are synchronous and unprotected: callback errors propagate directly, outside the
+existing guarded rule body, without being converted into framework diagnostics.
+Observers must not mutate pipeline state and should return nil.
+
+With no observer, no event tables are allocated and no observation clocks run.
+These production modules add no environment switch, clock, formatting, output,
+writer import, protected workload wrapper, coroutine, deadline or hook. Consumers
+own any opt-in policy, clock, bounded formatting/output and overhead assessment;
+test-only writer integration is a separate checkpoint. Existing budgets and
+exception boundaries remain unchanged.
+
 ## Constraint Families
 
 The current constraints are grouped into four families:

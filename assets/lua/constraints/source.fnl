@@ -98,8 +98,9 @@
   (for [i 0 (- (node:child-count) 1)]
     (M.walk (node:child i) f)))
 
-(fn M.discover [target]
+(fn M.discover [target observer]
   "Discover and parse Fennel source files for a target.
+   Optional observer receives scalar discover scan/read/parse edges.
   Returns a list of file-records:
   [{:target target
     :path absolute-path-string
@@ -107,6 +108,7 @@
     :source string
     :tree TSTree
     :root TSNode} ...]"
+  (when observer (observer {:edge :begin :phase :discover :subphase :scan}))
   (var file-paths [])
   ;; Collect files from roots (may throw on unreadable root)
   (each [_ root (ipairs (or target.roots []))]
@@ -130,13 +132,31 @@
   (local module-roots [])
   (each [_ root (ipairs raw-roots)]
     (table.insert module-roots (fs.absolute root)))
+  (when observer (observer {:edge :end :phase :discover :subphase :scan :count (# deduped)}))
   (local records [])
-  (each [_ path (ipairs deduped)]
-    (let [source (fs.read-file path)
-          tree (ts.parse source {:language :fennel})
-          root (tree:root)
-          module (compute-module path module-roots)
-          relative-path (compute-relative-path path module-roots)]
+  (each [index path (ipairs deduped)]
+    ;; Observation metadata never changes the record's existing path projection.
+    ;; Reject absolute, drive/UNC, control and noncanonical relative spellings.
+    (local file (when observer (compute-relative-path path module-roots)))
+    (local safe-file (and file (not= file "")
+                          (not (file:find "^/"))
+                          (not (file:find "[%c:\\]"))
+                          (not (file:find "//" 1 true))
+                          (not (file:find "/$"))
+                          (not (string.find (.. "/" file "/") "/%.%.?/"))))
+    (local event-file (if safe-file file nil))
+    (when observer
+      (observer {:edge :begin :phase :discover :subphase :read :file event-file :index index}))
+    (local source (fs.read-file path))
+    (when observer
+      (observer {:edge :end :phase :discover :subphase :read :file event-file :index index})
+      (observer {:edge :begin :phase :discover :subphase :parse :file event-file :index index}))
+    (let [tree (ts.parse source {:language :fennel})]
+      (when observer
+        (observer {:edge :end :phase :discover :subphase :parse :file event-file :index index}))
+      (local root (tree:root))
+      (local module (compute-module path module-roots))
+      (local relative-path (compute-relative-path path module-roots))
       (table.insert records
         {:target target
          :path path

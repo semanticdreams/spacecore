@@ -376,6 +376,135 @@
   (assert (= result.status :interrupted)
           (.. "violations + interrupted should be :interrupted, got " (tostring result.status))))
 
+(fn assert-result-parity [expected actual]
+  (assert (= (type expected) (type actual)) "observer changed result type")
+  (if (= (type expected) :table)
+      (do
+        (each [key value (pairs expected)] (assert-result-parity value (. actual key)))
+        (each [key _ (pairs actual)] (assert (not= (. expected key) nil) "observer added result data")))
+      (assert (= expected actual) "observer changed result data")))
+
+(fn with-observer-target [body]
+  (local fs (require :fs))
+  (local dir (fs.join-path "/tmp/space/tests" "constraints-observer-runner"))
+  (fs.create-dirs dir)
+  (local path (fs.join-path dir "sample.fnl"))
+  (fs.write-file path "(fn fixture [] (let [private-value 1] private-value))")
+  (local target {:kind :files :name "private-target" :files [path] :module-roots [dir]
+                :suites [:structure-formatting]})
+  (local (ok result) (pcall body target))
+  (fs.remove-all dir)
+  (if ok result (error result 0)))
+
+(fn assert-runner-event-schema [events]
+  (local allowed {:edge true :phase true :subphase true :file true :index true
+                  :rule-id true :count true :definitions true :calls true})
+  (local phases {:discover true :facts true :select true :rule true :baseline true :summarize true})
+  (local subphases {:scan true :read true :parse true :extract true :recover true :span true})
+  (each [_ event (ipairs events)]
+    (assert (or (= event.edge :begin) (= event.edge :end)))
+    (assert (. phases event.phase))
+    (when event.subphase (assert (. subphases event.subphase)))
+    (when event.file (assert (= event.file "sample.fnl")))
+    (each [key value (pairs event)]
+      (assert (. allowed key) (.. "unexpected event field " key))
+      (assert (or (= (type value) :string) (= (type value) :number)))
+      (when (= (type value) :number)
+        (assert (= value (math.floor value)))
+        (assert (>= value (if (= key :index) 1 0)))))))
+
+(fn assert-runner-phase-order [events]
+  (local Registry (require :constraints.rules.init))
+  (local expected [[:begin :discover] [:end :discover] [:begin :facts] [:end :facts]
+                   [:begin :select] [:end :select]])
+  (each [_ rule (ipairs (Registry.all-rules))]
+    (when (= rule.family :structure-formatting)
+      (table.insert expected [:begin :rule rule.id])
+      (table.insert expected [:end :rule rule.id])))
+  (each [_ phase (ipairs [:baseline :summarize])]
+    (table.insert expected [:begin phase])
+    (table.insert expected [:end phase]))
+  (local actual [])
+  (each [_ event (ipairs events)]
+    (when (not event.subphase) (table.insert actual [event.edge event.phase event.rule-id])))
+  (assert-result-parity expected actual)
+  (local last (. events (# events)))
+  (assert (= last.count 1) "summarize must report unchanged diagnostic count"))
+
+(fn runner-observer-parity-and-phase-order []
+  (fn check [target]
+    (local Runner (require :constraints.runner))
+    (each [_ baseline (ipairs [false {:required-rule-ids [] :entries []}])]
+      (local expected (Runner.run-target target {:baseline-data baseline}))
+      (local events [])
+      (fn record-event [event] (table.insert events event))
+      (local actual (Runner.run-target target {:baseline-data baseline
+                                               :observer record-event}))
+      (assert (= expected.status :violations))
+      (assert (= expected.counts.total 1) "fixture should yield exactly one style diagnostic")
+      (assert-result-parity expected actual)
+      (assert-runner-event-schema events)
+      (assert-runner-phase-order events)))
+  (with-observer-target check))
+
+(fn runner-observer-old-call-compatibility []
+  (local Runner (require :constraints.runner))
+  (local target {:kind :files :files [] :suites [:structure-formatting]})
+  (local expected (Runner.run-target target))
+  (assert-result-parity expected (Runner.run-target target {}))
+  (assert-result-parity expected (Runner.run-target target {:observer nil})))
+
+(fn runner-observer-workload-error-stays-open [module operation phase subphase]
+  (fn check [target]
+    (local Runner (require :constraints.runner))
+    (local owner (require module))
+    (local previous (. owner operation))
+    (local sentinel {})
+    (local events [])
+    (fn fail [...] (error sentinel 0))
+    (fn record-event [event] (table.insert events event))
+    (tset owner operation fail)
+    (local (ok err) (pcall Runner.run-target target
+                           {:baseline-data {:required-rule-ids [] :entries []}
+                            :observer record-event}))
+    (tset owner operation previous)
+    (assert (not ok))
+    (assert (= err sentinel) "observer must preserve escaping workload errors")
+    (local last (. events (# events)))
+    (assert last "failure must retain begin")
+    (assert (= last.edge :begin))
+    (assert (= last.phase phase))
+    (assert (= last.subphase subphase)))
+  (with-observer-target check))
+
+(fn runner-observer-error-propagates-directly []
+  (local Runner (require :constraints.runner))
+  (local sentinel {})
+  (fn fail [_event] (error sentinel 0))
+  (local (ok err) (pcall Runner.run-target {:kind :files :files []}
+                         {:observer fail}))
+  (assert (not ok) "observer failure must not be swallowed or made into diagnostics")
+  (assert (= err sentinel)))
+
+(table.insert tests {:name "runner observer preserves results and registered phase/rule order"
+                     :fn runner-observer-parity-and-phase-order})
+(table.insert tests {:name "runner observer preserves old call compatibility"
+                     :fn runner-observer-old-call-compatibility})
+(table.insert tests {:name "runner observer leaves discovery failure open"
+                     :fn #(runner-observer-workload-error-stays-open :constraints.source :discover :discover nil)})
+(table.insert tests {:name "runner observer leaves facts failure open"
+                     :fn #(runner-observer-workload-error-stays-open :constraints.facts :extract :facts nil)})
+(table.insert tests {:name "runner observer leaves selection failure open"
+                     :fn #(runner-observer-workload-error-stays-open :constraints.rules.init :all-rules :select nil)})
+(table.insert tests {:name "runner observer leaves escaping rule failure open"
+                     :fn #(runner-observer-workload-error-stays-open :constraints.runner :run-rule :rule nil)})
+(table.insert tests {:name "runner observer leaves baseline failure open"
+                     :fn #(runner-observer-workload-error-stays-open :constraints.baseline :apply :baseline nil)})
+(table.insert tests {:name "runner observer leaves summary failure open"
+                     :fn #(runner-observer-workload-error-stays-open :constraints.diagnostics :summary :summarize nil)})
+(table.insert tests {:name "runner observer failures propagate directly"
+                     :fn runner-observer-error-propagates-directly})
+
 ;; Register tests
 (table.insert tests {:name "diagnostic violation normalizes fields"
                      :fn diagnostic-violation-normalizes-fields})
