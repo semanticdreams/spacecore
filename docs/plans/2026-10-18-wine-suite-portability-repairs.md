@@ -111,7 +111,7 @@ Advisor `ses_eae49660cffeITY3eJ72dyD06e` confirmed all18 blocking diagnostics: e
 
 **Interfaces:** preserve `WorkflowStore({:base-dir string})` and `get-default(opts?)`; use existing `fs.absolute` normalization.
 
-- [ ] RED equivalent-spelling regression: raw root, absolute root and `fs.join-path(root, ".")` must return same store/cached definition, retain subscription and emit exactly one mutation signal; truly different root has separate owner/output.
+- [ ] RED equivalent-spelling regression: raw root, absolute root and `fs.relative(root)` must return same store/cached definition, retain subscription and emit exactly one mutation signal; truly different root has separate owner/output. Assert first that each spelling has the exact same `fs.absolute` result. This contract reuses existing lexical normalization, not filesystem identity: a terminal `/.` can retain a trailing separator in C++ `lexically_normal`, so do not promise a new trailing-separator/symlink/case normalization policy.
 - [ ] Resolve explicit/appdirs request, assert required data, canonicalize before cache comparison and constructor input. Keep direct constructor normalization. No extra cache, manual case folding or alias.
 - [ ] Two original default-root tests compare exactly to `fs.absolute(root)`, retaining persisted-content/path and different-root assertions. Source cache bug alone is not proof both Wine failures repaired.
 - [ ] Compile→constraints→`[:tests.test-workflow-store :tests.test-reference-lifecycle-composition]`; document, review/checkpoint.
