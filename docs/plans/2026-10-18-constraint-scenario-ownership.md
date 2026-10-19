@@ -43,4 +43,13 @@
 
 ## Scope and Acceptance Review
 
+### Execution Checkpoints
+
+A fresh worker declined the combined ownership/isolation/fault matrix before edits. Execute the same approved design in two separately reviewed source checkpoints; no requirement is removed and no actual Wine runs between them.
+
+1. **Task1A, helper ownership:** exact four paths `assets/lua/constraints/scenarios.fnl`, new `assets/lua/tests/test-constraints-scenarios.fnl`, `assets/lua/tests/fast.fnl`, `docs/dev/constraints.md`. Implement verified caller borrowing, explicit standalone ownership/cleanup, helper success/failure/nesting/identity/pending-native-jobs tests and fake standalone failure matrix plus real fresh-process smoke. Tests must not exercise the unfixed real routing scenario against a borrowed caller yet. Compile→whole constraints→new helper module/standalone validation and independent review/exact checkpoint. This checkpoint does not certify Scene/Sandbox state isolation; documentation must call that next step pending.
+2. **Task1B, real rule isolation:** exact four paths `assets/lua/constraints/rules/scene-sandbox.fnl`, `assets/lua/tests/test-constraints-rules-scene-sandbox.fnl`, `assets/lua/tests/test-constraints-scenarios.fnl`, `docs/dev/constraints.md`. Consume unchanged helper1A; implement the fresh Lua fixture and independent owned-resource cleanup plus full caller-state/real-scenario/fault matrix. Retain helper tests and original routing diagnostics. Compile→whole constraints→complete ownership and existing scene-rule modules→unchanged205-case vector, independent review/exact checkpoint. Both checkpoints must pass before resumingTask6C final validation.
+
+Use separate evidence/report/manifest/hash prefixes `scenario-ownership-a` and `scenario-ownership-b`. ExcludedTask6C WIP byteidentity and repair-only staging rules apply at both checkpoints. Original single-task requirements above remain authoritative for the union; worker reads globals/shared validation plus only its own checkpoint requirements, not the other subtask's implementation scope.
+
 All44 failure mechanisms have a native causal trace, not experimental repair proof yet. Borrowing alone would mutate caller Scene/Sandbox state, so its rule owner isolates that state and owns cleanup in the same coherent repair. No product decision is required for this bounded test-runtime safety contract. Broader UI rollback, native restoration APIs and publication behavior remain out of scope. Resume6C documentation/off-on/fullgate after this repair; no readiness claim while any required failure remains.
