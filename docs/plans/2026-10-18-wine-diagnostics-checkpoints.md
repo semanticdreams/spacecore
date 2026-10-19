@@ -51,6 +51,8 @@
 
 ## Reports and Downstream Acceptance
 
+Task6C domain interruption: execute `docs/plans/2026-10-18-constraint-scenario-ownership.md` as a separately reviewed ownership repair before resuming6C validation. Preserve the existing writer/default-run WIP byte-for-byte and exclude it from the repair commit. This refinement does not waive any6C/Task7 gate.
+
 Under `.superpowers/sdd/wine-posix-publication/` use task prefixes `suite-portability-task-6a`, `suite-portability-task-6b`, `suite-portability-task-6c`: report.md, full review.diff including new contents, manifest.md, source hashes.sha256, evidence-hashes.sha256 and command logs. Record BASE/scope/index/constraint impact/RED-GREEN/parity/privacy/caps/hooks/overhead as applicable. Preserve preceding evidence; reviewer PASS precedes exact commit.
 
 Original Task7 consumes all three checkpoint reports and its focused/native/provider/seven-host/fullLinux/diff/cumulative-review gates before actual guarded full reproduction. Actual measurements still gate any List fix or constraints optimization. Original publication Tasks7–9 remain separate. No feature/PR readiness claim or publishing action here.
