@@ -144,6 +144,8 @@ Advisor `ses_eae49660cffeITY3eJ72dyD06e` confirmed all18 blocking diagnostics: e
 
 ### Task 6: Fixless Operands and Bounded Constraints Progress
 
+Execution granularity refinement: execute the three independently reviewed checkpoints in `docs/plans/2026-10-18-wine-diagnostics-checkpoints.md` instead of assigning this whole eleven-path task to one worker. Its union preserves every requirement below; Task7 consumes all three completed checkpoints. A fresh worker declined capacity before edits at8ee118ff, not a requirements/product blocker.
+
 **Modify:** `assets/lua/constraints/runner.fnl`, `assets/lua/constraints/source.fnl`, `assets/lua/constraints/facts.fnl`, `assets/lua/tests/test-constraints-default-run.fnl`, `assets/lua/tests/test-constraints-source.fnl`, `assets/lua/tests/test-constraints-facts.fnl`, `assets/lua/tests/test-constraints-runner.fnl`, `assets/lua/tests/test-list-entities.fnl`, `docs/dev/constraints.md`, `docs/dev/notes/test-harness-cleanup.md`.
 **Create:** `assets/lua/tests/constraint-progress.fnl` (test-only formatting).
 
