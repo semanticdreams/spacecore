@@ -876,13 +876,15 @@
 (fn ensure-extended-sidebar! []
   (when (not app.extended-sidebar)
     (set app.extended-sidebar (HudExtendedSidebar))
-    (local TerminalWidget (require :terminal-widget))
-    (app.extended-sidebar:register-entry
-      {:id :terminal
-       :icon :terminal
-       :label "Terminal"
-       :build-panel (fn [ctx]
-                      ((TerminalWidget {:focusable? true}) ctx))}))
+    (when (not (= (rawget package.preload "terminal") nil))
+      (local TerminalWidget (require :terminal-widget))
+      (fn build-terminal-panel [ctx]
+        ((TerminalWidget {:focusable? true}) ctx))
+      (app.extended-sidebar:register-entry
+        {:id :terminal
+         :icon :terminal
+         :label "Terminal"
+         :build-panel build-terminal-panel})))
   (when (and app.agent-runner (not (app.extended-sidebar:get-entry :space-agent)))
     (local AgentPanel (require :llm/agent/ui/panel))
     (app.extended-sidebar:register-entry

@@ -350,13 +350,95 @@
     (local (drop-ok drop-error) (pcall cleanup))
     (if (not ok) (error result) (not drop-ok) (error drop-error) result))
   (fn viewport-scoped []
-    (H.with-fields app {:viewport {:x 0 :y 0 :width 640 :height 480}} #(fresh-defaults scoped)))
+    (H.with-fields app {:viewport {:x 0 :y 0 :width 640 :height 480}
+                       :extended-sidebar false :pending-extended-sidebar-state false}
+      #(fresh-defaults scoped)))
   (H.with-fields dirs {:user-data-dir directory} viewport-scoped))
 
 (fn add-startup [name f]
   (fn rooted [root] (startup-fixture root f))
   (table.insert tests {:name (.. "reference lifecycle composition startup " name)
                        :fn #(H.with-root rooted) :timeout-seconds 300}))
+
+(fn with-terminal-modules [preloader cached-native cached-widget f]
+  (local previous-preloader (rawget package.preload :terminal))
+  (local previous-native (rawget package.loaded :terminal))
+  (local previous-widget (rawget package.loaded :terminal-widget))
+  (rawset package.preload :terminal preloader)
+  (rawset package.loaded :terminal cached-native)
+  (rawset package.loaded :terminal-widget cached-widget)
+  (local (ok result) (pcall f))
+  (rawset package.preload :terminal previous-preloader)
+  (rawset package.loaded :terminal previous-native)
+  (rawset package.loaded :terminal-widget previous-widget)
+  (if ok result (error result 0)))
+
+(fn terminal-scope-restoration []
+  (local native-cache {})
+  (fn widget-cache [...] (error "cached Terminal widget must not build"))
+  (fn scoped []
+    (local preloader (rawget package.preload :terminal))
+    (each [_ fail? (ipairs [false true])]
+      (fn action []
+        (assert (= (rawget package.preload :terminal) nil))
+        (assert (= (rawget package.loaded :terminal) nil))
+        (assert (= (rawget package.loaded :terminal-widget) widget-cache))
+        (rawset package.loaded :terminal {})
+        (rawset package.loaded :terminal-widget {})
+        (when fail? (error "Terminal scope failure")))
+      (fn run [] (with-terminal-modules nil nil widget-cache action))
+      (if fail? (H.assert-error "Terminal scope failure" run) (run))
+      (assert (= (rawget package.preload :terminal) preloader))
+      (assert (= (rawget package.loaded :terminal) native-cache))
+      (assert (= (rawget package.loaded :terminal-widget) widget-cache))))
+  (H.with-fields package.loaded {:terminal native-cache :terminal-widget widget-cache} scoped))
+
+(table.insert tests {:name "reference lifecycle composition Terminal module scope restores success and failure"
+                     :fn terminal-scope-restoration})
+
+(add-startup "absent native Terminal retains sidebar and Space Agent" (fn absent [Main _root]
+  (fn action []
+    (Main.init)
+    (assert app.extended-sidebar "optional Terminal absence must not remove the sidebar")
+    (assert (= (app.extended-sidebar:get-entry :terminal) nil))
+    (assert (app.extended-sidebar:get-entry :space-agent) "Space Agent must remain registered")
+    (assert app.agent-runner)
+    (assert app.active-world-runtime)
+    (assert (= (# app.reference-lifecycle.owners) 5)))
+  (with-terminal-modules nil nil nil action)))
+
+(add-startup "absent native Terminal ignores cached widget" (fn cached-absence [Main _root]
+  (fn cached-widget [...] (error "absent native Terminal cached widget used"))
+  (fn action []
+    (Main.init)
+    (assert (= (app.extended-sidebar:get-entry :terminal) nil))
+    (assert (app.extended-sidebar:get-entry :space-agent)))
+  (with-terminal-modules nil {} cached-widget action)))
+
+(add-startup "registered Terminal loader failure remains explicit" (fn registered-failure [Main _root]
+  (local sentinel "registered Terminal loader failure sentinel")
+  (var loads 0)
+  (fn broken-loader [...]
+    (set loads (+ loads 1))
+    (error sentinel))
+  (fn action [] (with-terminal-modules broken-loader nil nil Main.init))
+  (H.assert-error sentinel action)
+  (assert (= loads 1) "registered broken Terminal must not be treated as absence")))
+
+(add-startup "registered unusable Terminal fails when panel builds" (fn unusable [Main _root]
+  (fn unusable-loader [...] {})
+  (fn action []
+    (Main.init)
+    (local entry (assert (app.extended-sidebar:get-entry :terminal)))
+    (H.assert-error "Terminal" #(entry.build-panel app.hud.build-context)))
+  (with-terminal-modules unusable-loader nil nil action)))
+
+(add-startup "real Terminal registration follows native availability" (fn real-native [Main _root]
+  (local available? (not (= (rawget package.preload :terminal) nil)))
+  (Main.init)
+  (assert (= (not (= (app.extended-sidebar:get-entry :terminal) nil)) available?)
+          "actual native registration must retain Terminal when available")
+  (assert (app.extended-sidebar:get-entry :space-agent))))
 
 (add-startup "canonical code cache and native runtime providers" (fn cache [Main root]
   (Main.init)

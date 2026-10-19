@@ -116,6 +116,25 @@ This removed Wine startup noise/failure pattern:
 - previous: `Failed to open OpenAL device.`
 - now: Windows binary under Wine initializes audio without forcing Linux backends
 
+### 3.1) Optional native Terminal startup boundary (portability source checkpoint)
+
+The Windows build intentionally has no VTERM backend. The runtime registers the
+native `terminal` preloader only when that backend is available. Main therefore
+requires/registers the Terminal sidebar widget only when
+`(rawget package.preload "terminal")` is not nil. This is an availability check,
+not an OS branch or a broad protected-require fallback: a registered throwing
+loader still propagates its error, and an unusable registered module still fails
+when its panel is built. A cached widget/native module does not substitute for
+native registration when the preloader is genuinely absent.
+
+Only Terminal is optional at this boundary. Sidebar creation, Space Agent
+registration, pending sidebar-state restoration, startup providers and ownership
+remain unchanged. Host startup regressions isolate/restore native preload and
+loaded native/widget caches on success and failure, including a cached widget.
+This unfinished source checkpoint does not establish a repaired actual Wine
+full-suite run; independent review/exact commit and the supervisor's combined
+guarded runtime validation remain pending. No test deadline or skip policy changes.
+
 ### 4) Test architecture and skip policy
 
 Windows skip policy is centralized in:
