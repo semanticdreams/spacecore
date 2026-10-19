@@ -231,7 +231,7 @@
 (fn assert-get-default-uses-user-data-dir [root]
   (local {: get-default} (require :workflows/store))
   (local store (get-default))
-  (assert (= store.base-dir root) "get-default should use appdirs user data dir when opts omit :base-dir")
+  (assert (= store.base-dir (fs.absolute root)) "get-default should use canonical appdirs user data dir when opts omit :base-dir")
   (local definition (store:create-definition {:name "default"}))
   (local definition-path (fs.join-path root "workflows" "definitions" (.. definition.id ".json")))
   (assert-file-json definition-path "default store should persist below app user data dir"))
@@ -241,15 +241,24 @@
 
 (fn assert-explicit-default-second-root [first-root second-root]
   (local {: get-default} (require :workflows/store))
+  (assert (not (= (fs.absolute first-root) (fs.absolute second-root))) "fixture roots must be canonically distinct")
   (local first-store (get-default {:base-dir first-root}))
-  (assert (= first-store.base-dir first-root)
+  (assert (= first-store.base-dir (fs.absolute first-root))
           "get-default should use explicit app/user base dir")
+  (local first-definition (first-store:create-definition {:id "isolated-owner" :name "first root"}))
   (local second-store (get-default {:base-dir second-root}))
-  (assert (= second-store.base-dir second-root)
+  (assert (not (= second-store first-store)) "distinct roots must have different owners")
+  (assert (= (second-store:get-definition first-definition.id) nil) "second root must not see the first cache or output")
+  (assert (= second-store.base-dir (fs.absolute second-root))
           "get-default should not keep a stale default when a new explicit app/user base dir is passed")
-  (local definition (second-store:create-definition {:name "explicit default"}))
+  (local definition (second-store:create-definition {:id first-definition.id :name "explicit default"}))
+  (assert (not (= definition first-definition)) "same record id in distinct roots must not share cache identity")
   (local definition-path (fs.join-path second-root "workflows" "definitions" (.. definition.id ".json")))
-  (assert-file-json definition-path "explicit default store should persist below the passed app user data dir"))
+  (local persisted (assert-file-json definition-path "explicit default store should persist below the passed app user data dir"))
+  (assert (= persisted.id definition.id))
+  (assert (= persisted.name "explicit default"))
+  (local first-path (fs.join-path first-root "workflows" "definitions" (.. first-definition.id ".json")))
+  (assert (= (. (assert-file-json first-path "first owner output must remain separate") :name) "first root")))
 
 (fn assert-explicit-default-first-root [first-root]
   (with-temp-dir
@@ -258,6 +267,44 @@
 
 (fn workflow-store-get-default-honors-explicit-app-base-dir []
   (with-temp-dir assert-explicit-default-first-root))
+
+(fn assert-default-equivalent-spellings [root]
+  (local {: get-default} (require :workflows/store))
+  (local canonical (assert (fs.absolute root)))
+  (local relative (assert (fs.relative root)))
+  (local spellings [root canonical relative])
+  (each [_ spelling (ipairs spellings)]
+    (assert (= (fs.absolute spelling) canonical) "cache equivalence requires exactly equal fs.absolute results"))
+  (assert (not (= relative canonical)) "relative spelling must exercise a noncanonical request")
+  (local owner (get-default {:base-dir root}))
+  (local definition (owner:create-definition {:id "canonical-owner" :name "before"}))
+  (local counts {})
+  (local handlers [(connect-count owner :definition-updated counts :updated)])
+  (fn exercise []
+    (each [_ spelling (ipairs spellings)]
+      (local candidate (get-default {:base-dir spelling}))
+      (assert (= candidate owner) "equivalent spellings must retain the same default store")
+      (assert (= (candidate:get-definition definition.id) definition) "equivalent requests must retain the cached definition")
+      (assert (= candidate.definition-updated owner.definition-updated) "equivalent requests must retain the subscription owner"))
+    (local candidate (get-default {:base-dir relative}))
+    (local updated (candidate:update-definition definition.id {:name "after"}))
+    (assert (= updated definition) "mutation must update the original cached object")
+    (assert (= definition.name "after"))
+    (each [_ spelling (ipairs spellings)]
+      (local reused (get-default {:base-dir spelling}))
+      (assert (= reused owner))
+      (assert (= (reused:get-definition definition.id) definition)))
+    (assert (= counts.updated 1) "original subscription must observe exactly one mutation event")
+    (local path (fs.join-path canonical "workflows" "definitions" (.. definition.id ".json")))
+    (local persisted (assert-file-json path "equivalent request must persist below the canonical root"))
+    (assert (= persisted.id definition.id))
+    (assert (= persisted.name "after")))
+  (local (ok result) (pcall exercise))
+  (disconnect-signal-handlers handlers)
+  (when (not ok) (error result 0)))
+
+(fn workflow-store-get-default-retains-equivalent-owner []
+  (with-temp-dir assert-default-equivalent-spellings))
 
 (table.insert tests {:name "workflow-store-persists-definitions-app-scoped"
                      :fn workflow-store-persists-definitions-app-scoped})
@@ -276,7 +323,9 @@
 (table.insert tests {:name "workflow-store-get-default-uses-app-user-data-dir"
                       :fn workflow-store-get-default-uses-app-user-data-dir})
 (table.insert tests {:name "workflow-store-get-default-honors-explicit-app-base-dir"
-                     :fn workflow-store-get-default-honors-explicit-app-base-dir})
+                      :fn workflow-store-get-default-honors-explicit-app-base-dir})
+(table.insert tests {:name "workflow-store-get-default-retains-equivalent-owner"
+                     :fn workflow-store-get-default-retains-equivalent-owner})
 
 (local main
   (fn []

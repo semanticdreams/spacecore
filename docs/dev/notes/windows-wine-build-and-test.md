@@ -155,6 +155,24 @@ resealing inventories/receipts. Owned-session cleanup remains independent of
 documentation and receipt availability. Host fixture/source checks are not proof
 of a repaired actual Wine run; combined guarded runtime validation remains pending.
 
+### 3.3) Workflow default-store lexical cache ownership
+
+`WorkflowStore.get-default` resolves the explicit/appdirs request, requires that
+data, and applies the existing `fs.absolute` before comparing it with the cached
+owner and passing it to the constructor. Direct construction retains its existing
+normalization boundary. Equivalent request spellings share the store, cached
+definitions and subscriptions only when their `fs.absolute` results are exactly
+equal; truly different roots retain separate owners and output files.
+
+This is existing lexical normalization, not a new trailing-separator, symlink,
+case-folding or filesystem-identity policy. A terminal `/.` may keep a separator
+under C++ `lexically_normal` and is not promised equivalent. Tests use raw,
+absolute and `fs.relative(root)` witnesses with an explicit equal-result premise.
+The two original default-root cases now compare against canonical expectations
+while retaining disk and different-root checks. The source cache mismatch and
+uncanonical test expectations are distinct observations, not proof that the cache
+bug explains both actual Wine failures; combined guarded runtime proof is pending.
+
 ### 4) Test architecture and skip policy
 
 Windows skip policy is centralized in:
