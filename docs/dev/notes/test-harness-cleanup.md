@@ -288,6 +288,33 @@ That is acceptable for now, but it is the first place to revisit if this harness
 again.
 
 
+## Fixless List Operand Experiment
+
+With the existing `SPACE_TEST_TIMINGS=1`, the List presentation fixture emits
+`[LIST-OPERANDS]` observations at its existing `JsonUtils.write-json!` seam for
+move, remove, selection, name-only edit, and resolver-error recovery scenarios.
+Each line contains only the generated fixture root, the intercepted write path,
+their `fs.absolute` equivalents, the exact intended canonical
+`entities/list/list.json` destination, the existing raw-prefix predicate result,
+and canonical destination equality. No record values, app-data paths, or session
+data are inspected or printed. The sink immediately flushes each line.
+
+Qualification uses equality with that fixture-owned canonical destination, not
+the potentially mismatching raw-prefix predicate. Other leaf names and unrelated
+writes are excluded. This does **not** change which writes the existing counter
+counts: its original predicate, roots, counter resets, expected arrays, disk and
+signal assertions, and fixture cleanup remain unchanged.
+
+Output is capped at two observations per scenario and twelve lines per module,
+with at most 1024 encoded bytes per line. Each path is byte-escaped to printable
+ASCII and independently bounded to 128 encoded bytes plus quotes; truncation is
+marked `[truncated]`. Disabled observations resolve no extra paths and emit no
+output. In-module controls exercise escaping, caps, unrelated writes, and a
+canonical destination whose raw prefix differs. Native timings on/off runs
+check outcomes and diagnostic overhead; they do not establish Wine operands.
+The raw-prefix normalization hypothesis remains unproven until actual guarded
+Wine measurements. This checkpoint is not a normalization or persistence fix.
+
 ## See also
 
 - [Development Tooling](/dev/features/development-tooling)
