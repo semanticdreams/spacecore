@@ -18,6 +18,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 MARKER = ".space-windows-artifact-v1.json"
+CATALOG_RESOURCE = 'docs/dev/features/entity-type-catalog.md'
 PUBLICATION_INPUTS = ('src/record_publication_wine_abi.h', 'src/record_publication_wine_authority.h',
                       'src/record_publication_unix.h', 'src/record_publication_unix.cpp',
                       'src/record_publication_operation.h', 'src/record_publication.h',
@@ -155,6 +156,9 @@ class Fixture:
         assets = self.root / "assets/lua"
         assets.mkdir(parents=True)
         (assets / "fixture.fnl").write_text("packaged-assets")
+        resource = self.root / CATALOG_RESOURCE
+        resource.parent.mkdir(parents=True)
+        shutil.copy2(ROOT / CATALOG_RESOURCE, resource)
         self.dist = self.root / "build/dist/windows"
         self.overlay = self.root / "build/wine/windows"
         self.bin = path / "bin"
@@ -258,6 +262,138 @@ os.execvp(args[1], args[1:])
 @pytest.fixture
 def runtime(tmp_path):
     return Fixture(tmp_path)
+
+
+def seed_required_resource_admission(runtime):
+    """Seed real canonical bytes so negative controls also run before the fix."""
+    from wine import artifacts
+    runtime.package()
+    target = runtime.dist / CATALOG_RESOURCE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(runtime.root / CATALOG_RESOURCE, target)
+    artifacts.seal(runtime.dist, 'native-package')
+    result = runtime.prepare([0])
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def damage_required_resource(runtime, layer, damage, *, reseal):
+    """Deliberately keep all generic ownership/receipt hashes consistent."""
+    from wine import artifacts
+    directory = runtime.dist if layer == 'native' else runtime.overlay
+    target = directory / CATALOG_RESOURCE
+    if damage == 'missing':
+        target.unlink()
+    else:
+        target.write_bytes(b'not the canonical documentation')
+    if reseal:
+        receipt_path = runtime.overlay / 'admission.json'
+        receipt = json.loads(receipt_path.read_text())
+        if layer == 'native':
+            artifacts.seal(directory, 'native-package')
+            receipt['package'] = artifacts.inventory(directory)
+        else:
+            receipt['payload'] = {key: value for key, value in artifacts.inventory(directory).items()
+                                  if key != 'admission.json'}
+        receipt_path.write_text(json.dumps(receipt))
+        artifacts.seal(runtime.overlay, 'wine-overlay')
+
+
+def test_required_resource_is_canonical_owned_native_and_overlay_payload(runtime):
+    from wine import artifacts
+    runtime.package()
+    canonical = (ROOT / CATALOG_RESOURCE).read_bytes()
+    target = runtime.dist / CATALOG_RESOURCE
+    assert target.is_file(), 'native package must contain the canonical documentation beside assets'
+    assert target.read_bytes() == canonical == (runtime.root / CATALOG_RESOURCE).read_bytes()
+    assert artifacts.REQUIRED_RESOURCES == (CATALOG_RESOURCE,)
+    digest = hashlib.sha256(canonical).hexdigest()
+    assert artifacts.clean_native(runtime.dist)[CATALOG_RESOURCE] == digest
+    assert json.loads((runtime.dist / MARKER).read_text())['inventory'][CATALOG_RESOURCE] == digest
+    assert {p.relative_to(runtime.dist / 'docs').as_posix() for p in (runtime.dist / 'docs').rglob('*') if p.is_file()} == {
+        'dev/features/entity-type-catalog.md'}
+    assert runtime.prepare([0]).returncode == 0
+    assert (runtime.overlay / CATALOG_RESOURCE).read_bytes() == canonical
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['version'] == 3
+    assert receipt['package'][CATALOG_RESOURCE] == receipt['payload'][CATALOG_RESOURCE] == digest
+    assert artifacts.verify(runtime.overlay, 'wine-overlay')[CATALOG_RESOURCE] == digest
+
+
+@pytest.mark.parametrize('damage', ['missing', 'symlink', 'symlink-parent', 'directory', 'fifo'])
+def test_required_resource_invalid_canonical_source_preserves_existing_output(runtime, damage):
+    runtime.package()
+    before = hashes(runtime.dist), runtime.dist.stat().st_ino, runtime.calls()
+    source = runtime.root / CATALOG_RESOURCE
+    if damage == 'symlink-parent':
+        saved = source.parent.with_name('preserved-features')
+        source.parent.rename(saved)
+        source.parent.symlink_to(saved, target_is_directory=True)
+    else:
+        source.unlink()
+        if damage == 'symlink':
+            source.symlink_to(ROOT / CATALOG_RESOURCE)
+        elif damage == 'directory':
+            source.mkdir()
+        elif damage == 'fifo':
+            os.mkfifo(source)
+    result = runtime.run('package-windows-runtime.sh')
+    assert result.returncode != 0, 'invalid canonical resource must not authorize replacement'
+    assert (hashes(runtime.dist), runtime.dist.stat().st_ino, runtime.calls()) == before
+
+
+def test_required_resource_docs_input_is_protected_against_output_overlap(runtime):
+    before = hashes(runtime.root / 'docs')
+    destination = runtime.root / 'docs/packaged-output'
+    result = runtime.run('package-windows-runtime.sh', destination)
+    assert result.returncode != 0 and 'overlaps a source tree' in result.stderr
+    assert not destination.exists() and hashes(runtime.root / 'docs') == before
+
+
+@pytest.mark.parametrize('mode', ['smoke60', 'fast1800'])
+@pytest.mark.parametrize('layer', ['native', 'overlay'])
+@pytest.mark.parametrize('damage', ['missing', 'tampered'])
+@pytest.mark.parametrize('reseal', [False, True])
+def test_required_resource_corruption_refuses_launch_and_cleans_owned_session(runtime, mode, layer, damage, reseal):
+    seed_required_resource_admission(runtime)
+    damage_required_resource(runtime, layer, damage, reseal=reseal)
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    identifier = receipt['ownedSession']['id']
+    before = len(runtime.calls())
+    result = subprocess.run([sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), mode],
+                            cwd=runtime.root, env=dict(runtime.env, SPACE_WINE_SESSION_ID=identifier),
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode != 0, f'{mode}/{layer}/{damage}/reseal={reseal} launched corrupt documentation'
+    calls = runtime.calls()[before:]
+    assert not [call for call in calls if 'wine' in call]
+    # Admission already stopped this generation. Refusal before launch must end
+    # ownership without starting another generation or redundantly stopping it.
+    assert not [call for call in calls if 'server' in call]
+    state = json.loads((runtime.root / 'build/wine/sessions' / identifier / 'state.json').read_text())
+    assert state['ended'] and not state['authorized'] and state['stopped_generation'] == state['generation']
+
+
+def test_required_resource_is_not_a_terminal_cleanup_dependency(runtime):
+    from wine import prefix
+    seed_required_resource_admission(runtime)
+    receipt_path = runtime.overlay / 'admission.json'
+    identifier = json.loads(receipt_path.read_text())['ownedSession']['id']
+    session = prefix.load_session(runtime.root, identifier)
+    state = session.state()
+    state.update(generation=state['generation'] + 1, stopped_generation=None)
+    session.save(state)  # Model an outstanding owned generation requiring stop/wait.
+    for directory in (runtime.root, runtime.dist, runtime.overlay):
+        (directory / CATALOG_RESOURCE).unlink()
+    receipt_path.unlink()
+    before = len(runtime.calls())
+    result = subprocess.run([sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), 'terminal-stop'],
+                            cwd=runtime.root, env=dict(runtime.env, SPACE_WINE_SESSION_ID=identifier),
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+    calls = runtime.calls()[before:]
+    assert not [call for call in calls if 'wine' in call]
+    assert [call['server'] for call in calls if 'server' in call] == [['-k'], ['-w']]
+    state = session.state()
+    assert state['ended'] and not state['authorized'] and state['stopped_generation'] == state['generation']
 
 
 def report_probe_context(runtime, monkeypatch, code=0):

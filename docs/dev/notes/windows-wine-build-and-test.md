@@ -135,6 +135,26 @@ This unfinished source checkpoint does not establish a repaired actual Wine
 full-suite run; independent review/exact commit and the supervisor's combined
 guarded runtime validation remain pending. No test deadline or skip policy changes.
 
+### 3.2) Fixed canonical runtime documentation resource
+
+The Windows native package carries the single required
+`docs/dev/features/entity-type-catalog.md` page at the same relative path as the
+checkout, beside `assets/`. The existing graph-extension test resolves it through
+`SPACE_ASSETS_PATH/../docs/dev/features/entity-type-catalog.md` and still extracts
+the executable example from that one canonical document; no example copy, cwd
+fallback or Fennel skip is introduced.
+
+The private `REQUIRED_RESOURCES` tuple owns this fixed list, not the whole docs
+tree. Packaging validates the canonical safe regular source, protects `ROOT/docs`
+from output overlap, and copies the page **before** sealing the native inventory.
+The overlay inherits that verified package; existing recursive inventories and
+the unchanged admission receipt bind its exact bytes. Native verification and
+admitted overlay configuration independently compare required resources with the
+canonical source, so missing or tampered resources refuse launch even after
+resealing inventories/receipts. Owned-session cleanup remains independent of
+documentation and receipt availability. Host fixture/source checks are not proof
+of a repaired actual Wine run; combined guarded runtime validation remains pending.
+
 ### 4) Test architecture and skip policy
 
 Windows skip policy is centralized in:

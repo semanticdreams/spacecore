@@ -32,6 +32,7 @@ OVERLAY = BUILD / "wine/windows"
 MARKER = ".space-windows-artifact-v1.json"
 FORBIDDEN = "bcryptprimitives.dll"
 PAIR_NAMES = {'space_record_publication.dll', 'space_record_publication.so'}
+REQUIRED_RESOURCES: tuple[str, ...] = ('docs/dev/features/entity-type-catalog.md',)
 IDENTITY_REPORT = 'space-record-publication-identity.json'
 IDENTITY_LIMIT = 4096
 PUBLICATION_BUILD = ('timeout', '--kill-after=5s', '900s', 'python3', 'scripts/wine/build_publication.py')
@@ -86,8 +87,27 @@ def verify(path, kind):
     return entries
 
 
+def verify_required_resources(path: Path) -> None:
+    """Fixed packaged resources must be safe regular files with canonical bytes."""
+    for relative in REQUIRED_RESOURCES:
+        contents = []
+        for root in (ROOT, path):
+            resource = safe_path(root / relative)
+            fd = os.open(resource, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+            try:
+                if not stat.S_ISREG(os.fstat(fd).st_mode):
+                    raise ValueError(f'Required resource is not a regular file: {resource}')
+                with os.fdopen(fd, 'rb', closefd=False) as stream:
+                    contents.append(stream.read())
+            finally:
+                os.close(fd)
+        if contents[0] != contents[1]:
+            raise ValueError(f'Required resource differs from canonical source: {relative}')
+
+
 def clean_native(path):
     entries = verify(path, "native-package")
+    verify_required_resources(path)
     if any(Path(name).name.casefold() in {FORBIDDEN, *PAIR_NAMES} for name in entries):
         raise ValueError(f"Forbidden Wine helper in native package: {path}")
     for name in ("space.exe", "space-cli.exe", "assets"):
@@ -168,9 +188,10 @@ def package(destination):
     source = safe_path(Path(os.environ.get("BUILD_DIR", BUILD / "windows")))
     destination = safe_path(destination)
     # Never allow a requested output to replace source inputs or their parents.
-    inputs = (source, ROOT / "assets", ROOT / "external", ROOT / "scripts")
+    inputs = (source, ROOT / "assets", ROOT / "external", ROOT / "scripts", ROOT / "docs")
     if any(destination == p or destination in p.parents or p in destination.parents for p in inputs):
         raise ValueError("Package destination overlaps a source tree")
+    verify_required_resources(ROOT)
     check_replace(destination, "native-package")
     for item in source.iterdir():
         if item.is_symlink():
@@ -193,6 +214,10 @@ def package(destination):
             shutil.copy2(safe_path(source / name), stage / name)
         copy_tree(ROOT / "assets", stage / "assets")
         copy_tree(tzdata, stage / "tzdata")
+        for relative in REQUIRED_RESOURCES:
+            target = stage / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(safe_path(ROOT / relative), target)
         for manifest in manifests:
             safe_path(manifest)
             dest = stage / "external/temporal" / manifest.parent.name
@@ -450,6 +475,7 @@ def configuration(session):
             or state['stopped_generation'] != state['generation']):
         raise ValueError('Wine session authorization ended/consumed or not quiescent')
     entries = verify(OVERLAY, "wine-overlay")
+    verify_required_resources(OVERLAY)
     native = clean_native(PACKAGE)
     receipt = json.loads((OVERLAY / "admission.json").read_text())
     backend = receipt.get("backend")

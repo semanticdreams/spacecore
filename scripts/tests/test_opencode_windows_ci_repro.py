@@ -2064,6 +2064,43 @@ def test_reproducer_supplies_validated_publication_binding_and_receipt_free_clea
     assert 'SPACE_WINE_PUBLICATION_BINDING' not in prefix.PRIVATE_ENV_KEYS
 
 
+@pytest.mark.parametrize('layer', ['native', 'overlay'])
+@pytest.mark.parametrize('damage', ['missing', 'tampered'])
+def test_reproducer_required_resource_resealed_corruption_blocks_fast_and_still_cleans(tmp_path, monkeypatch, layer, damage):
+    from test_windows_wine_runtime import CATALOG_RESOURCE, damage_required_resource
+    from wine import artifacts
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    original = windows_ci_repro._run_repro_step
+    def corrupt_before_fast(repo, run_dir, step, args, session=None):
+        if step == 'wine-fast':
+            # Seed canonical payloads before the fault so this negative control
+            # exercises configuration even before the packaging feature exists.
+            # The runtime module independently proves production copying/sealing.
+            for directory in (runtime.dist, runtime.overlay):
+                target = directory / CATALOG_RESOURCE
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(SCRIPT_ROOT.parent / CATALOG_RESOURCE, target)
+            receipt_path = runtime.overlay / 'admission.json'
+            receipt = json.loads(receipt_path.read_text())
+            receipt['package'] = artifacts.inventory(runtime.dist)
+            receipt['payload'] = {key: value for key, value in artifacts.inventory(runtime.overlay).items()
+                                  if key != 'admission.json'}
+            artifacts.seal(runtime.dist, 'native-package')
+            receipt_path.write_text(json.dumps(receipt))
+            artifacts.seal(runtime.overlay, 'wine-overlay')
+            damage_required_resource(runtime, layer, damage, reseal=True)
+        return original(repo, run_dir, step, args, session)
+    monkeypatch.setattr(windows_ci_repro, '_run_repro_step', corrupt_before_fast)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'fail', result
+    assert result['evidence']['failing_step'] == 'wine-fast'
+    stage = result['evidence']['stages'][-1]
+    assert stage['step'] == 'wine-fast' and stage['returncode'] == 1
+    assert stage['cleanup']['outcome'] == 'pass'
+    assert stage['cleanup']['after']['state']['ended']
+    assert not [call for call in runtime.calls() if 'wine' in call and Path(call['wine'][0]).name == 'space-cli.exe']
+
+
 @pytest.mark.parametrize("fault,code", [("success", 0), ("init", 42), ("admission", 20),
                                          ("app", 124), ("app", 137)])
 def test_parent_owns_session_before_init_and_terminally_cleans_without_receipt(tmp_path, monkeypatch, fault, code):
