@@ -32,7 +32,8 @@ OVERLAY = BUILD / "wine/windows"
 MARKER = ".space-windows-artifact-v1.json"
 FORBIDDEN = "bcryptprimitives.dll"
 PAIR_NAMES = {'space_record_publication.dll', 'space_record_publication.so'}
-REQUIRED_RESOURCES: tuple[str, ...] = ('docs/dev/features/entity-type-catalog.md',)
+REQUIRED_RESOURCES: tuple[str, ...] = ('docs/dev/features/entity-type-catalog.md',
+                                    'docs/dev/notes/native-sha256.md')
 IDENTITY_REPORT = 'space-record-publication-identity.json'
 IDENTITY_LIMIT = 4096
 PUBLICATION_BUILD = ('timeout', '--kill-after=5s', '900s', 'python3', 'scripts/wine/build_publication.py')

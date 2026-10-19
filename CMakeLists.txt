@@ -177,6 +177,7 @@ if(SPACE_ENABLE_WALLET_CORE)
     set(TW_TREZOR_TESTS OFF CACHE BOOL "Disable trezor-crypto tests" FORCE)
     add_subdirectory(external/wallet-core)
 endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/sha256.cmake)
 
 set(MSDF_ATLAS_BUILD_STANDALONE OFF CACHE BOOL "Disable msdf-atlas-gen standalone build" FORCE)
 set(MSDF_ATLAS_USE_VCPKG OFF CACHE BOOL "Disable msdf-atlas-gen vcpkg integration" FORCE)
@@ -538,6 +539,7 @@ target_link_libraries(${PROJECT_NAME}_lib
     glm::glm
     CURL::libcurl
     lua
+    space_sha256_backend
     sqlite3
     lsqlite3
     PkgConfig::ZMQ
@@ -956,6 +958,14 @@ add_test(NAME test_ssh_service COMMAND test_ssh_service)
 set_tests_properties(test_ssh_service PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+add_executable(test_lua_sha256_binding
+    tests/test_lua_sha256_binding.cpp
+    src/lua_sha256.cpp
+)
+target_include_directories(test_lua_sha256_binding PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(test_lua_sha256_binding lua space_sha256_backend)
+add_test(NAME test_lua_sha256_binding COMMAND test_lua_sha256_binding)
 
 add_executable(test_lua_ssh_binding
     tests/test_lua_ssh_binding.cpp
@@ -1442,6 +1452,7 @@ file(WRITE ${DESKTOP_FILE}
 # Install the generated desktop file
 install(FILES ${DESKTOP_FILE} DESTINATION share/applications)
 install(FILES assets/pics/space.png DESTINATION share/icons/hicolor/256x256/apps)
+install(FILES docs/dev/notes/native-sha256.md DESTINATION share/doc/space)
 
 set(CPACK_GENERATOR "DEB;RPM")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "space")

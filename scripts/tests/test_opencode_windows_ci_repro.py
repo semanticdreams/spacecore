@@ -2066,8 +2066,9 @@ def test_reproducer_supplies_validated_publication_binding_and_receipt_free_clea
 
 @pytest.mark.parametrize('layer', ['native', 'overlay'])
 @pytest.mark.parametrize('damage', ['missing', 'tampered'])
-def test_reproducer_required_resource_resealed_corruption_blocks_fast_and_still_cleans(tmp_path, monkeypatch, layer, damage):
-    from test_windows_wine_runtime import CATALOG_RESOURCE, damage_required_resource
+@pytest.mark.parametrize('resource', ['docs/dev/features/entity-type-catalog.md', 'docs/dev/notes/native-sha256.md'])
+def test_reproducer_required_resource_resealed_corruption_blocks_fast_and_still_cleans(tmp_path, monkeypatch, layer, damage, resource):
+    from test_windows_wine_runtime import REQUIRED_RESOURCE_PATHS, damage_required_resource
     from wine import artifacts
     runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
     original = windows_ci_repro._run_repro_step
@@ -2077,9 +2078,10 @@ def test_reproducer_required_resource_resealed_corruption_blocks_fast_and_still_
             # exercises configuration even before the packaging feature exists.
             # The runtime module independently proves production copying/sealing.
             for directory in (runtime.dist, runtime.overlay):
-                target = directory / CATALOG_RESOURCE
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(SCRIPT_ROOT.parent / CATALOG_RESOURCE, target)
+                for relative in REQUIRED_RESOURCE_PATHS:
+                    target = directory / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(SCRIPT_ROOT.parent / relative, target)
             receipt_path = runtime.overlay / 'admission.json'
             receipt = json.loads(receipt_path.read_text())
             receipt['package'] = artifacts.inventory(runtime.dist)
@@ -2088,7 +2090,7 @@ def test_reproducer_required_resource_resealed_corruption_blocks_fast_and_still_
             artifacts.seal(runtime.dist, 'native-package')
             receipt_path.write_text(json.dumps(receipt))
             artifacts.seal(runtime.overlay, 'wine-overlay')
-            damage_required_resource(runtime, layer, damage, reseal=True)
+            damage_required_resource(runtime, layer, damage, reseal=True, resource=resource)
         return original(repo, run_dir, step, args, session)
     monkeypatch.setattr(windows_ci_repro, '_run_repro_step', corrupt_before_fast)
     result = windows_ci_repro.reproduce(runtime.root)

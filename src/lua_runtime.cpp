@@ -15,6 +15,7 @@
 #include "lua_http.h"
 #include "lua_http_server.h"
 #include "lua_ssh.h"
+#include "lua_sha256.h"
 #include "lua_temporal_core.h"
 #include "lua_ray_box.h"
 #include "lua_notify.h"
@@ -275,6 +276,7 @@ void LuaRuntime::install_base_bindings()
     lua_bind_msdf_atlas_gen(lua);
     lua_bind_cgltf(lua);
     lua_bind_fs(lua);
+    lua_bind_sha256(lua);
     lua_bind_appdirs(lua);
     lua_bind_random(lua);
     lua_bind_physics(lua);
