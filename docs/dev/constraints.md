@@ -75,6 +75,48 @@ The Make target is the normal repository workflow. The runner can also be invoke
 
 Use neutral absolute paths for external unit, app, or file targets. Production modules should not import or call constraint modules.
 
+## Scenario Helper Runtime Ownership
+
+`constraints.scenarios.with-test-app(f)` returns only the first result of `f`,
+including nil or false. Escaping body errors retain a traceback and the
+`scenario failed: ` prefix. Setup and cleanup errors are explicit; cleanup errors
+are appended without replacing a primary failure, and cleanup-only failure still
+fails the scenario.
+
+The helper has two bounded ownership modes:
+
+- **Verified test caller:** borrow the exact app and already-started,
+  non-shutdown Engine. The caller must be a table marked `testing`, have cached
+  `main`, Engine physics/jobs, initialized interaction/theme/light services, and
+  a jobs preload that resolves to its Engine's jobs. A cached jobs module, when
+  present, must be that same object. Borrowing performs no setup, app drop,
+  Engine construction/start/shutdown, main reload, or native jobs rebinding.
+  It restores the captured global app reference on body unwind. Invalid nonnil
+  callers fail before the body rather than creating a nested Engine.
+- **Owned standalone:** setup is allowed only for an absent app or the pristine
+  native CLI bootstrap: an ordinary empty table with no metatable/raw Engine and
+  genuinely nil cached main, jobs preload and cached jobs. False is not absence.
+  Setup itself is protected; its allocated app/Engine are captured at the setup
+  success/error boundary before body or teardown can replace global app. The
+  captured app teardown and Engine finalization are independently attempted,
+  using the test runner's one-attempt started-owner policy (skip unstarted or
+  already-shutdown Engines). Caller app identity/content, reset-engine-events,
+  package namespace and loaded/preload table identities and complete slot
+  membership are restored independently, including false values and absent keys.
+
+This is not arbitrary live-UI rollback or a native ownership-restoration API.
+Module membership restoration is shallow: it does not reverse mutations inside
+shared module objects or promises about unrelated globals. Borrowed scenario
+bodies must own and clean up their Lua resources; the helper does not snapshot
+the caller's canvas, activity registry, sessions, selection or mutable services.
+
+**Task1B Scene/Sandbox isolation remains pending:** the real routing rule still
+needs its fresh rule-owned Lua fixture and exception-safe resource cleanup before
+it is safe to certify against a borrowed caller. Task1A helper validation does
+not exercise that consumer against a borrowed test runtime or certify the
+unchanged205-case combined regression gate. That gate, Task6C timing validation,
+actual Wine evidence and final integration remain separate later requirements.
+
 ## Injected Pipeline Observer
 
 `Runner.run-target(target, opts?)` accepts an optional `opts.observer(event) -> nil`.

@@ -292,8 +292,9 @@
     :tests.test-constraints-runner
     :tests.test-constraints-source
     :tests.test-constraints-facts
-    :tests.test-constraints-baseline
-    :tests.test-constraints-rules-scene-sandbox
+     :tests.test-constraints-baseline
+     :tests.test-constraints-scenarios
+     :tests.test-constraints-rules-scene-sandbox
     :tests.test-constraints-rules-lifecycle
      :tests.test-constraints-rules-test-isolation
      :tests.test-constraints-rules-test-isolation-precision
