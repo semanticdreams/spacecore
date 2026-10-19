@@ -68,6 +68,15 @@ Task artifacts under `.superpowers/sdd/wine-posix-publication/`: `suite-portabil
 - [ ] Guard only Terminal require/register with `(not (= (rawget package.preload "terminal") nil))`. Keep sidebar creation, agent registration and pending-state restoration outside. No OS switch, dummy module or broad pcall fallback.
 - [ ] Validate compile→constraints→`[:tests.test-reference-lifecycle-composition :tests.test-main-events :tests.test-hud-extended-sidebar]`; retain startup-provider and teardown assertions. Document availability boundary; independent review/checkpoint.
 
+#### Task1 Constraint Refinement
+
+Advisor `ses_eae88b5c3ffe1N7QMdCExPbxYy` confirmed that the required guard adds a real depth8 finding (limit7), increases the existing module measure2242→2243 and relocates15 existing line-keyed findings. Preproduction constraints passed; this is not environmental noise. Add only `assets/lua/constraints/baseline-data.fnl` to Task1's allowlist; no rule/module extraction is authorized.
+
+- [ ] Separate the lazy Terminal builder callback from the registration table using a named local builder. Preserve require/error timing during registration and defer widget construction until the callback runs. Keep the exact raw-preloader absence guard and unrelated sidebar behavior. Measure nesting; new depth8 must disappear in code, never be baselined.
+- [ ] Reconcile existing baseline entries one-to-one using actual diagnostics and unchanged/reduced measures; record old/new locations/fingerprints. No bulk regeneration, new exception, dropped unrelated debt or rule/limit change.
+- [ ] **Explicit bounded debt approval:** the supervisor permits updating only the existing main module-length measure to the exact observed minimum increase attributable to the necessary availability guard/named-builder separation, at most8 lines over2242. This is intentional measured debt, not mere relocation: a focused availability repair does not justify unrelated restructuring of the2242-line main module. Report the exact delta and justification separately for independent review. Stop if the increase exceeds8 or any other finding worsens. Do not minify/remove unrelated whitespace to game measures.
+- [ ] Preserve initial failing artifacts; run compile→whole constraints→the exact unfiltered three-module vector above. Reviewer covers all four paths and verifies both nesting repair and narrow baseline continuity/debt approval before checkpoint. Later broad/actual gates unchanged.
+
 ### Task 2: Canonical Documentation Resource Integrity
 
 **Files:** modify `scripts/wine/artifacts.py`, `scripts/tests/test_windows_wine_runtime.py`, `scripts/tests/test_opencode_windows_ci_repro.py`, `docs/dev/notes/windows-wine-build-and-test.md`. Read-only canonical `docs/dev/features/entity-type-catalog.md` and `assets/lua/tests/test-builtin-graph-extensions.fnl`.
