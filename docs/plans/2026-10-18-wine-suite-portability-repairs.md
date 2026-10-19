@@ -98,6 +98,13 @@ Advisor `ses_eae88b5c3ffe1N7QMdCExPbxYy` confirmed that the required guard adds 
 - [ ] Create/save at1700000000, same-second save stays equal; advance to1700000001, update/save; assert unchanged creation time, exact update time and persisted status/timestamps. Do not directly assign the session timestamp. Prove restoration after throwing body.
 - [ ] Compile→constraints→`[:tests.test-agent-layer]`; no shell delay/polling. Document exception-safe clock testing; independent review/checkpoint.
 
+#### Task3 Measured Baseline Continuity
+
+Advisor `ses_eae49660cffeITY3eJ72dyD06e` confirmed all18 blocking diagnostics: eight unchanged findings paired with stale line entries, plus existing module growth paired with its exceeded baseline. Add only `assets/lua/constraints/baseline-data.fnl` as the third Task3 path. The supervisor explicitly approves the measured test module increase2848→2886 (+38) for the deterministic scoped clock, exact same/later-second persisted assertions and throwing-body restoration regression; this bounded test-only growth does not justify unrelated restructuring.
+
+- [ ] Relocate exactly the eight report-listed existing findings by+37, preserving identity/measures/limits and source continuity; update only the existing module measure to2886. No new exceptions, changed limits, unrelated baseline entries, production-session edits or formatting tricks.
+- [ ] Preserve pre-refinement evidence; compile→whole constraints→the exact unfiltered agent-layer runner. Independent review covers all three paths, measured growth and unchanged production session; actual combined runtime proof remains pending.
+
 ### Task 4: Workflow Canonical Cache Owner
 
 **Files:** modify `assets/lua/workflows/store.fnl`, `assets/lua/tests/test-workflow-store.fnl`, `docs/dev/notes/windows-wine-build-and-test.md`.
