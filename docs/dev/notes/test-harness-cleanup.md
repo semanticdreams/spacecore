@@ -219,6 +219,21 @@ When writing or refactoring tests in this codebase:
 - verify state-heavy cleanup with `tests.fast` or `make test`, not only a narrow module run
 - avoid asserting incidental global plumbing when the test can assert the owned behavior directly
 
+### Exception-Safe Second-Precision Clock Tests
+
+Session persistence uses zero-argument `os.time()` integer seconds. Its timestamp
+regression must not depend on a shell `sleep` command or polling: a missing command
+under Wine used to leave the ignored delay unsuccessful and the newer-time
+assertion racing the same second.
+
+The agent-layer test now scopes a test-only clock at1700000000, verifies a
+same-second save remains equal, then advances to1700000001 before update/save.
+It asserts exact creation/update/status values in memory and persisted JSON,
+without directly assigning session timestamps. The protected clock scope restores
+the original `os.time` before directory cleanup or rethrow; a throwing-body case
+also verifies restoration and original error identity. Production session APIs,
+second-precision semantics and test deadlines remain unchanged.
+
 ## Future Improvements
 
 The next worthwhile improvements are structural, not urgent.
