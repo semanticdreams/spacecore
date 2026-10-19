@@ -110,12 +110,28 @@ shared module objects or promises about unrelated globals. Borrowed scenario
 bodies must own and clean up their Lua resources; the helper does not snapshot
 the caller's canvas, activity registry, sessions, selection or mutable services.
 
-**Task1B Scene/Sandbox isolation remains pending:** the real routing rule still
-needs its fresh rule-owned Lua fixture and exception-safe resource cleanup before
-it is safe to certify against a borrowed caller. Task1A helper validation does
-not exercise that consumer against a borrowed test runtime or certify the
-unchanged205-case combined regression gate. That gate, Task6C timing validation,
-actual Wine evidence and final integration remain separate later requirements.
+The Scene/Sandbox routing scenario installs a private, fresh Lua app fixture
+inside this helper. Only the verified caller's Engine and read-only themes are
+shared. Canonical interaction services and LightSystem, projection factory,
+canvas/runtime, activity registry, sessions and signals belong to the fixture;
+caller renderers, hooks, callbacks and selection are never installed there.
+The scenario still loads and activates the real Sandbox activity and checks its
+actual Scene slot for render context and layout-root routing.
+
+Each returned Camera, Scene and interaction service is recorded before the next
+failure point. Cleanup independently attempts activity deactivation, session
+cleanup, unregistration, Scene drop, Camera drop and interaction-service drops
+under the fixture app, then always restores the exact caller app. Activity
+selection/session references are detached after their cleanup attempt, including
+on failure, so unregister's internal teardown cannot retry an attempted owner.
+LightSystem has no drop API. Primary tracebacks are preserved and cleanup-stage
+errors are appended; cleanup-only failures still fail the scenario through the
+helper's existing `scenario failed: ` prefix.
+
+These are bounded test-runtime ownership guarantees, not arbitrary UI rollback
+or recovery of resources that a constructor never returned. Other scenario
+bodies must provide their own isolation. Task6C timing validation, actual Wine
+evidence and final integration remain separate requirements.
 
 ## Injected Pipeline Observer
 

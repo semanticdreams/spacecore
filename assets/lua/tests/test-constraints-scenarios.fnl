@@ -1,4 +1,4 @@
-;; Helper ownership only. Real Scene/Sandbox caller-state isolation is Task1B.
+;; Scenario helper ownership and real Scene/Sandbox rule isolation.
 (local Scenarios (require :constraints.scenarios))
 (local Runner (require :tests/runner))
 (local tests [])
@@ -566,6 +566,387 @@
                        :fn check-lookalike}))
 
 (assert (= (# tests) 62) "retain original38 plus14 pristine-owned and10 invalid bootstrap cases")
+
+(fn routing-rule []
+  (var found nil)
+  (each [_ rule (ipairs ((. (require :constraints.rules.scene-sandbox) :rules)))]
+    (when (= rule.id "scene.active-render-context-routing") (set found rule)))
+  (assert found "missing real routing scenario"))
+
+;; Preserve table identity AND every reachable slot (including nested lists,
+;; specs, sessions and hooks). Engine/theme are deliberately shared read-only.
+(fn snapshot-graph [root excluded]
+  (local seen {})
+  (fn visit [object]
+    (when (and (= (type object) :table) (not (. excluded object)) (not (. seen object)))
+      (tset seen object {:slots (copy-slots object) :metatable (getmetatable object)})
+      (each [key value (pairs object)] (visit key) (visit value))))
+  (visit root)
+  seen)
+
+(fn assert-graph [snapshot]
+  (each [object record (pairs snapshot)]
+    (assert (= (getmetatable object) record.metatable) "caller metatable changed")
+    (assert-slots object record.slots "caller graph")))
+
+(fn seed-parent-lights! [lights]
+  (lights:set-state
+    {:ambient {:id :caller-ambient :color [0.17 0.29 0.43] :enabled? true}
+     :directional [{:id :caller-directional :direction [1 -2 3] :diffuse [0.24 0.35 0.46]}]
+     :point [{:id :caller-point :position [7 8 9] :linear 0.27}]
+     :spot [{:id :caller-spot :position [10 11 12] :direction [0 -1 -1]}]}))
+
+(fn serialized-lights [lights]
+  ((. (require :json) :dumps) (lights:get-state)))
+
+(fn assert-preservation [parent graph lights-value]
+  (assert-graph graph)
+  (assert (= (serialized-lights parent.lights) lights-value) "caller light state changed"))
+
+(fn assert-light-oracle-sensitive [parent]
+  (local lights (assert parent.lights "light counterexample requires caller LightSystem"))
+  (local before (lights:get-state))
+  (local lights-value (serialized-lights lights))
+  (local graph (snapshot-graph parent {[parent.engine] true [parent.themes] true}))
+  (fn counterexample []
+    (lights:clear)
+    (assert (= parent.lights lights) "real light mutation preserves table identity")
+    (assert-graph graph) ;; The old table-only oracle cannot see this real mutation.
+    (local (accepted err) (pcall assert-preservation parent graph lights-value))
+    (assert (not accepted) "light state mutation must fail preservation oracle")
+    (assert (string.find (tostring err) "caller light state changed" 1 true)))
+  (local (ok result) (xpcall counterexample traceback))
+  (local errors [])
+  (attempt-safety! errors "light counterexample restoration" lights.set-state lights before)
+  (raise-outcome! ok result errors))
+
+(fn parent-fixture [mode]
+  (local caller app)
+  (local calls [])
+  (fn forbidden [...]
+    (table.insert calls :parent-operation)
+    (error "caller activation/deactivation/snapshot/notification/resource operation ran"))
+  (fn parent-spec [id]
+    {: id :activate forbidden :deactivate forbidden :snapshot forbidden :restore forbidden
+     :metadata {:retained [false :spec-state]}})
+  (local other (parent-spec :other))
+  (local sandbox (when mode.registered (parent-spec :sandbox)))
+  (local specs {: other : sandbox})
+  (local order (if sandbox [:other :sandbox] [:other]))
+  (local sessions {:other {:user-session {:retained :other} :cleanup [forbidden]}})
+  (when sandbox (set sessions.sandbox {:user-session {:retained :sandbox} :cleanup [forbidden]}))
+  (local selected mode.selected)
+  (local selected-spec (and selected (. specs selected)))
+  (local selected-session (and selected (. sessions selected)))
+  (local registry {:activities specs :ordered-ids order :sessions sessions
+                   :global-sessions {:retained {:global true}}
+                   :active-activity-id selected :active-activity-spec selected-spec
+                   :active-activity-session selected-session :activating-activity-id :retained
+                   :suppress-workspace-shell-change? false})
+  (local runtime {:activity-sessions sessions :activity-session-state {:sandbox {:retained [1 2]}}
+                  :active-activity-id selected :requested-activity-id :retained
+                  :requested-activity-known? false :activating-activity-id :retained
+                  :scene {:drop forbidden :deactivate-activity-slot forbidden}
+                  :renderer {:drop forbidden} :retained {:state [false :runtime]}})
+  (local canvas {:visible? true :interactive? true :drop forbidden :retained [false :canvas]})
+  (local Signal (require :signal))
+  (fn guarded-signal []
+    (local signal (Signal))
+    (signal:connect forbidden)
+    ;; No caller signal operation, including clearing listeners, is allowed.
+    (each [key _ (pairs signal)] (tset signal key forbidden))
+    signal)
+  (local parent {:testing true :engine caller.engine :themes caller.themes
+                 :canvas canvas :active-world-runtime runtime :activity-registry registry
+                 :active-activity-id selected :create-default-projection forbidden
+                 :projection {:retained [false :projection]} :renderers {:drop forbidden}
+                 :activities-changed (guarded-signal) :activity-dock-changed (guarded-signal)
+                 :workspace-shell-changed (guarded-signal) :set-canvas-visible forbidden
+                 :set-active-interaction-surface forbidden :sync-interaction-surface-state forbidden
+                 :set-active-activity forbidden :drop forbidden})
+  (each [_ key (ipairs [:activity-root-actions :activity-selection-actions :activity-left-dock-builder
+                        :activity-command-hints-provider :activity-leader-command-providers
+                        :activity-delete-selection :activity-activate-focused :activity-drawing-enabled?
+                        :activity-context-enricher :activity-input-handlers :activity-target-enabled?
+                        :activity-update :activity-preferred-interaction-surface :activity-surface-state
+                        :activity-top-toolbar-builder :activity-object-drag-mode-provider
+                        :canvas-surface-interactive? :canvas-visible? :preferred-interaction-surface])]
+    (tset parent key {:retained [false key]}))
+  {:app parent : calls})
+
+(fn initialize-parent-services [parent]
+  (set parent.intersectables ((require :intersectables)))
+  (local intersectables (assert parent.intersectables "parent fixture requires acquired intersectables"))
+  (set parent.clickables ((require :clickables) {: intersectables}))
+  (set parent.hoverables ((require :hoverables) {: intersectables}))
+  (set parent.lights ((. (require :light-system) :LightSystem) {}))
+  (seed-parent-lights! (assert parent.lights "parent fixture requires acquired LightSystem"))
+  (local clickables (assert parent.clickables "parent fixture requires acquired clickables"))
+  (local hoverables (assert parent.hoverables "parent fixture requires acquired hoverables"))
+  (set intersectables.last-pointer {:x 7 :y 8})
+  (set intersectables.ray-cache.retained {:ray [1 2 3]})
+  (table.insert clickables.left-click-objects {:retained :click})
+  (table.insert hoverables.objects {:retained :hover}))
+
+(fn with-parent-fixture [mode f]
+  (local fixture (parent-fixture mode))
+  (local parent fixture.app)
+  (fn prepare-and-run []
+    (initialize-parent-services parent)
+    (f fixture))
+  (fn run []
+    (local (ok result) (xpcall prepare-and-run traceback))
+    (local errors [])
+    (each [_ key (ipairs [:hoverables :clickables :intersectables])]
+      (local service (. parent key))
+      (when service (attempt-safety! errors (.. "test parent " key) service.drop service)))
+    (raise-outcome! ok result errors))
+  (with-patches [{:object _G :key :app :value parent}] run))
+
+(fn fault! [options stage]
+  (when (. options stage) (error (.. "fixture " stage " fault"))))
+
+(fn count! [state key]
+  (local count (. state.calls key))
+  (assert (= (type count) :number) (.. "unknown or nonnumeric fixture counter: " (tostring key)))
+  (tset state.calls key (+ count 1)))
+
+(fn instrument-resource [state key resource]
+  (local owner app)
+  (table.insert state.resources {: key : resource : owner})
+  (local drop resource.drop)
+  (fn tracked-drop [self]
+    (assert (= app owner) (.. key " cleanup requires fixture app"))
+    (count! state key)
+    ;; Perform real cleanup BEFORE any injected error. Never strand a native fixture.
+    (drop self)
+    (fault! state.options key))
+  (set resource.drop tracked-drop)
+  (assert (not (= owner state.parent)) "rule must install a fresh Lua fixture before acquisition")
+  (when state.fixture (assert (= owner state.fixture) "all resources share one fixture app"))
+  (set state.fixture owner)
+  (assert (= owner.engine state.parent.engine) "fixture borrows exact Engine")
+  (assert (= owner.themes state.parent.themes) "fixture borrows read-only themes")
+  (assert (not owner.renderers) "fixture must not borrow parent renderers")
+  resource)
+
+(fn resource-factory [state key factory]
+  (fn construct [...]
+    (fault! state.options (.. key "-construction"))
+    (instrument-resource state key (factory ...))))
+
+(fn scene-factory [state factory]
+  (fn construct [opts]
+    (fault! state.options :scene-construction)
+    (local scene (instrument-resource state :scene (factory opts)))
+    (local activate scene.activate-activity-slot)
+    (local activity-slot scene.activity-slot)
+    (fn activate-slot [self id ...]
+      (local result (activate self id ...))
+      (count! state :slot-activation)
+      (assert (= id :sandbox) "real Sandbox must activate its actual Scene slot")
+      (fault! state.options :activation)
+      result)
+    (fn read-slot [self id]
+      (local slot (activity-slot self id))
+      (when state.activated
+        (count! state :routing-check)
+        (fault! state.options :check))
+      (if (and state.activated state.options.broken-slot) nil slot))
+    (set scene.activate-activity-slot activate-slot)
+    (set scene.activity-slot read-slot)
+    scene))
+
+(fn activity-wrapper [state key delegate]
+  (fn invoke [...]
+    (assert (= app state.fixture) "activity operation must use isolated fixture")
+    (count! state key)
+    (local result (delegate ...))
+    ;; Deactivation/session faults now originate inside their actual owner
+    ;; callbacks, before the manager clears selected/session references.
+    (when (= key :unregister) (fault! state.options key))
+    result))
+
+(fn register-session-cleanup! [state ctx]
+  (local signal ((require :signal)))
+  (fn listener [] (error "fixture session listener must be disconnected"))
+  (local handler (signal:connect listener))
+  (fn cleanup []
+    (assert (= app state.fixture) "session owner cleanup requires fixture app")
+    (count! state :owner-session)
+    (signal:disconnect handler)
+    (set state.session-cleaned true)
+    (when state.options.session
+      (assert (= (. app.activity-registry.sessions :sandbox) state.session-owner)
+              "session fault occurs before manager clears its retained session"))
+    (fault! state.options :session))
+  (ctx:defer-cleanup! cleanup)
+  (set state.session-signal signal))
+
+(fn instrument-sandbox-spec! [state Activities]
+  (local spec (assert (Activities.spec :sandbox) "real fixture must register Sandbox spec"))
+  (local deactivate (assert spec.deactivate "real Sandbox must provide deactivation"))
+  (local activate (assert spec.activate "real Sandbox must provide activation"))
+  (fn deactivate-owner [ctx session]
+    (assert (= app state.fixture) "deactivation owner requires fixture app")
+    (count! state :owner-deactivate)
+    (local result (deactivate ctx session))
+    (when state.options.deactivate
+      (assert (= app.activity-registry.active-activity-spec spec)
+              "deactivation fault occurs before manager clears selection"))
+    (fault! state.options :deactivate)
+    result)
+  (fn activate-owner [ctx session]
+    (register-session-cleanup! state ctx)
+    (activate ctx session))
+  ;; These callbacks belong only to this freshly registered fixture spec, just
+  ;; like instrument-resource's owned method seams; no parent spec is patched.
+  (set spec.deactivate deactivate-owner)
+  (set spec.activate activate-owner))
+
+(fn rule-patches [state]
+  (local Activities (require :activities))
+  ;; Load the canonical activity before factory seams; its activation stays real.
+  (local Sandbox (require :sandbox-activity-unit))
+  (local load Sandbox.load-sandbox-activity!)
+  (local activate Activities.activate-activity)
+  (local LightSystemModule (require :light-system))
+  (local LightSystem LightSystemModule.LightSystem)
+  (fn fixture-lights [opts]
+    (assert (= app state.fixture) "fixture light factory requires isolated app")
+    (local lights (LightSystem opts))
+    (set state.fixture-lights lights)
+    (assert (not (= lights state.parent.lights)) "fixture LightSystem must differ from caller")
+    lights)
+  (fn load-sandbox []
+    (count! state :load)
+    (load)
+    (instrument-sandbox-spec! state Activities)
+    (fault! state.options :load))
+  (fn activate-sandbox [id]
+    (local result (activate id))
+    (set state.activated true)
+    (assert (= app.activity-registry.active-activity-id :sandbox))
+    (assert app.activity-registry.active-activity-session "real Activities must commit a session")
+    (set state.session-owner app.activity-registry.active-activity-session)
+    (fault! state.options :postactivation)
+    result)
+  (local patches [{:object package.loaded :key :scene :value (scene-factory state (require :scene))}
+                 {:object LightSystemModule :key :LightSystem :value fixture-lights}
+                 {:object Sandbox :key :load-sandbox-activity! :value load-sandbox}
+                 {:object Activities :key :activate-activity :value activate-sandbox}])
+  (each [_ entry (ipairs [{:module :intersectables :key :intersectables}
+                          {:module :clickables :key :clickables}
+                          {:module :hoverables :key :hoverables}
+                          {:module :camera :key :camera}])]
+    (table.insert patches {:object package.loaded :key entry.module
+                           :value (resource-factory state entry.key (require entry.module))}))
+  (each [_ entry (ipairs [{:method :deactivate-active-activity :key :deactivate}
+                          {:method :drop-activity-session! :key :session}
+                          {:method :unregister-activity :key :unregister}])]
+    (table.insert patches {:object Activities :key entry.method
+                           :value (activity-wrapper state entry.key (. Activities entry.method))}))
+  patches)
+
+(fn assert-rule-outcome [state ok result]
+  (local options state.options)
+  ;; Count callbacks themselves: unregister's LOCAL manager calls bypass the
+  ;; exported manager wrappers and must not hide a second owner attempt.
+  (when state.activated
+    (assert (= state.calls.owner-deactivate 1) "one actual Sandbox deactivation callback"))
+  (when state.session-signal
+    (assert (= state.calls.owner-session 1) "one actual Sandbox session cleanup callback")
+    (assert state.session-cleaned "real signal disconnect must precede injected session fault")
+    (state.session-signal:emit :after-session-cleanup))
+  (var expected-failure false)
+  (each [stage value (pairs options)]
+    (when (and value (not (= stage :broken-slot)))
+      (set expected-failure true)
+      (assert (string.find (tostring result) (.. "fixture " stage " fault") 1 true)
+              (.. "retain " stage " failure"))))
+  (assert (= ok (not expected-failure)) (tostring result))
+  (when expected-failure
+    (assert (string.find (tostring result) "scenario failed: " 1 true) "existing helper error prefix")
+    (assert (string.find (tostring result) "stack traceback:" 1 true) "primary traceback retained"))
+  (each [_ acquired (ipairs state.resources)]
+    (assert (= (. state.calls acquired.key) 1) (.. "exactly one drop of acquired " acquired.key)))
+  (when state.activated
+    (each [_ key (ipairs [:deactivate :session :unregister])]
+      (assert (= (. state.calls key) 1) (.. "one independent " key " attempt"))))
+  (when (and ok (not options.broken-slot))
+    (assert (= result nil) "real routing scenario should pass")
+    (assert (= state.calls.slot-activation 1) "real Sandbox activation, not an oracle stub")
+    (assert (= state.calls.routing-check 1) "unchanged routing check must execute"))
+  (when options.broken-slot
+    (assert ok (tostring result))
+    (assert (= (# result) 1) "real-rule negative control must report missing slot")
+    (assert (= (. result 1 :constraint-id) "scene.active-render-context-routing"))
+    (assert (= (. result 1 :message) "no Scene activity slot for sandbox after activation"))))
+
+(fn run-rule-fixture [fixture options]
+  (local parent fixture.app)
+  (assert-light-oracle-sensitive parent)
+  (local snapshot (snapshot-graph parent {[parent.engine] true [parent.themes] true}))
+  (local lights-value (serialized-lights parent.lights))
+  (local state {: parent : options :resources []
+               :calls {:intersectables 0 :clickables 0 :hoverables 0 :camera 0 :scene 0
+                       :slot-activation 0 :routing-check 0 :load 0
+                       :deactivate 0 :session 0 :unregister 0
+                       :owner-deactivate 0 :owner-session 0}})
+  (local patches (rule-patches state))
+  (local rule (routing-rule))
+  (fn invoke [] (rule.run {:target {:kind :repo :name :ownership} :facts {:files []} :files []}))
+  (local (ok result) (pcall with-patches patches invoke))
+  (fn observe []
+    ;; Observe all preservation before the test fixture's own safety cleanup.
+    (assert (= app parent) "always restore exact caller app")
+    (assert (= (# fixture.calls) 0) "caller sentinels must NEVER run")
+    (assert-preservation parent snapshot lights-value)
+    (assert-rule-outcome state ok result))
+  (local (observed observation) (xpcall observe traceback))
+  (local errors [])
+  (each [_ acquired (ipairs state.resources)]
+    (when (= (. state.calls acquired.key) 0)
+      (fn safety-drop [] (acquired.resource:drop))
+      (attempt-safety! errors (.. "unreleased test observation " acquired.key) with-patches
+                       [{:object _G :key :app :value acquired.owner}] safety-drop)))
+  (raise-outcome! observed observation errors))
+
+(fn rule-case [mode options]
+  (local finish (native-probe))
+  (fn check [fixture] (run-rule-fixture fixture options))
+  (fn guarded [] (with-parent-fixture mode check))
+  (local (ok result) (pcall lifecycle-guard guarded))
+  (finish-probe ok result finish)
+  (assert ok (tostring result)))
+
+(local parent-modes [{:name :absent-none}
+                     {:name :absent-other :selected :other}
+                     {:name :present-none :registered true}
+                     {:name :present-other :registered true :selected :other}
+                     {:name :present-sandbox :registered true :selected :sandbox}])
+(local rule-faults [{:name :success :options {}}
+                    {:name :fixture :options {:clickables-construction true}}
+                    {:name :camera-construction :options {:camera-construction true}}
+                    {:name :scene-construction :options {:scene-construction true}}
+                    {:name :load :options {:load true}}
+                    {:name :activation :options {:activation true}}
+                    {:name :postactivation :options {:postactivation true}}
+                    {:name :check :options {:check true}}
+                    {:name :deactivate :options {:deactivate true}}
+                    {:name :session :options {:session true}}
+                    {:name :unregister :options {:unregister true}}
+                    {:name :scene-drop :options {:scene true}}
+                    {:name :camera-drop :options {:camera true}}
+                    {:name :service-drop :options {:hoverables true :clickables true :intersectables true}}
+                    {:name :combined :options {:check true :deactivate true :session true :unregister true
+                                               :scene true :camera true :hoverables true :clickables true
+                                               :intersectables true}}
+                    {:name :broken-slot :options {:broken-slot true}}])
+(each [_ mode (ipairs parent-modes)]
+  (each [_ fault (ipairs rule-faults)]
+    (fn check-rule [] (rule-case mode fault.options))
+    (table.insert tests {:name (.. "real scenario isolates " mode.name " / " fault.name) :fn check-rule})))
 
 (fn make-standalone-body [observed-engines]
   (fn standalone-body []
