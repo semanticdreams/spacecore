@@ -443,6 +443,62 @@ paths, failed job metadata, and excerpts. Agents use those repo-local bundle
 paths for diagnosis instead of requesting raw `gh`, wildcard `actions-log`, or
 external-directory permissions.
 
+### Guarded merge-policy proof
+
+In the strict capability flow, `github-operator` uses the existing
+`check-main-protection` wrapper to prove the policy for
+`semanticdreams/spacecore` before publication. `enable-auto-merge-current`
+rechecks that proof immediately before requesting auto-merge. A refusal is
+`HUMAN_DECISION_REQUIRED`, not permission to bypass the guard or change GitHub
+settings automatically.
+
+The proof requires all of the following:
+
+- **Complete effective rules:** retrieve every page of
+  `repos/semanticdreams/spacecore/rules/branches/main?per_page=100` with
+  `gh api --paginate --slurp`. Each page must be an array and every rule an
+  object with a nonempty string `type`. Partial/failed pagination, malformed
+  data, or unavailable effective rules cannot authorize publication. The helper
+  does not reconstruct ruleset inheritance or applicability from summaries or
+  bounded detail fetches; GitHub's effective branch endpoint is authoritative.
+- **Required PR, exact `test`, and queue:** require pull-request protection,
+  a required status-check context exactly equal to `test`, and an effective
+  merge-queue rule. Readable classic protection may supplement the PR/check
+  proofs: a `required_pull_request_reviews` object proves PR protection even
+  with zero approvals or an empty object. Missing/null classic fields prove
+  nothing. Only an explicit `HTTP 404` diagnostic permits classic protection to
+  be unavailable, and then complete effective rules must independently prove
+  both PR and `test` protection. Other classic errors or malformed relevant
+  configuration refuse, even when effective rules otherwise supply the proofs.
+- **Explicit safe queue method:** every effective queue rule must specify a
+  recognized, consistent uppercase `MERGE`, `SQUASH`, or `REBASE` method. Only
+  merge or squash can pass; rebase-only policy requires a human decision. The
+  repository metadata endpoint must return an object, and the chosen method's
+  `allow_merge_commit` or `allow_squash_merge` permission must literally be
+  boolean `true`, not merely truthy.
+- **All applicable restrictions:** intersect every explicit PR
+  `allowed_merge_methods` list across all pages. Present lists must contain
+  only lowercase `merge`, `squash`, or `rebase`; null/scalar/unknown values
+  refuse, and an empty list permits nothing. PR parameters are optional but
+  must be objects when present. An absent optional method list adds no
+  restriction; it does not replace mandatory queue-method and repository
+  permission proof. Effective or readable classic linear-history requirements
+  exclude merge commits, but allow squash. Malformed relevant policy cannot be
+  hidden by another valid proof; unrelated well-formed rule types are ignored.
+
+Structured evidence reports repository identity, effective-rule completeness
+and page count, classic/metadata status, source and aggregate PR/check/queue
+proofs, repository merge permissions, explicit restrictions, queue method,
+linear history, safe-method proof, and actionable blockers. Command failures
+preserve arguments, return code, and stderr for diagnosis rather than trying
+alternate evidence sources or merge methods.
+
+After proof passes, the wrapper requests `gh pr merge <safe-branch> --auto`
+without a client strategy (`--merge`, `--squash`, or `--rebase`) or administrative
+bypass flags. GitHub's queue controls the actual method and enforces concurrent
+policy changes. A successful command means only that the request was accepted;
+the existing queue poll must still observe `mergedAt` to prove an actual merge.
+
 ### Capability preflight
 
 In the strict flow, privileged Git, GitHub, and OpenCode configuration operations route through

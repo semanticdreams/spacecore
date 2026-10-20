@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import json
 import re
 import sys
@@ -21,7 +20,6 @@ PENDING_ROLLUP_STATUSES = {"queued", "pending", "in-progress", "expected"}
 FAILED_ROLLUP_CONCLUSIONS = {"failure", "failed", "cancelled", "timed-out", "action-required"}
 DEFAULT_POLL_TIMEOUT_SECONDS = 7200
 DEFAULT_POLL_INTERVAL_SECONDS = 100
-MAX_RULESET_DETAIL_FETCHES = 5
 MAX_FAILED_CHECK_LOG_LINES = 80
 MAX_FAILED_CHECK_LOG_CHARS = 12000
 GITHUB_ACTIONS_JOB_URL = re.compile(r"^https://github\.com/[^/]+/[^/]+/actions/runs/(\d+)/job/(\d+)(?:[/?#].*)?$")
@@ -86,118 +84,124 @@ def _existing_pr_reuse_evidence(data: dict[str, Any], branch: str, current_head:
     }
 
 
-def _required_checks_include_test(required_checks: Any) -> bool:
-    if not isinstance(required_checks, dict):
+def _read_policy_json(
+    repo: Path, args: list[str], source: str, blockers: list[str], command_errors: list[dict[str, object]],
+    *, allow_classic_404: bool = False,
+) -> tuple[Any, str]:
+    try:
+        result = run_command(args, repo, check=False)
+    except CapabilityError as error:
+        blockers.append(f"Could not retrieve {source}: {error.message}")
+        command_errors.append({"args": args, "code": error.code, "details": error.details})
+        return None, "command_failed"
+    command = {"args": result.args, "returncode": result.returncode, "stderr": result.stderr.strip()}
+    if result.returncode != 0:
+        command_errors.append(command)
+        if allow_classic_404 and re.search(r"\bHTTP 404\b", result.stderr):
+            return None, "unavailable_http_404"
+        blockers.append(f"Could not retrieve {source}; inspect command_errors for access or command failure")
+        return None, "command_failed"
+    try:
+        return json.loads(result.stdout), "available"
+    except json.JSONDecodeError as error:
+        blockers.append(f"Malformed {source} JSON: {error.msg}")
+        command_errors.append({**command, "error": str(error)})
+        return None, "malformed"
+
+
+def _complete_effective_rules(pages: Any, blockers: list[str]) -> tuple[list[dict[str, Any]], bool, int]:
+    if not isinstance(pages, list) or not pages:
+        blockers.append("Malformed effective branch rules: expected a nonempty slurped array of pages")
+        return [], False, 0
+    for page_index, page in enumerate(pages, 1):
+        if not isinstance(page, list):
+            blockers.append(f"Malformed effective branch rules page {page_index}: expected an array")
+            return [], False, len(pages)
+        for rule_index, rule in enumerate(page, 1):
+            if not isinstance(rule, dict) or not isinstance(rule.get("type"), str) or not rule["type"].strip():
+                blockers.append(f"Malformed effective branch rule {page_index}/{rule_index}: expected an object with nonempty type")
+                return [], False, len(pages)
+    return [rule for page in pages for rule in page], True, len(pages)
+
+
+def _check_collection_has_test(checks: Any, source: str, blockers: list[str], *, contexts: bool = False) -> bool:
+    if not isinstance(checks, list):
+        blockers.append(f"Malformed {source}: expected a check array")
         return False
-    contexts = required_checks.get("contexts")
-    if isinstance(contexts, list) and "test" in contexts:
-        return True
-    checks = required_checks.get("checks")
-    if isinstance(checks, list):
-        for check in checks:
-            if isinstance(check, dict) and check.get("context") == "test":
-                return True
-    return False
+    has_test = False
+    for check in checks:
+        context = check if contexts else check.get("context") if isinstance(check, dict) else None
+        if not isinstance(context, str) or not context.strip():
+            blockers.append(f"Malformed {source}: expected nonempty check context strings")
+        elif context == "test":
+            has_test = True
+    return has_test
 
 
-def _classic_protection_requires_test(protection: Any) -> bool:
-    if not isinstance(protection, dict):
-        return False
-    return _required_checks_include_test(protection.get("required_status_checks"))
+def _classic_policy_proofs(protection: dict[str, Any], blockers: list[str]) -> tuple[bool, bool, bool]:
+    reviews = protection.get("required_pull_request_reviews")
+    has_pr = isinstance(reviews, dict)
+    if reviews is not None and not has_pr:
+        blockers.append("Malformed classic required_pull_request_reviews: expected an object or null")
+    required_checks = protection.get("required_status_checks")
+    has_test = False
+    if isinstance(required_checks, dict):
+        for key in ("contexts", "checks"):
+            if key in required_checks:
+                found = _check_collection_has_test(required_checks[key], f"classic required_status_checks.{key}", blockers, contexts=key == "contexts")
+                has_test = has_test or found
+    elif required_checks is not None:
+        blockers.append("Malformed classic required_status_checks: expected an object or null")
+    linear_history = False
+    if "required_linear_history" in protection:
+        linear = protection["required_linear_history"]
+        if not isinstance(linear, dict) or not isinstance(linear.get("enabled"), bool):
+            blockers.append("Malformed classic required_linear_history: expected an object with boolean enabled")
+        else:
+            linear_history = linear["enabled"]
+    return has_pr, has_test, linear_history
 
 
-def _ruleset_applies_to_main(ruleset: dict[str, Any]) -> bool:
-    if ruleset.get("enforcement") != "active":
-        return False
-    conditions = ruleset.get("conditions")
-    if not isinstance(conditions, dict):
-        return False
-    ref_name = conditions.get("ref_name", {})
-    if not isinstance(ref_name, dict):
-        return False
-    include = ref_name.get("include")
-    exclude = ref_name.get("exclude", [])
-    if not isinstance(include, list) or not isinstance(exclude, list):
-        return False
-    main_ref = "refs/heads/main"
-    aliases = {"main", "refs/heads/main", "~DEFAULT_BRANCH"}
-    included = any(pattern in aliases or fnmatch.fnmatch(main_ref, str(pattern)) for pattern in include)
-    excluded = any(pattern in aliases or fnmatch.fnmatch(main_ref, str(pattern)) for pattern in exclude)
-    return included and not excluded
-
-
-def _ruleset_rule_requires_test(rule: Any) -> bool:
-    if not isinstance(rule, dict) or rule.get("type") != "required_status_checks":
-        return False
-    parameters = rule.get("parameters")
-    if not isinstance(parameters, dict):
-        return False
-    required = parameters.get("required_status_checks")
-    if not isinstance(required, list):
-        return False
-    for check in required:
-        if check == "test":
-            return True
-        if isinstance(check, dict) and check.get("context") == "test":
-            return True
-    return False
-
-
-def _rule_list_proofs(rules: Any) -> tuple[bool, bool]:
-    if not isinstance(rules, list):
-        return False, False
-    requires_test = any(_ruleset_rule_requires_test(rule) for rule in rules)
-    has_merge_queue = any(isinstance(rule, dict) and rule.get("type") == "merge_queue" for rule in rules)
-    return requires_test, has_merge_queue
-
-
-def _active_main_ruleset_proofs(rulesets: Any) -> tuple[bool, bool]:
-    if not isinstance(rulesets, list):
-        return False, False
-    requires_test = False
-    has_merge_queue = False
-    for ruleset in rulesets:
-        if not isinstance(ruleset, dict) or not _ruleset_applies_to_main(ruleset):
+def _effective_policy_proofs(rules: list[dict[str, Any]], blockers: list[str]) -> dict[str, Any]:
+    has_pr = False
+    has_test = False
+    has_queue = False
+    linear_history = False
+    queue_methods: list[str] = []
+    restrictions: list[list[str]] = []
+    relevant_types = {"pull_request", "required_status_checks", "merge_queue", "required_linear_history"}
+    for rule in rules:
+        rule_type = rule["type"]
+        if rule_type not in relevant_types:
             continue
-        ruleset_requires_test, ruleset_has_merge_queue = _rule_list_proofs(ruleset.get("rules"))
-        requires_test = requires_test or ruleset_requires_test
-        has_merge_queue = has_merge_queue or ruleset_has_merge_queue
-    return requires_test, has_merge_queue
-
-
-def _ruleset_detail_path(ruleset: dict[str, Any]) -> str | None:
-    ruleset_id = ruleset.get("id")
-    if isinstance(ruleset_id, int) or (isinstance(ruleset_id, str) and ruleset_id.isdigit()):
-        return f"repos/{SPACE_REPO}/rulesets/{ruleset_id}"
-    links = ruleset.get("_links")
-    self_link = links.get("self") if isinstance(links, dict) else None
-    href = self_link.get("href") if isinstance(self_link, dict) else self_link
-    if not isinstance(href, str):
-        return None
-    api_prefix = "https://api.github.com/"
-    path = href.removeprefix(api_prefix)
-    allowed_prefix = f"repos/{SPACE_REPO}/rulesets/"
-    if path.startswith(allowed_prefix):
-        return path
-    return None
-
-
-def _ruleset_detail_paths(rulesets: Any) -> list[str]:
-    if not isinstance(rulesets, list):
-        return []
-    paths: list[str] = []
-    seen: set[str] = set()
-    for ruleset in rulesets:
-        if not isinstance(ruleset, dict):
+        parameters = rule.get("parameters", {})
+        if not isinstance(parameters, dict):
+            blockers.append(f"Malformed effective {rule_type} parameters: expected an object")
             continue
-        path = _ruleset_detail_path(ruleset)
-        if path is None or path in seen:
-            continue
-        paths.append(path)
-        seen.add(path)
-        if len(paths) >= MAX_RULESET_DETAIL_FETCHES:
-            break
-    return paths
+        if rule_type == "pull_request":
+            has_pr = True
+            if "allowed_merge_methods" in parameters:
+                allowed = parameters["allowed_merge_methods"]
+                if not isinstance(allowed, list) or any(not isinstance(method, str) or method not in {"merge", "squash", "rebase"} for method in allowed):
+                    blockers.append("Malformed pull_request allowed_merge_methods: expected a list of lowercase merge, squash or rebase")
+                else:
+                    restrictions.append(allowed)
+        elif rule_type == "required_status_checks":
+            found = _check_collection_has_test(parameters.get("required_status_checks"), "effective required_status_checks", blockers)
+            has_test = has_test or found
+        elif rule_type == "merge_queue":
+            has_queue = True
+            method = parameters.get("merge_method")
+            if not isinstance(method, str) or method not in {"MERGE", "SQUASH", "REBASE"}:
+                blockers.append("Malformed merge_queue merge_method: require explicit MERGE, SQUASH or REBASE")
+            else:
+                queue_methods.append(method.lower())
+        elif rule_type == "required_linear_history":
+            linear_history = True
+    return {
+        "has_pr": has_pr, "has_test": has_test, "has_queue": has_queue,
+        "queue_methods": queue_methods, "restrictions": restrictions, "linear_history": linear_history,
+    }
 
 
 def pr_auth_status(repo_root: Path) -> dict[str, object]:
@@ -216,58 +220,99 @@ def check_main_protection(repo_root: Path) -> dict[str, object]:
     action = "check_main_protection"
     try:
         repo = ensure_space_repo(repo_root)
-        protection_result = run_command(["gh", "api", f"repos/{SPACE_REPO}/branches/main/protection"], repo, check=False)
-        rulesets_result = run_command(["gh", "api", f"repos/{SPACE_REPO}/rulesets"], repo, check=False)
-        protection = _json_loads(protection_result.stdout) if protection_result.returncode == 0 else None
-        rulesets = _json_loads(rulesets_result.stdout) if rulesets_result.returncode == 0 else None
-    except (CapabilityError, json.JSONDecodeError) as error:
-        details = {"error_type": type(error).__name__, "error": str(error)}
-        if isinstance(error, CapabilityError):
-            details = {"code": error.code, "details": error.details}
-        return human_decision(action, "Could not prove required main protection and merge queue from GitHub responses", details)
+    except CapabilityError as error:
+        return human_decision(action, "Could not verify repository for main protection", {"code": error.code, "details": error.details})
 
-    classic_has_test = _classic_protection_requires_test(protection)
-    ruleset_has_test, ruleset_has_queue = _active_main_ruleset_proofs(rulesets)
-    effective_rules = None
-    if not (classic_has_test or ruleset_has_test) or not ruleset_has_queue:
-        try:
-            effective_rules_result = run_command(["gh", "api", f"repos/{SPACE_REPO}/rules/branches/main"], repo, check=False)
-            effective_rules = _json_loads(effective_rules_result.stdout) if effective_rules_result.returncode == 0 else None
-        except (CapabilityError, json.JSONDecodeError):
-            effective_rules = None
-    effective_has_test, effective_has_queue = _rule_list_proofs(effective_rules)
-    detailed_rulesets: list[dict[str, Any]] = []
-    if not (classic_has_test or ruleset_has_test or effective_has_test) or not (ruleset_has_queue or effective_has_queue):
-        for path in _ruleset_detail_paths(rulesets):
-            try:
-                detail_result = run_command(["gh", "api", path], repo, check=False)
-                detail = _json_loads(detail_result.stdout) if detail_result.returncode == 0 else None
-            except (CapabilityError, json.JSONDecodeError):
-                detail = None
-            if isinstance(detail, dict):
-                detailed_rulesets.append(detail)
-    detailed_has_test, detailed_has_queue = _active_main_ruleset_proofs(detailed_rulesets)
-    has_test = classic_has_test or ruleset_has_test or effective_has_test or detailed_has_test
-    has_queue = ruleset_has_queue or effective_has_queue or detailed_has_queue
-    evidence = {
-        "classic_protection_available": protection is not None,
-        "rulesets_available": rulesets is not None,
-        "effective_branch_rules_available": effective_rules is not None,
-        "detailed_rulesets_available": len(detailed_rulesets) > 0,
-        "detailed_rulesets_checked": len(detailed_rulesets),
-        "classic_required_test_check_proven": classic_has_test,
-        "active_main_ruleset_required_test_check_proven": ruleset_has_test,
-        "active_main_ruleset_merge_queue_proven": ruleset_has_queue,
-        "effective_branch_rules_required_test_check_proven": effective_has_test,
-        "effective_branch_rules_merge_queue_proven": effective_has_queue,
-        "detailed_rulesets_required_test_check_proven": detailed_has_test,
-        "detailed_rulesets_merge_queue_proven": detailed_has_queue,
-        "required_test_check_proven": has_test,
-        "merge_queue_proven": has_queue,
+    blockers: list[str] = []
+    command_errors: list[dict[str, object]] = []
+    pages, effective_status = _read_policy_json(
+        repo, ["gh", "api", "--paginate", "--slurp", f"repos/{SPACE_REPO}/rules/branches/main?per_page=100"],
+        "effective branch rules", blockers, command_errors,
+    )
+    rules, complete, page_count = [], False, 0
+    if effective_status == "available":
+        rules, complete, page_count = _complete_effective_rules(pages, blockers)
+        if not complete:
+            effective_status = "malformed"
+    metadata, metadata_status = _read_policy_json(
+        repo, ["gh", "api", f"repos/{SPACE_REPO}"], "repository metadata", blockers, command_errors,
+    )
+    if metadata_status == "available" and not isinstance(metadata, dict):
+        blockers.append("Malformed repository metadata: expected an object")
+        metadata_status = "malformed"
+    protection, classic_status = _read_policy_json(
+        repo, ["gh", "api", f"repos/{SPACE_REPO}/branches/main/protection"], "classic protection", blockers, command_errors,
+        allow_classic_404=True,
+    )
+    if classic_status == "available" and not isinstance(protection, dict):
+        blockers.append("Malformed classic protection: expected an object")
+        classic_status = "malformed"
+
+    effective = _effective_policy_proofs(rules, blockers)
+    classic_has_pr, classic_has_test, classic_linear = _classic_policy_proofs(protection, blockers) if classic_status == "available" else (False, False, False)
+    has_pr = classic_has_pr or effective["has_pr"]
+    has_test = classic_has_test or effective["has_test"]
+    if not has_pr:
+        blockers.append("Require proof of required pull request protection on main")
+    if not has_test:
+        blockers.append("Require proof of exact required test check on main")
+    if not effective["has_queue"]:
+        blockers.append("Require effective merge queue protection on main")
+
+    queue_methods = effective["queue_methods"]
+    method = None
+    if queue_methods and len(set(queue_methods)) == 1:
+        method = queue_methods[0]
+    elif queue_methods:
+        blockers.append("Conflicting effective merge_queue methods; require one consistent queue method")
+    else:
+        blockers.append("Require an explicit recognized merge_queue method")
+
+    permissions = {
+        key: metadata.get(key) if metadata_status == "available" else None
+        for key in ("allow_merge_commit", "allow_squash_merge", "allow_rebase_merge")
     }
-    if not has_test or not has_queue:
-        return human_decision(action, "Main protection does not prove both required test and merge queue", evidence)
-    return success(action, "Main protection proves required test and merge queue", evidence)
+    permission_keys = {"merge": "allow_merge_commit", "squash": "allow_squash_merge"}
+    linear_history = classic_linear or effective["linear_history"]
+    if method == "rebase":
+        blockers.append("Queue method rebase is unsupported; a human must decide a safe merge or squash policy")
+    if method in permission_keys and permissions[permission_keys[method]] is not True:
+        blockers.append(f"Repository {permission_keys[method]} must literally be true for queue method {method}")
+    if method and any(method not in allowed for allowed in effective["restrictions"]):
+        blockers.append(f"Queue method {method} is excluded by explicit pull_request allowed_merge_methods restrictions")
+    if method == "merge" and linear_history:
+        blockers.append("Queue method merge conflicts with required linear history; require a compatible queue policy")
+
+    safe_method = method in permission_keys and not blockers
+    evidence = {
+        "repository": SPACE_REPO,
+        "effective_branch_rules_status": effective_status,
+        "effective_branch_rules_complete": complete,
+        "effective_branch_rules_page_count": page_count,
+        "metadata_status": metadata_status,
+        "classic_protection_status": classic_status,
+        "repository_merge_permissions": permissions,
+        "classic_required_pull_request_proven": classic_has_pr,
+        "classic_required_test_check_proven": classic_has_test,
+        "effective_branch_rules_required_pull_request_proven": effective["has_pr"],
+        "effective_branch_rules_required_test_check_proven": effective["has_test"],
+        "effective_branch_rules_merge_queue_proven": effective["has_queue"],
+        "required_pull_request_proven": has_pr,
+        "required_test_check_proven": has_test,
+        "merge_queue_proven": effective["has_queue"],
+        "queue_merge_methods": queue_methods,
+        "queue_merge_method": method,
+        "explicit_pr_merge_method_restrictions": effective["restrictions"],
+        "effective_linear_history_required": effective["linear_history"],
+        "classic_linear_history_required": classic_linear,
+        "linear_history_required": linear_history,
+        "safe_merge_method_proven": safe_method,
+        "command_errors": command_errors,
+        "blockers": blockers,
+    }
+    if blockers:
+        return human_decision(action, "Could not prove required PR/test protection and a safe merge queue method on main", evidence)
+    return success(action, "Main protection proves required PR/test protection and a safe merge queue method", evidence)
 
 
 def create_pr(repo_root: Path, head: str) -> dict[str, object]:
@@ -331,14 +376,14 @@ def enable_auto_merge(repo_root: Path, branch: str) -> dict[str, object]:
     protection = check_main_protection(repo_root)
     if protection.get("status") != "pass":
         return human_decision(action, "Auto-merge requires proven main protection and merge queue", {"branch": safe, "protection": protection})
+    evidence = {"branch": safe, "queue_merge_method": protection["evidence"]["queue_merge_method"], "protection": protection}
     try:
-        result = run_command(["gh", "pr", "merge", safe, "--auto", "--merge"], repo, check=False)
-        output = f"{result.stdout}\n{result.stderr}".lower()
-        if result.returncode != 0 or "rebase" in output:
-            return human_decision(action, "Auto-merge could not be enabled safely", {"branch": safe, "returncode": result.returncode})
-        return success(action, "Enabled auto-merge with merge commits", {"branch": safe, "args": result.args})
+        result = run_command(["gh", "pr", "merge", safe, "--auto"], repo, check=False)
+        if result.returncode != 0:
+            return human_decision(action, "Auto-merge request could not be accepted safely", {**evidence, **_command_result_evidence(result, safe)})
+        return success(action, "Auto-merge request accepted under the verified queue policy; merge is not yet proven", {**evidence, "args": result.args})
     except CapabilityError as error:
-        return human_decision(action, error.message, {"code": error.code, "details": error.details, "branch": safe})
+        return human_decision(action, error.message, {**evidence, "code": error.code, "details": error.details})
 
 
 def enable_auto_merge_current(repo_root: Path) -> dict[str, object]:
