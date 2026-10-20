@@ -24,7 +24,8 @@ class GhRunner:
         del cwd, check
         args = list(args)
         self.calls.append(args)
-        output = self.outputs.get(tuple(args), "")
+        assert tuple(args) in self.outputs, f"Unexpected command: {args}"
+        output = self.outputs[tuple(args)]
         if isinstance(output, capabilities.CommandResult):
             return output
         return command_result(args, output)
@@ -36,6 +37,382 @@ def trusted_repo(monkeypatch, tmp_path: Path) -> Path:
     repo.mkdir()
     monkeypatch.setattr(pr_operator, "ensure_space_repo", lambda repo_root: repo)
     return repo
+
+
+EFFECTIVE_ARGS = ("gh", "api", "--paginate", "--slurp", "repos/semanticdreams/spacecore/rules/branches/main?per_page=100")
+METADATA_ARGS = ("gh", "api", "repos/semanticdreams/spacecore")
+CLASSIC_ARGS = ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection")
+BRANCH = "feature/opencode-capabilities"
+MERGE_ARGS = ("gh", "pr", "merge", BRANCH, "--auto")
+
+
+def safe_rules(method="MERGE"):
+    return [
+        {"type": "pull_request"},
+        {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "test"}]}},
+        {"type": "merge_queue", "parameters": {"merge_method": method}},
+    ]
+
+
+@pytest.mark.parametrize("missing_proof", ["pull_request", "safe_method"])
+def test_incomplete_policy_cannot_authorize_auto_merge(monkeypatch, trusted_repo, missing_proof):
+    rules = safe_rules("REBASE" if missing_proof == "safe_method" else "MERGE")
+    if missing_proof == "pull_request":
+        rules = [rule for rule in rules if rule["type"] != "pull_request"]
+    runner = policy_runner(monkeypatch, pages=[rules])
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "human_decision_required"
+    assert not any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
+
+
+@pytest.mark.parametrize("method", ["merge", "squash"])
+def test_queue_request_has_no_strategy(monkeypatch, trusted_repo, method):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(method.upper())])
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    assert runner.calls == [list(EFFECTIVE_ARGS), list(METADATA_ARGS), list(CLASSIC_ARGS), list(MERGE_ARGS)]
+    assert result["evidence"]["queue_merge_method"] == method
+
+
+def policy_runner(monkeypatch, *, pages=None, metadata=None, classic=None, overrides=None, merge_output=""):
+    outputs = {
+        EFFECTIVE_ARGS: json.dumps([safe_rules()] if pages is None else pages),
+        METADATA_ARGS: json.dumps({"allow_merge_commit": True, "allow_squash_merge": True} if metadata is None else metadata),
+        CLASSIC_ARGS: json.dumps({} if classic is None else classic),
+        MERGE_ARGS: merge_output,
+    }
+    outputs.update(overrides or {})
+    runner = GhRunner(outputs)
+    monkeypatch.setattr(pr_operator, "run_command", runner)
+    return runner
+
+
+def assert_policy_refusal(trusted_repo, runner, diagnostic):
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "human_decision_required"
+    proof = result["evidence"]["protection"]
+    assert proof["status"] == "human_decision_required"
+    assert diagnostic in " ".join(proof["evidence"]["blockers"])
+    assert not any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
+    return proof["evidence"]
+
+
+@pytest.mark.parametrize("method", ["MERGE", "SQUASH"])
+@pytest.mark.parametrize("pr_parameters", [None, {}, {"allowed_merge_methods": ["merge", "squash"]}])
+def test_complete_policy_requests_queue_method_without_strategy(monkeypatch, trusted_repo, method, pr_parameters):
+    rules = safe_rules(method)
+    if pr_parameters is not None:
+        rules[0]["parameters"] = pr_parameters
+    runner = policy_runner(monkeypatch, pages=[rules])
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    evidence = result["evidence"]["protection"]["evidence"]
+    assert evidence["repository"] == pr_operator.SPACE_REPO
+    assert evidence["effective_branch_rules_complete"] is True
+    assert evidence["effective_branch_rules_page_count"] == 1
+    for key in ("required_pull_request_proven", "required_test_check_proven", "merge_queue_proven", "safe_merge_method_proven"):
+        assert evidence[key] is True
+    assert evidence["queue_merge_method"] == method.lower()
+    assert evidence["blockers"] == []
+    assert not any("ruleset" in key for key in evidence)
+    assert runner.calls == [list(EFFECTIVE_ARGS), list(METADATA_ARGS), list(CLASSIC_ARGS), list(MERGE_ARGS)]
+
+
+@pytest.mark.parametrize("missing", ["pull_request", "required_status_checks", "merge_queue"])
+def test_missing_required_effective_proof_refuses_before_mutation(monkeypatch, trusted_repo, missing):
+    rules = [rule for rule in safe_rules() if rule["type"] != missing]
+    runner = policy_runner(monkeypatch, pages=[rules])
+    assert_policy_refusal(trusted_repo, runner, {"pull_request": "pull request", "required_status_checks": "test", "merge_queue": "queue"}[missing])
+
+
+@pytest.mark.parametrize("reviews", [{}, {"required_approving_review_count": 0}])
+@pytest.mark.parametrize("checks", [{"contexts": ["test"]}, {"checks": [{"context": "test"}]}])
+def test_classic_supplies_pr_and_test_even_without_approvals(monkeypatch, trusted_repo, reviews, checks):
+    runner = policy_runner(monkeypatch, pages=[[safe_rules()[2]]], classic={
+        "required_pull_request_reviews": reviews, "required_status_checks": checks,
+    })
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    evidence = result["evidence"]["protection"]["evidence"]
+    assert evidence["classic_required_pull_request_proven"] is True
+    assert evidence["classic_required_test_check_proven"] is True
+    assert evidence["effective_branch_rules_required_pull_request_proven"] is False
+    assert evidence["effective_branch_rules_required_test_check_proven"] is False
+    assert runner.calls[-1] == list(MERGE_ARGS)
+
+
+@pytest.mark.parametrize("field", ["required_pull_request_reviews", "required_status_checks"])
+def test_classic_null_cannot_supply_missing_proof(monkeypatch, trusted_repo, field):
+    missing_type = "pull_request" if field == "required_pull_request_reviews" else "required_status_checks"
+    runner = policy_runner(monkeypatch, pages=[[rule for rule in safe_rules() if rule["type"] != missing_type]], classic={field: None})
+    assert_policy_refusal(trusted_repo, runner, "pull request" if missing_type == "pull_request" else "test")
+
+
+@pytest.mark.parametrize("missing", [None, "pull_request", "required_status_checks"])
+def test_classic_explicit_404_requires_independent_effective_proof(monkeypatch, trusted_repo, missing):
+    rules = [rule for rule in safe_rules() if rule["type"] != missing]
+    runner = policy_runner(monkeypatch, pages=[rules], overrides={
+        CLASSIC_ARGS: command_result(list(CLASSIC_ARGS), returncode=1, stderr="gh: Not Found (HTTP 404)"),
+    })
+    if missing:
+        assert_policy_refusal(trusted_repo, runner, "pull request" if missing == "pull_request" else "test")
+    else:
+        result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+        assert result["status"] == "pass"
+        assert result["evidence"]["protection"]["evidence"]["classic_protection_status"] == "unavailable_http_404"
+
+
+@pytest.mark.parametrize("args", [EFFECTIVE_ARGS, METADATA_ARGS, CLASSIC_ARGS])
+@pytest.mark.parametrize("stderr,code", [("HTTP 401: credential expired", 1), ("HTTP 403: Forbidden", 1), ("network unavailable", 2), ("Not Found", 404)])
+def test_unreadable_mandatory_evidence_preserves_command_failure(monkeypatch, trusted_repo, args, stderr, code):
+    # Even syntactically valid partial stdout from failed pagination cannot authorize.
+    runner = policy_runner(monkeypatch, overrides={args: command_result(list(args), json.dumps([safe_rules()]), returncode=code, stderr=stderr)})
+    evidence = assert_policy_refusal(trusted_repo, runner, "retrieve")
+    assert {"args": list(args), "returncode": code, "stderr": stderr} in evidence["command_errors"]
+
+
+@pytest.mark.parametrize("args", [EFFECTIVE_ARGS, METADATA_ARGS, CLASSIC_ARGS])
+@pytest.mark.parametrize("raw", ["", "{", "null", '"scalar"', "7", "[]"])
+def test_invalid_json_or_top_level_type_refuses(monkeypatch, trusted_repo, args, raw):
+    runner = policy_runner(monkeypatch, overrides={args: raw})
+    assert_policy_refusal(trusted_repo, runner, "Malformed")
+
+
+@pytest.mark.parametrize("pages", [[], {}, [None], [safe_rules(), {}], [[None]], [[{}]], [[{"type": ""}]], [[{"type": 1}]], [[{"type": "   "}]], [safe_rules(), [False]]])
+def test_invalid_effective_page_or_rule_shape_refuses(monkeypatch, trusted_repo, pages):
+    runner = policy_runner(monkeypatch, pages=pages)
+    evidence = assert_policy_refusal(trusted_repo, runner, "Malformed")
+    assert evidence["effective_branch_rules_complete"] is False
+
+
+def test_empty_effective_page_is_complete_but_proves_no_queue(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, pages=[[]], classic={"required_pull_request_reviews": {}, "required_status_checks": {"contexts": ["test"]}})
+    evidence = assert_policy_refusal(trusted_repo, runner, "queue")
+    assert evidence["effective_branch_rules_complete"] is True
+    assert evidence["effective_branch_rules_page_count"] == 1
+
+
+def test_effective_retrieval_is_mandatory_even_with_classic_pr_and_test(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, classic={"required_pull_request_reviews": {}, "required_status_checks": {"contexts": ["test"]}}, overrides={
+        EFFECTIVE_ARGS: command_result(list(EFFECTIVE_ARGS), json.dumps([safe_rules()]), returncode=1, stderr="HTTP 404: Not Found"),
+    })
+    evidence = assert_policy_refusal(trusted_repo, runner, "retrieve effective")
+    assert evidence["effective_branch_rules_complete"] is False
+    assert evidence["classic_required_pull_request_proven"] is True
+    assert evidence["classic_required_test_check_proven"] is True
+    assert runner.calls == [list(EFFECTIVE_ARGS), list(METADATA_ARGS), list(CLASSIC_ARGS)]
+
+
+def test_consistent_queue_methods_and_only_selected_permission_are_sufficient(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, pages=[safe_rules("SQUASH"), [{"type": "merge_queue", "parameters": {"merge_method": "SQUASH"}}]], metadata={"allow_merge_commit": False, "allow_squash_merge": True, "allow_rebase_merge": False})
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    assert result["evidence"]["protection"]["evidence"]["queue_merge_methods"] == ["squash", "squash"]
+    assert runner.calls[-1] == list(MERGE_ARGS)
+
+
+def test_all_blockers_are_retained_after_positive_proofs(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(), [
+        {"type": "pull_request", "parameters": {"allowed_merge_methods": []}},
+        {"type": "required_linear_history"},
+        {"type": "required_status_checks", "parameters": None},
+    ]], metadata={"allow_merge_commit": False})
+    evidence = assert_policy_refusal(trusted_repo, runner, "Malformed")
+    blockers = " ".join(evidence["blockers"])
+    for reason in ("allow_merge_commit", "allowed_merge_methods", "linear history"):
+        assert reason in blockers
+    assert evidence["required_pull_request_proven"] is True
+    assert evidence["required_test_check_proven"] is True
+    assert evidence["merge_queue_proven"] is True
+    assert evidence["safe_merge_method_proven"] is False
+
+
+@pytest.mark.parametrize("failed_args", [EFFECTIVE_ARGS, METADATA_ARGS, CLASSIC_ARGS, MERGE_ARGS])
+def test_capability_command_errors_are_structured_and_fail_closed(monkeypatch, trusted_repo, failed_args):
+    runner = policy_runner(monkeypatch)
+    details = {"args": list(failed_args), "returncode": 2, "stderr": "command unavailable"}
+
+    def failing_run(args, cwd, check=True):
+        if list(args) == list(failed_args):
+            runner.calls.append(list(args))
+            raise capabilities.CapabilityError("command_failed", "Could not run command", details)
+        return runner(args, cwd, check=check)
+
+    monkeypatch.setattr(pr_operator, "run_command", failing_run)
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "human_decision_required"
+    if failed_args == MERGE_ARGS:
+        assert result["evidence"]["details"] == details
+        assert runner.calls.count(list(MERGE_ARGS)) == 1
+    else:
+        evidence = result["evidence"]["protection"]["evidence"]
+        assert evidence["command_errors"][0]["details"] == details
+        assert not any(call[:3] == ["gh", "pr", "merge"] for call in runner.calls)
+
+
+def test_later_pages_supply_proofs_and_all_restrictions(monkeypatch, trusted_repo):
+    rules = safe_rules("SQUASH")
+    runner = policy_runner(monkeypatch, pages=[[], [rules[2]], rules[:2], [{"type": "pull_request", "parameters": {"allowed_merge_methods": ["squash"]}}]])
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    evidence = result["evidence"]["protection"]["evidence"]
+    assert evidence["effective_branch_rules_page_count"] == 4
+    assert evidence["explicit_pr_merge_method_restrictions"] == [["squash"]]
+    assert runner.calls[-1] == list(MERGE_ARGS)
+
+
+@pytest.mark.parametrize("later_rule,diagnostic", [
+    ({"type": "pull_request", "parameters": {"allowed_merge_methods": ["squash"]}}, "allowed_merge_methods"),
+    ({"type": "merge_queue", "parameters": {"merge_method": "SQUASH"}}, "Conflicting"),
+    ({"type": "required_linear_history"}, "linear history"),
+])
+def test_later_page_blocker_cannot_be_hidden_by_positive_first_page(monkeypatch, trusted_repo, later_rule, diagnostic):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(), [later_rule]])
+    assert_policy_refusal(trusted_repo, runner, diagnostic)
+
+
+@pytest.mark.parametrize("method", [None, "", "merge", "UNKNOWN", "REBASE", 1, {}, []])
+def test_queue_method_must_be_recognized_uppercase_and_safe(monkeypatch, trusted_repo, method):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(method)])
+    assert_policy_refusal(trusted_repo, runner, "method")
+
+
+@pytest.mark.parametrize("queue", [{"type": "merge_queue"}, {"type": "merge_queue", "parameters": None}, {"type": "merge_queue", "parameters": {}}, {"type": "merge_queue", "parameters": []}])
+def test_queue_parameters_and_method_are_mandatory(monkeypatch, trusted_repo, queue):
+    runner = policy_runner(monkeypatch, pages=[safe_rules()[:2] + [queue]])
+    assert_policy_refusal(trusted_repo, runner, "merge_queue")
+
+
+@pytest.mark.parametrize("method,key", [("MERGE", "allow_merge_commit"), ("SQUASH", "allow_squash_merge")])
+@pytest.mark.parametrize("permission", [None, False, "true", 1, [], {}])
+def test_queue_method_permission_requires_literal_true(monkeypatch, trusted_repo, method, key, permission):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(method)], metadata={key: permission})
+    assert_policy_refusal(trusted_repo, runner, key)
+
+
+def test_missing_repository_permission_refuses(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, metadata={})
+    assert_policy_refusal(trusted_repo, runner, "allow_merge_commit")
+
+
+@pytest.mark.parametrize("restriction", [None, "merge", {}, ["MERGE"], ["unknown"], [True], ["merge", None], []])
+def test_explicit_invalid_or_empty_restriction_never_grants_permission(monkeypatch, trusted_repo, restriction):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(), [{"type": "pull_request", "parameters": {"allowed_merge_methods": restriction}}]])
+    assert_policy_refusal(trusted_repo, runner, "allowed_merge_methods")
+
+
+def test_explicit_pr_restrictions_are_intersected(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(), [
+        {"type": "pull_request", "parameters": {"allowed_merge_methods": ["merge", "squash"]}},
+        {"type": "pull_request", "parameters": {"allowed_merge_methods": ["rebase", "squash"]}},
+    ]])
+    evidence = assert_policy_refusal(trusted_repo, runner, "allowed_merge_methods")
+    assert evidence["explicit_pr_merge_method_restrictions"] == [["merge", "squash"], ["rebase", "squash"]]
+
+
+@pytest.mark.parametrize("source", ["effective", "classic"])
+@pytest.mark.parametrize("method", ["MERGE", "SQUASH"])
+def test_linear_history_excludes_merge_but_allows_squash(monkeypatch, trusted_repo, source, method):
+    rules = safe_rules(method)
+    classic = {}
+    if source == "effective":
+        rules.append({"type": "required_linear_history"})
+    else:
+        classic = {"required_linear_history": {"enabled": True}}
+    runner = policy_runner(monkeypatch, pages=[rules], classic=classic)
+    if method == "MERGE":
+        assert_policy_refusal(trusted_repo, runner, "linear history")
+    else:
+        result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+        assert result["status"] == "pass"
+        assert result["evidence"]["protection"]["evidence"]["linear_history_required"] is True
+
+
+@pytest.mark.parametrize("extra_rule", [
+    {"type": "pull_request", "parameters": None},
+    {"type": "pull_request", "parameters": []},
+    {"type": "required_status_checks"},
+    {"type": "required_status_checks", "parameters": None},
+    {"type": "required_status_checks", "parameters": {}},
+    {"type": "required_status_checks", "parameters": {"required_status_checks": None}},
+    {"type": "required_status_checks", "parameters": {"required_status_checks": "test"}},
+    {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "test"}, {}]}},
+    {"type": "required_status_checks", "parameters": {"required_status_checks": [False]}},
+    {"type": "required_linear_history", "parameters": None},
+    {"type": "merge_queue", "parameters": None},
+])
+def test_malformed_relevant_rule_refuses_despite_other_valid_proof(monkeypatch, trusted_repo, extra_rule):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(), [extra_rule]])
+    assert_policy_refusal(trusted_repo, runner, "Malformed")
+
+
+@pytest.mark.parametrize("classic", [
+    {"required_pull_request_reviews": []},
+    {"required_pull_request_reviews": False},
+    {"required_status_checks": []},
+    {"required_status_checks": {"contexts": None}},
+    {"required_status_checks": {"contexts": ["test", 1]}},
+    {"required_status_checks": {"contexts": ["test"], "checks": None}},
+    {"required_status_checks": {"checks": [{"context": "test"}, {}]}},
+    {"required_linear_history": None},
+    {"required_linear_history": {}},
+    {"required_linear_history": {"enabled": "true"}},
+    {"required_linear_history": {"enabled": 1}},
+])
+def test_malformed_classic_policy_refuses_despite_effective_proof(monkeypatch, trusted_repo, classic):
+    runner = policy_runner(monkeypatch, classic=classic)
+    assert_policy_refusal(trusted_repo, runner, "Malformed")
+
+
+def test_unrelated_rule_types_and_disabled_classic_linear_history_do_not_restrict(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, pages=[safe_rules(), [{"type": "deletion"}, {"type": "future_rule", "parameters": None}]], classic={"required_linear_history": {"enabled": False}})
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    assert runner.calls[-1] == list(MERGE_ARGS)
+
+
+@pytest.mark.parametrize("context", ["tests", "Test", "test / linux", " test", "lint"])
+def test_required_check_must_be_exact_test(monkeypatch, trusted_repo, context):
+    rules = safe_rules()
+    rules[1]["parameters"]["required_status_checks"] = [{"context": context}]
+    runner = policy_runner(monkeypatch, pages=[rules])
+    assert_policy_refusal(trusted_repo, runner, "test")
+
+
+def test_merge_command_failure_is_structured_and_never_retried(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, merge_output=command_result(list(MERGE_ARGS), returncode=1, stderr="GraphQL: policy changed"))
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "human_decision_required"
+    assert result["evidence"]["args"] == list(MERGE_ARGS)
+    assert result["evidence"]["returncode"] == 1
+    assert result["evidence"]["stderr"] == "GraphQL: policy changed"
+    assert result["evidence"]["queue_merge_method"] == "merge"
+    assert [call for call in runner.calls if call[:3] == ["gh", "pr", "merge"]] == [list(MERGE_ARGS)]
+
+
+def test_accepted_request_is_not_rejected_for_incidental_rebase_text(monkeypatch, trusted_repo):
+    policy_runner(monkeypatch, merge_output="Queue accepted; no client rebase strategy selected")
+    result = pr_operator.enable_auto_merge(trusted_repo, BRANCH)
+    assert result["status"] == "pass"
+    assert "request" in result["message"].lower()
+    assert "merged_at" not in result["evidence"]
+
+
+def test_current_branch_wrapper_runs_real_proof_before_request(monkeypatch, trusted_repo):
+    runner = policy_runner(monkeypatch, overrides={("git", "branch", "--show-current"): BRANCH + "\n"})
+    result = pr_operator.enable_auto_merge_current(trusted_repo)
+    assert result["status"] == "pass"
+    assert runner.calls == [["git", "branch", "--show-current"], list(EFFECTIVE_ARGS), list(METADATA_ARGS), list(CLASSIC_ARGS), list(MERGE_ARGS)]
+
+
+@pytest.mark.parametrize("branch", ["main", "bad branch", "--admin"])
+@pytest.mark.parametrize("current", [False, True])
+def test_unsafe_branch_never_reads_policy_or_mutates(monkeypatch, trusted_repo, branch, current):
+    runner = GhRunner({("git", "branch", "--show-current"): branch})
+    monkeypatch.setattr(pr_operator, "run_command", runner)
+    result = pr_operator.enable_auto_merge_current(trusted_repo) if current else pr_operator.enable_auto_merge(trusted_repo, branch)
+    assert result["status"] == "human_decision_required"
+    assert runner.calls == ([["git", "branch", "--show-current"]] if current else [])
 
 
 def test_auth_status_runs_only_gh_auth_status(monkeypatch, trusted_repo: Path) -> None:
@@ -413,223 +790,6 @@ def test_view_pr_nonzero_failure_preserves_command_evidence(monkeypatch, trusted
         "stderr": "HTTP 401: credential expired\nauth detail from gh",
     }
     assert calls == [(["gh", "pr", "view", "feature/opencode-capabilities", "--json", pr_operator.PR_VIEW_FIELDS], False)]
-
-
-def test_enable_auto_merge_checks_main_protection_before_auto_merge(monkeypatch, trusted_repo: Path) -> None:
-    protection = json.dumps({"required_status_checks": {"contexts": ["test"]}})
-    rulesets = json.dumps(
-        [
-            {
-                "enforcement": "active",
-                "conditions": {"ref_name": {"include": ["refs/heads/main"]}},
-                "rules": [{"type": "merge_queue"}],
-            }
-        ]
-    )
-    runner = GhRunner(
-        {
-            ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"): protection,
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets"): rulesets,
-            (
-                "gh",
-                "pr",
-                "merge",
-                "feature/opencode-capabilities",
-                "--auto",
-                "--merge",
-            ): "",
-        }
-    )
-    monkeypatch.setattr(pr_operator, "run_command", runner)
-
-    result = pr_operator.enable_auto_merge(trusted_repo, "feature/opencode-capabilities")
-
-    assert result["status"] == "pass"
-    assert runner.calls == [
-        ["gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"],
-        ["gh", "api", "repos/semanticdreams/spacecore/rulesets"],
-        ["gh", "pr", "merge", "feature/opencode-capabilities", "--auto", "--merge"],
-    ]
-
-
-def test_check_main_protection_requires_test_status_and_merge_queue(monkeypatch, trusted_repo: Path) -> None:
-    runner = GhRunner(
-        {
-            ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"): json.dumps(
-                {"required_status_checks": {"contexts": ["lint"]}}
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets"): json.dumps([{"rules": []}]),
-        }
-    )
-    monkeypatch.setattr(pr_operator, "run_command", runner)
-
-    result = pr_operator.check_main_protection(trusted_repo)
-
-    assert result["status"] == "human_decision_required"
-
-
-@pytest.mark.parametrize(
-    "ruleset",
-    [
-        {
-            "name": "test",
-            "enforcement": "disabled",
-            "conditions": {"ref_name": {"include": ["refs/heads/main"]}},
-            "rules": [{"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "test"}]}}, {"type": "merge_queue"}],
-        },
-        {
-            "name": "test",
-            "enforcement": "active",
-            "conditions": {"ref_name": {"include": ["refs/heads/dev"]}},
-            "rules": [{"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "test"}]}}, {"type": "merge_queue"}],
-        },
-        {
-            "name": "test",
-            "enforcement": "active",
-            "conditions": {"ref_name": {"include": ["refs/heads/main"]}},
-            "rules": [{"type": "merge_queue"}],
-        },
-    ],
-)
-def test_check_main_protection_ignores_disabled_non_main_and_unrelated_test_strings(
-    monkeypatch,
-    trusted_repo: Path,
-    ruleset: dict[str, object],
-) -> None:
-    runner = GhRunner(
-        {
-            ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"): json.dumps(
-                {"required_status_checks": {"contexts": ["lint"]}}
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets"): json.dumps([ruleset]),
-        }
-    )
-    monkeypatch.setattr(pr_operator, "run_command", runner)
-
-    result = pr_operator.check_main_protection(trusted_repo)
-
-    assert result["status"] == "human_decision_required"
-
-
-def test_check_main_protection_accepts_active_main_ruleset_with_required_test_and_merge_queue(
-    monkeypatch,
-    trusted_repo: Path,
-) -> None:
-    runner = GhRunner(
-        {
-            ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"): json.dumps(
-                {"required_status_checks": {"contexts": ["lint"]}}
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets"): json.dumps(
-                [
-                    {
-                        "enforcement": "active",
-                        "conditions": {"ref_name": {"include": ["refs/heads/main"]}},
-                        "rules": [
-                            {
-                                "type": "required_status_checks",
-                                "parameters": {"required_status_checks": [{"context": "test"}]},
-                            },
-                            {"type": "merge_queue"},
-                        ],
-                    }
-                ]
-            ),
-        }
-    )
-    monkeypatch.setattr(pr_operator, "run_command", runner)
-
-    result = pr_operator.check_main_protection(trusted_repo)
-
-    assert result["status"] == "pass"
-
-
-def test_check_main_protection_accepts_effective_main_rules_when_ruleset_list_is_summary_only(
-    monkeypatch,
-    trusted_repo: Path,
-) -> None:
-    runner = GhRunner(
-        {
-            ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"): json.dumps(
-                {"required_status_checks": {"contexts": ["lint"]}}
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets"): json.dumps(
-                [
-                    {
-                        "id": 20232493,
-                        "enforcement": "active",
-                        "conditions": None,
-                    }
-                ]
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rules/branches/main"): json.dumps(
-                [
-                    {"type": "pull_request"},
-                    {"type": "merge_queue"},
-                    {
-                        "type": "required_status_checks",
-                        "parameters": {"required_status_checks": [{"context": "test"}]},
-                    },
-                ]
-            ),
-        }
-    )
-    monkeypatch.setattr(pr_operator, "run_command", runner)
-
-    result = pr_operator.check_main_protection(trusted_repo)
-
-    assert result["status"] == "pass"
-    assert result["evidence"]["effective_branch_rules_available"] is True
-    assert result["evidence"]["effective_branch_rules_required_test_check_proven"] is True
-    assert result["evidence"]["effective_branch_rules_merge_queue_proven"] is True
-
-
-def test_check_main_protection_accepts_detailed_ruleset_when_effective_rules_are_unavailable(
-    monkeypatch,
-    trusted_repo: Path,
-) -> None:
-    runner = GhRunner(
-        {
-            ("gh", "api", "repos/semanticdreams/spacecore/branches/main/protection"): json.dumps(
-                {"required_status_checks": {"contexts": ["lint"]}}
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets"): json.dumps(
-                [
-                    {
-                        "id": 20232493,
-                        "enforcement": "active",
-                        "conditions": None,
-                    }
-                ]
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rules/branches/main"): command_result(
-                ["gh", "api", "repos/semanticdreams/spacecore/rules/branches/main"],
-                returncode=404,
-            ),
-            ("gh", "api", "repos/semanticdreams/spacecore/rulesets/20232493"): json.dumps(
-                {
-                    "id": 20232493,
-                    "enforcement": "active",
-                    "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
-                    "rules": [
-                        {
-                            "type": "required_status_checks",
-                            "parameters": {"required_status_checks": [{"context": "test"}]},
-                        },
-                        {"type": "merge_queue"},
-                    ],
-                }
-            ),
-        }
-    )
-    monkeypatch.setattr(pr_operator, "run_command", runner)
-
-    result = pr_operator.check_main_protection(trusted_repo)
-
-    assert result["status"] == "pass"
-    assert result["evidence"]["detailed_rulesets_available"] is True
-    assert result["evidence"]["detailed_rulesets_required_test_check_proven"] is True
-    assert result["evidence"]["detailed_rulesets_merge_queue_proven"] is True
 
 
 def test_poll_merge_queue_treats_pending_states_as_nonterminal_until_merged(monkeypatch, trusted_repo: Path) -> None:
