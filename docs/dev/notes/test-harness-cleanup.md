@@ -288,7 +288,7 @@ That is acceptable for now, but it is the first place to revisit if this harness
 again.
 
 
-## Fixless List Operand Experiment
+## List Operand Observations and Canonical Fixture Roots
 
 With the existing `SPACE_TEST_TIMINGS=1`, the List presentation fixture emits
 `[LIST-OPERANDS]` observations at its existing `JsonUtils.write-json!` seam for
@@ -300,10 +300,29 @@ and canonical destination equality. No record values, app-data paths, or session
 data are inspected or printed. The sink immediately flushes each line.
 
 Qualification uses equality with that fixture-owned canonical destination, not
-the potentially mismatching raw-prefix predicate. Other leaf names and unrelated
-writes are excluded. This does **not** change which writes the existing counter
-counts: its original predicate, roots, counter resets, expected arrays, disk and
-signal assertions, and fixture cleanup remain unchanged.
+the raw-prefix predicate. Other leaf names and unrelated writes are excluded from
+diagnostic output; diagnostic observations never supply write-counter values.
+
+The guarded Task 7 Wine run established the original fixture defect: all nine
+observations across the five affected scenarios had `raw-prefix=false` and
+`intended-equal=true`. The fixture retained a raw mixed-separator temporary root
+while the real store/writer used its canonical Windows absolute spelling. Only
+the write counter was zero; expected signal counts and existing disk assertions
+were consistent with the real writes. Native passes alone had not proven this.
+
+The fixture now returns `fs.absolute` from `make-temp-dir` before directory
+creation, store construction, observation, snapshots, or cleanup. All share that
+one canonical root. Counting canonicalizes each intercepted write path using the
+same lexical `fs.absolute` contract and requires the root plus its native path
+separator, so a sibling sharing only the textual root prefix is not counted.
+This adds no symlink, case-folding, or trailing-separator policy and changes no
+production List persistence or filesystem API.
+
+Real-writer regressions exercise absolute, relative, and dot-component spellings
+of the same canonical List leaf, check exact JSON disk bytes, and reject a real
+sibling-prefix write. The five existing counter arrays and all passive/error,
+signal, view, and cleanup oracles remain intact. Recovery additionally compares
+the final held record with a fresh disk readback after its successful name edit.
 
 Output is capped at two observations per scenario and twelve lines per module,
 with at most 1024 encoded bytes per line. Each path is byte-escaped to printable
@@ -311,9 +330,10 @@ ASCII and independently bounded to 128 encoded bytes plus quotes; truncation is
 marked `[truncated]`. Disabled observations resolve no extra paths and emit no
 output. In-module controls exercise escaping, caps, unrelated writes, and a
 canonical destination whose raw prefix differs. Native timings on/off runs
-check outcomes and diagnostic overhead; they do not establish Wine operands.
-The raw-prefix normalization hypothesis remains unproven until actual guarded
-Wine measurements. This checkpoint is not a normalization or persistence fix.
+check outcomes, caps, and parity. The actual Wine cause is established by the
+earlier guarded operands; success of this fixture repair in Wine still requires
+the next guarded combined run. The bounded observations retain their original
+raw operands and predicates for that verification, rather than assuming success.
 
 ## See also
 

@@ -7,7 +7,7 @@
 
 (fn make-temp-dir []
   (set temp-counter (+ temp-counter 1))
-  (fs.join-path temp-root (.. "entities-" (os.time) "-" temp-counter)))
+  (fs.absolute (fs.join-path temp-root (.. "entities-" (os.time) "-" temp-counter))))
 
 (fn with-temp-dir [f]
   (local dir (make-temp-dir))
@@ -654,11 +654,13 @@
   (local original-write JsonUtils.write-json!)
   (local clickables (assert app.clickables "list presentation requires native clickables"))
   (local original-register clickables.register)
+  ;; The fixture root is canonical; the native separator makes this a component boundary.
+  (local write-prefix (fs.join-path f.root ""))
   (local observe-write (make-list-write-observer list-observation-budget f.observation-scenario
     f.root f.path (os.getenv "SPACE_TEST_TIMINGS") write-list-observation))
   (fn write [path value]
     (when observe-write (observe-write path))
-    (when (= (string.sub path 1 (# f.root)) f.root) (set f.writes (+ f.writes 1)))
+    (when (= (string.sub (fs.absolute path) 1 (# write-prefix)) write-prefix) (set f.writes (+ f.writes 1)))
     (original-write path value))
   (fn register [self widget]
     (when widget.clicked (table.insert f.buttons widget))
@@ -928,7 +930,39 @@
   (local count (# f.buttons)) (f.node.items-changed:emit {})
   (assert (= (- (# f.buttons) count) 12) "only the surviving List view may rebuild three rows")
   (assert-list-rows f canonical-items ["node-key-alpha" "node-key-alpha" "node-key-beta"])
+  (same-presentation-value f.entity (json.loads (fs.read-file f.path)))
   (same-presentation-value [f.writes f.updated f.changed f.created] [1 1 0 0]))
+
+(fn list-counter-equivalent-spellings [f]
+  (assert (= f.root (fs.absolute f.root)) "all fixture users must share the canonical root")
+  (local absolute (fs.absolute f.path))
+  (local relative (fs.relative absolute))
+  (local equivalent (fs.join-path (fs.parent absolute) "." "list.json"))
+  (assert (not (= relative absolute)) "regression requires a distinct relative spelling")
+  (local value (json.loads (fs.read-file absolute)))
+  (each [i path (ipairs [absolute relative equivalent])]
+    (assert (= (fs.absolute path) absolute) "all spellings must identify the same canonical List leaf")
+    (reset-list-observation f)
+    (set value.name (.. "spelling-" i))
+    (JsonUtils.write-json! path value)
+    (assert (= (fs.read-file absolute) (json.dumps value)) "real writer must persist the exact JSON bytes")
+    (assert (= f.writes 1) (.. "canonical-equivalent write must count once for spelling " i))
+    (same-presentation-value [f.updated f.changed f.created] [0 0 0])))
+
+(fn list-counter-sibling-prefix [f]
+  (local sibling-root (.. f.root "-sibling"))
+  (local path (fs.join-path sibling-root "list.json"))
+  (local value {:fixture "sibling-prefix"})
+  (fs.create-dirs sibling-root)
+  (fn write []
+    (reset-list-observation f)
+    (JsonUtils.write-json! path value)
+    (assert (= (fs.read-file path) (json.dumps value)) "sibling write must reach the real disk")
+    (assert (= f.writes 0) "a sibling sharing the raw root prefix must not count")
+    (same-presentation-value [f.updated f.changed f.created] [0 0 0]))
+  (local (ok err) (pcall write))
+  (fs.remove-all sibling-root)
+  (when (not ok) (error err)))
 
 (fn add-list-presentation-test [suffix body scenario]
   (fn run [] (with-list-presentation body scenario))
@@ -942,6 +976,8 @@
 (add-list-presentation-test "focus uses canonical existing key without opening/loading" list-presentation-focus)
 (add-list-presentation-test "name-only edit preserves membership" list-presentation-name :name)
 (add-list-presentation-test "unresolved and resolver errors do not author" list-presentation-errors :recovery)
+(add-list-presentation-test "write counter accepts canonical-equivalent spellings" list-counter-equivalent-spellings)
+(add-list-presentation-test "write counter excludes sibling-root prefixes" list-counter-sibling-prefix)
 
 (fn assert-list-fixture-lifetime [run expected]
   (local caller (assert app)) (local engine (assert caller.engine))
