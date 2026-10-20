@@ -73,4 +73,13 @@ The saved plan is a separate coordination checkpoint. No baseline path is author
 
 ## Self-Review and Escalation
 
+### First Implementation Gate Refinement
+
+Advisor `ses_ea5a00cd3fferf7Fii4xJ4o3Ov` confirmed all43 initial diagnostics: raw generic-for iterator misuse,17 relocated old findings plus17 stale entries, new121-line rule function and seven helper alternative/doctrine findings. Add ONLY `assets/lua/constraints/baseline-data.fnl` as the sixth implementation path; no other scope expansion.
+
+- [ ] Correct the three raw iterations using the project-verified iterator/state tuple `(values next object)`, not `next(object)` and not pairs/metamethod traversal. Verify spelling through the embedded runtime before accepting it.
+- [ ] Replace the new selector's boolean/value alternatives with explicit branches preserving exact nil/false/value and short-circuit semantics, including nested create/lookup forms and expected absent-group behavior. No dummy assertion, unsupported-input rejection or rule bypass.
+- [ ] Extract the existing definition/recovered-parent merge into a focused private helper to satisfy function length in code. Preserve fresh array, merge/call-read order, field-read behavior and nil/false optional-array defaults; no masking/coverage/cleaner change, line-count gaming or new length exception.
+- [ ] After source structure settles, relocate ONLY the17 demonstrated existing baseline findings one-to-one using actual new positions/fingerprints and unchanged/reduced measures. Do not add debt, raise limits or regenerate unrelated rows. Compile→wholeconstraints→new semantic module and complete layout aggregator, then separately reviewed fresh work/differential instrumentation remains required before execution.
+
 One authoritative coverage algorithm remains; selector changes candidate filtering only. Exact manifest/API/keys, lazy errors/accesses, raw fallback, nonvacuous equivalence, deterministic work and separate timing evidence are specified. No product decision is identified. If scope/API changes are needed, stop for coordinator/plan refinement; HUMAN_DECISION_REQUIRED only for a genuine unresolved product/API/data/architecture/access choice. Original publication controlled Tasks7–9, current-origin/whole-branch/PRCI integration gates remain separate and mandatory.
