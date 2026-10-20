@@ -181,8 +181,93 @@ With no observer, no event tables are allocated and no observation clocks run.
 These production modules add no environment switch, clock, formatting, output,
 writer import, protected workload wrapper, coroutine, deadline or hook. Consumers
 own any opt-in policy, clock, bounded formatting/output and overhead assessment;
-test-only writer integration is a separate checkpoint. Existing budgets and
-exception boundaries remain unchanged.
+the bounded test-only consumer is described below. Existing budgets and exception
+boundaries remain unchanged.
+
+### Bounded Full-Repository Test Progress
+
+`tests.constraint-progress` is a test-only consumer, not a production dependency
+or a generic profiler. Its sole export is:
+
+```text
+ConstraintProgress.create({now-ms = () -> number,
+                           write = (string) -> nil,
+                           detail-phase = string | nil}) -> observer
+```
+
+The caller injects the monotonic wall-clock millisecond function and a synchronous
+sink. The writer samples that clock at creation and on valid events, reports
+relative `at_ms` and completed `elapsed_ms`, and clamps backward samples to the
+last observed time. Nonfinite samples fail explicitly. Each sink call receives a
+complete, encoded line **without** a newline and returns before observation
+continues; sink errors propagate unchanged. Every line, including the cap marker,
+conservatively reserves **two terminator bytes**: the live sink supplies LF, which
+text-mode stdout may expand to CRLF on Windows/Wine. On an LF-only sink this
+leaves one unused byte per line; no stdout mode or callback API is changed.
+This introduces no workload exception
+wrapper, coroutine, replacement debug hook or per-rule timeout.
+
+Only the existing full-repository pipeline case in
+`tests.test-constraints-default-run` attaches a live observer, and only when the
+existing `SPACE_TEST_TIMINGS` value is exactly `1`. For that case, disabled values
+allocate no writer and call neither its clock nor sink. The live clock is `sysinfo.now-ms`;
+the sink adds one newline, flushes immediately, and raises returned write/flush
+errors. The full roots, all five suites, `baseline-data=false`, existing result
+assertions, 120-second case deadline and 1800-second outer application deadline
+are unchanged. Synthetic nested `Runner.run-case` tests verify the existing
+10000-instruction hook stays installed during writes, is restored before teardown,
+and retains its failure latch when an inner timeout exception is caught.
+
+The private live `detail-phase` literal remains **nil** for the first experiment.
+There is no new environment selector, command or test-runner marker/schema change.
+Every diagnostic line uses the distinct `[CONSTRAINT-PROGRESS] ` prefix:
+
+- **Phase-first (`detail-phase=nil`):** emit high-level begin/end events and, at
+  phase end, fixed-subphase aggregate begin/end counts, completed elapsed totals,
+  definitions and calls. Top-level `count` carries the phase's actual file, rule
+  or diagnostic count. Individual file events are not printed. State consists
+  of fixed phase/subphase slots, never event history or a file-keyed map.
+  Output is capped at **256 lines**, **256 encoded bytes per line** and
+  **65536 bytes total**, including the two-byte terminator reservation per line.
+  The final available line is
+  reserved for `[CONSTRAINT-PROGRESS] cap reached mode=phase`.
+- **Later measured detail:** the injected option may select one known pipeline
+  phase. Only that phase's subphase/file edges are added to the high-level output.
+  The entire observer output is capped at **2 MiB** and **512 encoded bytes per
+  line**, including the two-byte terminator reservation. Space for
+  `[CONSTRAINT-PROGRESS] cap reached mode=detail` and its two-byte terminator is reserved
+  inside the total budget. This mode exists for a later evidence-selected
+  experiment; it is not enabled by the live integration. LF output need not fill
+  the physical 2-MiB bound: conservative reserved bytes, not LF bytes alone,
+  determine the cap. CRLF output is bounded without that unused byte per line.
+
+After either cap marker, further observation does no clock or formatting work.
+There is no fabricated completion at a cap or after a raised workload/sink error.
+An emitted end means that an end event was received, **not** that a rule passed.
+Elapsed values are attached only to matched starts; aggregate `begins` and `ends`
+preserve unmatched work without assigning it a completed duration. Phase elapsed
+already includes its subphase work. Definitions/calls describe each subphase's
+observed file-fact state, not distinct records to sum across subphases.
+
+Formatting reads only allowlisted raw scalar fields: known phase/subphase/edge,
+finite nonnegative integral counts, positive file/rule indices, registered rule
+identifiers and safe relative file labels. Unsafe or absent labels use the index
+without an absolute-path fallback. Labels are quoted and byte-escaped to printable
+ASCII, with explicit `[truncated]` on bounded label truncation. No source, AST,
+diagnostic/result payload, arbitrary object stringification, runtime-private path
+or data dump is included. Number formatting is bounded and approximate (six
+significant digits); these observations are diagnostics, not exact counters for
+accounting or a timing API.
+
+The phase-first allowance plus the existing approximately 642-KiB capture remains
+below the 16-MiB capture limit; even the optional 2-MiB detail allowance fits within
+that bound. Compare native default-module OFF/ON executed counts, ordered outcomes,
+output size, phase inventory and elapsed time before actual Wine observation.
+Alternating repeated local samples assess obvious instrumentation overhead but
+are not a general speed guarantee. Last-started phases are not a root-cause
+diagnosis; this instrumentation does not itself fix the Wine timeout. The
+separately reviewed scenario-ownership repair above does not waive Task6C or
+Task7's remaining measurement and integration gates.
 
 ## Constraint Families
 
