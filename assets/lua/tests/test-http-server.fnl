@@ -10,14 +10,14 @@
 (fn poll-http []
   (callbacks.run-loop {:poll-http true :sleep-ms 5 :timeout-ms 50}))
 
-(fn wait-for [srv pred timeout-ms]
+(fn wait-for [_srv pred timeout-ms]
   "Poll until pred returns truthy, or timeout."
-  (local deadline (+ (os.clock) (/ (or timeout-ms 5000) 1000)))
+  (local deadline (+ (sysinfo.now-ms) (or timeout-ms 5000)))
   (var result nil)
-  (while (and (not result) (< (os.clock) deadline))
+  (while (and (not result) (< (sysinfo.now-ms) deadline))
     (poll-http)
-    (local (ok val) (pcall pred))
-    (when ok (set result val)))
+    (local val (pred))
+    (set result val))
   (assert result (.. "timeout after " (or timeout-ms 5000) "ms")))
 
 (fn stream-body [chunks]
@@ -159,7 +159,7 @@
 
   (var response nil)
   (http.request
-    {:method "POST"
+    {:method "POST" :headers {:Content-Length "0"}
      :url (.. "http://127.0.0.1:" port "/no-content")
      :callback (fn [res] (set response res))})
 
@@ -299,6 +299,225 @@
   (assert true "SSE cleanup completes without error"))
 
 (table.insert tests {:name "http-server: SSE connection closes on server stop" :fn test-sse-cleanup})
+
+;; ── SSE callable finalizers ──
+;; Only state owns strong server/stream references. Callbacks capture state, not
+;; aliases of its mutable fields, so clearing those fields really permits GC.
+(fn sse-log [message]
+  (print (.. "[SSE-FINALIZERS] " message))
+  (io.flush))
+
+(fn collect-twice []
+  (collectgarbage :collect)
+  (collectgarbage :collect))
+
+(fn wait-sse [state pred]
+  ;; lua_http_dispatch buffers completed responses for http.poll. Its streaming
+  ;; callback is unregistered before the queued done item can dispatch, so use
+  ;; the request-id-matched completion response rather than depending on done.
+  (wait-for nil (fn []
+                  (each [_ response (ipairs (http.poll))]
+                    (when (= response.id state.request)
+                      (set state.done true)
+                      (set state.cancelled (= response.error "cancelled"))))
+                  (pred)) 5000))
+
+(fn teardown-sse [state]
+  (local errors [])
+  (fn attempt [label action]
+    (local (ok err) (pcall action))
+    (when (not ok)
+      (table.insert errors (.. label ": " (tostring err)))))
+  (attempt "cancel" (fn []
+                      (when (and state.request (not state.done))
+                        (http.cancel state.request))))
+  (attempt "stop" (fn [] (when state.server (state.server:stop))))
+  (attempt "completion drain" (fn []
+                                (when state.request
+                                  (wait-sse state #state.done))))
+  ;; Always release roots, even when cancellation/stop/draining raised an error.
+  (set state.stream nil)
+  (set state.server nil)
+  (set state.request nil)
+  (attempt "collection" collect-twice)
+  (assert (= (# errors) 0) (table.concat errors "\n")))
+
+(fn add-sse-finalizer-case [name body]
+  (local state {:weak (setmetatable {} {:__mode "v"})
+                :body "" :done false :close-count 0})
+  (table.insert tests {:name (.. "http-server: SSE finalizers " name)
+                       :timeout-seconds 25
+                       :fn #(body state)
+                       :teardown #(teardown-sse state)}))
+
+(fn assert-sse-error [action expected]
+  (local (ok err) (pcall action))
+  (assert (not ok) (.. "expected error: " expected))
+  (assert (string.find (tostring err) expected 1 true)
+          (.. "expected " expected ", got: " (tostring err))))
+
+(fn configure-sse [state colon?]
+  (assert-sse-error (fn [] (if colon? (state.stream:send {} true)
+                                    (state.stream.send {} true)))
+                    "SSEStream.send requires a string")
+  (assert-sse-error (fn [] (if colon? (state.stream:on-close {} false)
+                                    (state.stream.on-close {} false)))
+                    "SSEStream.on-close requires a function")
+  ;; This temporary strong reference ends before any collection phase. Once
+  ;; registered, only native ownership and a weak diagnostic witness remain.
+  (local handler (fn [] (set state.close-count (+ state.close-count 1))))
+  (set state.weak.handler handler)
+  (local registered-values
+    (if colon?
+        (select "#" (state.stream:on-close {} true handler))
+        (select "#" (state.stream.on-close {} false handler))))
+  (assert (= registered-values 0) "on-close must return no values")
+  (local first "event: finalizer\ndata: finalizer-one\n\n")
+  (local second "event: finalizer\ndata: finalizer-two\n\n")
+  (assert (= (if colon? (state.stream:send {} true first)
+                       (state.stream.send {} false first)) true)
+          "first send must succeed after scanning table/boolean arguments")
+  (assert (= (if colon? (state.stream:send {} false second)
+                       (state.stream.send {} true second)) true)
+          "second send must succeed")
+  (wait-sse state #(and (string.find state.body "finalizer-one" 1 true)
+                       (string.find state.body "finalizer-two" 1 true)))
+  (assert (= state.close-count 0) "open stream must not notify close")
+  (assert (not state.done) "stream must still be active after delivery")
+  (sse-log "two payloads delivered; stream active; close-count=0"))
+
+(fn start-sse [state colon?]
+  (set state.server (http-server-mod.HttpServer))
+  (set state.weak.server state.server)
+  (state.server:route_sse "/finalizers"
+    (fn [req]
+      (set state.stream req.stream)
+      (set state.weak.stream req.stream)
+      (set state.weak.send req.stream.send)
+      (set state.weak.close req.stream.close)
+      (set state.weak.on-close req.stream.on-close)))
+  (local port (state.server:listen "127.0.0.1" 0))
+  (assert (> port 0) "fixture must bind an ephemeral loopback port")
+  (set state.request
+       (http.request {:method "GET"
+                      :url (.. "http://127.0.0.1:" port "/finalizers")
+                      :headers {:Accept "text/event-stream"}
+                      :stream true
+                      :callback (fn [result]
+                                  (when result.chunk
+                                    (set state.body (.. state.body result.chunk)))
+                                  (when result.done (set state.done true)))}))
+  (wait-sse state #state.stream)
+  (configure-sse state colon?))
+
+;; This helper's userdata/metatable/finalizer locals die on return. Its result
+;; contains primitives only, never a diagnostic root to a callable's userdata.
+(fn sse-identity-snapshot [stream]
+  (local identities [])
+  (each [_ key (ipairs [:send :close :on-close])]
+    (local (upvalue-name userdata) (debug.getupvalue (. stream key) 2))
+    (assert (= (type userdata) "userdata")
+            (.. key " upvalue 2 must be actual callable userdata"))
+    (local mt (debug.getmetatable userdata))
+    (assert (= (type mt) "table") "callable userdata must have a metatable")
+    (assert (= (type mt.__gc) "function") "callable metatable must have __gc")
+    (local names [])
+    (each [name value (pairs (debug.getregistry))]
+      (when (and (= (type name) "string") (rawequal value mt))
+        (table.insert names name)))
+    (table.sort names)
+    (assert (> (# names) 0) "callable metatable must have a registry name")
+    (table.insert identities {:key key :mt mt :gc mt.__gc})
+    (sse-log (.. key " upvalue2-name=" upvalue-name
+                 " type=" (type userdata) " registry=" (table.concat names " | "))))
+  (local comparisons [])
+  (for [i 1 2]
+    (for [j (+ i 1) 3]
+      (local a (. identities i))
+      (local b (. identities j))
+      (local comparison {:pair (.. a.key "/" b.key)
+                         :same-metatable (rawequal a.mt b.mt)
+                         :same-gc (rawequal a.gc b.gc)})
+      (table.insert comparisons comparison)
+      (sse-log (.. comparison.pair " same-metatable=" (tostring comparison.same-metatable)
+                   " same-__gc=" (tostring comparison.same-gc)))))
+  comparisons)
+
+(fn test-sse-identities [state]
+  (start-sse state false)
+  (local comparisons (sse-identity-snapshot state.stream))
+  (each [_ comparison (ipairs comparisons)]
+    (assert (not comparison.same-metatable)
+            (.. "SSE callable finalizer identities must be distinct: " comparison.pair))))
+
+(fn close-sse-twice [state colon?]
+  (for [_ 1 2]
+    (assert (= (if colon? (select "#" (state.stream:close {} true))
+                         (select "#" (state.stream.close {} false))) 0)
+            "close must return no values"))
+  (assert (= (if colon? (state.stream:send {} true "after-close")
+                       (state.stream.send {} false "after-close")) false)
+          "send after close must return false"))
+
+(fn await-sse-close [state]
+  (wait-sse state #(and state.done (= state.close-count 1)))
+  (poll-http)
+  (assert (= state.close-count 1) "close must dispatch exactly once")
+  (sse-log "client completion observed; close-count=1"))
+
+(fn collect-sse-before-stop [state closed?]
+  (set state.stream nil)
+  (sse-log "collecting stream and callables before server stop")
+  (collect-twice)
+  (each [_ key (ipairs [:stream :send :close :on-close])]
+    (assert (= (. state.weak key) nil) (.. key " must be collected before server stop")))
+  (when closed?
+    (assert (= state.weak.handler nil) "dispatched Lua close handler must be released"))
+  (assert (rawequal state.weak.server state.server) "server must remain rooted through stream GC")
+  (assert state.server "server root must be live")
+  (sse-log (.. "weak stream/send/close/on-close cleared; server rooted; close-count=" state.close-count))
+  (state.server:stop)
+  (sse-log "server stop returned")
+  (wait-sse state #state.done)
+  (set state.request nil)
+  (set state.server nil)
+  (collect-twice)
+  (assert (= state.weak.server nil) "server must collect after releasing its root")
+  (assert (= state.weak.handler nil) "Lua close handler must release with server")
+  (sse-log "weak server/handler cleared after stop and collection"))
+
+(fn test-sse-explicit-close [state colon?]
+  (start-sse state colon?)
+  (close-sse-twice state colon?)
+  (assert (= state.close-count 0) "close notification must wait for Lua polling")
+  (await-sse-close state)
+  (close-sse-twice state colon?)
+  (poll-http)
+  (assert (= state.close-count 1) "repeated close must not dispatch again")
+  (collect-sse-before-stop state true))
+
+(fn test-sse-client-disconnect [state]
+  (start-sse state false)
+  (assert (= (http.cancel state.request) true) "active SSE cancellation must succeed")
+  (sse-log "active client cancellation succeeded")
+  (await-sse-close state)
+  (assert state.cancelled "client completion must report cancellation")
+  (close-sse-twice state false)
+  (poll-http)
+  (assert (= state.close-count 1) "close after disconnect must not notify again")
+  (collect-sse-before-stop state true))
+
+(fn test-sse-open-collection [state]
+  (start-sse state true)
+  ;; Intentionally neither cancel nor close: collect before stopping a live SSE
+  ;; connection. stop suppresses enqueue, so no stop-time Lua notice is required.
+  (collect-sse-before-stop state false))
+
+(add-sse-finalizer-case "distinct callable identities" test-sse-identities)
+(add-sse-finalizer-case "dot explicit-close" #(test-sse-explicit-close $ false))
+(add-sse-finalizer-case "colon explicit-close" #(test-sse-explicit-close $ true))
+(add-sse-finalizer-case "client-disconnect" test-sse-client-disconnect)
+(add-sse-finalizer-case "open-stream collection before stop" test-sse-open-collection)
 
 (fn main []
   (local runner (require :tests/runner))
