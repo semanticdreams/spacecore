@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-21
+Scheduled devlog automation can now prepare its writing branch through a [guarded capability](/dev/features/opencode-agent-workflow#strict-daily-devlog-branch-preparation) that pins freshly fetched `origin/main`, derives the UTC-dated branch internally, and fails closed on collisions or ambiguous safety evidence rather than resetting existing work. This removes a branch-creation blocker without broadening Git permissions, while keeping reviewed writing and publication as separate steps.
+
 ## 2026-08-07
 Space's graph workspace became easier to recover, search, and trust in motion: the [Graph Sidebar Node Finder](/specs/2026-08-06-graph-sidebar-node-finder-design) added Add Start recovery and Find Node rows that reveal or open graph-addressable objects through activity callbacks while keeping GraphMap as the interaction-context owner, and [Graph UX Polish](/specs/2026-08-07-graph-ux-polish-design) stabilized sidebar width, restored-map identity, truncation, and theme-resolved graph/chrome backgrounds so the graph view can stay a visual navigation surface instead of absorbing domain ownership. In parallel, weekly-agent workflow hardening tightened OpenCode capability boundaries and PR-protection polling, making the scheduled-agent path safer as graph work accelerates.
 
