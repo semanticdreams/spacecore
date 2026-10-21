@@ -280,6 +280,50 @@ The current constraints are grouped into four families:
 
 These constraints complement human review and normal unit/integration tests; they do not replace either one.
 
+### Invocation-local assertion-call selection
+
+`layout.interactive-context-assertion` keeps one private lazy selector per file
+and rule invocation. Creating it only captures the file fact, merged definitions
+and original calls references. Anonymous and nil/false-name coverage branches
+never demand eligibility or classification. The first named coverage lookup
+checks the entire original/recovered definition graph before serving any group;
+no name, kind, scope or relevance policy is added.
+
+The indexed path supports immutable canonical Facts: metatable-free dense arrays,
+plain definition/call records with string keys and finite scalar fields, and
+nil/false/string name, enclosure, callee and form fields. File module/path must
+also be nil/false/strings. Raw eligibility does not invoke access, equality, length
+or iteration metamethods, including protected metatables. Unrelated FileFact AST,
+target, metrics and access payloads are not recursively inspected. Unsupported or
+dynamic shapes discard tentative groups and retain the **actual original
+scanner**, with the original calls value, accesses, ignored poison fields and
+errors—not a normalized substitute or a new rejection.
+
+Eligible groups contain original assertion call references in original `ipairs`
+order, keyed by the existing enclosure-or-empty-string semantics. Duplicate
+names/scopes and calls are not deduplicated. Nil/false forms still count as
+matched assertions; forms are never cleaned eagerly. The coverage algorithm,
+conservative all-keyword coverage, text fallback, nested-definition masking and
+the original calls passed to bare/closure coverage remain unchanged. No cache
+survives a file/run, and neither results nor cleaned forms are cached.
+
+For Q named queries and C calls, repeated named filtering was Q×C entry visits.
+Selection now uses one C-entry eligibility/grouping pass plus the sum of queried
+group sizes. There is also a separate C-key array-density metadata pass (not
+another call-record classification), linear definition/container eligibility and
+linear raw record-field checks. Thus the 100-call/four-query fixture targets
+100 classified records plus eight group visits, **and 100 call-array key
+visits**; it is not a claim of only 108 total operations. Repeated names revisit
+their groups without rebuilding. Zero named demands mean zero selector work.
+Deterministic work proof uses separately reviewed test-only compiled-source
+counters, never production hooks, counters, exports or wall-time assertions.
+
+Native semantic equivalence and work counts do not establish a Wine speedup or
+120-second full-repository compliance. Uninstrumented alternating comparisons,
+the unchanged hook-bearing regression vector, full local suite and guarded
+actual reproduction remain separate gates. Selection adds no telemetry or
+progress/privacy contract changes, and changes no baseline, rule or timeout limit.
+
 ## Baselines
 
 Baselines are reviewed, versioned project data for accepted existing violations. They are not a bypass flag.

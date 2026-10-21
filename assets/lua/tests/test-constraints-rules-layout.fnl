@@ -9,6 +9,7 @@
 (local child-drop (require :tests.test-constraints-rules-layout-child-drop))
 (local interactive (require :tests.test-constraints-rules-layout-interactive))
 (local ancestors (require :tests.test-constraints-rules-layout-interactive-ancestors))
+(local assert-calls (require :tests.test-constraints-layout-assert-calls))
 
 (local tests [])
 
@@ -19,6 +20,7 @@
 (each [_ t (ipairs child-drop.tests)] (table.insert tests t))
 (each [_ t (ipairs interactive.tests)] (table.insert tests t))
 (each [_ t (ipairs ancestors.tests)] (table.insert tests t))
+(each [_ t (ipairs assert-calls.tests)] (table.insert tests t))
 
 ;; ======================================================================
 
