@@ -289,6 +289,58 @@ creation through `github-operator`, auto-merge/queue setup, and merge-queue
 polling. Raw privileged Git/GitHub commands, direct `main` pushes, rebase, reset,
 force-push, clean, and branch deletion remain forbidden.
 
+#### Strict daily-devlog branch preparation
+
+The strict daily automation delegates this **exact** command to `git-integrator`:
+
+```bash
+python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root .
+```
+
+The wrapper derives `automation/daily-devlog/YYYY-MM-DD` from a single
+timezone-aware UTC clock sample. There are no caller-supplied date, branch,
+base, remote, force, cleanup or generic branch-creation arguments. Shared
+trusted-Space-repository and branch-name policy are unchanged. A clean worktree
+(including untracked files) and a named, allowed non-`main` source are required
+before fetching; detached HEAD and unsafe sources are refused.
+
+It fetches with `git fetch --no-tags origin
+refs/heads/main:refs/remotes/origin/main` (non-forced, with no fallback), resolves
+`refs/remotes/origin/main^{commit}`, and pins that full fresh commit SHA. It
+checks the exact local ref, the live exact origin target via `ls-remote`, and
+NUL-delimited worktree registrations, failing closed on command errors or
+malformed/ambiguous evidence. From another source it refuses **any** existing
+local or remote dated target, even at main. Any other worktree holding the
+target is refused, including locked or prunable registrations; no worktree
+directory traversal, pruning, unlocking, force or deletion is performed.
+
+The only idempotent retry is already on today's exact target, clean HEAD equal
+to freshly fetched main, no other worktree holder, and the origin target absent
+or equal to that same SHA. A progressed target requires an ownership/resumption
+decision, never a reset. Otherwise the wrapper rechecks source/clean state and
+creates with `git switch --no-track -c <derived-target> <captured-base-sha>`.
+Source commits remain on the source ref and are not copied; no upstream is
+inherited even with `branch.autoSetupMerge=always`. It verifies resulting
+branch, HEAD and cleanliness. Failed postconditions are explicit failures with
+no automatic rollback.
+
+The existing JSON envelope uses action `create_daily_devlog_branch` and reports
+`utc_date`, `source_branch`, `source_head_sha`, `target_branch`,
+`origin_main_sha`, resulting `head_sha`, collision/worktree facts, `commands`
+and `already_current`. Existing exit codes remain 0 (pass), 2 (human decision)
+and 3 (failure). Preparation does **not** push, merge, rebase or publish;
+reviewed writing and the existing finishing capabilities remain separate.
+
+**Restart OpenCode after changing the agent definition.** Configuration is
+startup-loaded, not hot-reloaded. Unit tests and static permission checks do
+not activate a running session. End-to-end acceptance requires a fresh
+automation process from landed `origin/main`, actual authorized execution of
+the exact command, correct dated branch/base evidence, and progression through
+the reviewed docs/PR workflow to actual publication when an entry is warranted.
+Scheduler `completed` alone is not acceptance. Leave unrelated home
+configuration, backups and plugins untouched; a separate home-audit refusal
+must not be described as a successful audit.
+
 ### Strict-flow low-ceremony paths
 
 The strict `supervisor` also has opt-in low-ceremony paths for work that does
