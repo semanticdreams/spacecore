@@ -3,6 +3,54 @@
 ## 2026-10-21
 Scheduled devlog automation can now prepare its writing branch through a [guarded capability](/dev/features/opencode-agent-workflow#strict-daily-devlog-branch-preparation) that pins freshly fetched `origin/main`, derives the UTC-dated branch internally, and fails closed on collisions or ambiguous safety evidence rather than resetting existing work. This removes a branch-creation blocker without broadening Git permissions, while keeping reviewed writing and publication as separate steps.
 
+## 2026-09-30
+[Recurrence sets](/dev/features/temporal-parsing-recurrence#recurrence-sets-and-zoned-expansion) now combine inclusions and exclusions before resolving occurrences through an explicit timezone and daylight-saving policy. Expanded [interval semantics](/dev/features/temporal-intervals) preserve the distinction between exact-duration and calendar-period steps across clock changes, giving time-aware apps a firmer basis for repeated spans without assuming full calendar-file interoperability.
+
+## 2026-09-29
+[Guarded CI diagnostics](/dev/features/opencode-agent-workflow#guarded-ci-log-diagnostics) now expose bounded log searches and failure bundles, with stronger Windows reproduction support to make cross-platform failures easier to investigate. Source-path normalization repairs app discovery across path conventions, while island drag completion now preserves an already-running force layout instead of interrupting it.
+
+## 2026-09-28
+The new [SDK documentation](/sdk/) connects app-building guides to module references, while a graph launcher brings source apps into the hosted workspace. Temporal provider registration creates an extension seam, and [RRULE expansion](/dev/features/temporal-parsing-recurrence) now handles richer candidate sets for plain date-times. Dependency manifests prepare later integrations; they do not yet deliver the external libraries those integrations need.
+
+## 2026-09-27
+The [hosted command workbench](/dev/features/hosted-runtime-apps) now turns command metadata into payload forms and confirmations, with readable results and cancellable asynchronous progress. A bounded, session-local recent-runs history makes those interactions traceable without implying durable background jobs. Meanwhile, [monthly and yearly recurrence](/dev/features/temporal-parsing-recurrence) gained date selectors and finite end bounds, making more calendar patterns expressible without broad natural-language guessing.
+
+## 2026-09-26
+[Hosted apps](/dev/features/hosted-runtime-apps) gained owned scene handles and a workspace inspection and command surface, so tools can observe and control an app without reaching into raw scene objects. Above the temporal core, [strict parsing and bounded recurrence](/dev/features/temporal-parsing-recurrence) now connect text to typed values. Interval arithmetic and calendar periods extend that foundation while keeping elapsed time distinct from calendar movement.
+
+## 2026-09-25
+Apps can now use the same composition factory [standalone or hosted inside Space](/dev/features/hosted-runtime-apps), receiving services from the host rather than taking over the workspace engine. The new [temporal core](/dev/features/temporal) similarly makes context explicit through typed instants, elapsed durations and zoned values, laying groundwork for time-aware tools without relying on the machine's local timezone.
+
+## 2026-09-24
+Dragging an ordered-list member with Alt now moves its whole [presentation island](/dev/graph-maps#presentation-islands), and force layout treats unpinned members as one aggregate body. Explicitly pinned members keep their positions, letting grouped content participate in map arrangement without discarding the user's local anchors.
+
+## 2026-09-23
+[Presentation islands](/dev/graph-maps#presentation-islands) now retain their own absolute positions instead of being re-anchored to the list node that created them. Refreshing list membership preserves that placement, so an arranged group can stay where the user put it while its source remains elsewhere on the map.
+
+## 2026-09-18
+Snake became a graphical example of the [app distribution path](/dev/features/app-distribution), connecting a playable board to a reusable release template. Its [orthographic UI surface](/dev/features/orthographic-ui-surface) presents normal retained widgets with upright text and viewport-scaled layout without importing the product HUD, giving small apps a lighter starting point.
+
+## 2026-09-17
+Ordered lists can now appear as persisted [presentation islands](/dev/graph-maps#presentation-islands), arranging graph members together without transferring ownership of their underlying records. Alongside that richer workspace presentation, a reusable [app bundle workflow](/dev/features/app-distribution) packages independent Fennel apps against a pinned Space release, opening a distribution path that does not rebuild the engine in each app repository.
+
+## 2026-09-16
+Ordered [asset overlays](/dev/notes/runtime-asset-overlays) now let project modules override packaged defaults while retaining fallback discovery, giving independent apps a practical runtime layout. Separate Windows GUI and console launch modes support desktop use and command-line tooling. Explicitly initialized [error reporting](/dev/features/error-reporting) adds a diagnostic foundation for runtime failures as those packaging paths expand.
+
+## 2026-09-15
+[Reloadable graph extensions](/dev/features/reloadable-graph-extension-units) can refresh visible adapters without restarting the app root, with owner-safe registration and rollback keeping failed reloads from leaving stale hooks. Built-in node families now use the same descriptor lifecycle, while store-backed child creation keeps domain records separate from their map presentation, giving extension work a clearer ownership boundary.
+
+## 2026-09-14
+Small inputs and file-backed editors now share a [text command engine](/dev/features/shared-text-interaction-engine), including forward word motion, instead of maintaining separate modal command behavior. Shared [interaction policies](/dev/features/text-input-policies) align focus, caret and pointer geometry while leaving lazy storage behind its own adapter, so consistency does not require loading large files into memory.
+
+## 2026-09-10
+Ordinary movement in the [lazy editor](/dev/features/lazy-text-buffer-virtual-input#virtualinput-widget) now resumes from cached cursor and viewport anchors, so navigation far into long files need not repeatedly rediscover the prefix. Exact commands such as jumping to the document end can still scan, preserving their meaning without imposing that cost on every adjacent move.
+
+## 2026-09-07
+Kind badges now distinguish [graph nodes](/dev/notes/graph) beside their titles in cards and dialogs, making mixed maps easier to read. Clicking into the [lazy editor](/dev/features/lazy-text-buffer-virtual-input) targets the editor rather than its surrounding dialog, and text events insert only in insert mode, making the transition from browsing to editing more predictable.
+
+## 2026-09-06
+The [lazy file editor](/dev/features/lazy-text-buffer-virtual-input#virtualinput-widget) gained modal movement and insertion with UTF-8-safe navigation, bringing familiar editing gestures to file-backed text. Viewport-aware clipping and caret scrolling keep the active edit visible in narrow containers without turning the document into an eager text widget.
+
 ## 2026-08-30
 [Lazy text editing](/dev/features/lazy-text-buffer-virtual-input) replaces yesterday's read-only window viewer with a piece-table buffer, sparse line indexing and viewport-sized rendering instead of loading an entire file into an ordinary text control. Explicit saves check for external changes and leave edits dirty on conflict, adding a practical save boundary rather than a race-free guarantee against other writers.
 
