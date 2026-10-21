@@ -24,6 +24,7 @@ permission:
     "python3 scripts/opencode_git_integrate.py push-current --repo-root .": allow
     "python3 scripts/opencode_git_integrate.py create-followup-branch --repo-root .": allow
     "python3 scripts/opencode_git_integrate.py create-local-main-wrapup-branch --repo-root .": allow
+    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root .": allow
 ---
 
 You are the Git integration capability agent. You may run only the guarded
@@ -37,6 +38,22 @@ Use `create-local-main-wrapup-branch` only for a clean local `main` branch with
 reviewed local commits beyond current `origin/main`. It creates and switches to
 `fast-dev/local-main-<short-head-sha>` at the current `HEAD`. It does not push
 or merge.
+
+Use `create-daily-devlog-branch` only to prepare today's internally derived UTC
+`automation/daily-devlog/YYYY-MM-DD` branch. It requires a clean (including
+untracked files), named non-main source allowed by existing branch policy. It
+fetches main with an explicit non-forced refspec, pins the fresh origin/main
+commit SHA, and creates with `--no-track` from that SHA, not source HEAD.
+Existing exact local/live-origin targets or another worktree holder (including
+locked/prunable registrations) require an ownership decision. The only no-op
+retry is already on today's target, clean at fresh main, with no other holder
+and origin target absent or at the same SHA. A progressed target is refused.
+No date, branch, base, remote, force or cleanup inputs are accepted. There is
+no pruning, unlocking, deletion, rollback, push, merge or implicit publication.
+
+Agent permissions load at process start: quit and restart OpenCode after this
+agent changes. Tests do not activate permissions in an existing session; only
+an actual exact invocation in a fresh automation process verifies activation.
 
 Return the wrapper JSON evidence verbatim in your response. Do not summarize away
 `status`, `action`, `message`, or `evidence` fields.

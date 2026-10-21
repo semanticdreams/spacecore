@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from opencode_capabilities import (
     CapabilityError,
+    CommandResult,
     ensure_space_repo,
     failure,
     human_decision,
@@ -289,10 +292,144 @@ def create_local_main_wrapup_branch(repo_root: Path) -> dict[str, object]:
         return failure(action, error.message, {"code": error.code, "details": error.details})
 
 
+def _daily_commit_sha(sha: str) -> str:
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", sha):
+        raise CapabilityError("invalid_git_evidence", "Expected one full Git commit SHA", {"sha": sha})
+    return sha
+
+
+def _daily_remote_sha(result: CommandResult, target: str) -> str | None:
+    if result.returncode == 2 and not result.stdout:
+        return None
+    if result.returncode not in (0, 2):
+        raise CapabilityError("command_failed", "Cannot inspect live origin target", {
+            "args": result.args, "returncode": result.returncode, "stderr": result.stderr.strip(),
+        })
+    fields = result.stdout.removesuffix("\n").split("\t")
+    if result.returncode != 0 or len(fields) != 2 or fields[1] != f"refs/heads/{target}":
+        raise CapabilityError("invalid_git_evidence", "Expected one exact live origin ref", {"stdout": result.stdout})
+    return _daily_commit_sha(fields[0])
+
+
+def _daily_worktree_records(raw: str) -> list[dict[str, str]]:
+    """Parse Git's NUL fields, never traverse or repair worktree directories."""
+    if not raw or not raw.endswith("\0\0"):
+        raise CapabilityError("invalid_git_evidence", "Worktree registrations must be NUL-delimited")
+    records = []
+    for record in raw[:-2].split("\0\0"):
+        fields: dict[str, str] = {}
+        for field in record.split("\0"):
+            key, separator, value = field.partition(" ")
+            if key not in {"worktree", "HEAD", "branch", "detached", "bare", "locked", "prunable"} or key in fields:
+                raise CapabilityError("invalid_git_evidence", "Unknown or duplicate worktree field", {"field": field})
+            if key in {"worktree", "HEAD", "branch"} and (not separator or not value):
+                raise CapabilityError("invalid_git_evidence", "Missing worktree field value", {"field": field})
+            if key in {"bare", "detached"} and separator:
+                raise CapabilityError("invalid_git_evidence", "Malformed worktree marker", {"field": field})
+            fields[key] = value
+        if not Path(fields.get("worktree", "")).is_absolute():
+            raise CapabilityError("invalid_git_evidence", "Worktree registration lacks an absolute path")
+        modes = sum(key in fields for key in ("branch", "detached", "bare"))
+        if modes != 1 or ("bare" in fields and "HEAD" in fields) or ("bare" not in fields and "HEAD" not in fields):
+            raise CapabilityError("invalid_git_evidence", "Ambiguous worktree registration", {"record": fields})
+        if "HEAD" in fields:
+            _daily_commit_sha(fields["HEAD"])
+        if "branch" in fields:
+            ref = fields["branch"]
+            # Other worktrees need valid Git refs, not the capability's narrower
+            # allowed-source policy. Do not reject legitimate unrelated topics.
+            if (not ref.startswith("refs/heads/") or ref.endswith(".") or ".." in ref or "@{" in ref
+                    or re.search(r"[\x00-\x20\x7f~^:?*\[\\]", ref)
+                    or any(not part or part.startswith(".") or part.endswith(".lock") for part in ref.split("/"))):
+                raise CapabilityError("invalid_git_evidence", "Worktree branch is not a valid full local ref", {"record": fields})
+        records.append(fields)
+    if len({record["worktree"] for record in records}) != len(records):
+        raise CapabilityError("invalid_git_evidence", "Duplicate worktree registrations")
+    return records
+
+
+def create_daily_devlog_branch(repo_root: Path) -> dict[str, object]:
+    action = "create_daily_devlog_branch"
+    commands: list[list[str]] = []
+    evidence: dict[str, object] = {"commands": commands, "already_current": False}
+    try:
+        repo = ensure_space_repo(repo_root)
+
+        def execute(args: list[str], *, check: bool = True) -> CommandResult:
+            commands.append(args)
+            return run_command(args, repo, check=check)
+
+        def state() -> tuple[str, str, str]:
+            dirty = execute(["git", "status", "--porcelain", "--untracked-files=all"]).stdout
+            branch = execute(["git", "branch", "--show-current"]).stdout.strip()
+            head = _daily_commit_sha(execute(["git", "rev-parse", "--verify", "HEAD^{commit}"]).stdout.removesuffix("\n"))
+            return dirty, branch, head
+
+        dirty = execute(["git", "status", "--porcelain", "--untracked-files=all"]).stdout
+        source = execute(["git", "branch", "--show-current"]).stdout.strip()
+        evidence.update(source_branch=source, dirty=bool(dirty))
+        if dirty or not source or source == "main":
+            return human_decision(action, "Daily devlog preparation requires a clean, named non-main source", evidence)
+        try:
+            validate_branch_name(source)
+        except CapabilityError as error:
+            return human_decision(action, error.message, {**evidence, "code": error.code, "details": error.details})
+        source_sha = _daily_commit_sha(execute(["git", "rev-parse", "--verify", "HEAD^{commit}"]).stdout.removesuffix("\n"))
+        utc_date = datetime.now(timezone.utc).date().isoformat()
+        target = f"automation/daily-devlog/{utc_date}"
+        validate_branch_name(target)
+        evidence.update(utc_date=utc_date, source_head_sha=source_sha, target_branch=target)
+
+        execute(["git", "fetch", "--no-tags", "origin", "refs/heads/main:refs/remotes/origin/main"])
+        base_sha = _daily_commit_sha(execute(["git", "rev-parse", "--verify", "refs/remotes/origin/main^{commit}"]).stdout.removesuffix("\n"))
+        evidence["origin_main_sha"] = base_sha
+        local = execute(["git", "show-ref", "--verify", "--quiet", f"refs/heads/{target}"], check=False)
+        if local.returncode not in (0, 1):
+            raise CapabilityError("command_failed", "Cannot inspect exact local target", {
+                "args": local.args, "returncode": local.returncode, "stderr": local.stderr.strip(),
+            })
+        if local.stdout:
+            raise CapabilityError("invalid_git_evidence", "Quiet local ref check returned unexpected output", {"stdout": local.stdout})
+        local_sha = None
+        if local.returncode == 0:
+            local_sha = _daily_commit_sha(execute(["git", "rev-parse", "--verify", f"refs/heads/{target}^{{commit}}"]).stdout.removesuffix("\n"))
+        evidence.update(local_target_exists=local.returncode == 0, local_target_sha=local_sha)
+        remote_sha = _daily_remote_sha(execute([
+            "git", "ls-remote", "--exit-code", "--heads", "origin", f"refs/heads/{target}",
+        ], check=False), target)
+        evidence["remote_target_sha"] = remote_sha
+        worktrees = _daily_worktree_records(execute(["git", "worktree", "list", "--porcelain", "-z"]).stdout)
+        current = [record for record in worktrees if record["worktree"] == str(repo)]
+        if len(current) != 1 or current[0].get("branch") != f"refs/heads/{source}" or current[0].get("HEAD") != source_sha:
+            raise CapabilityError("invalid_git_evidence", "Current worktree registration does not match captured source", {"worktrees": worktrees})
+        holders = [record for record in worktrees if record["worktree"] != str(repo) and record.get("branch") == f"refs/heads/{target}"]
+        evidence.update(worktrees=worktrees, other_worktree_holders=holders)
+        if holders:
+            return human_decision(action, "Daily target is registered in another worktree; no cleanup is permitted", evidence)
+        already_target = source == target
+        if not already_target and (local_sha is not None or remote_sha is not None):
+            return human_decision(action, "Daily target already exists; ownership/resumption decision required", evidence)
+        if already_target and (source_sha != base_sha or local_sha != base_sha or remote_sha not in (None, base_sha)):
+            return human_decision(action, "Daily target is not an untouched retry at fresh origin/main", evidence)
+
+        dirty, branch, head = state()
+        if dirty or branch != source or head != source_sha:
+            return human_decision(action, "Source state changed during daily devlog preparation", {**evidence, "observed_branch": branch, "head_sha": head, "dirty": bool(dirty)})
+        if not already_target:
+            execute(["git", "switch", "--no-track", "-c", target, base_sha])
+            dirty, branch, head = state()
+            if dirty or branch != target or head != base_sha:
+                return failure(action, "Daily branch postconditions failed; no rollback attempted", {**evidence, "observed_branch": branch, "head_sha": head, "dirty": bool(dirty)})
+        evidence.update(already_current=already_target, head_sha=head, branch=branch, dirty=False)
+        return success(action, "Daily devlog branch prepared at freshly fetched origin/main without publication", evidence)
+    except CapabilityError as error:
+        return failure(action, error.message, {**evidence, "code": error.code, "details": error.details})
+
+
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
-    for command in ("status", "fetch-origin", "merge-origin-main", "push-current", "create-followup-branch", "create-local-main-wrapup-branch"):
+    for command in ("status", "fetch-origin", "merge-origin-main", "push-current", "create-followup-branch", "create-local-main-wrapup-branch", "create-daily-devlog-branch"):
         subparser = subparsers.add_parser(command)
         subparser.add_argument("--repo-root", required=True, type=Path)
     return parser.parse_args(argv)
@@ -307,6 +444,7 @@ def main(argv: list[str] | None = None) -> int:
         "push-current": push_current,
         "create-followup-branch": create_followup_branch,
         "create-local-main-wrapup-branch": create_local_main_wrapup_branch,
+        "create-daily-devlog-branch": create_daily_devlog_branch,
     }
     try:
         result = operations[args.command](args.repo_root)
