@@ -1,5 +1,7 @@
 import json
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -845,3 +847,368 @@ def test_cli_emits_json_and_returns_nonzero_on_unsafe_state(monkeypatch, trusted
     assert exit_code == 2
     assert payload["status"] == "human_decision_required"
     assert set(payload) == {"status", "action", "message", "evidence"}
+
+
+DAILY_TARGET = "automation/daily-devlog/2026-10-21"
+DAILY_BASE = "a" * 40
+DAILY_SOURCE = "b" * 40
+DAILY_STATUS = ["git", "status", "--porcelain", "--untracked-files=all"]
+DAILY_BRANCH = ["git", "branch", "--show-current"]
+DAILY_HEAD = ["git", "rev-parse", "--verify", "HEAD^{commit}"]
+DAILY_FETCH = ["git", "fetch", "--no-tags", "origin", "refs/heads/main:refs/remotes/origin/main"]
+DAILY_MAIN = ["git", "rev-parse", "--verify", "refs/remotes/origin/main^{commit}"]
+DAILY_LOCAL = ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{DAILY_TARGET}"]
+DAILY_LOCAL_SHA = ["git", "rev-parse", "--verify", f"refs/heads/{DAILY_TARGET}^{{commit}}"]
+DAILY_REMOTE = ["git", "ls-remote", "--exit-code", "--heads", "origin", f"refs/heads/{DAILY_TARGET}"]
+DAILY_WORKTREES = ["git", "worktree", "list", "--porcelain", "-z"]
+DAILY_SWITCH = ["git", "switch", "--no-track", "-c", DAILY_TARGET, DAILY_BASE]
+
+
+class DailyRunner:
+    """Ordered, exhaustive responses: an omitted mock can never mean absence."""
+
+    def __init__(self, steps):
+        self.steps = list(steps)
+        self.calls = []
+
+    def __call__(self, args, cwd, check=True):
+        self.calls.append(list(args))
+        assert self.steps, f"Unmocked command: {args}"
+        expected, output = self.steps.pop(0)
+        assert list(args) == expected
+        result = output if isinstance(output, capabilities.CommandResult) else command_result(expected, output)
+        if check and result.returncode:
+            raise capabilities.CapabilityError("command_failed", "Mock Git command failed", {"args": expected, "returncode": result.returncode})
+        return result
+
+
+def daily_operation(repo):
+    operation = getattr(git_integrate, "create_daily_devlog_branch", None)
+    assert callable(operation), "Missing bounded daily-devlog branch operation"
+    return operation(repo)
+
+
+@pytest.fixture
+def daily_clock(monkeypatch):
+    class Clock:
+        calls = []
+
+        @classmethod
+        def now(cls, tz):
+            cls.calls.append(tz)
+            # A second sample crosses midnight and must never be used.
+            return datetime(2026, 10, 21 if len(cls.calls) == 1 else 22, 23, 59, 59, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(git_integrate, "datetime", Clock, raising=False)
+    return Clock
+
+
+def daily_worktree(path, branch="feature/source", sha=DAILY_SOURCE, extra=""):
+    return f"worktree {path}\0HEAD {sha}\0branch refs/heads/{branch}\0{extra}\0"
+
+
+def daily_steps(repo, *, current=False, remote_sha=None):
+    source = DAILY_TARGET if current else "feature/source"
+    sha = DAILY_BASE if current else DAILY_SOURCE
+    local = command_result(DAILY_LOCAL, returncode=0 if current else 1)
+    remote = command_result(DAILY_REMOTE, f"{remote_sha}\trefs/heads/{DAILY_TARGET}\n" if remote_sha else "", 0 if remote_sha else 2)
+    steps = [(DAILY_STATUS, ""), (DAILY_BRANCH, source + "\n"), (DAILY_HEAD, sha + "\n"),
+             (DAILY_FETCH, ""), (DAILY_MAIN, DAILY_BASE + "\n"), (DAILY_LOCAL, local)]
+    if current:
+        steps.append((DAILY_LOCAL_SHA, DAILY_BASE + "\n"))
+    steps.extend([(DAILY_REMOTE, remote), (DAILY_WORKTREES, daily_worktree(repo, source, sha)),
+                  (DAILY_STATUS, ""), (DAILY_BRANCH, source + "\n"), (DAILY_HEAD, sha + "\n")])
+    if not current:
+        steps.extend([(DAILY_SWITCH, ""), (DAILY_STATUS, ""), (DAILY_BRANCH, DAILY_TARGET + "\n"), (DAILY_HEAD, DAILY_BASE + "\n")])
+    return steps
+
+
+def install_daily_runner(monkeypatch, steps):
+    runner = DailyRunner(steps)
+    monkeypatch.setattr(git_integrate, "run_command", runner)
+    return runner
+
+
+def test_daily_devlog_pins_fresh_base_and_samples_utc_once(monkeypatch, trusted_repo, daily_clock):
+    runner = install_daily_runner(monkeypatch, daily_steps(trusted_repo))
+    result = daily_operation(trusted_repo)
+    assert result["status"] == "pass"
+    assert result["action"] == "create_daily_devlog_branch"
+    evidence = result["evidence"]
+    for key, value in {"utc_date": "2026-10-21", "source_branch": "feature/source", "source_head_sha": DAILY_SOURCE,
+                       "target_branch": DAILY_TARGET, "origin_main_sha": DAILY_BASE, "head_sha": DAILY_BASE,
+                       "already_current": False, "local_target_exists": False, "remote_target_sha": None,
+                       "other_worktree_holders": []}.items():
+        assert evidence[key] == value
+    assert evidence["commands"] == runner.calls
+    assert not runner.steps
+    assert daily_clock.calls == [timezone.utc]
+    assert all(call[1] not in {"push", "merge", "rebase", "reset", "clean", "prune"} for call in runner.calls)
+
+
+@pytest.mark.parametrize("branch,dirty", [("main", ""), ("", ""), ("unsafe/source", ""), ("bad branch", ""),
+                                          ("feature/../bad", ""), ("feature/source", " M tracked\n"),
+                                          ("feature/source", "?? untracked\n")])
+def test_daily_devlog_refuses_unsafe_source_before_fetch(monkeypatch, trusted_repo, daily_clock, branch, dirty):
+    runner = install_daily_runner(monkeypatch, [(DAILY_STATUS, dirty), (DAILY_BRANCH, branch + "\n")])
+    assert daily_operation(trusted_repo)["status"] == "human_decision_required"
+    assert not any(call[1] in {"fetch", "switch"} for call in runner.calls)
+    assert not daily_clock.calls
+
+
+def test_daily_devlog_untrusted_repo_cannot_execute_git(monkeypatch, tmp_path):
+    def untrusted(_):
+        raise capabilities.CapabilityError("invalid_repo", "Untrusted origin")
+    monkeypatch.setattr(git_integrate, "ensure_space_repo", untrusted)
+    runner = install_daily_runner(monkeypatch, [])
+    result = daily_operation(tmp_path)
+    assert result["status"] == "fail"
+    assert result["evidence"]["code"] == "invalid_repo"
+    assert not runner.calls
+
+
+@pytest.mark.parametrize("remote_sha", [None, DAILY_BASE])
+def test_daily_devlog_strict_retry_is_noop(monkeypatch, trusted_repo, daily_clock, remote_sha):
+    runner = install_daily_runner(monkeypatch, daily_steps(trusted_repo, current=True, remote_sha=remote_sha))
+    result = daily_operation(trusted_repo)
+    assert result["status"] == "pass"
+    assert result["evidence"]["already_current"] is True
+    assert result["evidence"]["head_sha"] == DAILY_BASE
+    assert not runner.steps
+    assert not any(call[1] == "switch" for call in runner.calls)
+
+
+@pytest.mark.parametrize("collision", ["local", "remote", "remote-other", "holder", "locked", "prunable", "progressed", "retry-remote-other"])
+def test_daily_devlog_refuses_collisions_without_switch(monkeypatch, trusted_repo, daily_clock, collision):
+    current = collision in {"progressed", "retry-remote-other"}
+    steps = daily_steps(trusted_repo, current=current, remote_sha=DAILY_SOURCE if "other" in collision else DAILY_BASE if collision == "remote" else None)
+    if collision == "local":
+        index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_LOCAL)
+        steps[index] = (DAILY_LOCAL, command_result(DAILY_LOCAL))
+        steps.insert(index + 1, (DAILY_LOCAL_SHA, DAILY_BASE + "\n"))
+    if collision in {"holder", "locked", "prunable"}:
+        index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_WORKTREES)
+        extra = f"{collision} reason with\nnewline\0" if collision != "holder" else ""
+        steps[index] = (DAILY_WORKTREES, steps[index][1] + daily_worktree("/missing/other\nworktree", DAILY_TARGET, DAILY_BASE, extra))
+    if collision == "progressed":
+        steps = [(args, DAILY_SOURCE + "\n" if args in (DAILY_HEAD, DAILY_LOCAL_SHA) else output) for args, output in steps]
+        steps = [(args, daily_worktree(trusted_repo, DAILY_TARGET, DAILY_SOURCE) if args == DAILY_WORKTREES else output) for args, output in steps]
+    runner = install_daily_runner(monkeypatch, steps)
+    result = daily_operation(trusted_repo)
+    assert result["status"] == "human_decision_required"
+    assert not any(call[1] == "switch" for call in runner.calls)
+    if collision in {"holder", "locked", "prunable"}:
+        assert result["evidence"]["other_worktree_holders"][0]["worktree"] == "/missing/other\nworktree"
+
+
+@pytest.mark.parametrize("command", [DAILY_STATUS, DAILY_BRANCH, DAILY_HEAD, DAILY_FETCH, DAILY_MAIN, DAILY_LOCAL, DAILY_REMOTE, DAILY_WORKTREES, DAILY_SWITCH])
+def test_daily_devlog_git_errors_fail_closed(monkeypatch, trusted_repo, daily_clock, command):
+    steps = daily_steps(trusted_repo)
+    index = next(i for i, (args, _) in enumerate(steps) if args == command)
+    steps[index] = (command, command_result(command, returncode=128, stderr="fatal: unavailable"))
+    runner = install_daily_runner(monkeypatch, steps)
+    result = daily_operation(trusted_repo)
+    assert result["status"] == "fail"
+    assert result["evidence"]["code"] == "command_failed"
+    assert runner.calls[-1] == command
+
+
+@pytest.mark.parametrize("command,output", [
+    (DAILY_HEAD, "short\n"), (DAILY_MAIN, "a" * 39 + "z\n"), (DAILY_MAIN, DAILY_BASE + "\n" + DAILY_SOURCE),
+    (DAILY_REMOTE, ""), (DAILY_REMOTE, f"{DAILY_BASE}\trefs/heads/{DAILY_TARGET}-suffix\n"),
+    (DAILY_REMOTE, f"short\trefs/heads/{DAILY_TARGET}\n"),
+    (DAILY_REMOTE, f"{DAILY_BASE}\n\trefs/heads/{DAILY_TARGET}\n"),
+    (DAILY_REMOTE, f"{DAILY_BASE}\trefs/heads/{DAILY_TARGET}\n" * 2),
+    (DAILY_REMOTE, command_result(DAILY_REMOTE, "unexpected", 2)),
+    (DAILY_LOCAL, command_result(DAILY_LOCAL, "unexpected", 1)),
+    (DAILY_WORKTREES, ""), (DAILY_WORKTREES, "worktree /missing\nHEAD bad\n"),
+    (DAILY_WORKTREES, "worktree /missing\0branch refs/heads/feature/source\0\0"),
+    (DAILY_WORKTREES, f"worktree /missing\0HEAD {DAILY_BASE}\0detached\0unknown field\0\0"),
+    (DAILY_WORKTREES, f"worktree /missing\0HEAD {DAILY_BASE}\0HEAD {DAILY_BASE}\0detached\0\0"),
+    (DAILY_WORKTREES, f"worktree /missing\0HEAD {DAILY_BASE}\n\0detached\0\0"),
+])
+def test_daily_devlog_malformed_evidence_fails_closed(monkeypatch, trusted_repo, daily_clock, command, output):
+    steps = daily_steps(trusted_repo)
+    index = next(i for i, (args, _) in enumerate(steps) if args == command)
+    steps[index] = (command, output)
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "fail"
+    assert not any(call[1] == "switch" for call in runner.calls)
+
+
+@pytest.mark.parametrize("command,output", [(DAILY_STATUS, "?? raced\n"), (DAILY_BRANCH, "feature/changed\n"), (DAILY_HEAD, "c" * 40 + "\n")])
+@pytest.mark.parametrize("postcondition", [False, True])
+def test_daily_devlog_rechecks_state_and_never_rolls_back(monkeypatch, trusted_repo, daily_clock, command, output, postcondition):
+    steps = daily_steps(trusted_repo)
+    indices = [i for i, (args, _) in enumerate(steps) if args == command]
+    steps[indices[2 if postcondition else 1]] = (command, output)
+    runner = install_daily_runner(monkeypatch, steps)
+    result = daily_operation(trusted_repo)
+    assert result["status"] == ("fail" if postcondition else "human_decision_required")
+    assert (DAILY_SWITCH in runner.calls) is postcondition
+    assert not any(call[1] in {"reset", "clean", "checkout", "branch"} and call != DAILY_BRANCH for call in runner.calls)
+
+
+@pytest.mark.parametrize("status,exit_code", [("pass", 0), ("human_decision_required", 2), ("fail", 3)])
+def test_daily_devlog_cli_envelope(monkeypatch, trusted_repo, daily_clock, capsys, status, exit_code):
+    steps = daily_steps(trusted_repo) if status == "pass" else [(DAILY_STATUS, ""), (DAILY_BRANCH, "main\n")]
+    if status == "fail":
+        steps[0] = (DAILY_STATUS, command_result(DAILY_STATUS, returncode=128))
+    install_daily_runner(monkeypatch, steps)
+    assert git_integrate.main(["create-daily-devlog-branch", "--repo-root", str(trusted_repo)]) == exit_code
+    payload = json.loads(capsys.readouterr().out)
+    assert set(payload) == {"status", "action", "message", "evidence"}
+    assert payload["action"] == "create_daily_devlog_branch"
+    assert payload["status"] == status
+
+
+@pytest.mark.parametrize("argument", ["--date", "--branch", "--base", "--remote", "--force", "--cleanup", "arbitrary"])
+def test_daily_devlog_cli_rejects_extra_inputs(monkeypatch, trusted_repo, argument):
+    runner = install_daily_runner(monkeypatch, [])
+    with pytest.raises(SystemExit) as error:
+        git_integrate.main(["create-daily-devlog-branch", "--repo-root", str(trusted_repo), argument])
+    assert error.value.code == 2
+    assert not runner.calls
+
+
+@pytest.fixture
+def daily_real_repo(monkeypatch, tmp_path, daily_clock):
+    # No host config, hooks, credentials or network: all remotes are disposable paths.
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "absent-config"))
+    monkeypatch.setenv("GIT_AUTHOR_NAME", "Fixture")
+    monkeypatch.setenv("GIT_AUTHOR_EMAIL", "fixture@example.invalid")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "Fixture")
+    monkeypatch.setenv("GIT_COMMITTER_EMAIL", "fixture@example.invalid")
+    origin = tmp_path / "origin.git"
+    repo = tmp_path / "checkout"
+
+    def git(*args, cwd=repo, check=True):
+        return subprocess.run(["git", *args], cwd=cwd, check=check, capture_output=True, text=True)
+
+    git("init", "--bare", "--initial-branch=main", str(origin), cwd=tmp_path)
+    git("init", "--initial-branch=main", str(repo), cwd=tmp_path)
+    git("commit", "--allow-empty", "-m", "base")
+    git("remote", "add", "origin", str(origin))
+    git("push", "origin", "main")
+    git("switch", "-c", "feature/source")
+    git("commit", "--allow-empty", "-m", "source-only")
+    source = git("rev-parse", "HEAD").stdout.strip()
+    # Origin moves independently; the local tracking ref is deliberately stale.
+    git("clone", str(origin), str(tmp_path / "writer"), cwd=tmp_path)
+    git("commit", "--allow-empty", "-m", "fresh-main", cwd=tmp_path / "writer")
+    git("push", "origin", "main", cwd=tmp_path / "writer")
+    base = git("rev-parse", "HEAD", cwd=tmp_path / "writer").stdout.strip()
+    monkeypatch.setattr(git_integrate, "ensure_space_repo", lambda root: repo if root == repo else pytest.fail("unexpected repository"))
+    return repo, git, source, base
+
+
+def test_daily_devlog_real_git_uses_fresh_main_preserves_source_and_has_no_upstream(daily_real_repo, daily_clock):
+    repo, git, source, base = daily_real_repo
+    git("config", "branch.autoSetupMerge", "always")
+    result = daily_operation(repo)
+    assert result["status"] == "pass", result
+    assert git("branch", "--show-current").stdout.strip() == DAILY_TARGET
+    assert git("rev-parse", "HEAD").stdout.strip() == base
+    assert git("rev-parse", "feature/source").stdout.strip() == source
+    assert git("merge-base", "--is-ancestor", source, "HEAD", check=False).returncode == 1
+    assert git("rev-parse", "--abbrev-ref", "@{upstream}", check=False).returncode != 0
+    assert git("status", "--porcelain", "--untracked-files=all").stdout == ""
+    daily_clock.calls.clear()
+    retry = daily_operation(repo)
+    assert retry["status"] == "pass", retry
+    assert retry["evidence"]["already_current"] is True
+    git("commit", "--allow-empty", "-m", "progress")
+    daily_clock.calls.clear()
+    assert daily_operation(repo)["status"] == "human_decision_required"
+
+
+@pytest.mark.parametrize("collision", ["local", "remote", "worktree"])
+def test_daily_devlog_real_git_collisions_preserve_source(daily_real_repo, collision):
+    repo, git, source, base = daily_real_repo
+    # Collision setup needs the independent writer's object locally. The fresh
+    # creation test above deliberately leaves it absent until the capability fetch.
+    git("fetch", "--no-tags", "origin", "refs/heads/main:refs/remotes/origin/main")
+    if collision == "remote":
+        git("push", "origin", f"{base}:refs/heads/{DAILY_TARGET}")
+    elif collision == "local":
+        git("branch", DAILY_TARGET, base)
+    else:
+        git("worktree", "add", "-b", DAILY_TARGET, str(repo.parent / "other worktree"), base)
+        git("worktree", "lock", "--reason", "fixture lock", str(repo.parent / "other worktree"))
+    result = daily_operation(repo)
+    assert result["status"] == "human_decision_required", result
+    assert git("branch", "--show-current").stdout.strip() == "feature/source"
+    assert git("rev-parse", "HEAD").stdout.strip() == source
+
+
+@pytest.mark.parametrize("branch", ["refs/heads/", "refs/heads/feature/../bad", "refs/heads/feature/a.lock",
+                                   "refs/heads/feature/a b", "refs/heads/feature/a@{b", "refs/heads/.hidden",
+                                   "refs/heads/feature/a.", "refs/heads/feature/a//b"])
+def test_daily_devlog_rejects_malformed_other_worktree_refs(monkeypatch, trusted_repo, daily_clock, branch):
+    steps = daily_steps(trusted_repo)
+    index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_WORKTREES)
+    steps[index] = (DAILY_WORKTREES, steps[index][1] + f"worktree /other\0HEAD {DAILY_BASE}\0branch {branch}\0\0")
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "fail"
+    assert DAILY_SWITCH not in runner.calls
+
+
+@pytest.mark.parametrize("output", ["short\n", command_result(DAILY_LOCAL_SHA, returncode=128)])
+def test_daily_devlog_local_sha_must_be_available_and_valid(monkeypatch, trusted_repo, daily_clock, output):
+    steps = daily_steps(trusted_repo, current=True)
+    index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_LOCAL_SHA)
+    steps[index] = (DAILY_LOCAL_SHA, output)
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "fail"
+    assert DAILY_SWITCH not in runner.calls
+
+
+def test_daily_devlog_rejects_newline_inside_other_worktree_head(monkeypatch, trusted_repo, daily_clock):
+    steps = daily_steps(trusted_repo)
+    index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_WORKTREES)
+    steps[index] = (DAILY_WORKTREES, steps[index][1] + f"worktree /other\0HEAD {DAILY_BASE}\n\0detached\0\0")
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "fail"
+    assert DAILY_SWITCH not in runner.calls
+
+
+@pytest.mark.parametrize("kind", ["bare", "detached", "suffix", "unrelated-locked"])
+def test_daily_devlog_accepts_valid_unrelated_worktree_registrations(monkeypatch, trusted_repo, daily_clock, kind):
+    records = {
+        "bare": "worktree /origin.git\0bare\0\0",
+        "detached": f"worktree /detached\0HEAD {DAILY_BASE}\0detached\0\0",
+        "suffix": daily_worktree("/suffix", DAILY_TARGET + "-suffix", DAILY_BASE),
+        "unrelated-locked": daily_worktree("/other\npath", "unrestricted/topic", DAILY_BASE, "locked reason\0"),
+    }
+    steps = daily_steps(trusted_repo)
+    index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_WORKTREES)
+    steps[index] = (DAILY_WORKTREES, steps[index][1] + records[kind])
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "pass"
+    assert not runner.steps
+
+
+@pytest.mark.parametrize("kind", ["missing-current", "duplicate-current", "wrong-current-branch", "wrong-current-head", "truncated"])
+def test_daily_devlog_refuses_ambiguous_worktree_registration(monkeypatch, trusted_repo, daily_clock, kind):
+    steps = daily_steps(trusted_repo)
+    index = next(i for i, (args, _) in enumerate(steps) if args == DAILY_WORKTREES)
+    current = steps[index][1]
+    outputs = {"missing-current": daily_worktree("/different"), "duplicate-current": current * 2,
+               "wrong-current-branch": daily_worktree(trusted_repo, "feature/other"),
+               "wrong-current-head": daily_worktree(trusted_repo, sha=DAILY_BASE), "truncated": current[:-1]}
+    steps[index] = (DAILY_WORKTREES, outputs[kind])
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "fail"
+    assert DAILY_SWITCH not in runner.calls
+
+
+@pytest.mark.parametrize("command,output", [(DAILY_STATUS, "?? raced\n"), (DAILY_BRANCH, "feature/other\n"),
+                                          (DAILY_HEAD, DAILY_SOURCE + "\n")])
+def test_daily_devlog_noop_retry_rechecks_state(monkeypatch, trusted_repo, daily_clock, command, output):
+    steps = daily_steps(trusted_repo, current=True)
+    index = [i for i, (args, _) in enumerate(steps) if args == command][-1]
+    steps[index] = (command, output)
+    runner = install_daily_runner(monkeypatch, steps)
+    assert daily_operation(trusted_repo)["status"] == "human_decision_required"
+    assert DAILY_SWITCH not in runner.calls
