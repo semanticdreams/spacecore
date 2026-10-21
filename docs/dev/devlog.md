@@ -3,6 +3,36 @@
 ## 2026-10-21
 Scheduled devlog automation can now prepare its writing branch through a [guarded capability](/dev/features/opencode-agent-workflow#strict-daily-devlog-branch-preparation) that pins freshly fetched `origin/main`, derives the UTC-dated branch internally, and fails closed on collisions or ambiguous safety evidence rather than resetting existing work. This removes a branch-creation blocker without broadening Git permissions, while keeping reviewed writing and publication as separate steps.
 
+## 2026-08-30
+[Lazy text editing](/dev/features/lazy-text-buffer-virtual-input) replaces yesterday's read-only window viewer with a piece-table buffer, sparse line indexing and viewport-sized rendering instead of loading an entire file into an ordinary text control. Explicit saves check for external changes and leave edits dirty on conflict, adding a practical save boundary rather than a race-free guarantee against other writers.
+
+## 2026-08-29
+Filesystem nodes now offer explicit actions based on conservative file classification: known text and source files can open an [internal viewer](/specs/2026-08-29-graph-filesystem-file-interactions-design) or module view, while unknown files retain an external-editor path. The internal viewer reads bounded windows only when requested and stays read-only, bringing file inspection into the graph without copying content into its saved topology.
+
+## 2026-08-26
+Everyday [workflow authoring](/user/workflows/edit-workflow-topology) now includes naming new workflows, renaming existing definitions and deleting steps with their dependent edges. Compact definition previews hand off browsing to dedicated step and run explorers, keeping the graph's overview small while making the next edit or past run easier to reach.
+
+## 2026-08-16
+[Workflow inspection](/dev/features/workflow-graph-ux) now separates focused step browsing, run timelines and multiline payload views, so debugging can follow a failed step or selected event without filling the graph with every record. Runs can also start with selected graph nodes as context, and [cancellation](/user/workflows/monitor-and-cancel-running-workflow) appears only while the run status permits it.
+
+## 2026-08-15
+[Workflow authoring](/dev/features/workflows) now has a discoverable path from the Workflows root to new definitions, steps and linked code, with related records revealed only by explicit actions. [Sidebar chats](/dev/features/workflow-backed-agent-sessions) now persist as long-lived workflow runs whose events supply the transcript, so the graph and chat panel inspect the same underlying session rather than separate copies.
+
+## 2026-08-14
+[Activities](/dev/features/activities#activity-camera-boundary) now enforce ownership of their cameras and presentation boundaries, and the graph exposes scene data through a world/activity/surface hierarchy rather than flattening it onto the world. Alongside that clearer ownership, [graph-authored workflows](/dev/features/workflows) gained durable definitions and runs backed by executable Fennel code entities, giving automation a home outside any particular world or graph map.
+
+## 2026-08-12
+Restoring a board now prunes references to deleted string entities and their connectors, letting saved work reopen without stale items blocking activation. [Reloadable units](/dev/reloadable-units) return activity-reactivation evidence, making recovery observable rather than merely reporting that code reloaded. [Space agent sessions](/dev/features/opencode-agent-workflow#internal-space-agent-artifact-handoffs) also record artifact paths and live-versus-disk validation context, with one bounded reconnect for stale OpenCode connections rather than blindly retrying prompts.
+
+## 2026-08-10
+The [light theme](/dev/notes/light-theme-layering) now separates rails, graph background, panel chrome and cards through a consistent tonal hierarchy, with darker outlines keeping boundaries visible. A distinct tertiary tone also gives dialog titlebars and depth faces their own place in that hierarchy without introducing a new elevation API.
+
+## 2026-08-09
+Switching [graph maps](/dev/graph-maps) now restores each map's camera instead of carrying the previous task's viewpoint along, while maps without saved camera state center on their first or start node. Bounded inline panels and height-constrained sidebar layout keep surrounding controls contained, and malformed JSON now surfaces an explicit Lua error so broken saved state is easier to diagnose.
+
+## 2026-08-08
+August 7 introduced Sandbox's explicit [Fly, Walk, Move and Grab modes](/dev/notes/sandbox-interaction-toolbar#canonical-modes) and a capability preflight for agent tooling. On August 8, canvas Alt-drag was restored and graph views began rebuilding on theme changes, keeping everyday interaction consistent. Agent automation also tightened permission boundaries and repository trust checks while treating transient pull-request states as waiting rather than failure, making the [guarded development loop](/dev/features/opencode-agent-workflow#capability-preflight) more predictable.
+
 ## 2026-08-07
 Space's graph workspace became easier to recover, search, and trust in motion: the [Graph Sidebar Node Finder](/specs/2026-08-06-graph-sidebar-node-finder-design) added Add Start recovery and Find Node rows that reveal or open graph-addressable objects through activity callbacks while keeping GraphMap as the interaction-context owner, and [Graph UX Polish](/specs/2026-08-07-graph-ux-polish-design) stabilized sidebar width, restored-map identity, truncation, and theme-resolved graph/chrome backgrounds so the graph view can stay a visual navigation surface instead of absorbing domain ownership. In parallel, weekly-agent workflow hardening tightened OpenCode capability boundaries and PR-protection polling, making the scheduled-agent path safer as graph work accelerates.
 
