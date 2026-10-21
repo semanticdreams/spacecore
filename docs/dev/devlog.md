@@ -3,6 +3,51 @@
 ## 2026-10-21
 Scheduled devlog automation can now prepare its writing branch through a [guarded capability](/dev/features/opencode-agent-workflow#strict-daily-devlog-branch-preparation) that pins freshly fetched `origin/main`, derives the UTC-dated branch internally, and fails closed on collisions or ambiguous safety evidence rather than resetting existing work. This removes a branch-creation blocker without broadening Git permissions, while keeping reviewed writing and publication as separate steps.
 
+## 2026-10-20
+The [guarded merge-policy proof](/dev/features/opencode-agent-workflow#guarded-merge-policy-proof) began requiring complete paginated branch rules, PR protection, the exact required test check and a compatible queue method before publication. Auto-merge requests leave strategy selection to GitHub's verified queue policy; incomplete or malformed evidence blocks the request, and polling must still establish an actual merge.
+
+## 2026-10-17
+[Reference lifecycle coordination](/dev/features/reference-lifecycle) moved normalization into owning stores and made logical deletion and string-to-code morphs resumable across domain records and their presentations. Frozen pending intents preserve recovery work and detect conflicting edits; they do not make multiple files atomic. Preview cleanup also moved to single-owner teardown, avoiding repeated drops during these transitions.
+
+## 2026-10-15
+An immutable [entity-type catalog](/dev/features/entity-type-catalog) unified browser metadata, with application composition supplying stores and map-local loaders opening each type. [Live development](/dev/features/live-dev) gained checkout-scoped instance discovery and explicit watcherless reloads under process-owned control. Health checks and restart-required boundaries kept refresh outcomes visible instead of treating an accepted request as a successful reload.
+
+## 2026-10-12
+A shared [graph projection runtime](/dev/graph-maps) consolidated capture, restoration and teardown across spatial and outline views. The reusable [TreeView widget](/dev/features/tree-view-widget) measured row heights so inline content could expand without fixed spacing assumptions. Targeted PR validation separated docs-only changes, asset changes using a trusted prebuilt runtime, and changes requiring native builds.
+
+## 2026-10-11
+[Dictionary entities](/dev/notes/dict-entities) added persistent named reference slots alongside ordered lists, with graph browsing and editing for keyed collections. The [OpenCode MCP bridges](/dev/notes/remote-mcp) also gained shared server and configuration lifecycle machinery, while agent, external-unit and validation surfaces retained separate tool registries and permission policies rather than inheriting one another's authority.
+
+## 2026-10-10
+Spatial and [outline projections](/dev/graph-maps#outline-mode) began sharing a compact-node lifecycle for clicking, selection, focus, activation and teardown, rather than giving outline rows a parallel interaction system. Outline activation could expand content inline, and collapsing it returned focus to the compact node instead of stranding it inside a removed preview.
+
+## 2026-10-09
+[Outline interaction](/dev/graph-maps#outline-mode) moved closer to spatial behavior: clicks changed focus without replacing selection, selector state stayed synchronized, and rebuilds respected focus held by outside controls. [CI responsibilities](/dev/notes/github-actions-hygiene) also became clearer, separating the Linux PR gate from Windows main-branch validation and centralizing release publication instead of letting builders race.
+
+## 2026-10-08
+[Outline mode](/dev/graph-maps#outline-mode) introduced a second projection of the active map, traversing visible outgoing edges from chosen roots without expanding hidden domain relationships. Unreachable nodes stayed in the map for spatial use, while visible select-all and shared focused actions began carrying graph interaction into the new presentation.
+
+## 2026-10-07
+[Hierarchical focus navigation](/specs/2026-10-07-hierarchical-focus-navigation-design) added explicit movement into and out of nested controls, with sibling traversal scoped to the current level rather than flattening the whole interface. Normal builds also began refreshing copied runtime assets even when the executable needed no relink, so asset-only fixes would reach the built app.
+
+## 2026-10-06
+[Full-text search](/dev/features/string-entity-full-text-search) made string entities discoverable by content through asynchronous, case-insensitive literal matching confined to their Markdown store. Opening a result materialized only the chosen entity in the active map, keeping temporary queries and result rows out of persisted topology and avoiding invented domain relationships.
+
+## 2026-10-05
+[SSH integration](/dev/subsystems/ssh#current-status-and-future-work) gained real-backend fixture coverage and SDK examples, with cancellation waiting for remote readiness rather than racing command startup. Interactive shell round trips remained quarantined behind an opt-in switch. A focus-start command restored a graph navigation anchor, while the initial [fast-development flow](/dev/features/opencode-agent-workflow#fast-interactive-development-flow) offered smaller reviewed iterations without replacing the strict supervisor.
+
+## 2026-10-04
+New [graph map commands](/dev/graph-maps#leader-map-commands) could create empty maps, copy selected topology and clear a workspace without deleting its backing objects. The [SSH foundation](/dev/subsystems/ssh) introduced backend-neutral asynchronous operations with explicit host-key decisions, cancellation and structured failures, opening a remote-control path without exposing transport-library handles to application code.
+
+## 2026-10-03
+Temporal closeout added cross-surface smoke coverage and documented the [supported acceptance boundary](/dev/features/temporal-complete-acceptance), keeping seed corpora and unsupported calendar behavior explicit rather than claiming ecosystem-wide completeness. [Scoped snackbars](/dev/features/snackbar-system) brought transient HUD feedback, while focused-node selection commands separated keyboard focus from the selection being edited.
+
+## 2026-10-02
+Workflow persistence moved to canonical UTC timestamp strings through [explicit migration boundaries](/dev/features/temporal-migrations), retaining legacy integer-second reads without a blanket startup rewrite. A [runtime scheduler](/dev/features/runtime-scheduler) connected typed durations and bounded, explicitly zoned recurrence to cancellable callbacks, giving hosted apps scheduling that follows runtime advancement rather than mixing wall-clock timestamps with elapsed timers.
+
+## 2026-10-01
+The [temporal library](/dev/features/temporal) gained bounded iCalendar interchange, seed-backed localization and business calendars, plus natural-language candidates that require explicit context rather than guessing dates. Alongside that calendar work, [contextual leader commands](/dev/features/leader-command-system) made graph actions discoverable through extensible command providers instead of a fixed shortcut table.
+
 ## 2026-09-30
 [Recurrence sets](/dev/features/temporal-parsing-recurrence#recurrence-sets-and-zoned-expansion) now combine inclusions and exclusions before resolving occurrences through an explicit timezone and daylight-saving policy. Expanded [interval semantics](/dev/features/temporal-intervals) preserve the distinction between exact-duration and calendar-period steps across clock changes, giving time-aware apps a firmer basis for repeated spans without assuming full calendar-file interoperability.
 
