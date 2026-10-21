@@ -23,6 +23,7 @@
 - TDD is not applicable to prose-only changes. Record missing-coverage baseline, then validate entry shape/date, claim evidence, links, preservation, exact added dates, generator output and whitespace. Native/Fennel build/constraints are not applicable.
 - Every task runs `npm run test:scripts` and `npm run devlog:indices` in `docs`; install locked deps with `npm ci` only if unavailable. Full docs build is the final branch gate, not a prerequisite before every paragraph checkpoint.
 - Supervisor commits task changes only after independent review passes. Implementer supplies exact uncommitted working diff and evidence report; final whole-branch review covers all 41 entries. No claim of social delivery from merge alone.
+- Required validation repair exception: before completing Task 1, separately route the advisor-confirmed baseline assertion drift in `docs/scripts/test-opencode-automation-config.mjs` through implementer/reviewer. Assert current complete paginated PR/test/queue/method proof, strategy-free queue request and exact fast-dev/live-dev primary policy, without skipping coverage or changing production logic. Run the full docs script suite and existing Python PR tests. This single test file is the only allowed expansion beyond prose/generated outputs; record it as a distinct reviewed fix and retain original content scope for Tasks 1–3.
 
 Read-only validation pattern (use the task's assigned dates and completed prior tasks; save any reusable checker only in ignored scratch):
 
