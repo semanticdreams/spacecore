@@ -33,6 +33,18 @@ INPUTS = (ABI_HEADER, AUTHORITY_HEADER, UNIX_HEADER, UNIX_ADAPTER_SOURCE, OPERAT
 DIRECTORIES = ('modules', 'modules/x86_64-windows', 'modules/x86_64-unix')
 MAX_ARTIFACT = 64 * 1024 * 1024
 
+# Dormant until the fixed publication stage opts in. Never added to INPUTS/PAIR:
+# production-only runtime fixture checkouts must not need any test sources.
+TEST_HEADER = 'tests/record_publication_wine_support.h'
+TEST_PE_SOURCE = 'tests/record_publication_wine_support_pe.c'
+TEST_UNIX_SOURCE = 'tests/record_publication_wine_support_unix.cpp'
+TEST_INPUTS = (TEST_HEADER, TEST_PE_SOURCE, TEST_UNIX_SOURCE, BUILDER_SOURCE,
+               'scripts/wine/publication_toolchain.py', 'scripts/wine/prefix.py')
+TEST_PAIR = ('modules/x86_64-windows/space_record_publication_tests.dll',
+             'modules/x86_64-unix/space_record_publication_tests.so')
+TEST_DISCOVERY = 'space_record_publication_tests.dll'
+TEST_KIND = 'record-publication-test-support'
+
 
 class BuildError(ValueError):
     pass
@@ -134,11 +146,12 @@ def _pe_dependencies(raw):
     raise BuildError('Unterminated PE import directory')
 
 
-def _inventory(path, relative, build_id):
+def _inventory(path, relative, build_id, *, windows=None):
     raw = _regular(path)
     if bytes.fromhex(build_id) not in raw:
         raise BuildError('Publication artifact is missing the embedded build ID')
-    windows = relative == PAIR[0]
+    if windows is None:
+        windows = relative == PAIR[0]
     return dict(sha256=_sha(raw), size=len(raw), architecture='x86_64',
                 format='pe32+' if windows else 'elf64',
                 dependencies=_pe_dependencies(raw) if windows else _elf_dependencies(raw))
@@ -271,6 +284,122 @@ def build_publication(repo: Path, session: prefix.Session) -> dict:
             raise
         if previous is not None:
             _remove_recognized(backup)
+    return manifest
+
+
+def _test_build_id(runtime, toolchain):
+    value = dict(kind=TEST_KIND, abi=1, runtime=runtime, toolchain=toolchain)
+    return _sha(json.dumps(value, sort_keys=True, separators=(',', ':')).encode())
+
+
+def _test_sources(repo):
+    return {relative: _sha(_regular(repo / relative, private=False)) for relative in TEST_INPUTS}
+
+
+def _test_inventory(output, build_id):
+    files = {relative: _inventory(output / relative, relative, build_id,
+                                 windows=relative != TEST_PAIR[1])
+             for relative in (*TEST_PAIR, TEST_DISCOVERY)}
+    if files[TEST_DISCOVERY] != files[TEST_PAIR[0]]:
+        raise BuildError('Test support discovery copy differs from paired PE')
+    return files
+
+
+def _recognized_test_output(output):
+    if not output.exists() and not output.is_symlink():
+        return None
+    identity = prefix.real_directory(output, True)
+    for directory in DIRECTORIES:
+        prefix.real_directory(output / directory, True)
+    expected = {*DIRECTORIES, *TEST_PAIR, TEST_DISCOVERY, 'build.json'}
+    if {str(path.relative_to(output)) for path in output.rglob('*')} != expected:
+        raise BuildError('Extra/missing test support output entry')
+    _regular(output / 'build.json')
+    manifest = prefix.read_control(output / 'build.json')
+    if (not isinstance(manifest, dict)
+            or set(manifest) != {'version', 'abi', 'kind', 'build_id', 'runtime', 'toolchain', 'files'}
+            or type(manifest['version']) is not int or manifest['version'] != 1
+            or type(manifest['abi']) is not int or manifest['abi'] != 1
+            or manifest['kind'] != TEST_KIND
+            or not isinstance(manifest['runtime'], dict) or not isinstance(manifest['toolchain'], dict)
+            or not isinstance(manifest['build_id'], str) or not re.fullmatch('[0-9a-f]{64}', manifest['build_id'])
+            or _test_build_id(manifest['runtime'], manifest['toolchain']) != manifest['build_id']
+            or not isinstance(manifest['files'], dict)
+            or set(manifest['files']) != {*TEST_PAIR, TEST_DISCOVERY}):
+        raise BuildError('Unrecognized test support manifest')
+    if _test_inventory(output, manifest['build_id']) != manifest['files']:
+        raise BuildError('Test support output inventory changed')
+    return identity, manifest
+
+
+def build_test_support(repo: Path, session: prefix.Session) -> dict:
+    """Build the separate fixed test-only pair/copy; no CLI or admission activation."""
+    repo = Path(os.path.abspath(repo))
+    if session.repo != repo:
+        raise BuildError('Test support Session belongs to another repository')
+    session.validate()
+    build = repo / 'build'
+    prefix.real_directory(build)
+    output = build / 'wine-publication-tests'
+    previous = _recognized_test_output(output)
+    runtime = dict(session.owner['tools']['wine'])
+    identity = publication_toolchain.resolve_toolchain(repo, runtime)
+    publication_toolchain.verify_toolchain(identity)
+    sources = _test_sources(repo)
+    toolchain = dict(identity=identity, inputs=sources)
+    build_id = _test_build_id(runtime, toolchain)
+    definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in bytes.fromhex(build_id)) + '}'
+    windows_headers, wine_headers = _headers(identity)
+    with tempfile.TemporaryDirectory(prefix='.wine-publication-tests-', dir=build) as name:
+        stage = Path(name)
+        new = stage / 'new'
+        new.mkdir(mode=0o700)
+        for directory in DIRECTORIES:
+            (new / directory).mkdir(mode=0o700)
+        unix, pe = new / TEST_PAIR[1], new / TEST_PAIR[0]
+        tools = identity['tools']
+        _compile([tools['host_cxx']['executable'], '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
+                  '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
+                  '-I', str(repo / 'tests'), definition, str(repo / TEST_UNIX_SOURCE),
+                  '-pthread', '-o', str(unix), '-ldl'], stage)
+        _compile([tools['mingw_cc']['executable'], '-std=c11', '-O2', '-Wall', '-Werror', '-shared', '-static-libgcc',
+                  '-I', str(windows_headers), '-I', str(wine_headers), '-I', str(repo / 'tests'), definition,
+                  str(repo / TEST_PE_SOURCE), '-o', str(pe)], stage)
+        _compile([tools['winebuild']['executable'], '--builtin', str(pe)], stage)
+        for path in (unix, pe):
+            _regular(path, private=False)
+            path.chmod(0o600)
+        # Exclusive byte-identical Windows-side basename discovery, Wine overlay only.
+        copy = new / TEST_DISCOVERY
+        fd = os.open(copy, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(_regular(pe))
+        manifest = dict(version=1, abi=1, kind=TEST_KIND, build_id=build_id, runtime=runtime,
+                        toolchain=toolchain, files=_test_inventory(new, build_id))
+        prefix.write_control(new / 'build.json', manifest, exclusive=True)
+        _recognized_test_output(new)
+        session.validate()
+        publication_toolchain.verify_toolchain(identity)
+        if _test_sources(repo) != sources:
+            raise BuildError('Test support source inputs changed during build')
+        if _recognized_test_output(output) != previous:
+            raise BuildError('Test support output changed during build')
+        backup = stage / 'old'
+        if previous is not None:
+            output.rename(backup)
+        try:
+            new.rename(output)
+        except OSError:
+            if previous is not None:
+                backup.rename(output)
+            raise
+        if previous is not None:
+            _recognized_test_output(backup)
+            for relative in (*TEST_PAIR, TEST_DISCOVERY, 'build.json'):
+                (backup / relative).unlink()
+            for directory in reversed(DIRECTORIES):
+                (backup / directory).rmdir()
+            backup.rmdir()
     return manifest
 
 

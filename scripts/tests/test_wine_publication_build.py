@@ -1711,3 +1711,520 @@ def test_publication_builder_cli_refuses_arguments_or_missing_owned_handoff(tmp_
         env['SPACE_WINE_SESSION_ID'] = session_id
     result = subprocess.run([sys.executable, str(script), *arguments], env=env, capture_output=True, text=True, timeout=10)
     assert result.returncode != 0 and 'refused' in result.stderr.lower()
+
+
+# Task7A1: the support pair is deliberately independent of the production ABI.
+SUPPORT_HEADER = 'tests/record_publication_wine_support.h'
+SUPPORT_PE = 'tests/record_publication_wine_support_pe.c'
+SUPPORT_UNIX = 'tests/record_publication_wine_support_unix.cpp'
+SUPPORT_INPUTS = (SUPPORT_HEADER, SUPPORT_PE, SUPPORT_UNIX, BUILDER_SOURCE,
+                  'scripts/wine/publication_toolchain.py', 'scripts/wine/prefix.py')
+SUPPORT_PAIR = ('modules/x86_64-windows/space_record_publication_tests.dll',
+                'modules/x86_64-unix/space_record_publication_tests.so')
+SUPPORT_COPY = 'space_record_publication_tests.dll'
+
+
+class SupportCall(ctypes.Structure):
+    _fields_ = [('size', ctypes.c_uint32), ('abi', ctypes.c_uint32),
+                ('opcode', ctypes.c_uint32), ('reserved', ctypes.c_uint32),
+                ('root', ctypes.c_uint64), ('mode', ctypes.c_uint32), ('gid', ctypes.c_uint32),
+                ('data_size', ctypes.c_uint32), ('os_error', ctypes.c_uint32),
+                ('device', ctypes.c_uint64), ('inode', ctypes.c_uint64),
+                ('links', ctypes.c_uint64), ('file_size', ctypes.c_uint64),
+                ('uid', ctypes.c_uint32), ('reserved2', ctypes.c_uint32),
+                ('offset', ctypes.c_uint64),
+                ('path', ctypes.c_char * 4096), ('other', ctypes.c_char * 4096),
+                ('data', ctypes.c_ubyte * 4096)]
+
+
+@pytest.fixture(scope='module')
+def support_elf(tmp_path_factory):
+    source = ROOT / SUPPORT_UNIX
+    assert source.is_file(), 'test-only Unix support is missing'
+    directory = tmp_path_factory.mktemp('real-publication-support')
+    output = directory / 'support.so'
+    expected = bytes(range(32))
+    definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(b) for b in expected) + '}'
+    result = subprocess.run(['c++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
+                             '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
+                             '-I', str(ROOT / 'tests'),
+                             definition, str(source), '-pthread', '-o', str(output), '-ldl'],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    library = ctypes.CDLL(str(output))
+    entries = (ctypes.c_void_p * 2).in_dll(library, '__wine_unix_call_funcs')
+    entry = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.c_void_p)
+    return output, library, entry(entries[0]), entry(entries[1]), expected
+
+
+def support_call(operate, opcode, root=0, path='', other='', data=b'', mode=0, gid=0, offset=0):
+    value = SupportCall(size=ctypes.sizeof(SupportCall), abi=1, opcode=opcode, root=root,
+                        path=os.fsencode(path), other=os.fsencode(other), mode=mode, gid=gid,
+                        offset=offset, data_size=len(data))
+    value.data[:len(data)] = data
+    status = operate(ctypes.byref(value))
+    return status, value
+
+
+def support_ok(operate, opcode, **kwargs):
+    status, value = support_call(operate, opcode, **kwargs)
+    assert status == 0, (opcode, status, value.os_error, kwargs)
+    return value
+
+
+def test_support_real_elf_identity_is_loaded_object_not_replacement(support_elf):
+    output, library, identify, _, expected = support_elf
+    value = Identity(size=112, abi=1, challenge=0x12345678)
+    value.pe_build_id[:] = bytes([0xa5]) * 32
+    info = output.stat()
+    assert identify(ctypes.byref(value)) == 0
+    assert (value.module_device, value.module_inode) == (info.st_dev, info.st_ino)
+    assert value.echo == value.challenge and value.architecture == 0x8664 and value.features == 3
+    assert bytes(value.pe_build_id) == bytes([0xa5]) * 32
+    assert bytes(value.unix_build_id) == expected
+    assert bytes((ctypes.c_uint8 * 32).in_dll(library, 'SpaceRecordPublicationTestsUnixBuildId')) == expected
+    saved = output.with_suffix('.loaded')
+    output.rename(saved)
+    output.write_bytes(b'not the loaded ELF')
+    try:
+        assert identify(ctypes.byref(value)) == 0
+        assert (value.module_device, value.module_inode) == (info.st_dev, info.st_ino)
+        assert value.module_inode != output.stat().st_ino
+    finally:
+        output.unlink()
+        saved.rename(output)
+    assert identify(None) != 0
+    for size, abi in [(111, 1), (113, 1), (112, 2)]:
+        assert identify(ctypes.byref(Identity(size=size, abi=abi))) != 0
+
+
+def test_support_real_elf_observations_mutations_and_retained_parent(support_elf, tmp_path):
+    import stat
+    _, _, _, operate, _ = support_elf
+    root_path = tmp_path / 'fixture'
+    root_path.mkdir(mode=0o700)
+    root = support_ok(operate, 1, path=str(root_path)).root
+    try:
+        support_ok(operate, 4, root=root, path='anchor', mode=0o700)
+        support_ok(operate, 4, root=root, path='anchor/attempt', mode=0o700)
+        support_ok(operate, 5, root=root, path='anchor/attempt/record', mode=0o600)
+        for name in ['', 'anchor', 'anchor/attempt', 'anchor/attempt/record']:
+            value = support_ok(operate, 3, root=root, path=name)
+            actual = (root_path / name).stat()
+            assert (value.device, value.inode, value.mode, value.uid, value.gid, value.links, value.file_size) == (
+                actual.st_dev, actual.st_ino, actual.st_mode, actual.st_uid, actual.st_gid, actual.st_nlink, actual.st_size)
+        assert support_ok(operate, 3, root=root, path='anchor/attempt/record').data_size == 0
+        listing = support_ok(operate, 3, root=root, path='anchor/attempt')
+        assert bytes(listing.data[:listing.data_size]) == b'record\0'
+        data = b'\x00binary\xff\xe9\x9b\xaa' * 300
+        support_ok(operate, 6, root=root, path='anchor/attempt/record', data=data)
+        value = support_ok(operate, 3, root=root, path='anchor/attempt/record')
+        assert value.file_size == len(data) and bytes(value.data[:value.data_size]) == data
+        assert stat.S_IMODE(value.mode) == 0o600
+        support_ok(operate, 7, root=root, path='anchor/attempt/record', mode=0o640)
+        support_ok(operate, 13, root=root, path='anchor/attempt/record', gid=os.getegid())
+        assert (root_path / 'anchor/attempt/record').stat().st_mode & 0o777 == 0o640
+        support_ok(operate, 12, root=root, path='anchor/attempt/record', data=b'unsafe')
+        assert os.getxattr(root_path / 'anchor/attempt/record', 'user.space-publication-test') == b'unsafe'
+        support_ok(operate, 8, root=root, path='anchor/attempt/record', other='hard')
+        assert support_ok(operate, 3, root=root, path='hard').links == 2
+        # Mutating through an unexpected hardlink is refused, not a host escape.
+        assert support_call(operate, 7, root=root, path='hard', mode=0o777)[0] != 0
+        support_ok(operate, 11, root=root, path='hard')
+        support_ok(operate, 9, root=root, path='sym', other='anchor/attempt/record')
+        assert stat.S_ISLNK(support_ok(operate, 3, root=root, path='sym').mode)
+        support_ok(operate, 10, root=root, path='anchor/attempt/record', other='saved')
+        support_ok(operate, 5, root=root, path='anchor/attempt/record', data=b'foreign', mode=0o600)
+        # The retained descriptor survives replacement of its original path.
+        moved = tmp_path / 'moved'
+        root_path.rename(moved)
+        root_path.mkdir(mode=0o700)
+        support_ok(operate, 6, root=root, path='saved', data=b'retained')
+        assert (moved / 'saved').read_bytes() == b'retained' and not (root_path / 'saved').exists()
+        support_ok(operate, 11, root=root, path='sym')
+        support_ok(operate, 11, root=root, path='anchor/attempt/record')
+        support_ok(operate, 14, root=root, path='anchor/attempt')
+    finally:
+        support_ok(operate, 2, root=root)
+    assert support_call(operate, 3, root=root)[0] != 0
+
+
+@pytest.mark.parametrize('bad', ['../escape', 'a/../escape', '/absolute', './record', 'a//b', 'a/'])
+def test_support_real_elf_refuses_non_fixture_names(support_elf, tmp_path, bad):
+    operate = support_elf[3]
+    root = support_ok(operate, 1, path=str(tmp_path)).root
+    try:
+        assert support_call(operate, 5, root=root, path=bad, mode=0o600)[0] != 0
+        assert support_call(operate, 9, root=root, path='sym', other=bad)[0] != 0
+        assert not list(tmp_path.iterdir())
+    finally:
+        support_ok(operate, 2, root=root)
+
+
+def test_support_real_elf_refuses_unsafe_roots_links_frames_and_oversize(support_elf, tmp_path):
+    operate = support_elf[3]
+    outside = tmp_path / 'outside'
+    outside.mkdir(mode=0o700)
+    (outside / 'keep').write_bytes(b'keep')
+    root_path = tmp_path / 'fixture'
+    root_path.mkdir(mode=0o750)
+    assert support_call(operate, 1, path=str(root_path))[0] != 0
+    assert root_path.stat().st_mode & 0o777 == 0o750
+    root_path.chmod(0o700)
+    root = support_ok(operate, 1, path=str(root_path)).root
+    try:
+        (root_path / 'escape').symlink_to(outside, target_is_directory=True)
+        assert support_call(operate, 1, path=str(root_path / 'escape'))[0] != 0
+        for opcode in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]:
+            assert support_call(operate, opcode, root=root, path='escape/keep', other='x', mode=0o600)[0] != 0
+        (root_path / 'leaf').symlink_to(outside / 'keep')
+        for opcode in [6, 7, 12, 13]:
+            assert support_call(operate, opcode, root=root, path='leaf', data=b'x', mode=0o600)[0] != 0
+        assert (outside / 'keep').read_bytes() == b'keep'
+        # A directory listing is bounded and must never silently omit entries.
+        (root_path / 'large').mkdir()
+        for index in range(100):
+            (root_path / 'large' / (str(index) + 'x' * 50)).touch()
+        status, value = support_call(operate, 3, root=root, path='large')
+        assert status != 0 and value.os_error != 0
+        assert operate(None) != 0
+        for changes in [dict(size=1), dict(abi=2), dict(opcode=99), dict(reserved=1),
+                        dict(reserved2=1), dict(data_size=4097), dict(mode=0o10000), dict(root=0)]:
+            value = SupportCall(size=ctypes.sizeof(SupportCall), abi=1, opcode=3, root=root)
+            for key, val in changes.items():
+                setattr(value, key, val)
+            assert operate(ctypes.byref(value)) != 0, changes
+        value = SupportCall(size=ctypes.sizeof(SupportCall), abi=1, opcode=3, root=root)
+        value.path = b'x' * 4096
+        assert operate(ctypes.byref(value)) != 0
+    finally:
+        support_ok(operate, 2, root=root)
+
+
+@pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
+def test_support_closed_abi_layout(tmp_path, compiler, standard):
+    assert (ROOT / SUPPORT_HEADER).is_file(), 'test-only ABI is missing'
+    source = '''#include "record_publication_wine_support.h"
+int main(void) { return sizeof(SrptCall) != 12376 || sizeof(SrptIdentity) != 112; }
+'''
+    result = subprocess.run([compiler, f'-std={standard}', '-Wall', '-Wextra', '-Werror',
+                             '-I', str(ROOT / 'tests'), '-x', 'c++' if compiler == 'c++' else 'c',
+                             '-', '-o', str(tmp_path / 'layout')], input=source,
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert subprocess.run([str(tmp_path / 'layout')], timeout=10).returncode == 0
+
+
+def test_support_real_elf_bounded_reads_cover_multichunk_content(support_elf, tmp_path):
+    operate = support_elf[3]
+    payload = bytes(range(256)) * 300
+    (tmp_path / 'multichunk').write_bytes(payload)
+    root = support_ok(operate, 1, path=str(tmp_path)).root
+    try:
+        observed = bytearray()
+        for offset in range(0, len(payload), 4096):
+            value = support_ok(operate, 3, root=root, path='multichunk', offset=offset)
+            assert value.file_size == len(payload)
+            assert value.data_size == min(4096, len(payload) - offset)
+            observed.extend(value.data[:value.data_size])
+        assert observed == payload
+        assert support_ok(operate, 3, root=root, path='multichunk', offset=len(payload)).data_size == 0
+        assert support_call(operate, 3, root=root, path='multichunk', offset=len(payload) + 1)[0] != 0
+    finally:
+        support_ok(operate, 2, root=root)
+
+
+@pytest.fixture
+def support_builder_fixture(publication_fixture):
+    fixture, session = publication_fixture
+    # Only support tests supply the extra inputs. Production-only checkouts stay valid.
+    for relative in SUPPORT_INPUTS:
+        target = fixture.root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / relative, target)
+    for command in ['g++', 'x86_64-w64-mingw32-gcc-posix']:
+        path = fixture.bin / command
+        path.write_text(path.read_text().replace("a.startswith('-DSRP_BUILD_ID_BYTES=')",
+                                                "a.startswith(('-DSRP_BUILD_ID_BYTES=', '-DSRPT_BUILD_ID_BYTES='))"))
+    return fixture, session
+
+
+def test_support_builder_is_independent_dormant_and_seals_discovery(support_builder_fixture):
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    assert hasattr(module, 'build_test_support'), 'independent test support builder is missing'
+    production = module.build_publication(fixture.root, session)
+    manifest = module.build_test_support(fixture.root, session)
+    assert set(manifest['toolchain']['inputs']) == set(SUPPORT_INPUTS)
+    assert manifest['kind'] == 'record-publication-test-support'
+    assert manifest['build_id'] != production['build_id']
+    assert manifest['runtime'] == production['runtime'] and manifest['abi'] == 1
+    assert set(manifest['files']) == {*SUPPORT_PAIR, SUPPORT_COPY}
+    output = fixture.root / 'build/wine-publication-tests'
+    assert json.loads((output / 'build.json').read_text()) == manifest
+    assert (output / SUPPORT_COPY).read_bytes() == (output / SUPPORT_PAIR[0]).read_bytes()
+    assert manifest['files'][SUPPORT_COPY] == manifest['files'][SUPPORT_PAIR[0]]
+    assert module.build_test_support(fixture.root, session) == manifest
+    assert module.build_publication(fixture.root, session) == production
+    commands = [call for call in fixture.calls() if '-o' in call]
+    support = [call for call in commands if any('SRPT_BUILD_ID_BYTES=' in arg for arg in call)]
+    assert len(support) == 4
+    assert all(str(fixture.root / PUBLICATION_SOURCE) not in call for call in support)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
+
+
+@pytest.mark.parametrize('relative', SUPPORT_INPUTS)
+def test_support_builder_pins_every_input(support_builder_fixture, relative):
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    assert hasattr(module, 'build_test_support'), 'independent test support builder is missing'
+    first = module.build_test_support(fixture.root, session)
+    path = fixture.root / relative
+    path.write_bytes(path.read_bytes() + b'\n/* identity change */\n')
+    assert module.build_test_support(fixture.root, session)['build_id'] != first['build_id']
+
+
+@pytest.mark.parametrize('damage', ['copy', 'so', 'extra', 'symlink', 'manifest'])
+def test_support_builder_refuses_tampered_output_before_compile(support_builder_fixture, damage):
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    assert hasattr(module, 'build_test_support'), 'independent test support builder is missing'
+    module.build_test_support(fixture.root, session)
+    output = fixture.root / 'build/wine-publication-tests'
+    if damage in ('copy', 'so'):
+        (output / (SUPPORT_COPY if damage == 'copy' else SUPPORT_PAIR[1])).write_bytes(b'bad')
+    elif damage == 'extra':
+        (output / 'keep').write_bytes(b'keep')
+    elif damage == 'symlink':
+        path = output / SUPPORT_COPY
+        path.unlink()
+        path.symlink_to(output / SUPPORT_PAIR[0])
+    else:
+        (output / 'build.json').write_text('{}')
+    before = len([call for call in fixture.calls() if '-o' in call])
+    with pytest.raises((ValueError, OSError)):
+        module.build_test_support(fixture.root, session)
+    assert len([call for call in fixture.calls() if '-o' in call]) == before
+
+
+@pytest.fixture(scope='module')
+def support_bridge_model(tmp_path_factory):
+    directory = tmp_path_factory.mktemp('support-bridge-model')
+    model = directory / 'model.c'
+    model.write_text(r'''
+#include <windef.h>
+#include <winbase.h>
+#include <winternl.h>
+#include "record_publication_wine_support.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+int32_t WINAPI SpaceRecordPublicationTestsCall(uint32_t, void*);
+static int selected, dispatches;
+static void* original;
+static const uint64_t opaque = UINT64_C(0x1122334455667788);
+HANDLE WINAPI GetCurrentProcess(void) { return (HANDLE)(uintptr_t)5; }
+BOOL GetModuleHandleExW(DWORD flags, LPCWSTR address, HMODULE* self) {
+    assert(flags == 6 && address == (LPCWSTR)(uintptr_t)&SpaceRecordPublicationTestsCall);
+    *self = (HMODULE)(uintptr_t)1;
+    return selected != 1;
+}
+HMODULE GetModuleHandleW(LPCWSTR name) {
+    assert(!wcscmp(name, L"ntdll.dll"));
+    return selected == 2 ? NULL : (HMODULE)(uintptr_t)2;
+}
+static NTSTATUS WINAPI query(HANDLE process, const void* self, MEMORY_INFORMATION_CLASS kind,
+                             void* out, SIZE_T size, SIZE_T* length) {
+    assert(process == (HANDLE)(uintptr_t)5 && self == (HMODULE)(uintptr_t)1);
+    assert(kind == 1000 && size == 8 && length == NULL);
+    *(uint64_t*)out = selected == 6 ? 0 : opaque;
+    return selected == 5 ? -127 : 0;
+}
+static NTSTATUS WINAPI dispatch(uint64_t handle, unsigned int entry, void* args) {
+    assert(handle == opaque); /* Not a callable address. */
+    ++dispatches;
+    if (entry == SRPT_ENTRY_FIXTURE) {
+        assert(args == original);
+        ((SrptCall*)args)->os_error = 73;
+        return -123;
+    }
+    assert(entry == SRPT_ENTRY_IDENTITY);
+    SrptIdentity* value = args;
+    assert(value->size == 112 && value->abi == 1 && value->challenge == 42);
+    for (unsigned i = 0; i < 32; ++i) {
+        assert(value->pe_build_id[i] == 1);
+        value->unix_build_id[i] = 1;
+    }
+    value->echo = value->challenge;
+    value->architecture = SRPT_ARCH_X86_64;
+    value->features = SRPT_FEATURES;
+    value->module_device = 7; value->module_inode = 9;
+    switch (selected) {
+    case 10: ++value->size; break;
+    case 11: ++value->abi; break;
+    case 12: ++value->challenge; ++value->echo; break;
+    case 13: ++value->echo; break;
+    case 14: ++value->pe_build_id[0]; break;
+    case 15: ++value->unix_build_id[31]; break;
+    case 16: ++value->architecture; break;
+    case 17: value->features = 1; break;
+    case 18: value->features = 7; break;
+    case 19: value->module_inode = 0; break;
+    case 20: return -126;
+    }
+    return 0;
+}
+FARPROC GetProcAddress(HMODULE ntdll, const char* name) {
+    assert(ntdll == (HMODULE)(uintptr_t)2);
+    if (!strcmp(name, "NtQueryVirtualMemory")) return selected == 3 ? NULL : (FARPROC)query;
+    assert(!strcmp(name, "__wine_unix_call"));
+    return selected == 4 ? NULL : (FARPROC)dispatch;
+}
+int main(int argc, char** argv) {
+    assert(argc == 2); selected = atoi(argv[1]);
+    SrptIdentity value = {0}; value.size = 112; value.abi = 1; value.challenge = 42;
+    int32_t status = SpaceRecordPublicationTestsCall(SRPT_ENTRY_IDENTITY, &value);
+    if (selected >= 1 && selected <= 6) {
+        assert(status == (selected == 5 ? -127 : SRPT_MODULE_UNAVAILABLE) && !dispatches);
+    } else if (selected >= 10 && selected <= 20) {
+        assert(status == (selected == 20 ? -126 : SRPT_IDENTITY_MISMATCH));
+        assert(value.echo == 0); /* Never return a half-validated identity. */
+    } else {
+        assert(status == 0 && value.echo == 42 && value.module_device == 7 && value.module_inode == 9);
+        SrptCall call = {0}; call.size = sizeof(call); call.abi = 1; call.opcode = SRPT_OBSERVE;
+        original = &call;
+        assert(SpaceRecordPublicationTestsCall(SRPT_ENTRY_FIXTURE, &call) == -123 && call.os_error == 73);
+        unsigned before = dispatches;
+        call.opcode = 99;
+        assert(SpaceRecordPublicationTestsCall(1, &call) == SRPT_INVALID_ARGUMENT);
+        call.opcode = SRPT_OBSERVE; call.abi = 2;
+        assert(SpaceRecordPublicationTestsCall(1, &call) == SRPT_INVALID_ARGUMENT);
+        assert(SpaceRecordPublicationTestsCall(0, NULL) == SRPT_INVALID_ARGUMENT);
+        assert(SpaceRecordPublicationTestsCall(1, NULL) == SRPT_INVALID_ARGUMENT);
+        assert(SpaceRecordPublicationTestsCall(9, &value) == SRPT_INVALID_ARGUMENT);
+        assert(before == (unsigned)dispatches);
+    }
+}
+''')
+    definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(['1'] * 32) + '}'
+    output = directory / 'model'
+    result = subprocess.run(['cc', '-std=c11', '-O2', '-Wall', '-Werror', '-D_WIN64', definition,
+                             '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'tests'),
+                             str(ROOT / SUPPORT_PE), str(model), '-o', str(output)],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    return output
+
+
+@pytest.mark.parametrize('case', [0, 1, 2, 3, 4, 5, 6, *range(10, 21)])
+def test_support_exact_pe_forwarder_host_model(support_bridge_model, case):
+    result = subprocess.run([str(support_bridge_model), str(case)], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert not result.stdout and not result.stderr
+
+
+def test_support_pe_dispatch_declarations_have_wine9_calling_convention(tmp_path):
+    bridge = (ROOT / SUPPORT_PE).read_text()
+    assert '<wine/unixlib.h>' not in bridge and 'wine-9.0/include/wine/unixlib.h' in bridge
+    block = bridge[bridge.index('typedef uint64_t SrptUnixHandle;'):bridge.index('static const uint8_t build_id')]
+    source = '''#include <stdint.h>
+typedef int32_t NTSTATUS;
+#define WINAPI __attribute__((ms_abi))
+enum { MemoryWineUnixFuncs = 1000 };
+''' + block + '''
+_Static_assert(__builtin_types_compatible_p(SrptUnixCall,
+    int32_t (WINAPI *)(uint64_t, unsigned int, void*)), "Wine9 dispatch signature");
+_Static_assert(!__builtin_types_compatible_p(SrptUnixCall,
+    int32_t (*)(uint64_t, unsigned int, void*)), "not SysV");
+'''
+    result = subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-x', 'c', '-c',
+                             '-', '-o', str(tmp_path / 'abi.o')], input=source,
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+
+
+def test_support_real_elf_bounded_owned_roots_and_target_parent_refusals(support_elf, tmp_path):
+    operate = support_elf[3]
+    for mode in [0o750, 0o770]:
+        unsafe = tmp_path / str(mode)
+        unsafe.mkdir(mode=0o700)
+        unsafe.chmod(mode)
+        assert support_call(operate, 1, path=str(unsafe))[0] != 0
+        assert unsafe.stat().st_mode & 0o777 == mode
+    alias = tmp_path / 'alias'
+    alias.symlink_to(tmp_path, target_is_directory=True)
+    assert support_call(operate, 1, path=str(alias / str(0o750)))[0] != 0
+    root_ids = []
+    try:
+        for _ in range(64):
+            root_ids.append(support_ok(operate, 1, path=str(tmp_path)).root)
+        assert len(set(root_ids)) == 64
+        assert support_call(operate, 1, path=str(tmp_path))[0] != 0
+        root = root_ids[0]
+        support_ok(operate, 5, root=root, path='record', data=b'kept', mode=0o600)
+        for opcode in [8, 10]:
+            assert support_call(operate, opcode, root=root, path='record', other='alias/target')[0] != 0
+        assert (tmp_path / 'record').read_bytes() == b'kept'
+        assert not (tmp_path / 'target').exists()
+        # No arbitrary UID takeover or root metadata mutation commands exist.
+        for opcode in [4, 5, 6, 7, 12, 13, 14]:
+            assert support_call(operate, opcode, root=root, mode=0o777)[0] != 0
+        assert tmp_path.stat().st_mode & 0o777 == 0o700
+        # Both sides use validated byte names; no UTF8 assumption or MAX_PATH cap.
+        parent = ''
+        for index in range(5):
+            parent += ('/' if parent else '') + str(index) + 'd' * 80
+            support_ok(operate, 4, root=root, path=parent, mode=0o700)
+        name = parent + '/雪-\udcff'
+        support_ok(operate, 5, root=root, path=name, data=b'raw host name', mode=0o600)
+        assert bytes(support_ok(operate, 3, root=root, path=name).data[:13]) == b'raw host name'
+    finally:
+        for root in root_ids:
+            support_ok(operate, 2, root=root)
+    new = support_ok(operate, 1, path=str(tmp_path)).root
+    try:
+        assert new > max(root_ids)
+        assert support_call(operate, 2, root=root_ids[-1])[0] != 0
+        assert support_call(operate, 3, root=new)[0] == 0
+    finally:
+        support_ok(operate, 2, root=new)
+
+
+@pytest.mark.parametrize('damage', ['compiler', 'source-drift', 'tool-drift', 'discovery', 'image'])
+def test_support_builder_failure_preserves_previous_pair(support_builder_fixture, monkeypatch, damage):
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    previous = module.build_test_support(fixture.root, session)
+    original = module._compile
+    def fail_build(args, stage):
+        if damage == 'compiler':
+            raise module.BuildError('test-only compiler refusal')
+        original(args, stage)
+        if '--builtin' not in args:
+            return
+        if damage in ('source-drift', 'tool-drift'):
+            path = fixture.root / SUPPORT_HEADER if damage == 'source-drift' else fixture.lib / 'winebuild'
+            path.write_bytes(path.read_bytes() + b'\n# changed while building\n')
+        elif damage == 'image':
+            path = Path(args[-1])
+            raw = bytearray(path.read_bytes())
+            raw[132:134] = bytes(2)  # Real image validation, not a fake inventory.
+            path.write_bytes(raw)
+    monkeypatch.setattr(module, '_compile', fail_build)
+    if damage == 'discovery':
+        inventory = module._test_inventory
+        def damage_copy(output, build_id):
+            if output.name == 'new':
+                # Differing but structurally valid staging copy; paired PE intact.
+                path = output / SUPPORT_COPY
+                raw = bytearray(path.read_bytes())
+                raw[-33] ^= 1
+                path.write_bytes(raw)
+            return inventory(output, build_id)
+        monkeypatch.setattr(module, '_test_inventory', damage_copy)
+    with pytest.raises((ValueError, OSError)):
+        module.build_test_support(fixture.root, session)
+    output = fixture.root / 'build/wine-publication-tests'
+    assert json.loads((output / 'build.json').read_text()) == previous
+    assert module._recognized_test_output(output)[1] == previous
+    assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
