@@ -187,6 +187,26 @@ OpenCode users: restart after `.opencode/**` changes.
 
 ## Commit Conventions
 
+- **Strict-flow checkpoint ownership:** Assigned implementers validate and self-review
+  ordinary task changes and accepted fixes, then create task-scoped local checkpoint
+  commits before independent review. Supervisors may commit only their existing
+  coordination edit allowlist or exact independently approved changes. Review covers
+  the complete task `BASE..HEAD` range and each subsequent `FIX_BASE..HEAD` range,
+  including tiny tasks. A checkpoint, clean tree, self-review, or DONE is not approval;
+  independent review and applicable finishing gates still block completion,
+  publication, and integration. Ensure reviewed work is committed; no extra or
+  empty post-review commit is needed. Implementers gain no push, PR, integration,
+  or history-rewrite authority. The fast-dev/live-dev exception above is unchanged.
+- **Explicit stage-only/no-commit handoffs override ordinary checkpoints**, including
+  fix rounds. Repeat that instruction on every fix dispatch. Daily/weekly automation
+  and workflow-debug's final staged landing stay review-first: review the complete
+  assigned staged diff, including additions and refreshed fixes, before committing.
+  A commit-only review package cannot represent pending edits.
+- Preserve unrelated worktree and index entries; never absorb, discard, or unstage
+  unrelated work to make a checkpoint or clean-tree gate pass. If task ownership
+  cannot be isolated safely, return NEEDS_CONTEXT. New policy wording does not
+  retroactively authorize commits in a running session assigned no-commit work;
+  restart OpenCode before relying on updated agent/skill instructions.
 - Use the `type(scope)` format as described by the `git-commit` skill.
 - Scopes (when useful): `engine`, `render`, `physics`, `audio`, `lua`, `ui`, `assets`, `scripts`.
 - For Fennel-facing feature or bugfix handoffs, include a lightweight constraint-impact line when relevant: helped, obstructed/noisy, changed, or not applicable.

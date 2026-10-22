@@ -66,6 +66,7 @@ def write_capability_files(root: Path) -> None:
         '    "python3 scripts/opencode_git_integrate.py push-current --repo-root .": allow\n'
         '    "python3 scripts/opencode_git_integrate.py create-followup-branch --repo-root .": allow\n'
         '    "python3 scripts/opencode_git_integrate.py create-local-main-wrapup-branch --repo-root .": allow\n'
+        '    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root .": allow\n'
     )
     write_file(
         root / ".opencode" / "agents" / "git-integrator.md",
@@ -148,6 +149,7 @@ def test_git_integrator_allows_exact_guarded_git_wrapper_commands():
         "python3 scripts/opencode_git_integrate.py push-current --repo-root .",
         "python3 scripts/opencode_git_integrate.py create-followup-branch --repo-root .",
         "python3 scripts/opencode_git_integrate.py create-local-main-wrapup-branch --repo-root .",
+        "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root .",
     }
 
 
@@ -158,6 +160,39 @@ def test_pr_recovery_operator_allows_only_exact_guarded_recovery_command():
     assert allowed_entries == {
         "python3 scripts/opencode_pr_recovery.py create-current-with-followup-recovery --repo-root ."
     }
+
+
+def test_daily_devlog_exact_permission_is_required(tmp_path):
+    repo = make_repo(tmp_path)
+    path = repo / ".opencode/agents/git-integrator.md"
+    text = path.read_text()
+    exact = '    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root .": allow\n'
+    assert exact in text
+    path.write_text(text.replace(exact, ""))
+    issues = load_checker().check_repo(repo)
+    assert any(issue.code == "capability-boundary" and "must allow guarded wrapper command exactly" in issue.message
+               and "create-daily-devlog-branch" in issue.message for issue in issues)
+
+
+@pytest.mark.parametrize("grant", [
+    "python3 scripts/opencode_git_integrate.py *",
+    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch *",
+    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root *",
+    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root . *",
+    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root . --date *",
+    "python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root . --branch * --base *",
+    "git switch -c *", "git branch *", "*",
+])
+def test_daily_devlog_rejects_wildcard_freeform_suffix_and_raw_git_grants(tmp_path, grant):
+    repo = make_repo(tmp_path)
+    path = repo / ".opencode/agents/git-integrator.md"
+    path.write_text(path.read_text().replace("  bash:\n", f'  bash:\n    "{grant}": allow\n', 1))
+    issues = load_checker().check_repo(repo)
+    assert any(issue.code == "capability-boundary" and grant in issue.message and "limited to approved" in issue.message for issue in issues)
+
+
+def test_daily_devlog_agent_keeps_default_deny():
+    assert permission_entries(REPO_ROOT, "git-integrator", "bash")["*"] == "deny"
 
 
 def test_github_operator_allows_exact_guarded_wrapper_commands():

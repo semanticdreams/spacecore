@@ -182,7 +182,7 @@ These thoughts mean you're rationalizing. Stop and follow the process:
 | "I'll fix it myself, dispatching is overhead" | Controller fixes pollute context and skip review. Dispatch the implementer. |
 | "Close enough on spec compliance" | Reviewer found spec gaps = not done. Fix or hit the cap and adjudicate. |
 | "This is just config/coordination, I can edit it directly" | The edit allowlist is exhaustive. If the file isn't on it, dispatch the implementer. |
-| "I already know what the reviewer will say, let me just commit" | Undispatched review is no review. The implementer's self-review doesn't count. Dispatch the reviewer. |
+| "The implementer committed and self-reviewed, so this is approved" | A checkpoint is not independent approval. Dispatch the reviewer for the complete task/fix range; no completion or publication before pass and finishing gates. |
 | "The change is so small, review is overhead" | Small changes cause the subtlest bugs. Every change — one line or one thousand — goes through implementer → reviewer → pass. |
 
 Small eligible changes may skip committed specs and plans only when they meet
@@ -213,15 +213,32 @@ such files directly, treat that as outdated and dispatch the implementer instead
 
 **Commit discipline:**
 
-Commits must only happen for files on the edit allowlist, or for changes that
-have passed through `implementer` → `reviewer` → pass. If there are staged
-changes you didn't route through review, unstage them and route them properly.
+Supervisor-owned commits may contain only files on the coordination edit
+allowlist or exact changes that have passed through `implementer` → `reviewer`
+→ pass. Assigned implementers own ordinary local task and accepted-fix
+checkpoints after validation and self-review, before independent review. Record
+BASE before task dispatch and FIX_BASE before each fix dispatch; review the
+complete BASE..HEAD task range and FIX_BASE..HEAD fix range, not just the last
+commit. Prior approval does not cover subsequent edits.
+
+Explicit stage-only/no-commit assignments override checkpoints, including fixes;
+repeat the restriction on each fix dispatch and review complete assigned pending
+diffs, including additions and refreshed staged fixes, instead of commit-only
+packages. Preserve unrelated worktree and index entries: do not commit, discard,
+or unstage them. If safe task isolation is unclear, return NEEDS_CONTEXT.
+Checkpoint authority grants implementers no publication, integration, or
+history-rewrite authority. Checkpoints, a clean tree, self-review, and DONE are
+not independent approval, even under deadline pressure.
 
 **Completion discipline:**
 
 After the implementer→reviewer→fix-loop passes, do not report completion yet.
-Commit all reviewed changes, then verify the worktree is clean (`git status`
-shows nothing to commit, nothing staged).
+Ensure all reviewed changes are committed, then verify the worktree is clean
+(`git status` shows nothing to commit, nothing staged). Already-checkpointed
+reviewed work needs no extra or empty approval commit. For a review-first
+handoff, commit only the exact approved content after checking for subsequent
+edits and unrelated staged entries. Preserve unrelated state; a dirty tree blocks
+finishing, not permission to clear it.
 
 Before reporting completion, ready-to-merge, or ready-to-PR, fetch `origin` and
 verify that the branch has been evaluated against current `origin/main`. If the
@@ -419,8 +436,11 @@ For a clear, local, low-risk task that can be completed as one focused change,
 write a short micro-design note in the `implementer` handoff instead of creating
 committed spec/plan files. The note must state the desired behavior, owning
 abstraction, existing pattern, design risks to avoid, and validation surface.
-Route the mutation through `implementer` → focused `reviewer` → pass before
-commit or completion.
+Record BASE, dispatch `implementer` to validate, self-review, and checkpoint the
+assigned change, then dispatch focused `reviewer` over the complete BASE..HEAD
+range. Independent pass is required before completion or publication, not before
+the implementer's ordinary checkpoint. Explicit no-commit handoffs use pending
+diff review instead; tiny tasks never skip independent approval.
 
 ### Escalation
 

@@ -470,6 +470,43 @@ public:
     }
 
 private:
+    // sol2 derives GC metatable names from callable types. Named types keep
+    // these differently laid-out captures on distinct finalizer identities.
+    struct SseSend
+    {
+        std::shared_ptr<SSEStream> stream;
+
+        bool operator()(sol::variadic_args args) const
+        {
+            for (auto arg : args) {
+                sol::object obj = arg;
+                if (obj.is<std::string>()) {
+                    return stream->send(obj.as<std::string>());
+                }
+            }
+            throw sol::error("SSEStream.send requires a string");
+            return false;
+        }
+    };
+
+    struct SseClose
+    {
+        std::shared_ptr<SSEStream> stream;
+
+        void operator()(sol::variadic_args) const
+        {
+            stream->close();
+        }
+    };
+
+    struct SseOnClose
+    {
+        HttpServer* server;
+        std::shared_ptr<SSEStream> stream;
+
+        void operator()(sol::variadic_args args) const;
+    };
+
     void assert_can_register_route() const
     {
         if (port_ != 0 || running_) {
@@ -606,36 +643,9 @@ private:
         if (pending.stream) {
             auto stream = pending.stream;
             sol::table stream_tbl = lua.create_table();
-            stream_tbl["send"] = [stream](sol::variadic_args args) {
-                for (auto arg : args) {
-                    sol::object obj = arg;
-                    if (obj.is<std::string>()) {
-                        return stream->send(obj.as<std::string>());
-                    }
-                }
-                throw sol::error("SSEStream.send requires a string");
-                return false;
-            };
-            stream_tbl["close"] = [stream](sol::variadic_args) {
-                stream->close();
-            };
-            stream_tbl["on-close"] = [this, stream](sol::variadic_args args) {
-                for (auto arg : args) {
-                    sol::object obj = arg;
-                    if (obj.is<sol::function>()) {
-                        uint64_t handler_id = register_sse_close_handler(obj.as<sol::function>());
-                        stream->set_close_handler(
-                            handler_id,
-                            [this, stream](uint64_t close_handler_id) {
-                                diagnostic_emit("sse-on-close-callback-begin");
-                                enqueue_sse_close(close_handler_id, stream);
-                                diagnostic_emit("sse-on-close-callback-end");
-                            });
-                        return;
-                    }
-                }
-                throw sol::error("SSEStream.on-close requires a function");
-            };
+            stream_tbl["send"] = SseSend{stream};
+            stream_tbl["close"] = SseClose{stream};
+            stream_tbl["on-close"] = SseOnClose{this, stream};
             req_tbl["stream"] = stream_tbl;
         }
 
@@ -690,6 +700,25 @@ private:
     std::mutex streams_mutex_;
     std::vector<std::weak_ptr<SSEStream>> active_streams_;
 };
+
+void HttpServer::SseOnClose::operator()(sol::variadic_args args) const
+{
+    for (auto arg : args) {
+        sol::object obj = arg;
+        if (obj.is<sol::function>()) {
+            uint64_t handler_id = server->register_sse_close_handler(obj.as<sol::function>());
+            stream->set_close_handler(
+                handler_id,
+                [server = server, stream = stream](uint64_t close_handler_id) {
+                    server->diagnostic_emit("sse-on-close-callback-begin");
+                    server->enqueue_sse_close(close_handler_id, stream);
+                    server->diagnostic_emit("sse-on-close-callback-end");
+                });
+            return;
+        }
+    }
+    throw sol::error("SSEStream.on-close requires a function");
+}
 
 } // namespace
 

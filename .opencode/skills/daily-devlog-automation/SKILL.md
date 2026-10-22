@@ -27,17 +27,32 @@ ask for a one-off broad command permission.
 
 ## Workflow
 
+**Review-first handoff:** Every implementation and fix dispatch in this
+automation must explicitly say: **stage only assigned changes; return them
+uncommitted; do not commit, amend, push, or integrate**. This overrides ordinary
+implementer checkpoints, including validation repairs, conflict resolutions, and
+merge-queue fixes. Review the complete assigned staged diff, including new files,
+with `git diff --staged -- <assigned paths>` and a complete assigned file list.
+Confirm no assigned unstaged or untracked content was omitted; a commit-only
+BASE..HEAD package cannot represent this handoff. After fixes, refresh the whole
+assigned staged diff and dispatch reviewer again. Each handoff includes successful
+local validation; any validation-generated edits must be staged and reviewed too.
+Only after pass may the supervisor commit the exact approved, locally validated
+content, checking for subsequent edits and
+preserving unrelated worktree/index entries; if isolation is unsafe, return
+NEEDS_CONTEXT rather than absorbing or unstaging unrelated work.
+
 1. Fetch `origin/main` through `git-integrator`.
 2. Create or switch to `automation/daily-devlog/YYYY-MM-DD` from `origin/main`.
 3. Inspect the latest relevant journal entry or recent day boundary, docs notes, plans/specs, and `origin/main` mainline/first-parent history to identify work that landed since that boundary.
 4. Apply the meaningful-change filter.
 5. If no entry is warranted, stop without edits, commits, pushes, or PRs.
-6. If an entry is warranted, dispatch `implementer` to write/update the journal entry and regenerate indexes.
-7. Dispatch `reviewer` before commit and before push.
-8. Dispatch `git-integrator` to fetch `origin` and confirm the automation branch has accounted for current `origin/main`. If the branch is behind, use the safe-merge wrapper when permitted, route conflicts or regenerated docs changes through `implementer` → `reviewer` → pass, and rerun validation from a clean tree. Do not rebase or force-push unless the human explicitly requests it.
-9. Run validation.
-10. Commit only reviewed devlog automation files.
-11. Re-fetch `origin` and recheck current `origin/main` through `git-integrator` before push or PR creation. If the branch is behind, use the safe-merge wrapper when permitted, route conflicts and fixes through `implementer` → `reviewer` → pass, and restart validation from a clean tree. Do not rebase or force-push unless the human explicitly requests it.
+6. If an entry is warranted, dispatch `implementer` to write/update the journal entry, regenerate indexes, and run local validation, explicitly using the stage-only/no-commit handoff above.
+7. Dispatch `reviewer` over the complete assigned staged content before commit and before push. Every fix dispatch repeats stage-only/no-commit and is followed by refreshed staged review.
+8. The supervisor commits only the exact independently approved, locally validated staged devlog automation content and verifies a clean tree before any safe merge. Preserve unrelated state; do not bypass the wrapper's clean-tree guard.
+9. Dispatch `git-integrator` to fetch `origin` and confirm the automation branch has accounted for current `origin/main`. If behind, use the safe-merge wrapper when permitted. Route conflicts or regenerated docs repairs through the stage-only/no-commit handoff above: implementer locally validates, reviewer inspects the refreshed complete assigned staged diff, then supervisor commits only approved content and verifies a clean tree. Do not rebase or force-push unless the human explicitly requests it.
+10. Run final validation from the clean, current-base tree. If validation produces file changes, route them through the same locally validated staged-review/commit handoff, then restart at step 9; prior review does not cover generated edits. Handle failures through Validation Failure Recovery below.
+11. Re-fetch `origin` and recheck current `origin/main` through `git-integrator` before push or PR creation. If behind, repeat step 9's safe-merge and repair handoff, then rerun final validation from a clean tree before rechecking. Do not rebase or force-push unless the human explicitly requests it.
 12. Push only the dated automation branch through `git-integrator`.
 13. Open a PR, enable auto-merge (or queue the PR), and poll merge queue through `github-operator` when branch protection
     allows it. After the PR enters merge queue, poll with

@@ -56,8 +56,8 @@ test('daily devlog delegates effective branch rule verification to the guarded p
     await loadFiles()
     assert.match(skillContent, /Dispatch `github-operator` to verify branch protection rules and required status checks/)
     assert.ok(githubOperatorContent.includes('"python3 scripts/opencode_pr_operator.py check-main-protection --repo-root .": allow'))
-    assert.ok(prOperatorContent.includes('f"repos/{SPACE_REPO}/rules/branches/main"'),
-        'the delegated protection wrapper must inspect effective branch rules')
+    assert.ok(prOperatorContent.includes('["gh", "api", "--paginate", "--slurp", f"repos/{SPACE_REPO}/rules/branches/main?per_page=100"]'),
+        'the delegated protection wrapper must retrieve all effective branch rule pages')
 })
 
 test('daily devlog skill requires verifying required status checks before auto-merge', async () => {
@@ -133,12 +133,61 @@ test('weekly auto-merge stays with the guarded GitHub capability', async () => {
 test('guarded auto-merge requires protection proof instead of raw merge-method grants', async () => {
     await loadFiles()
     assert.doesNotMatch(supervisorContent, /"gh pr merge[^\n]*": allow/)
-    assert.match(prOperatorContent, /if not has_test or not has_queue:\s+return human_decision/,
-        'protection verification must fail closed unless both required test and queue are proven')
-    assert.match(prOperatorContent, /protection = check_main_protection\(repo_root\)\s+if protection.get\("status"\) != "pass":\s+return human_decision/,
+
+    // Scope proof and invocation assertions to the functions that enforce them.
+    const protection = prOperatorContent.match(/^def check_main_protection\([^\n]*\n[\s\S]*?(?=^def )/m)?.[0]
+    const autoMerge = prOperatorContent.match(/^def enable_auto_merge\([^\n]*\n[\s\S]*?(?=^def )/m)?.[0]
+    assert.ok(protection, 'the guarded wrapper must implement main protection verification')
+    assert.ok(autoMerge, 'the guarded wrapper must own auto-merge requests')
+    assert.match(protection, /if effective_status == "available":\s+rules, complete, page_count = _complete_effective_rules\(pages, blockers\)\s+if not complete:\s+effective_status = "malformed"/,
+        'all retrieved rule pages must be validated before they can supply proof')
+    assert.ok(protection.includes('["gh", "api", f"repos/{SPACE_REPO}"]'),
+        'repository merge permissions must be retrieved, not assumed')
+    assert.ok(protection.includes('["gh", "api", f"repos/{SPACE_REPO}/branches/main/protection"]'),
+        'classic protection must also be inspected for PR/test and linear-history evidence')
+    assert.match(protection, /effective = _effective_policy_proofs\(rules, blockers\)/)
+    assert.match(protection, /_classic_policy_proofs\(protection, blockers\) if classic_status == "available" else \(False, False, False\)/)
+    assert.match(protection, /has_pr = classic_has_pr or effective\["has_pr"\]/)
+    assert.match(protection, /has_test = classic_has_test or effective\["has_test"\]/)
+    assert.match(protection, /if not has_pr:\s+blockers.append\("Require proof of required pull request protection on main"\)/)
+    assert.match(protection, /if not has_test:\s+blockers.append\("Require proof of exact required test check on main"\)/)
+    assert.match(protection, /if not effective\["has_queue"\]:\s+blockers.append\("Require effective merge queue protection on main"\)/)
+    assert.match(protection, /if queue_methods and len\(set\(queue_methods\)\) == 1:\s+method = queue_methods\[0\]\s+elif queue_methods:\s+blockers.append\("Conflicting effective merge_queue methods[^\n]*\)\s+else:\s+blockers.append\("Require an explicit recognized merge_queue method"\)/,
+        'the queue must supply one consistent recognized method')
+    assert.ok(protection.includes('permission_keys = {"merge": "allow_merge_commit", "squash": "allow_squash_merge"}'))
+    assert.match(protection, /if method == "rebase":\s+blockers.append\(/,
+        'rebase queue policy must remain a human-owned decision')
+    assert.match(protection, /if method in permission_keys and permissions\[permission_keys\[method\]\] is not True:\s+blockers.append\(/,
+        'the selected queue method must be literally enabled in repository metadata')
+    assert.match(protection, /if method and any\(method not in allowed for allowed in effective\["restrictions"\]\):\s+blockers.append\(/,
+        'explicit PR merge-method restrictions must not be ignored')
+    assert.match(protection, /linear_history = classic_linear or effective\["linear_history"\]/)
+    assert.match(protection, /if method == "merge" and linear_history:\s+blockers.append\(/,
+        'merge commits must be refused when linear history is required')
+    assert.match(protection, /safe_method = method in permission_keys and not blockers/)
+    for (const field of [
+        '"effective_branch_rules_complete": complete',
+        '"effective_branch_rules_page_count": page_count',
+        '"required_pull_request_proven": has_pr',
+        '"required_test_check_proven": has_test',
+        '"merge_queue_proven": effective["has_queue"]',
+        '"queue_merge_method": method',
+        '"safe_merge_method_proven": safe_method',
+        '"command_errors": command_errors',
+        '"blockers": blockers',
+    ]) {
+        assert.ok(protection.includes(field), `protection must retain evidence: ${field}`)
+    }
+    assert.match(protection, /if blockers:\s+return human_decision\(action, [^\n]+, evidence\)\s+return success\(action, [^\n]+, evidence\)/,
+        'any incomplete, malformed, conflicting or unsafe policy proof must fail closed with evidence')
+    assert.match(autoMerge, /protection = check_main_protection\(repo_root\)\s+if protection.get\("status"\) != "pass":\s+return human_decision/,
         'auto-merge must be gated on the protection result')
-    assert.ok(prOperatorContent.includes('["gh", "pr", "merge", safe, "--auto", "--merge"]'),
-        'the guarded wrapper, not the primary, owns the merge invocation')
+    assert.match(autoMerge, /"queue_merge_method": protection\["evidence"\]\["queue_merge_method"\], "protection": protection/,
+        'the auto-merge result must retain the verified queue method and full protection proof')
+    assert.match(autoMerge, /result = run_command\(\["gh", "pr", "merge", safe, "--auto"\], repo, check=False\)/,
+        'the guarded wrapper must request auto-merge without --merge, --squash or --rebase strategy flags')
+    assert.match(autoMerge, /if result.returncode != 0:\s+return human_decision/,
+        'a refused queue request must not be reported as success')
 })
 
 test('daily devlog skill attributes work by origin/main landing date, not author date', async () => {
@@ -367,9 +416,17 @@ test('fast-dev is direct and local-only until explicit wrap-up, without changing
     assert.match(primary, /A commit request is local only/)
     assert.match(primary, /Only explicit user wrap-up\/integration authorization triggers `fast-dev-wrap-up`/)
     assert.doesNotMatch(fastDevContent, /supervisor|dispatch `implementer`|micro-design/i)
-    assert.match(agentsContent, /For the user-selected `fast-dev` primary only/)
-    assert.match(agentsContent, /override conflicting process rules below and those imported by domain skills/)
-    assert.match(agentsContent, /Retain Space technical standards/)
+    const policy = agentsContent.replace(/\s+/g, ' ')
+    assert.match(policy, /For the user-selected `fast-dev` primary and user-selected `live-dev` primary only,/,
+        'the direct-work exception must be limited to the two exact user-selected identities')
+    assert.match(policy, /override conflicting process rules below and those imported by domain skills/)
+    assert.match(policy, /These exact identities edit, debug, validate, and commit directly: fast-dev on `fast-dev\/<topic>`, live-dev on `live-dev\/<topic>`/)
+    assert.match(policy, /The selected caller must use its own corresponding branch prefix, not the other's/)
+    assert.match(policy, /Checkpoints are local only/)
+    assert.match(policy, /Ordinary completion or a commit request does not authorize publishing; integration requires explicit user wrap-up authorization/)
+    assert.match(policy, /The default `supervisor` is unchanged/)
+    assert.match(policy, /Retain Space technical standards/)
+    assert.match(policy, /For all other agents, retain their existing process and permission contracts; this exception does not change an already-running agent's rules/)
     assert.match(supervisorContent, /^    "gh \*": deny$/m)
 })
 

@@ -289,6 +289,58 @@ creation through `github-operator`, auto-merge/queue setup, and merge-queue
 polling. Raw privileged Git/GitHub commands, direct `main` pushes, rebase, reset,
 force-push, clean, and branch deletion remain forbidden.
 
+#### Strict daily-devlog branch preparation
+
+The strict daily automation delegates this **exact** command to `git-integrator`:
+
+```bash
+python3 scripts/opencode_git_integrate.py create-daily-devlog-branch --repo-root .
+```
+
+The wrapper derives `automation/daily-devlog/YYYY-MM-DD` from a single
+timezone-aware UTC clock sample. There are no caller-supplied date, branch,
+base, remote, force, cleanup or generic branch-creation arguments. Shared
+trusted-Space-repository and branch-name policy are unchanged. A clean worktree
+(including untracked files) and a named, allowed non-`main` source are required
+before fetching; detached HEAD and unsafe sources are refused.
+
+It fetches with `git fetch --no-tags origin
+refs/heads/main:refs/remotes/origin/main` (non-forced, with no fallback), resolves
+`refs/remotes/origin/main^{commit}`, and pins that full fresh commit SHA. It
+checks the exact local ref, the live exact origin target via `ls-remote`, and
+NUL-delimited worktree registrations, failing closed on command errors or
+malformed/ambiguous evidence. From another source it refuses **any** existing
+local or remote dated target, even at main. Any other worktree holding the
+target is refused, including locked or prunable registrations; no worktree
+directory traversal, pruning, unlocking, force or deletion is performed.
+
+The only idempotent retry is already on today's exact target, clean HEAD equal
+to freshly fetched main, no other worktree holder, and the origin target absent
+or equal to that same SHA. A progressed target requires an ownership/resumption
+decision, never a reset. Otherwise the wrapper rechecks source/clean state and
+creates with `git switch --no-track -c <derived-target> <captured-base-sha>`.
+Source commits remain on the source ref and are not copied; no upstream is
+inherited even with `branch.autoSetupMerge=always`. It verifies resulting
+branch, HEAD and cleanliness. Failed postconditions are explicit failures with
+no automatic rollback.
+
+The existing JSON envelope uses action `create_daily_devlog_branch` and reports
+`utc_date`, `source_branch`, `source_head_sha`, `target_branch`,
+`origin_main_sha`, resulting `head_sha`, collision/worktree facts, `commands`
+and `already_current`. Existing exit codes remain 0 (pass), 2 (human decision)
+and 3 (failure). Preparation does **not** push, merge, rebase or publish;
+reviewed writing and the existing finishing capabilities remain separate.
+
+**Restart OpenCode after changing the agent definition.** Configuration is
+startup-loaded, not hot-reloaded. Unit tests and static permission checks do
+not activate a running session. End-to-end acceptance requires a fresh
+automation process from landed `origin/main`, actual authorized execution of
+the exact command, correct dated branch/base evidence, and progression through
+the reviewed docs/PR workflow to actual publication when an entry is warranted.
+Scheduler `completed` alone is not acceptance. Leave unrelated home
+configuration, backups and plugins untouched; a separate home-audit refusal
+must not be described as a successful audit.
+
 ### Strict-flow low-ceremony paths
 
 The strict `supervisor` also has opt-in low-ceremony paths for work that does
@@ -309,6 +361,45 @@ No strict low-ceremony path skips independent review for mutations, and no path 
 ready-to-merge before finishing validation and PR CI.
 
 Restart OpenCode after `.opencode/**` changes. Agent definitions, skill instructions, and permission rules are loaded at startup and are not hot-reloaded.
+
+### Strict-flow checkpoint and review ownership
+
+Ordinary strict-flow tasks, including tiny tasks, use implementer-owned local
+checkpoints followed by independent review:
+
+1. The supervisor records BASE before dispatch. The assigned implementer
+   implements, validates, self-reviews, checkpoints only assigned changes, and
+   reports all checkpoint SHAs.
+2. The supervisor packages the complete `BASE..HEAD` range for independent
+   reviewer approval, not only the latest checkpoint.
+3. For accepted fixes, record FIX_BASE before dispatch; the implementer validates,
+   self-reviews, and checkpoints the fixes. Independently verify the complete
+   `FIX_BASE..HEAD` range. Prior approval never covers subsequent edits.
+
+A checkpoint, clean tree, self-review, or DONE is not approval. Independent
+review and applicable finishing gates still block completion, publication, and
+integration. Supervisors may commit only their existing coordination allowlist
+or exact independently approved content. Ensure reviewed work is committed;
+already-reviewed checkpoints require no extra or empty post-review commit.
+Implementers gain no push, PR, integration, or history-rewrite authority.
+
+Explicit **stage-only/no-commit** assignments override ordinary checkpoints,
+including on fix resumes. Daily/weekly automation and workflow-debug's final
+staged landing retain review-first commits: repeat the no-commit restriction on
+every fix dispatch, review complete assigned staged content including new files,
+and refresh staged evidence after fixes. Check the assigned file list against
+staged, unstaged, and untracked state so no assigned content is omitted. A
+commit-only package does not represent pending changes. Only after pass may the
+supervisor commit the exact approved content, after checking for subsequent
+edits and unrelated staged entries.
+
+Preserve unrelated worktree and index entries; never commit, discard, or unstage
+them to satisfy a checkpoint or clean-tree gate. If task ownership cannot be
+isolated safely, return NEEDS_CONTEXT. Newly edited policy does not retroactively
+authorize commits in a running session assigned no-commit work; restart OpenCode
+before relying on updated agent/skill instructions. The selected fast-dev and
+live-dev exceptions above, permission mappings, and capability boundaries remain
+unchanged.
 
 ### Internal Space agent artifact handoffs
 
@@ -443,6 +534,62 @@ paths, failed job metadata, and excerpts. Agents use those repo-local bundle
 paths for diagnosis instead of requesting raw `gh`, wildcard `actions-log`, or
 external-directory permissions.
 
+### Guarded merge-policy proof
+
+In the strict capability flow, `github-operator` uses the existing
+`check-main-protection` wrapper to prove the policy for
+`semanticdreams/spacecore` before publication. `enable-auto-merge-current`
+rechecks that proof immediately before requesting auto-merge. A refusal is
+`HUMAN_DECISION_REQUIRED`, not permission to bypass the guard or change GitHub
+settings automatically.
+
+The proof requires all of the following:
+
+- **Complete effective rules:** retrieve every page of
+  `repos/semanticdreams/spacecore/rules/branches/main?per_page=100` with
+  `gh api --paginate --slurp`. Each page must be an array and every rule an
+  object with a nonempty string `type`. Partial/failed pagination, malformed
+  data, or unavailable effective rules cannot authorize publication. The helper
+  does not reconstruct ruleset inheritance or applicability from summaries or
+  bounded detail fetches; GitHub's effective branch endpoint is authoritative.
+- **Required PR, exact `test`, and queue:** require pull-request protection,
+  a required status-check context exactly equal to `test`, and an effective
+  merge-queue rule. Readable classic protection may supplement the PR/check
+  proofs: a `required_pull_request_reviews` object proves PR protection even
+  with zero approvals or an empty object. Missing/null classic fields prove
+  nothing. Only an explicit `HTTP 404` diagnostic permits classic protection to
+  be unavailable, and then complete effective rules must independently prove
+  both PR and `test` protection. Other classic errors or malformed relevant
+  configuration refuse, even when effective rules otherwise supply the proofs.
+- **Explicit safe queue method:** every effective queue rule must specify a
+  recognized, consistent uppercase `MERGE`, `SQUASH`, or `REBASE` method. Only
+  merge or squash can pass; rebase-only policy requires a human decision. The
+  repository metadata endpoint must return an object, and the chosen method's
+  `allow_merge_commit` or `allow_squash_merge` permission must literally be
+  boolean `true`, not merely truthy.
+- **All applicable restrictions:** intersect every explicit PR
+  `allowed_merge_methods` list across all pages. Present lists must contain
+  only lowercase `merge`, `squash`, or `rebase`; null/scalar/unknown values
+  refuse, and an empty list permits nothing. PR parameters are optional but
+  must be objects when present. An absent optional method list adds no
+  restriction; it does not replace mandatory queue-method and repository
+  permission proof. Effective or readable classic linear-history requirements
+  exclude merge commits, but allow squash. Malformed relevant policy cannot be
+  hidden by another valid proof; unrelated well-formed rule types are ignored.
+
+Structured evidence reports repository identity, effective-rule completeness
+and page count, classic/metadata status, source and aggregate PR/check/queue
+proofs, repository merge permissions, explicit restrictions, queue method,
+linear history, safe-method proof, and actionable blockers. Command failures
+preserve arguments, return code, and stderr for diagnosis rather than trying
+alternate evidence sources or merge methods.
+
+After proof passes, the wrapper requests `gh pr merge <safe-branch> --auto`
+without a client strategy (`--merge`, `--squash`, or `--rebase`) or administrative
+bypass flags. GitHub's queue controls the actual method and enforces concurrent
+policy changes. A successful command means only that the request was accepted;
+the existing queue poll must still observe `mergedAt` to prove an actual merge.
+
 ### Capability preflight
 
 In the strict flow, privileged Git, GitHub, and OpenCode configuration operations route through
@@ -469,9 +616,13 @@ tests, relevant output, current branch state, and `git status --porcelain`;
 invoke `systematic-debugging`; and continue investigating even when the failure
 appears unrelated, flaky, timing-dependent, or environmental.
 
-In the strict flow, repository fixes, generated-file repairs, and conflict resolutions go through
-`implementer` → `reviewer` → pass before commit. Selected fast-dev and live-dev fix
-these directly, self-review, and revalidate under their scoped exception. Agents rerun
+In the strict flow, repository fixes, generated-file repairs, and conflict
+resolutions follow [checkpoint and review ownership](#strict-flow-checkpoint-and-review-ownership):
+the assigned implementer validates, self-reviews, and checkpoints ordinary fixes
+before independent review; supervisor-owned commits require prior approval.
+Explicit stage-only/no-commit handoffs remain review-first, including fixes.
+Selected fast-dev and live-dev fix these directly, self-review, and revalidate
+under their scoped exception. Agents rerun
 validation from a clean tree and proceed only when the required suite is green, or when systematic
 debugging establishes a true human-input blocker such as missing credentials,
 inaccessible infrastructure, an unsafe git-history decision, unreproducible

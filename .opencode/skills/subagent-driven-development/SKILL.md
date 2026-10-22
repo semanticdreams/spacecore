@@ -27,6 +27,30 @@ The subagent config defines the model per role. On fix-loop escalation (rounds 4
 
 Record BASE (`git rev-parse HEAD`) before dispatching.
 
+**Ordinary checkpoint handoff:** The assigned implementer implements, validates,
+self-reviews, and creates task-scoped local checkpoint commits before reporting.
+Review covers the complete BASE..HEAD range, including every checkpoint, not
+only the latest commit. A checkpoint, clean tree, self-review, or DONE is not
+approval; independent review and applicable finishing gates still block task
+completion, publication, and integration. Implementers gain no push, PR,
+integration, or history-rewrite authority. Preserve unrelated worktree and index
+entries; never absorb, discard, or unstage them. If safe task isolation is
+unclear, return NEEDS_CONTEXT.
+
+**Explicit stage-only/no-commit handoff:** When the assignment requires it,
+dispatch the implementer with that restriction instead of checkpointing. Repeat
+the restriction on every fix dispatch. Review the complete assigned pending
+diff, including additions; for staged handoffs, require all assigned content
+staged and use `git diff --staged -- <assigned paths>` plus a complete file
+manifest. Confirm no assigned unstaged or untracked content is omitted. For an
+uncommitted worktree handoff, include both staged and unstaged assigned changes
+and explicitly include new-file contents. Do not use an unchanged BASE..HEAD
+package as evidence of pending edits. Keep unrelated index entries untouched.
+These handoffs remain uncommitted until independent pass, then the supervisor
+may commit only the exact approved content. Newly edited policy never grants
+retroactive checkpoint authority to a running no-commit session; restart
+OpenCode before relying on updated instructions.
+
 **Task brief:** run `.opencode/skills/subagent-driven-development/scripts/task-brief PLAN_FILE N` — it extracts the task's full text to a file. The controller's dispatch should include:
 1. One line on where this task fits in the project
 2. The brief path ("read this first — it is your requirements")
@@ -39,6 +63,9 @@ Record BASE (`git rev-parse HEAD`) before dispatching.
 9. For Fennel-facing work: compile check first (`make fennel-check` or touched-file `tools.fennel-check`), then constraints, then focused Fennel tests — with evidence reported in that order in the handoff.
 10. A requirement that the implementer report explain validation coverage (why the selected checks cover the behavioral surface), not merely list commands.
 11. A reminder that checkpoint commits are not final integration sign-offs — the reviewer must still approve before the task is complete. Do not claim ready-to-merge until the applicable PR CI gate is green.
+12. The handoff mode: ordinary validated/self-reviewed checkpoints with all SHAs,
+    or explicit stage-only/no-commit with a complete assigned file list and
+    pending-diff review evidence. Repeat a no-commit restriction on fix resumes.
 
 **Report file:** `task-N-report.md` in the plan's workspace. The implementer writes its full report there and returns only status summary.
 
@@ -52,7 +79,12 @@ Never dispatch multiple implementation subagents in parallel (conflicts).
 
 Implementer subagents report one of four statuses:
 
-- **DONE:** Generate the review package (`.opencode/skills/subagent-driven-development/scripts/review-package PLAN_FILE BASE HEAD`), then dispatch the **reviewer** subagent in FULL REVIEW MODE with: the brief path, the report file path, the review package path, and the plan's Global Constraints. See below for review dispatch format.
+- **DONE:** For ordinary checkpoints, verify the reported SHAs and generate the
+  complete task review package (`.opencode/skills/subagent-driven-development/scripts/review-package PLAN_FILE BASE HEAD`).
+  For explicit stage-only/no-commit work, prepare the complete assigned pending
+  diff and file manifest as described above instead. Then dispatch the **reviewer**
+  subagent in FULL REVIEW MODE with: the brief path, the report file path, the
+  review evidence path, and the plan's Global Constraints. See below for review dispatch format.
 
 - **DONE_WITH_CONCERNS:** Read the concerns. If about correctness or scope, address them before review. If observations (e.g., "this file is getting large"), note them and proceed to review.
 
@@ -95,7 +127,17 @@ Triggered when review status is `candidates_found` with Critical or Important fi
 
 **Rounds 4-5:** The implementer should try fresh — this is a hard stall. Same model but frame it as a fresh dispatch: "A prior implementer attempted this task and could not converge. You own it now. Read the report file for what was tried."
 
-**Every round:** Record `FIX_BASE=$(git rev-parse HEAD)` before dispatching the fix. The implementer fixes, re-runs covering tests, and appends a fix report to the report file. After the implementer returns, generate a fix-diff package: run `.opencode/skills/subagent-driven-development/scripts/review-package PLAN_FILE FIX_BASE HEAD` and pass that output to the reviewer in TARGETED VERIFICATION MODE for a scoped re-review:
+**Every round:** Record `FIX_BASE=$(git rev-parse HEAD)` before dispatching the
+fix. The implementer fixes, re-runs covering tests, self-reviews, checkpoints only
+assigned accepted fixes, and appends a fix report with SHAs to the report file.
+After the implementer returns, generate the complete fix-range package:
+`.opencode/skills/subagent-driven-development/scripts/review-package PLAN_FILE FIX_BASE HEAD`.
+Prior approval does not cover subsequent edits; each FIX_BASE..HEAD range needs
+independent verification. For explicit stage-only/no-commit assignments, repeat
+that restriction on the fix dispatch, leave fixes uncommitted, and refresh the
+complete assigned pending diff and manifest (including additions and updated
+staged fixes) instead of generating a commit-only package. Pass the applicable
+evidence to the reviewer in TARGETED VERIFICATION MODE for a scoped re-review:
 
 ```
 You are verifying fixes for Task N using TARGETED VERIFICATION MODE.
@@ -116,6 +158,13 @@ dispatched the reviewer subagent for this task and consumed its JSON response.
 If the reviewer was never dispatched for this task, STOP — dispatch the
 reviewer now. Never write "review clean" to the ledger without first
 dispatching and consuming the reviewer's verdict.
+
+Ensure all reviewed changes are committed before marking the task complete.
+Ordinary reviewed checkpoints need no extra or empty post-review commit. For
+review-first handoffs, the supervisor checks for subsequent edits and unrelated
+staged content, then commits only the exact approved assigned content. Any new
+edits require refreshed review evidence; never absorb unrelated work to satisfy
+completion or finishing clean-tree gates.
 
 When review passes or findings are parked at the cap, append to the ledger
 with the reviewer's status recorded:
@@ -191,4 +240,6 @@ force-push unless the human explicitly requests it.
 | "I'll fix it myself, dispatching is overhead" | Controller fixes pollute your context and skip review. Resume the implementer. |
 | "One more round will converge" | Past the cap, rounds don't converge — the failure is structural. Adjudicate and route. |
 | "The fix was small, skip the re-review" | Unreviewed fixes are how regressions land. Every round ends with a scoped re-review. |
+| "The checkpoint or DONE means we can publish now" | Checkpoints are review inputs, not approval. Independent review and finishing gates still apply, including for tiny tasks. |
+| "The new policy permits this session to commit staged-only work" | Explicit no-commit assignments still govern, including fixes. Review the pending content before the supervisor commits it; restart to load new policy. |
 | "Ledger bookkeeping is overhead" | The ledger is what survives compaction. Controllers without one have re-dispatched entire completed task sequences. |
