@@ -371,8 +371,8 @@ void private_contract_models()
 }
 
 struct Fixture {
-    fs::path root;
-    Fixture()
+    fs::path root, cleanup_root;
+    explicit Fixture(bool long_paths = false)
     {
 #ifdef _WIN32
         root = fs::temp_directory_path() / ("record-publication-" + std::to_string(
@@ -386,11 +386,21 @@ struct Fixture {
         check(::mkdtemp(name.data()) != nullptr, "exclusive private fixture creation");
         root = name.data();
 #endif
+        cleanup_root = root;
+#ifdef _WIN32
+        if (long_paths && !under_wine) {
+            auto absolute = fs::absolute(root);
+            absolute.make_preferred();
+            cleanup_root = fs::path(L"\\\\?\\" + absolute.native());
+        }
+#else
+        (void)long_paths;
+#endif
     }
     ~Fixture()
     {
         std::error_code ignored;
-        fs::remove_all(root, ignored); // Test-owned fixture only; production never sweeps.
+        fs::remove_all(cleanup_root, ignored); // Test-owned fixture only; production never sweeps.
     }
 };
 
@@ -491,30 +501,54 @@ void basic_publication()
 
 void unicode_long_paths_and_payload_snapshot()
 {
-    Fixture fixture;
-    auto parent = fixture.root;
-    for (int i = 0; i < 4; ++i) {
-        parent /= std::string(70, static_cast<char>('a' + i));
+    struct FixtureUnwind {};
+    for (bool unwind : {false, true}) {
+        fs::path removed_root;
+        try {
+            Fixture fixture(true);
+            removed_root = fixture.cleanup_root;
+            auto parent = fixture.root;
+            for (int i = 0; i < 4; ++i) {
+                parent /= std::string(70, static_cast<char>('a' + i));
 #ifdef _WIN32
-        if (under_wine) owned_tmp->mutate(SRPT_MKDIR, parent, 0700);
-        else {
-            auto absolute = fs::absolute(parent);
-            absolute.make_preferred();
-            win_check(::CreateDirectoryW((L"\\\\?\\" + absolute.native()).c_str(), nullptr), "long parent fixture");
-        }
+                if (under_wine) owned_tmp->mutate(SRPT_MKDIR, parent, 0700);
+                else {
+                    auto absolute = fs::absolute(parent);
+                    absolute.make_preferred();
+                    win_check(::CreateDirectoryW((L"\\\\?\\" + absolute.native()).c_str(), nullptr), "long parent fixture");
+                }
 #else
-        check(fs::create_directory(parent), "long parent fixture");
+                check(fs::create_directory(parent), "long parent fixture");
 #endif
+            }
+            check(parent.native().size() > 260, "fixture exceeds legacy Windows MAX_PATH");
+#ifdef _WIN32
+            if (!under_wine) {
+                check(fixture.cleanup_root.native().compare(0, 4, L"\\\\?\\") == 0
+                    && fixture.root.native().compare(0, 4, L"\\\\?\\") != 0,
+                    "native long fixture inspection/cleanup is extended, public root stays ordinary");
+            }
+#endif
+            const auto destination = parent / fs::u8path("record-雪-🌱");
+            std::string payload("owned\0binary", 12);
+            const auto original = payload;
+            rp::Hooks hooks;
+            hooks.before_write = [&] { std::fill(payload.begin(), payload.end(), 'x'); };
+            const auto result = rp::publish(destination, payload, hooks);
+            check(result.committed && !result.cleanup_error && read(destination) == original,
+                "Unicode long-path publication owns original binary snapshot");
+            // Lexical suffix only: querying the ordinary long path here would
+            // reintroduce a native Windows MAX_PATH dependency into the fixture.
+            clean_anchor(fixture.cleanup_root / parent.lexically_relative(fixture.root));
+            if (unwind) throw FixtureUnwind {};
+            check(fs::remove_all(fixture.cleanup_root) > 0, "checked recursive long fixture removal");
+            check(!fs::exists(fixture.cleanup_root), "checked long fixture removal completed before destructor");
+        } catch (const FixtureUnwind&) {
+            // Only this deliberate fault is swallowed; real test failures escape.
+        }
+        check(!fs::exists(removed_root), unwind ? "exceptional long fixture fallback removed all descendants"
+                                              : "normal long fixture removal left no descendants");
     }
-    const auto destination = parent / fs::u8path("record-雪-🌱");
-    std::string payload("owned\0binary", 12);
-    const auto original = payload;
-    rp::Hooks hooks;
-    hooks.before_write = [&] { std::fill(payload.begin(), payload.end(), 'x'); };
-    const auto result = rp::publish(destination, payload, hooks);
-    check(result.committed && !result.cleanup_error && read(destination) == original,
-        "Unicode long-path publication owns original binary snapshot");
-    clean_anchor(parent);
 }
 
 void phase_failures_and_cleanup()
