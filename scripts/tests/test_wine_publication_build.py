@@ -1483,7 +1483,7 @@ def publication_fixture(fixture):
         (directory / name).mkdir(mode=0o700)
     wine = fixture.lib / 'wine64'
     runtime = dict(executable=str(wine), sha256=hashlib.sha256(wine.read_bytes()).hexdigest(), version='wine-9.0 (fixture)')
-    owner = dict(version=3, id=identifier, nonce='b' * 32, repo=str(fixture.root), uid=os.geteuid(),
+    owner = dict(version=4, id=identifier, nonce='b' * 32, repo=str(fixture.root), uid=os.geteuid(),
                  bounds=prefix.BOUNDS, tools=dict(wine=runtime, server=runtime),
                  crash_policy=[list(row) for row in prefix.CRASH_POLICY])
     session = prefix.Session(fixture.root, identifier, owner)
@@ -1530,6 +1530,28 @@ data[64:80] = b'Wine builtin DLL'; path.write_bytes(data)
 ''', fixture.lib)
     fixture.save()
     return fixture, session
+
+
+def test_publication_main_builds_production_then_support_with_same_owned_session(monkeypatch, tmp_path):
+    module = builder_module()
+    repo = tmp_path / 'repo'
+    session = object()
+    calls = []
+    monkeypatch.setattr(module, '__file__', str(repo / 'scripts/wine/build_publication.py'))
+    monkeypatch.setattr(module.sys, 'argv', ['build_publication.py'])
+    monkeypatch.setenv('SPACE_WINE_SESSION_ID', 'a' * 32)
+    monkeypatch.setattr(module.prefix, 'load_session', lambda root, identifier: session)
+    def production(root, owned):
+        assert root == repo and owned is session
+        calls.append('production')
+        return {'build_id': 'b' * 64}
+    def support(root, owned):
+        assert root == repo and owned is session
+        calls.append('support')
+    monkeypatch.setattr(module, 'build_publication', production)
+    monkeypatch.setattr(module, 'build_test_support', support)
+    module.main()
+    assert calls == ['production', 'support']
 
 
 def test_publication_fixed_builder_seals_pair_and_replaces_only_recognized_output(publication_fixture):
@@ -1690,14 +1712,23 @@ def test_publication_builder_checks_images_before_installing(publication_fixture
     assert not (fixture.root / 'build/wine-publication').exists()
 
 
-def test_publication_builder_cli_loads_existing_immutable_session_without_wine(publication_fixture):
-    fixture, session = publication_fixture
+def test_publication_builder_cli_loads_existing_immutable_session_without_wine(support_builder_fixture):
+    fixture, session = support_builder_fixture
     result = subprocess.run([sys.executable, str(fixture.root / BUILDER_SOURCE)],
                             env=dict(fixture.env, SPACE_WINE_SESSION_ID=session.id),
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
     summary = json.loads(result.stdout)
     assert summary['version'] == 1 and summary['abi'] == 1 and summary['files'] == list(PAIR)
+    module = builder_module()
+    production = module._recognized_output(fixture.root / 'build/wine-publication')[1]
+    support = module._recognized_test_output(fixture.root / 'build/wine-publication-tests')[1]
+    assert summary['build_id'] == production['build_id'] != support['build_id']
+    assert production['runtime'] == support['runtime'] == session.owner['tools']['wine']
+    assert set(production['files']) == set(PAIR)
+    assert set(support['files']) == {*SUPPORT_PAIR, SUPPORT_COPY}
+    assert support['kind'] == 'record-publication-test-support'
+    assert support['files'][SUPPORT_COPY] == support['files'][SUPPORT_PAIR[0]]
     assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
 
 
@@ -1937,7 +1968,8 @@ def test_support_real_elf_bounded_reads_cover_multichunk_content(support_elf, tm
 @pytest.fixture
 def support_builder_fixture(publication_fixture):
     fixture, session = publication_fixture
-    # Only support tests supply the extra inputs. Production-only checkouts stay valid.
+    # Support-aware API/main tests supply extra inputs; production-only API
+    # checkouts remain independently valid without these files.
     for relative in SUPPORT_INPUTS:
         target = fixture.root / relative
         target.parent.mkdir(parents=True, exist_ok=True)

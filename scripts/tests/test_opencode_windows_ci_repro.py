@@ -416,8 +416,8 @@ def test_reproduce_runs_build_package_verify_and_wine_steps_in_order(tmp_path, m
     assert result["status"] == "pass"
     stages = result["evidence"]["stages"]
     assert [s["step"] for s in stages] == ["preflight", "build-windows-from-linux", "package-windows-runtime",
-                                                "verify-windows-outputs", "wine-publication-build", "wine-admission", "wine-fast"]
-    assert [s["outcome"] for s in stages] == ["pass"] * 7
+                                                "verify-windows-outputs", "wine-publication-build", "wine-admission", "wine-publication", "wine-fast"]
+    assert [s["outcome"] for s in stages] == ["pass"] * 8
     assert (repo / "dispatch").read_text().splitlines() == ["build", "package", "builder", "admission", "fast"]
     ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
     assert ledger["stages"] == stages
@@ -469,7 +469,7 @@ def test_reproducer_refuses_valid_json_substitution_of_parent_report(tmp_path, m
     assert stage['progress']['admission_phases'] == [{'backend': 'builtin', 'returncode': 20}]
     assert stage['cleanup']['outcome'] == 'pass'
     state = stage['cleanup']['after']['state']
-    assert state['ended'] and not state['authorized']
+    assert state['ended'] and state['authorized_for'] is None
     assert not (runtime.overlay / 'admission.json').exists()
     assert not any(call.get('wine', [''])[0].endswith('space-cli.exe') for call in runtime.calls())
     assert not any('process_prng_compat.c' in ' '.join(call.get('cc', [])) for call in runtime.calls())
@@ -483,7 +483,7 @@ import fcntl
 identifier = os.environ['SPACE_WINE_SESSION_ID']
 directory = pathlib.Path('build/wine/sessions')/identifier
 state = json.loads((directory/'state.json').read_text())
-assert state['generation'] == 0 and not state['authorized'] and not state['ended']
+assert state['generation'] == 0 and state['authorized_for'] is None and not state['ended']
 assert os.environ['WINEPREFIX'] == str(directory.absolute()/'prefix')
 assert json.loads((directory/'setup.json').read_text())['windows_tmp'] is None
 fd = os.open('build', os.O_RDONLY | os.O_DIRECTORY)
@@ -590,24 +590,51 @@ def reproduction_fixture(tmp_path, monkeypatch):
     monkeypatch.setenv('WINE_CMD', str(tools / 'wine'))
     for name in ('prefix.py', 'artifacts.py', 'publication_toolchain.py'):
         shutil.copy2(SCRIPT_ROOT / 'wine' / name, repo / 'scripts/wine' / name)
+    from wine import build_publication as builder
+    from test_windows_wine_runtime import REQUIRED_RESOURCE_PATHS
+    for relative in (*builder.INPUTS, *builder.TEST_INPUTS):
+        if relative == 'scripts/wine/build_publication.py':
+            continue  # Deliberately inert builder below, not an actual cross-build.
+        target = repo / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(SCRIPT_ROOT.parent / relative, target)
+    for directory in (repo / 'build/dist/windows', repo / 'build/wine/windows'):
+        directory.mkdir(parents=True, exist_ok=True)
+        for relative in REQUIRED_RESOURCE_PATHS:
+            target = directory / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(SCRIPT_ROOT.parent / relative, target)
+        for name in ('space.exe', 'space-cli.exe'):
+            (directory / name).write_text('fixture executable, not PE')
+        (directory / 'assets').mkdir(exist_ok=True)
+    def fixture_toolchain(identity):
+        assert identity == {}, 'only this inert fixture has an empty toolchain'
+    monkeypatch.setattr(windows_ci_repro._publication_toolchain, 'verify_toolchain', fixture_toolchain)
     # Only this fake repository routes the new private bootstrap action to the
     # existing inert stage body. Terminal-stop still uses actual cleanup code.
     artifact = repo / 'scripts/wine/artifacts.py'
     artifact.write_text("import sys, runpy\nif __name__ == '__main__' and sys.argv[1:] == ['prepare-bootstrap']:\n"
-                        "    runpy.run_path('scripts/prepare-windows-wine-runtime.sh', run_name='__main__')\n"
-                        "    sys.exit(0)\n" + artifact.read_text())
+                         "    runpy.run_path('scripts/prepare-windows-wine-runtime.sh', run_name='__main__')\n"
+                         "    import os, json\n    from pathlib import Path\n"
+                         "    sys.path.insert(0, str(Path(__file__).absolute().parents[1]))\n"
+                         "    from wine import prefix\n"
+                         "    session = prefix.load_session(Path.cwd(), os.environ['SPACE_WINE_SESSION_ID'])\n"
+                         "    state = session.state()\n"
+                         "    state.update(authorized_for='publication', grant='c'*32, phase='prepared', stopped_generation=state['generation'])\n"
+                         "    session.save(state)\n"
+                         "    sys.exit(0)\n" + artifact.read_text())
     for script, label in [("build-windows-from-linux.sh", "build"), ("package-windows-runtime.sh", "package"),
                           ('wine/build_publication.py', 'builder'),
                           ("prepare-windows-wine-runtime.sh", "admission"), ("test-windows-under-wine.sh", "fast")]:
         fixture_script(repo, script, f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)")
     receipt = repo / "build/wine/windows/admission.json"
-    receipt.parent.mkdir(parents=True)
+    receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.parent.chmod(0o700)
     shutil.copy2(repo / 'build/dist/windows/space-cli.exe', receipt.parent / 'space-cli.exe')
-    receipt.write_text(json.dumps({"version": 3,
+    receipt.write_text(json.dumps({"version": 4,
                                   "backend": "bcryptprimitives=b;advapi32,cryptbase=b",
                                   "payload": {"space-cli.exe": "b"*64}, "package": {"space-cli.exe": "b"*64},
-                                   "conditions": {"DISPLAY": "do-not-copy", "secret": "do-not-copy"}, "secret": "do-not-copy"}))
+                                    "conditions": windows_ci_repro._artifacts.launch_conditions(), "secret": "do-not-copy"}))
     create = windows_ci_repro._prefix.create_session
     def fixture_session(root):
         session = create(root)
@@ -615,12 +642,59 @@ def reproduction_fixture(tmp_path, monkeypatch):
             value = json.loads(receipt.read_text())
             value.update(ownedSession=session.binding(), tools=session.owner['tools'])
             value['bridge'] = fixture_bridge_inventory(root, session)
+            grant = 'c' * 32
+            state = session.state()
+            value.update(support=fixture_support_inventory(root, session), publication=None,
+                         authorization=dict(purpose='publication', grant=grant, stopped_generation=state['generation']))
+            windows_ci_repro._artifacts.seal(root / 'build/dist/windows', 'native-package')
+            value['package'] = windows_ci_repro._artifacts.inventory(root / 'build/dist/windows')
             value['payload'] = {key: digest for key, digest in windows_ci_repro._artifacts.inventory(receipt.parent).items()
                                 if key != 'admission.json'}
             receipt.write_text(json.dumps(value))
             windows_ci_repro._artifacts.seal(receipt.parent, 'wine-overlay')
         return session
     monkeypatch.setattr(windows_ci_repro._prefix, 'create_session', fixture_session)
+    # Synthetic wrapper fixture only: fixed components are modeled host work.
+    # Real Session/report/capture authorization is independently covered by
+    # owned_reproduction_fixture with the actual production validation helper.
+    fixture_script(repo, 'wine/publication_validation.py', '''
+sys.path.insert(0, str(pathlib.Path.cwd()/'scripts'))
+from wine import prefix
+session = prefix.load_session(pathlib.Path.cwd(), os.environ['SPACE_WINE_SESSION_ID'])
+state = session.state()
+start, grant = state['generation'], state['grant']
+state.update(authorized_for=None, grant=None, phase='publication-consumed')
+session.save(state)
+receipt = json.loads(pathlib.Path('build/wine/windows/admission.json').read_text())
+identity = receipt['bridge']['identity']
+value = dict(version=1, backend='wine-posix', build_id=receipt['bridge']['build_id'],
+             module_device=identity['module_device'], module_inode=identity['module_inode'],
+             categories={'common':'passed','host-policy':'passed','mapping-authority':'passed','native-windows':'not-exercised'},
+             foreign_uid_probe='not-configured')
+fd = int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+reports, snapshots = [], []
+for name, bound in [('cpp-022',120),('cpp-002',120),('store-write',30),('store-read',30)]:
+    at = time.monotonic()
+    os.write(fd, (json.dumps(dict(event='launch',component=name,launched_monotonic=at,hard_deadline_monotonic=at+bound))+'\\n').encode())
+    if name.startswith('cpp-'):
+        path = session.tmp/'space-record-publication-report.json'
+        sink = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC, 0o600)
+        os.write(sink, (json.dumps(value)+'\\n').encode())
+        info = os.fstat(sink)
+        snapshots.append([info.st_dev,info.st_ino,info.st_mode,info.st_uid,info.st_nlink,info.st_size,info.st_mtime_ns,info.st_ctime_ns])
+        os.close(sink)
+        reports.append(value)
+        if name == 'cpp-022': path.unlink()
+    os.write(fd, (json.dumps(dict(event='result',component=name,command_returncode=0))+'\\n').encode())
+state.update(generation=start+4, stopped_generation=start+4, phase='publication-checked')
+prefix.write_control(session.directory/'publication.json', dict(version=1,nonce=session.nonce,grant=grant,
+    start_generation=start,stopped_generation=start+4,bridge_build_id=receipt['bridge']['build_id'],
+    reports=reports,report_facts=snapshots,foreign_uid_probe='not-configured'), exclusive=True)
+session.save(state)
+os.write(fd, (json.dumps(dict(event='publication-result',version=1,passed=True,
+    bridge_build_id=receipt['bridge']['build_id'],foreign_uid_probe='not-configured'))+'\\n').encode())
+os.close(fd)
+''')
     return repo
 
 
@@ -629,7 +703,7 @@ def fixture_bridge_inventory(repo, session):
     from wine import build_publication as builder
     from test_windows_wine_runtime import SYNTHETIC_PAIR_COMPILER
     runtime = session.owner['tools']['wine']
-    toolchain = {'identity': {}, 'inputs': {}}
+    toolchain = {'identity': {}, 'inputs': builder._sources(repo)}
     build_id = builder._build_id(runtime, toolchain)
     output = repo / 'build/wine-publication'
     output.mkdir(mode=0o700, exist_ok=True)
@@ -654,6 +728,33 @@ def fixture_bridge_inventory(repo, session):
                     pe_build_id=build_id, unix_build_id=build_id, module_device=info.st_dev,
                     module_inode=info.st_ino, architecture=0x8664, features=3)
     return dict(abi=1, build_id=build_id, toolchain=toolchain, files=files, identity=identity)
+
+
+def fixture_support_inventory(repo, session):
+    from wine import build_publication as builder
+    from test_windows_wine_runtime import SYNTHETIC_PAIR_COMPILER
+    runtime = session.owner['tools']['wine']
+    toolchain = {'identity': {}, 'inputs': builder._test_sources(repo)}
+    build_id = builder._test_build_id(runtime, toolchain)
+    output = repo / 'build/wine-publication-tests'
+    output.mkdir(mode=0o700, exist_ok=True)
+    for directory in builder.DIRECTORIES:
+        (output / directory).mkdir(mode=0o700, exist_ok=True)
+    definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in bytes.fromhex(build_id)) + '}'
+    for name in builder.TEST_PAIR:
+        target = output / name
+        command = 'mingw-fixture' if name.endswith('.dll') else 'host-fixture'
+        result = subprocess.run([sys.executable, '-c', 'import os, sys, pathlib\nargs=sys.argv[1:]\n' +
+                                 f'sys.argv[0]={command!r}\n' + SYNTHETIC_PAIR_COMPILER,
+                                 '-shared', definition, '-o', str(target)], capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        target.chmod(0o600)
+    shutil.copy2(output / builder.TEST_PAIR[0], output / builder.TEST_DISCOVERY)
+    manifest = dict(version=1, abi=1, kind=builder.TEST_KIND, runtime=runtime, toolchain=toolchain,
+                    build_id=build_id, files=builder._test_inventory(output, build_id))
+    windows_ci_repro._prefix.write_control(output / 'build.json', manifest)
+    shutil.copy2(output / builder.TEST_DISCOVERY, repo / 'build/wine/windows' / builder.TEST_DISCOVERY)
+    return manifest
 
 
 def run_build_fixture(repo, body):
@@ -723,6 +824,13 @@ def fatal_stream_record(step='wine-fast'):
 
 PUBLICATION_COMPONENTS = [('cpp-022', 120, '0022'), ('cpp-002', 120, '0002'),
                           ('store-write', 30, '0002'), ('store-read', 30, '0002')]
+
+
+def test_task9_live_publication_is_independently_bounded_before_fast():
+    steps = dict(windows_ci_repro._REPRO_STEPS)
+    assert steps.get('wine-publication') == ('timeout', '--kill-after=5s', '420s', 'python3',
+                                              'scripts/wine/publication_validation.py')
+    assert list(steps)[-2:] == ['wine-publication', 'wine-fast']
 
 
 def publication_frames():
@@ -1064,10 +1172,10 @@ def test_publication_terminal_report_accepts_only_evidence_not_foreign_uid_claim
     assert record['publication']['result']['foreign_uid_probe'] == foreign_uid_probe
 
 
-def test_publication_stage_is_dormant_and_public_command_vectors_stay_closed(tmp_path, monkeypatch):
+def test_publication_stage_is_live_and_public_command_vectors_stay_closed(tmp_path, monkeypatch):
     import _windows_repro_evidence as evidence
     repo = reproduction_fixture(tmp_path, monkeypatch)
-    assert evidence._STEPS == tuple(step for step, _ in windows_ci_repro._REPRO_STEPS) + ('wine-publication',)
+    assert set(evidence._STEPS) == {step for step, _ in windows_ci_repro._REPRO_STEPS}
     with pytest.raises(ValueError, match='fixed'):
         windows_ci_repro._run_repro_step(repo, evidence._new_run(repo), 'wine-publication', ['arbitrary'])
 
@@ -1383,7 +1491,7 @@ def test_application_observation_clock_follows_delayed_prelaunch_accounting(tmp_
             if '1800s' in argv:
                 state = session.state()
                 assert state['generation'] == initial_generation + 1
-                assert not state['authorized'] and state['stopped_generation'] is None
+                assert state['authorized_for'] is None and state['stopped_generation'] is None
                 assert kwargs['close_fds'] and not kwargs.get('pass_fds')
                 assert 'SPACE_WINE_APPLICATION_OBSERVER_FD' not in kwargs['env']
                 boundary['before_spawn'] = time.monotonic()
@@ -1442,7 +1550,7 @@ def test_application_prelaunch_or_spawn_failure_has_no_successful_launch_observa
     assert isinstance(error, OSError) and code is None
     assert observations == []
     assert bool(spawned) == (fault == 'spawn')
-    assert session.state()['ended'] and not session.state()['authorized']
+    assert session.state()['ended'] and session.state()['authorized_for'] is None
     assert [call['server'] for call in runtime.calls() if 'server' in call][-2:] == [['-k'], ['-w']]
 
 
@@ -1803,7 +1911,7 @@ def test_encoded_total_response_budget_with_real_controls_unicode_and_all_stages
     assert result["status"] == "pass"
     assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
     assert result["evidence"]["response_truncated"] is True
-    assert len(result["evidence"]["stages"]) == 7
+    assert len(result["evidence"]["stages"]) == 8
     assert "do-not-copy" not in json.dumps(result)
     ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
     assert len(ledger["stages"][1]["stdout"]["tail"]) == 4000
@@ -1929,6 +2037,7 @@ def test_wine_script_fixed_diagnostics_deadline_and_flushed_launch_marker(tmp_pa
     bounds = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
                   and any(isinstance(target, ast.Name) and target.id == "BOUNDS" for target in node.targets))
     assert bounds == {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
+                      "cpp-022": 120, "cpp-002": 120, "store-write": 30, "store-read": 30,
                       "stop": 10, "wait": 15, "kill_after": 5, "setup": 30}
 
     runtime = Fixture(tmp_path)
@@ -1981,7 +2090,7 @@ def test_encoded_budget_with_all_marker_kinds_and_later_failure(tmp_path, monkey
     assert result["status"] == "fail"
     assert result["evidence"]["failing_step"] == "wine-fast"
     assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
-    assert len(result["evidence"]["stages"]) == 7
+    assert len(result["evidence"]["stages"]) == 8
     assert result["evidence"]["stages"][-1]["returncode"] == 17
     assert result["evidence"]["stages"][-1]["progress"]["counts"]["fail"] == 1
     ledger = json.loads((repo / result["evidence"]["ledger_path"]).read_text())
@@ -2040,7 +2149,7 @@ def test_shell_diagnostics_do_not_change_admission_conditions_and_reject_filter(
     assert identifier != json.loads(before)["ownedSession"]["id"]
     state_file = runtime.root / "build/wine/sessions" / identifier / "state.json"
     state = json.loads(state_file.read_text())
-    assert state["authorized"] and not state["ended"]
+    assert state["authorized_for"] == 'application' and not state["ended"]
     assert state["stopped_generation"] == state["generation"]
     runtime.env["TEST_FILTER"] = "unknown-selection"
     count = len(runtime.calls())
@@ -2049,7 +2158,7 @@ def test_shell_diagnostics_do_not_change_admission_conditions_and_reject_filter(
     assert "Conflicting inherited full-fast setting: TEST_FILTER" in result.stderr
     assert len(runtime.calls()) == count
     state = json.loads(state_file.read_text())
-    assert state["ended"] and not state["authorized"]
+    assert state["ended"] and state["authorized_for"] is None
 
 
 def test_admission_builtin_compat_phases_stay_separate_from_full_tests(tmp_path, monkeypatch):
@@ -2057,7 +2166,7 @@ def test_admission_builtin_compat_phases_stay_separate_from_full_tests(tmp_path,
     fixture_script(repo, "prepare-windows-wine-runtime.sh", "print('Wine admission: probe backend=bcryptprimitives=b;advapi32,cryptbase=b deadline=60s kill-after=5s', flush=True)\nprint('Wine admission: probe exit=10', flush=True)\nprint('Wine admission: probe backend=bcryptprimitives=n;advapi32,cryptbase=b deadline=60s kill-after=5s', flush=True)\nprint('Wine admission: probe exit=0', flush=True)")
     result = windows_ci_repro.reproduce(repo)
     assert result["status"] == "pass"
-    assert result["evidence"]["stages"][-2]["progress"]["admission_phases"] == [
+    assert result["evidence"]["stages"][-3]["progress"]["admission_phases"] == [
         {"backend": "builtin", "returncode": 10}, {"backend": "compat", "returncode": 0}]
     assert result["evidence"]["stages"][-1]["progress"]["admission_phases"] == []
 
@@ -2109,7 +2218,7 @@ def test_budget_retains_failure_context_with_extreme_metadata(tmp_path, monkeypa
     fixture_script(repo, "test-windows-under-wine.sh", body + "\nprint('[FAIL] important failure context: broken call', file=sys.stderr, flush=True)\nsys.exit(17)")
     result = windows_ci_repro.reproduce(repo)
     assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
-    assert len(result["evidence"]["stages"]) == 7
+    assert len(result["evidence"]["stages"]) == 8
     failure = result["evidence"]["stages"][-1]
     assert "important failure context: broken call" in failure["stderr"]["tail"]
     assert failure["returncode"] == 17
@@ -2391,7 +2500,7 @@ def test_finalization_storage_failure_keeps_actual_status_and_complete_history(t
     result = windows_ci_repro.reproduce(repo)
     data = result["evidence"]
     assert result["status"] == "fail" and data["complete"] is False
-    assert len(data["stages"]) == 7
+    assert len(data["stages"]) == 8
     assert data["stages"][1]["stdout"]["tail"] == "successful build\n"
     stage = data["stages"][-1]
     assert stage["returncode"] == code
@@ -2463,7 +2572,12 @@ def test_clock_rollback_retention_always_protects_current_run(tmp_path, monkeypa
 def owned_reproduction_fixture(tmp_path, monkeypatch):
     """Real artifact/prefix code with host dispatchers; no PE is executed."""
     from test_windows_wine_runtime import Fixture
+    import importlib.util
     runtime = Fixture(tmp_path)
+    spec = importlib.util.spec_from_file_location('owned_fixture_toolchain', runtime.root / 'scripts/wine/publication_toolchain.py')
+    toolchain = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(toolchain)
+    monkeypatch.setattr(windows_ci_repro._publication_toolchain, 'verify_toolchain', toolchain.verify_toolchain)
     monkeypatch.setattr(windows_ci_repro, "ensure_space_repo", lambda path: runtime.root)
     monkeypatch_preflight_pass(monkeypatch, windows_ci_repro)
     for key, value in runtime.env.items():
@@ -2487,8 +2601,8 @@ def test_reproducer_supplies_validated_publication_binding_and_receipt_free_clea
     bridge = receipt['bridge']
     expected = f"{bridge['build_id']}:{bridge['identity']['module_device']}:{bridge['identity']['module_inode']}"
     applications = [c for c in runtime.calls() if 'wine' in c and Path(c['wine'][0]).name == 'space-cli.exe']
-    assert len(applications) == 1
-    assert applications[0]['env']['SPACE_WINE_PUBLICATION_BINDING'] == expected
+    assert len(applications) == 3  # separate store writer/reader, then full application
+    assert all(call['env']['SPACE_WINE_PUBLICATION_BINDING'] == expected for call in applications)
     assert result['evidence']['stages'][-1]['cleanup']['outcome'] == 'pass'
     # Cleanup authority stays in immutable ownership; binding is not promoted to
     # prefix PRIVATE_ENV_KEYS and cannot become a receipt prerequisite for stop.
@@ -2532,7 +2646,7 @@ def test_reproducer_required_resource_resealed_corruption_blocks_fast_and_still_
     assert stage['step'] == 'wine-fast' and stage['returncode'] == 1
     assert stage['cleanup']['outcome'] == 'pass'
     assert stage['cleanup']['after']['state']['ended']
-    assert not [call for call in runtime.calls() if 'wine' in call and Path(call['wine'][0]).name == 'space-cli.exe']
+    assert not [call for call in runtime.calls() if 'wine' in call and 'tests.fast:main' in call['wine']]
 
 
 @pytest.mark.parametrize("fault,code", [("success", 0), ("init", 42), ("admission", 20),
@@ -2550,13 +2664,13 @@ def test_parent_owns_session_before_init_and_terminally_cleans_without_receipt(t
     assert metadata['prefix_selection'] == 'generated-owned-session'
     session_id = metadata['owned_session']['id']
     state = json.loads((runtime.root / 'build/wine/sessions' / session_id / 'state.json').read_text())
-    assert state['ended'] and not state['authorized']
+    assert state['ended'] and state['authorized_for'] is None
     assert state['stopped_generation'] == state['generation']
     assert data['stages'][-1]['cleanup']['outcome'] == 'pass'
     calls = runtime.calls()
     assert all(c['env']['WINEPREFIX'] == metadata['effective_prefix'] for c in calls if 'wine' in c or 'server' in c)
     assert [c['server'] for c in calls if 'server' in c] == ([['-k'], ['-w']] if fault in ('init', 'admission')
-                                                          else [['-k'], ['-w'], ['-k'], ['-w']])
+                                                          else [['-k'], ['-w']] * 3)
     if fault == 'app':
         assert data['stages'][-1]['returncode'] == code
     if fault in ('init', 'admission'):
@@ -2639,13 +2753,13 @@ def test_wine_outer_vectors_are_exact_and_not_a_timeout_passthrough():
         'timeout', '--kill-after=5s', '1920s', 'scripts/test-windows-under-wine.sh')
 
 
-def test_seven_live_stages_have_dormant_eighth_stage_log_inventory():
+def test_eight_live_stages_have_complete_log_inventory():
     import _windows_repro_evidence as evidence
     names = tuple(name for name, _ in windows_ci_repro._REPRO_STEPS)
     assert names == ('preflight', 'build-windows-from-linux',
         'package-windows-runtime', 'verify-windows-outputs', 'wine-publication-build',
-        'wine-admission', 'wine-fast')
-    assert evidence._STEPS == names + ('wine-publication',)
+        'wine-admission', 'wine-publication', 'wine-fast')
+    assert len(evidence._STEPS) == len(names) and set(evidence._STEPS) == set(names)
 
 
 @pytest.mark.parametrize('code', [0, 17, 124, 137])
@@ -2674,7 +2788,7 @@ def test_cleanup_retry_is_finite_and_preserves_primary_stage_status(tmp_path, mo
     assert attempt['server_result']['stop_returncode'] == 37
     assert attempt['server_result']['wait_returncode'] == 0
     assert attempt['started_utc'] and attempt['finished_utc']
-    assert [c['server'] for c in runtime.calls() if 'server' in c] == [['-k'], ['-w']] * 3
+    assert [c['server'] for c in runtime.calls() if 'server' in c] == [['-k'], ['-w']] * 4
     assert cleanup['after']['state']['stopped_generation'] is None
 
 
@@ -2687,7 +2801,7 @@ def test_parent_backstop_survives_failed_capture_and_uses_immutable_owner(tmp_pa
         if step == 'wine-admission':
             assert session is not None
             state = session.state()
-            state.update(generation=1, stopped_generation=None, authorized=True)
+            state.update(generation=1, stopped_generation=None, authorized_for='publication', grant='c'*32, phase='prepared')
             session.save(state)
             if fault == 'checkpoint':
                 atomic = evidence._atomic
@@ -2736,7 +2850,7 @@ def test_parent_backstop_survives_failed_capture_and_uses_immutable_owner(tmp_pa
 
 
 @pytest.mark.parametrize('damage', ['missing', 'malformed'])
-@pytest.mark.parametrize('handoff', ['wine-admission', 'wine-fast'])
+@pytest.mark.parametrize('handoff', ['wine-admission', 'wine-publication', 'wine-fast'])
 def test_parent_terminal_backstop_ignores_damaged_setup_but_normal_handoffs_refuse(
         tmp_path, monkeypatch, damage, handoff):
     runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
@@ -2750,7 +2864,7 @@ def test_parent_terminal_backstop_ignores_damaged_setup_but_normal_handoffs_refu
         if step == handoff:
             assert session is not None
             state = session.state()
-            state.update(generation=state['generation'] + 1, stopped_generation=None, authorized=True)
+            state.update(generation=state['generation'] + 1, stopped_generation=None)
             session.save(state)
             setup_file = session.directory / 'setup.json'
             if damage == 'missing':
@@ -2781,7 +2895,7 @@ def test_parent_terminal_backstop_ignores_damaged_setup_but_normal_handoffs_refu
     assert cleanup['capture_complete'] and attempt['capture_complete']
     assert attempt['stdout']['eof'] and attempt['stderr']['eof']
     state = cleanup['after']['state']
-    assert state['ended'] and not state['authorized']
+    assert state['ended'] and state['authorized_for'] is None
     assert state['stopped_generation'] == state['generation']
     session = observed['session']
     assert session.state() == state
@@ -2860,7 +2974,7 @@ import signal, subprocess
 directory = pathlib.Path('build/wine/sessions') / os.environ['SPACE_WINE_SESSION_ID']
 state_file = directory / 'state.json'
 state = json.loads(state_file.read_text())
-state.update(generation=state['generation']+1, stopped_generation=None, authorized=False)
+state.update(generation=state['generation']+1, stopped_generation=None, authorized_for=None, grant=None, phase='application-consumed')
 state_file.write_text(json.dumps(state))
 child = subprocess.Popen([sys.executable, '-c', WRITER_PROGRAM], start_new_session=True)
 (directory / 'fixture-writer').write_text(str(child.pid))
@@ -2920,6 +3034,168 @@ print('[RUN] escaped writer', flush=True)
                 pass
 
 
+def history_snapshot(runtime, session):
+    paths = [runtime.overlay / 'admission.json', runtime.overlay / windows_ci_repro._artifacts.MARKER,
+             *[session.directory / name for name in ('owner.json', 'state.json', 'setup.json', 'publication.json')]]
+    return {str(path): (path.read_bytes(), path.stat().st_ino, path.stat().st_mode,
+                        path.stat().st_mtime_ns) for path in paths if path.exists()}
+
+
+def test_readonly_history_across_purpose_promotion_consumption_and_cleanup(tmp_path, monkeypatch):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    original = windows_ci_repro._run_repro_step
+    inspected = []
+    def inspect(session):
+        before, calls = history_snapshot(runtime, session), runtime.calls()
+        metadata = windows_ci_repro._admitted_metadata(runtime.root, session)
+        assert history_snapshot(runtime, session) == before
+        assert runtime.calls() == calls
+        receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+        assert metadata['authorization'] == receipt['authorization']
+        assert metadata['publication'] == receipt['publication']
+        inspected.append(session.state()['phase'])
+    def run(repo, run_dir, step, args, session=None):
+        if step == 'wine-fast':
+            inspect(session)  # promoted but not consumed
+        record = original(repo, run_dir, step, args, session)
+        if step in ('wine-admission', 'wine-publication', 'wine-fast') and record['outcome'] == 'pass':
+            inspect(session)
+        return record
+    monkeypatch.setattr(windows_ci_repro, '_run_repro_step', run)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'pass', result
+    assert inspected == ['prepared', 'publication-checked', 'publication-passed', 'application-consumed']
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['authorization']['grant'] != receipt['publication']['grant']
+    session = windows_ci_repro._prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    before, calls = history_snapshot(runtime, session), runtime.calls()
+    windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert history_snapshot(runtime, session) == before and runtime.calls() == calls
+    for purpose in ('publication', 'application'):
+        with pytest.raises(ValueError, match='authorization ended/consumed'):
+            windows_ci_repro._artifacts.configuration(session, purpose)
+    publication = next(stage for stage in result['evidence']['stages'] if stage['step'] == 'wine-publication')
+    with pytest.raises(ValueError):
+        windows_ci_repro._artifacts.authorize_application(session, publication)
+    # The owning consumers below may atomically save the same revoked state
+    # during terminal cleanup. Only inspection itself promises no file writes.
+    revoked = session.state()
+    assert revoked['ended'] and revoked['authorized_for'] is None and revoked['grant'] is None
+    with pytest.raises(ValueError):
+        windows_ci_repro._artifacts.execute_admitted(session, 'fast1800')
+    with pytest.raises(ValueError):
+        windows_ci_repro._publication_validation.validate_publication(session)
+    after = history_snapshot(runtime, session)
+    state_path = str(session.directory / 'state.json')
+    assert after[state_path][0] == before[state_path][0]
+    assert session.state() == revoked
+    assert {path: value for path, value in after.items() if path != state_path} == {
+        path: value for path, value in before.items() if path != state_path}
+    assert runtime.calls() == calls
+
+
+@pytest.mark.parametrize('damage', [
+    'auth-missing', 'auth-extra', 'purpose', 'grant', 'upper-grant', 'bool-generation', 'negative-generation',
+    'proof-missing', 'proof-null', 'proof-nonce', 'proof-start', 'proof-stop', 'proof-bridge', 'proof-report', 'proof-facts',
+    'proof-durable', 'grant-collision', 'session-generation', 'session-phase', 'support', 'bridge', 'seal',
+    'support-image', 'support-discovery',
+])
+def test_readonly_history_rejects_corrupt_authorization_proof_or_binding_without_mutation(tmp_path, monkeypatch, damage):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'pass', result
+    receipt_path = runtime.overlay / 'admission.json'
+    receipt = json.loads(receipt_path.read_text())
+    session = windows_ci_repro._prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    proof = receipt['publication']
+    if damage == 'auth-missing': del receipt['authorization']['grant']
+    elif damage == 'auth-extra': receipt['authorization']['extra'] = 1
+    elif damage == 'purpose': receipt['authorization']['purpose'] = 'other'
+    elif damage == 'grant': receipt['authorization']['grant'] = 'xyz'
+    elif damage == 'upper-grant': receipt['authorization']['grant'] = 'A' * 32
+    elif damage == 'bool-generation': receipt['authorization']['stopped_generation'] = True
+    elif damage == 'negative-generation': receipt['authorization']['stopped_generation'] = -1
+    elif damage == 'proof-missing': del receipt['publication']
+    elif damage == 'proof-null': receipt['publication'] = None
+    elif damage == 'proof-nonce': proof['nonce'] = '0' * 32
+    elif damage == 'proof-start': proof['start_generation'] += 1
+    elif damage == 'proof-stop': proof['stopped_generation'] += 1
+    elif damage == 'proof-bridge': proof['bridge_build_id'] = '0' * 64
+    elif damage == 'proof-report': proof['reports'][0]['module_inode'] += 1
+    elif damage == 'proof-facts': proof['report_facts'][0][2] = 0o100644
+    elif damage == 'proof-durable':
+        changed = dict(proof, grant='0' * 32)
+        windows_ci_repro._prefix.write_control(session.directory / 'publication.json', changed)
+    elif damage == 'grant-collision': receipt['authorization']['grant'] = proof['grant']
+    elif damage.startswith('session-'):
+        state = session.state()
+        if damage == 'session-generation':
+            state.update(generation=state['generation'] + 1, stopped_generation=None)
+        else: state['phase'] = 'publication-checked'
+        session.save(state)
+    elif damage == 'support': receipt['support']['build_id'] = '0' * 64
+    elif damage == 'support-image':
+        target = runtime.root / 'build/wine-publication-tests' / windows_ci_repro._build_publication.TEST_PAIR[1]
+        target.write_bytes(target.read_bytes() + b'changed')
+    elif damage == 'support-discovery':
+        (runtime.overlay / windows_ci_repro._build_publication.TEST_DISCOVERY).write_bytes(b'changed discovery')
+        receipt['payload'] = {key: value for key, value in windows_ci_repro._artifacts.inventory(runtime.overlay).items()
+                              if key != 'admission.json'}
+    elif damage == 'bridge': receipt['bridge']['build_id'] = '0' * 64
+    receipt_path.write_text(json.dumps(receipt))
+    if damage != 'seal':
+        windows_ci_repro._artifacts.seal(runtime.overlay, 'wine-overlay')
+    before, calls = history_snapshot(runtime, session), runtime.calls()
+    with pytest.raises((ValueError, KeyError)):
+        windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert history_snapshot(runtime, session) == before and runtime.calls() == calls
+
+
+@pytest.mark.parametrize('history', ['consumed-before-spawn', 'consumed-live', 'ended-teardown-failed'])
+def test_readonly_consumed_history_does_not_invent_authority_or_quiescence(tmp_path, monkeypatch, history):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert result['status'] == 'pass', result
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    session = windows_ci_repro._prefix.load_session(runtime.root, receipt['ownedSession']['id'])
+    state = session.state()
+    stopped = receipt['authorization']['stopped_generation']
+    state.update(ended=history == 'ended-teardown-failed', authorized_for=None, grant=None,
+                 phase='application-consumed', generation=stopped if history == 'consumed-before-spawn' else stopped + 1,
+                 stopped_generation=stopped if history == 'consumed-before-spawn' else None)
+    session.save(state)
+    before, calls = history_snapshot(runtime, session), runtime.calls()
+    windows_ci_repro._admitted_metadata(runtime.root, session)
+    assert history_snapshot(runtime, session) == before and runtime.calls() == calls
+    assert session.state()['stopped_generation'] == state['stopped_generation']
+    for purpose in ('publication', 'application'):
+        with pytest.raises(ValueError):
+            windows_ci_repro._artifacts.configuration(session, purpose)
+    assert history_snapshot(runtime, session) == before and runtime.calls() == calls
+
+
+def test_promotion_grant_collision_refuses_before_any_authorization_write(tmp_path, monkeypatch):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    original = windows_ci_repro._artifacts.authorize_application
+    checked = []
+    def collide(session, record):
+        receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+        before = history_snapshot(runtime, session)
+        monkeypatch.setattr(windows_ci_repro._artifacts.secrets, 'token_hex', lambda count: receipt['authorization']['grant'])
+        with pytest.raises(ValueError, match='collision'):
+            original(session, record)
+        assert history_snapshot(runtime, session) == before
+        checked.append(True)
+        raise ValueError('expected promotion collision')
+    monkeypatch.setattr(windows_ci_repro._artifacts, 'authorize_application', collide)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert checked == [True]
+    assert result['status'] == 'fail' and result['evidence']['failing_step'] == 'wine-publication'
+    assert not [call for call in runtime.calls() if 'tests.fast:main' in call.get('wine', [])]
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['authorization']['purpose'] == 'publication' and receipt['publication'] is None
+
+
 def test_real_parent_sigterm_has_terminal_backstop_and_does_not_leak_locks(tmp_path, monkeypatch):
     runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
     fixture_script(runtime.root, 'test-windows-under-wine.sh', '''
@@ -2942,6 +3218,10 @@ time.sleep(30)
     driver = (f"import sys,json,pathlib; sys.path.insert(0,{str(SCRIPT_ROOT)!r}); "
               "import opencode_windows_ci_repro as w; "
               f"repo=pathlib.Path({str(runtime.root)!r}); w.ensure_space_repo=lambda _:repo; "
+              "import importlib.util; "
+              "spec=importlib.util.spec_from_file_location('owned_fixture_toolchain',repo/'scripts/wine/publication_toolchain.py'); "
+              "toolchain=importlib.util.module_from_spec(spec); spec.loader.exec_module(toolchain); "
+              "w._publication_toolchain.verify_toolchain=toolchain.verify_toolchain; "
               "w.preflight=lambda _:w.success('preflight','fixture',{}); "
               "print(json.dumps(w.reproduce(repo)),flush=True)")
     child = subprocess.Popen([sys.executable, '-c', driver], cwd=runtime.root,
@@ -2972,7 +3252,7 @@ def test_primary_success_plus_backstop_failure_is_fail_without_rewriting_primary
 directory = pathlib.Path('build/wine/sessions')/os.environ['SPACE_WINE_SESSION_ID']
 state_file = directory/'state.json'
 state = json.loads(state_file.read_text())
-state.update(generation=state['generation']+1, stopped_generation=None, authorized=False)
+state.update(generation=state['generation']+1, stopped_generation=None, authorized_for=None, grant=None, phase='application-consumed')
 state_file.write_text(json.dumps(state))
 print('[PASS] primary success before backstop', flush=True)
 ''')
@@ -3019,7 +3299,7 @@ def test_owned_cleanup_after_persistent_storage_failure_retains_prior_success_an
     assert stage['cleanup']['outcome'] == 'pass'
     assert stage['cleanup']['after']['state']['ended']
     if when == 'during-fast':
-        assert len(data['stages']) == 7
+        assert len(data['stages']) == 8
         assert stage['returncode'] == 137 and stage['outcome'] == 'nonzero_exit'
         assert stage['capture_complete'] is False
         assert stage['progress']['last_markers']['pass']['text'] == '[PASS] after storage failure'
@@ -3172,7 +3452,7 @@ def test_cleanup_marker_keeps_stop_wait_codes_for_missing_state_under_long_unico
     assert result['status'] == 'fail'
     assert len(json.dumps(result).encode()) <= 48 * 1024
     data = result['evidence']
-    assert len(data['stages']) == 7
+    assert len(data['stages']) == 8
     stage = data['stages'][-1]
     assert stage['returncode'] == 0 and stage['outcome'] == 'pass'
     cleanup = stage['cleanup']

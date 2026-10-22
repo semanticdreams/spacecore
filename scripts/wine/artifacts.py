@@ -38,6 +38,7 @@ IDENTITY_REPORT = 'space-record-publication-identity.json'
 IDENTITY_LIMIT = 4096
 PUBLICATION_BUILD = ('timeout', '--kill-after=5s', '900s', 'python3', 'scripts/wine/build_publication.py')
 BOOTSTRAP = ('timeout', '--kill-after=5s', '480s', 'python3', 'scripts/wine/artifacts.py', 'prepare-bootstrap')
+PUBLICATION = ('timeout', '--kill-after=5s', '420s', 'python3', 'scripts/wine/publication_validation.py')
 BUILTIN = "bcryptprimitives=b;advapi32,cryptbase=b"
 COMPAT = "bcryptprimitives=n;advapi32,cryptbase=b"
 # Producer and capture parser share the encoded, newline-excluding line budget.
@@ -277,6 +278,19 @@ def publication_manifest(session):
     return manifest
 
 
+def support_manifest(session):
+    session.validate()
+    recognized = build_publication._recognized_test_output(session.repo / 'build/wine-publication-tests')
+    if recognized is None:
+        raise ValueError('Missing owned publication test support')
+    manifest = recognized[1]
+    if (manifest['runtime'] != session.owner['tools']['wine']
+            or manifest['toolchain']['inputs'] != build_publication._test_sources(session.repo)):
+        raise ValueError('Publication test runtime/source binding changed')
+    publication_toolchain.verify_toolchain(manifest['toolchain']['identity'])
+    return manifest
+
+
 def _verify_discovery_copy(manifest, overlay):
     prefix.real_directory(overlay, True)
     path = safe_path(overlay / Path(build_publication.PAIR[0]).name)
@@ -416,7 +430,10 @@ def probe(session, backend, manifest):
 
 
 def _prepare_payload(session):
+    if session.state()['phase'] != 'created' or session.state()['ended']:
+        raise ValueError('Session bootstrap is one-shot')
     manifest = publication_manifest(session)
+    support = support_manifest(session)
     package_before = clean_native(PACKAGE)
     check_replace(OVERLAY, "wine-overlay")
     conditions = launch_conditions()
@@ -436,6 +453,9 @@ def _prepare_payload(session):
         # reaches the builtin architecture pair through the fixed WINEDLLPATH.
         source = BUILD / 'wine-publication' / build_publication.PAIR[0]
         shutil.copy2(source, stage / source.name)
+        shutil.copy2(safe_path(BUILD / 'windows/test_record_publication.exe'), stage / 'test_record_publication.exe')
+        shutil.copy2(BUILD / 'wine-publication-tests' / build_publication.TEST_DISCOVERY,
+                     stage / build_publication.TEST_DISCOVERY)
         _verify_discovery_copy(manifest, stage)
         if publication_manifest(session) != manifest:
             raise ValueError('Publication pair changed while staging the discovery copy')
@@ -456,23 +476,32 @@ def _prepare_payload(session):
         raise ValueError("Native package changed during Wine admission")
     cleanup = prefix.stop_session(session, end=False)
     require_cleanup(cleanup)
-    receipt = {"version": 3, "ownedSession": session.binding(), 'bridge': bridge,
+    state = session.state()
+    grant = secrets.token_hex(16)
+    receipt = {"version": 4, "ownedSession": session.binding(), 'bridge': bridge,
+               'support': support, 'publication': None,
+               'authorization': dict(purpose='publication', grant=grant, stopped_generation=state['generation']),
                "tools": session.owner["tools"], "conditions": conditions,
                "backend": backend, "package": package_before,
                "payload": verify(OVERLAY, "wine-overlay")}
     with owned_file_write(OVERLAY, "admission.json"):
         (OVERLAY / "admission.json").write_text(json.dumps(receipt, sort_keys=True) + "\n")
     print("Wine admission: API contract admitted (not entropy certification)", flush=True)
-    state = session.state()
-    state['authorized'] = True
+    state.update(authorized_for='publication', grant=grant, phase='prepared')
     session.save(state)
     return 0
 
 
-def configuration(session):
+def configuration(session, purpose, *, _checked=False):
+    BUILD = session.repo / 'build'
+    OVERLAY = BUILD / 'wine/windows'
+    PACKAGE = BUILD / 'dist/windows'
     session.validate()
     state = session.state()
-    if (state['ended'] or not state['authorized']
+    if (purpose not in ('publication', 'application') or state['ended']
+            or (not _checked and (state['authorized_for'] != purpose or state['grant'] is None))
+            or (_checked and (purpose != 'publication' or state['phase'] != 'publication-checked'
+                             or state['authorized_for'] is not None or state['grant'] is not None))
             or state['stopped_generation'] != state['generation']):
         raise ValueError('Wine session authorization ended/consumed or not quiescent')
     entries = verify(OVERLAY, "wine-overlay")
@@ -481,12 +510,20 @@ def configuration(session):
     receipt = json.loads((OVERLAY / "admission.json").read_text())
     backend = receipt.get("backend")
     payload = {k: v for k, v in entries.items() if k != "admission.json"}
-    if (type(receipt.get('version')) is not int or receipt.get("version") != 3 or backend not in (BUILTIN, COMPAT)
+    if (type(receipt.get('version')) is not int or receipt.get("version") != 4 or backend not in (BUILTIN, COMPAT)
             or receipt.get("ownedSession") != session.binding()
             or receipt.get("tools") != session.owner['tools']
             or receipt.get("payload") != payload or receipt.get("package") != native
             or receipt.get("conditions") != launch_conditions()):
         raise ValueError("Wine admission receipt does not match payload/package/launch conditions")
+    authorization = receipt.get('authorization')
+    if (not isinstance(authorization, dict) or set(authorization) != {'purpose', 'grant', 'stopped_generation'}
+            or authorization['purpose'] != purpose
+            or not isinstance(authorization['grant'], str) or not re.fullmatch('[0-9a-f]{32}', authorization['grant'])
+            or type(authorization['stopped_generation']) is not int
+            or authorization['stopped_generation'] != state['generation'] - (4 if _checked else 0)
+            or (not _checked and authorization['grant'] != state['grant'])):
+        raise ValueError('Wine purpose grant/receipt generation mismatch')
     manifest = publication_manifest(session)
     bridge = receipt.get('bridge')
     if (not isinstance(bridge, dict) or set(bridge) != {'abi', 'build_id', 'toolchain', 'files', 'identity'}
@@ -497,11 +534,45 @@ def configuration(session):
         raise ValueError("WINE_CMD differs from admitted Wine")
     if (backend == COMPAT) != (FORBIDDEN in payload):
         raise ValueError("Backend does not match overlay helper inventory")
+    support = support_manifest(session)
+    discovery = build_publication.TEST_DISCOVERY
+    if (receipt.get('support') != support
+            or payload.get(discovery) != support['files'][discovery]['sha256']):
+        raise ValueError('Publication test support binding changed')
+    if purpose == 'application':
+        proof = prefix.read_control(session.directory / 'publication.json')
+        if (receipt.get('publication') != proof or proof['stopped_generation'] != state['generation']
+                or proof['bridge_build_id'] != manifest['build_id']):
+            raise ValueError('Publication proof changed')
+    elif receipt.get('publication') is not None:
+        raise ValueError('Unexpected publication proof before authorization')
+    test_so = (BUILD / 'wine-publication-tests' / build_publication.TEST_PAIR[1]).lstat()
     return {'wine': identity['executable'], 'backend': backend,
-            'WINEDLLPATH': str(BUILD / 'wine-publication/modules'),
+            'WINEDLLPATH': os.pathsep.join(str(BUILD / name / 'modules') for name in ('wine-publication', 'wine-publication-tests')),
+            'SPACE_WINE_PUBLICATION_TEST_BINDING': f"{support['build_id']}:{test_so.st_dev}:{test_so.st_ino}",
             'SPACE_WINE_PUBLICATION_BINDING': (f"{manifest['build_id']}:"
                                                f"{bridge['identity']['module_device']}:"
-                                               f"{bridge['identity']['module_inode']}")}
+                                                f"{bridge['identity']['module_inode']}")}
+
+
+def authorize_application(session, capture_record):
+    """Only the owning parent may promote complete independently captured proof."""
+    from wine import publication_validation as validation
+    OVERLAY = session.repo / 'build/wine/windows'
+    configuration(session, 'publication', _checked=True)
+    proof = prefix.read_control(session.directory / 'publication.json')
+    validation.validate_capture(session, capture_record, proof)
+    state = session.state()
+    grant = secrets.token_hex(16)
+    if grant == proof['grant']:
+        raise ValueError('Application/publication grant collision')
+    with owned_file_write(OVERLAY, 'admission.json'):
+        receipt = json.loads((OVERLAY / 'admission.json').read_text())
+        receipt.update(publication=proof, authorization=dict(purpose='application', grant=grant,
+                                                            stopped_generation=state['generation']))
+        (OVERLAY / 'admission.json').write_text(json.dumps(receipt, sort_keys=True) + '\n')
+    state.update(authorized_for='application', grant=grant, phase='publication-passed')
+    session.save(state)
 
 
 def require_cleanup(result):
@@ -553,6 +624,18 @@ def prepare(session):
             code = prefix.wait_leader(list(args), cwd=ROOT, env=env)
             if code:
                 return code
+        # Same parent capture/parser as reproduction, but session-owned logs and
+        # no persistent reproduction ledger. No build lock crosses this handoff.
+        import _windows_repro_evidence as evidence
+        logs = {name: evidence._exclusive(session.directory / f'publication.{name}.log')
+                for name in ('stdout', 'stderr')}
+        record = evidence._record('wine-publication', PUBLICATION)
+        for name in logs:
+            record[name] = evidence._stream_info(str(session.directory / f'publication.{name}.log'))
+        record = evidence._capture(ROOT, session.directory, {'stages': []}, record, logs,
+                                   list(PUBLICATION), session, persist=False)
+        with locked_build():
+            authorize_application(session, record)
         return 0
     try:
         code = composite()
@@ -582,7 +665,7 @@ def execute_admitted(session, mode):
     def execute():
         if mode not in ('smoke60', 'fast1800'):
             raise ValueError('Invalid private execution mode')
-        config = configuration(session)
+        config = configuration(session, 'application')
         if mode == 'fast1800':
             for key in ('TEST_FILTER', 'SPACE_TEST_CASE_TIMEOUT_SECONDS', 'TEST_SUITE',
                         'SPACE_TEST_SUITE', 'TEST_MODULES', 'SPACE_TEST_MODULES'):
@@ -593,11 +676,11 @@ def execute_admitted(session, mode):
                     raise ValueError(f'Conflicting inherited full-fast setting: {key}')
         # One authorization, durably revoked BEFORE any application launch.
         state = session.state()
-        state['authorized'] = False
+        state.update(authorized_for=None, grant=None, phase='application-consumed')
         session.save(state)
         assets = str(OVERLAY / 'assets')
         fennel = f'{assets}/lua/?.fnl;{assets}/lua/?/init.fnl'
-        env = {'WINEDLLOVERRIDES': 'space_record_publication=b;' + config['backend'], 'WINEDLLPATH': config['WINEDLLPATH'],
+        env = {'WINEDLLOVERRIDES': 'space_record_publication=b;space_record_publication_tests=b;' + config['backend'], 'WINEDLLPATH': config['WINEDLLPATH'],
                'SPACE_BIN': str(OVERLAY / 'space-cli.exe'),
                'SPACE_ASSETS_PATH': assets, 'FENNEL_PATH': fennel, 'FENNEL_MACRO_PATH': fennel}
         args = ['--help']
@@ -624,6 +707,7 @@ def execute_admitted(session, mode):
             # Producer-owned handoff LAST, after all receipt/session/pair/copy/
             # runtime checks. Never restore inherited input in prefix cleanup.
             env['SPACE_WINE_PUBLICATION_BINDING'] = config['SPACE_WINE_PUBLICATION_BINDING']
+            env['SPACE_WINE_PUBLICATION_TEST_BINDING'] = config['SPACE_WINE_PUBLICATION_TEST_BINDING']
             code = session.launch([config['wine'], str(OVERLAY / 'space-cli.exe'), *args], mode, env,
                                   on_launch=launched if fd is not None else None)
             observe('result', command_returncode=code)
@@ -640,12 +724,12 @@ def selected_session():
     identifier = os.environ.get('SPACE_WINE_SESSION_ID')
     if identifier:
         return prefix.load_session(ROOT, identifier)
-    # Without a private handoff, only a schema-3 receipt can identify a session.
+    # Without a private handoff, only a schema-4 receipt can identify a session.
     # Old receipts are evidence only. Never reinterpret their default prefix.
     safe_path(OVERLAY / 'admission.json')
     receipt = json.loads((OVERLAY / 'admission.json').read_text())
-    if type(receipt.get('version')) is not int or receipt.get('version') != 3:
-        raise ValueError('Unsupported Wine admission receipt (owned session schema 3 required)')
+    if type(receipt.get('version')) is not int or receipt.get('version') != 4:
+        raise ValueError('Unsupported Wine admission receipt (owned session schema 4 required)')
     return prefix.load_session(ROOT, receipt['ownedSession']['id'])
 
 

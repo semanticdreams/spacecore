@@ -412,6 +412,7 @@ def main():
     repo = Path(__file__).resolve().parents[2]
     session = prefix.load_session(repo, identifier)
     manifest = build_publication(repo, session)
+    build_test_support(repo, session)
     print(json.dumps(dict(version=1, abi=1, build_id=manifest['build_id'], files=list(PAIR)), sort_keys=True))
 
 

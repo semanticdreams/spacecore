@@ -1,9 +1,20 @@
 ;; Fixed fresh-process persistence probe; deliberately not registered in tests.fast.
 (local Strings (require :entities/string))
 (local Links (require :entities/link))
+(local fs (require :fs))
 (local text-id "wine-persistent-text")
 (local link-id "wine-persistent-link")
 (local final-text "  after 雪\r\n\n")
+
+(fn store-options []
+  ;; Test-only fixed external root. The owning parent creates it exclusively
+  ;; beneath verified TEMP; do not use Windows known-folder defaults or create
+  ;; an absent root here. Both fresh processes use ordinary real storage.
+  (local temporary (os.getenv :SPACE_WINE_WINDOWS_TMP))
+  (assert (and temporary (> (# temporary) 0)) "owned TEMP handoff required")
+  (local base-dir (fs.join-path temporary "space-record-publication-store"))
+  (assert (. (fs.stat base-dir) :is-dir) "parent-owned store root required")
+  {: base-dir})
 
 (fn assert-revision [revision]
   (assert (and (= (type revision) :string) (<= 1 (# revision) 512))
@@ -118,8 +129,9 @@
     (assert (= count 1) "each ordinary mutation must notify exactly once")))
 
 (fn write-body []
-  (local strings (Strings.StringEntityStore))
-  (local links (Links.LinkEntityStore))
+  (local options (store-options))
+  (local strings (Strings.StringEntityStore options))
+  (local links (Links.LinkEntityStore options))
   (local observed {:text-created 0 :text-updated 0 :link-created 0 :link-updated 0})
   (with-listeners (write-listeners strings links observed)
                   (fn [] (write-records strings links observed))))
@@ -156,8 +168,9 @@
 
 (fn read-body []
   ;; This entry is launched separately: no writer store/cache is retained.
-  (local strings (Strings.StringEntityStore))
-  (local links (Links.LinkEntityStore))
+  (local options (store-options))
+  (local strings (Strings.StringEntityStore options))
+  (local links (Links.LinkEntityStore options))
   (assert (= (next strings.cache) nil) "reader must start with an empty text cache")
   (assert (= (next links.cache) nil) "reader must start with an empty link cache")
   (local text (assert (strings:get-entity text-id) "persisted text must exist"))

@@ -22,6 +22,7 @@ import time
 import uuid
 
 BOUNDS = {"init": 90, "probe": 60, "smoke60": 60, "fast1800": 1800,
+          "cpp-022": 120, "cpp-002": 120, "store-write": 30, "store-read": 30,
           "stop": 10, "wait": 15, "kill_after": 5, "setup": 30}
 BOOTSTRAP_TEMP = r'C:\windows\temp'
 WINEPATH = r'C:\windows\system32\winepath.exe'
@@ -230,7 +231,7 @@ class Session:
 
     def validate(self):
         expected = self.owner
-        if (expected['version'] != 3 or expected['id'] != self.id
+        if (expected['version'] != 4 or expected['id'] != self.id
                 or expected['uid'] != os.geteuid() or expected['bounds'] != BOUNDS
                 or expected.get('crash_policy') != [list(row) for row in CRASH_POLICY]
                 or expected['repo'] != str(self.repo) or not re.fullmatch('[0-9a-f]{32}', self.nonce)):
@@ -254,10 +255,19 @@ class Session:
 
     def state(self):
         value = read_control(self.directory / 'state.json')
-        fields = {'nonce', 'generation', 'stopped_generation', 'authorized', 'ended'}
+        fields = {'nonce', 'generation', 'stopped_generation', 'authorized_for', 'grant', 'phase', 'ended'}
         if (not isinstance(value, dict) or value.keys() != fields
                 or value['nonce'] != self.nonce or type(value['generation']) is not int
-                or value['generation'] < 0 or type(value['authorized']) is not bool
+                or value['generation'] < 0
+                or value['authorized_for'] not in (None, 'publication', 'application')
+                or value['phase'] not in ('created', 'prepared', 'publication-consumed',
+                                          'publication-checked', 'publication-passed', 'application-consumed')
+                or (value['grant'] is not None and (not isinstance(value['grant'], str)
+                                                    or not re.fullmatch('[0-9a-f]{32}', value['grant'])))
+                or ((value['authorized_for'] is None) != (value['grant'] is None))
+                or (value['authorized_for'] == 'publication' and value['phase'] != 'prepared')
+                or (value['authorized_for'] == 'application' and value['phase'] != 'publication-passed')
+                or (value['ended'] and value['authorized_for'] is not None)
                 or type(value['ended']) is not bool
                 or (value['stopped_generation'] is not None
                     and (type(value['stopped_generation']) is not int
@@ -269,21 +279,34 @@ class Session:
         self.validate()
         write_control(self.directory / 'state.json', state)
 
-    def launch(self, argv, kind, extra_env=None, stdout=None, stderr=None, *, on_launch=None):
+    def launch(self, argv, kind, extra_env=None, stdout=None, stderr=None, *, on_launch=None, child_umask=None):
         self.validate()
         setup = self.setup()
-        if kind in ('probe', 'smoke60', 'fast1800') and not setup['policy_verified']:
+        if kind in ('probe', 'smoke60', 'fast1800', 'cpp-022', 'cpp-002', 'store-write', 'store-read') and not setup['policy_verified']:
             raise ValueError('Owned paths/debug policy not verified')
         state = self.state()
         if state['ended']:
             raise ValueError('Ended session cannot launch Wine')
+        publication = kind in ('cpp-022', 'cpp-002', 'store-write', 'store-read')
+        if publication:
+            expected = [self.owner['tools']['wine']['executable'], str(self.repo / 'build/wine/windows' /
+                        ('test_record_publication.exe' if kind.startswith('cpp-') else 'space-cli.exe'))]
+            if kind.startswith('store-'):
+                expected += ['-m', 'tests.wine-record-publication:' + kind.removeprefix('store-')]
+            if (argv != expected or child_umask != (0o022 if kind == 'cpp-022' else 0o002)
+                    or type(child_umask) is not int or state['phase'] != 'publication-consumed'
+                    or state['authorized_for'] is not None):
+                raise ValueError('Invalid fixed publication launch')
+        elif child_umask is not None:
+            raise ValueError('Child umask is private to fixed publication launches')
         if kind == 'init':
             setup['policy_verified'] = False
             write_control(self.directory / 'setup.json', setup)
         state['generation'] += 1
         state['stopped_generation'] = None
         self.save(state)  # Durable before a child can exist.
-        return bounded(self, argv, kind, extra_env, stdout=stdout, stderr=stderr, on_launch=on_launch)
+        return bounded(self, argv, kind, extra_env, stdout=stdout, stderr=stderr,
+                       on_launch=on_launch, child_umask=child_umask)
 
 
 def create_session(repo):
@@ -330,7 +353,7 @@ def create_session(repo):
     if versions['wine']['release'] != versions['server']['release']:
         raise ValueError(
             f'Wine/wineserver release mismatch; {paths}; {detail}')
-    owner = {'version': 3, 'id': identifier, 'nonce': uuid.uuid4().hex,
+    owner = {'version': 4, 'id': identifier, 'nonce': uuid.uuid4().hex,
              'repo': str(repo), 'uid': os.geteuid(), 'bounds': BOUNDS, 'tools': tools,
              'tool_versions': versions, 'crash_policy': [list(row) for row in CRASH_POLICY]}
     session = Session(repo, identifier, owner)
@@ -338,7 +361,8 @@ def create_session(repo):
                       for name, path in session.roots().items()}
     write_control(directory / 'owner.json', owner, exclusive=True)
     write_control(directory / 'state.json', {'nonce': session.nonce, 'generation': 0,
-                  'stopped_generation': None, 'authorized': False, 'ended': False}, exclusive=True)
+                  'stopped_generation': None, 'authorized_for': None, 'grant': None,
+                  'phase': 'created', 'ended': False}, exclusive=True)
     write_control(directory / 'setup.json', {'nonce': session.nonce, 'windows_tmp': None,
                   'roundtrip_tmp': None, 'policy_verified': False}, exclusive=True)
     session.validate()
@@ -356,14 +380,16 @@ def load_session(repo, identifier):
     return session
 
 
-def bounded(session, argv, kind, extra_env=None, *, stdout=None, stderr=None, on_launch=None):
+def bounded(session, argv, kind, extra_env=None, *, stdout=None, stderr=None, on_launch=None, child_umask=None):
     # Inherit outer capture streams. Never communicate() on Wine-descendant pipes.
     owned = session._server_environment() if kind in ('stop', 'wait') else session.environment()
     env = dict(owned, **(extra_env or {}))
+    env.pop('SPACE_WINE_APPLICATION_OBSERVER_FD', None)
     env.update({key: owned[key] for key in PRIVATE_ENV_KEYS})
     return wait_leader(['timeout', '--kill-after=5s', f'{BOUNDS[kind]}s', *argv],
                        cwd=session.repo, env=env,
-                       stdout=stdout, stderr=stderr, on_launch=on_launch)
+                       stdout=stdout, stderr=stderr, on_launch=on_launch,
+                       **({} if child_umask is None else {'umask': child_umask}))
 
 
 def _server_output(flag, output, stderr):
@@ -503,7 +529,7 @@ def stop_session(session, end):
         if state is not None:
             already_stopped = state['stopped_generation'] == state['generation']
             if end:
-                state.update(authorized=False, ended=True)
+                state.update(authorized_for=None, grant=None, ended=True)
             try:
                 session.save(state)
             except Exception as error:

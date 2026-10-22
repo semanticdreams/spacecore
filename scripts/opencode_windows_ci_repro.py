@@ -8,8 +8,10 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
+import stat
 import sys
 import time
 from pathlib import Path
@@ -19,6 +21,7 @@ import _windows_repro_evidence as _evidence
 from wine import prefix as _prefix
 from wine import publication_toolchain as _publication_toolchain
 from wine import artifacts as _artifacts, build_publication as _build_publication
+from wine import publication_validation as _publication_validation
 from opencode_capabilities import CapabilityError, CommandResult, ensure_space_repo, failure, human_decision, run_command, success
 
 
@@ -47,6 +50,10 @@ REQUIRED_SCRIPTS = (
     "scripts/wine/artifacts.py",
     "scripts/wine/publication_toolchain.py",
     "scripts/wine/build_publication.py",
+    "scripts/wine/publication_validation.py",
+    "tests/record_publication_wine_support.h",
+    "tests/record_publication_wine_support_pe.c",
+    "tests/record_publication_wine_support_unix.cpp",
     "scripts/wine/record_publication_bridge.c",
     "scripts/wine/record_publication_unix_entry.cpp",
     "src/record_publication_wine_abi.h",
@@ -360,6 +367,7 @@ _REPRO_STEPS = (
     ("verify-windows-outputs", ()),
     ("wine-publication-build", ("timeout", "--kill-after=5s", "900s", "python3", "scripts/wine/build_publication.py")),
     ("wine-admission", ("timeout", "--kill-after=5s", "480s", "python3", "scripts/wine/artifacts.py", "prepare-bootstrap")),
+    ("wine-publication", ("timeout", "--kill-after=5s", "420s", "python3", "scripts/wine/publication_validation.py")),
     ("wine-fast", ("timeout", "--kill-after=5s", "1920s", "scripts/test-windows-under-wine.sh")),
 )
 _TERMINAL_STOP = ("timeout", "--kill-after=5s", "45s", "python3", "scripts/wine/artifacts.py", "terminal-stop")
@@ -381,13 +389,96 @@ def _selection_conflicts() -> list[str]:
 
 def _launch_metadata(repo: Path) -> dict[str, object]:
     return {"module": "tests.fast:main", "deadline_seconds": 1800, "admission_deadline_seconds": 60,
-            "bounds": dict(_prefix.BOUNDS, publication_build=900, admission_outer=480, fast_outer=1920, cleanup_backstop=45),
+             "bounds": dict(_prefix.BOUNDS, publication_build=900, admission_outer=480, publication_outer=420,
+                            fast_outer=1920, cleanup_backstop=45),
             "case_deadline_seconds": 120, "case_deadline_policy": "existing per-case overrides unchanged",
             "diagnostics": {"TEST_VERBOSE": "1", "SPACE_TEST_TIMINGS": "1"}, "skip_keyring_tests": True,
             "prefix_selection": "generated-owned-session", "effective_prefix": None,
             "display_present": bool(os.environ.get("DISPLAY")),
             "wayland_display_present": bool(os.environ.get("WAYLAND_DISPLAY")),
             "effective_uid": os.geteuid(), "effective_gid": os.getegid()}
+
+
+def _historical_publication_proof(session, receipt):
+    path = session.directory / 'publication.json'
+    if not path.exists() and not path.is_symlink():
+        return None
+    proof = _prefix.read_control(path)
+    fields = {'version', 'nonce', 'grant', 'start_generation', 'stopped_generation',
+              'bridge_build_id', 'reports', 'report_facts', 'foreign_uid_probe'}
+    if (not isinstance(proof, dict) or set(proof) != fields
+            or type(proof['version']) is not int or proof['version'] != 1
+            or proof['nonce'] != session.nonce
+            or not isinstance(proof['grant'], str) or not re.fullmatch('[0-9a-f]{32}', proof['grant'])
+            or type(proof['start_generation']) is not int or proof['start_generation'] < 0
+            or type(proof['stopped_generation']) is not int
+            or proof['stopped_generation'] != proof['start_generation'] + 4
+            or proof['bridge_build_id'] != receipt['bridge']['build_id']
+            or proof['foreign_uid_probe'] != 'not-configured'
+            or not isinstance(proof['reports'], list) or len(proof['reports']) != 2
+            or not isinstance(proof['report_facts'], list) or len(proof['report_facts']) != 2):
+        raise ValueError('Invalid historical publication proof')
+    identity = receipt['bridge']['identity']
+    binding = f"{proof['bridge_build_id']}:{identity['module_device']}:{identity['module_inode']}"
+    for report, facts in zip(proof['reports'], proof['report_facts']):
+        _publication_validation.report_value(json.dumps(report), binding)
+        if (not isinstance(facts, list) or len(facts) != 8
+                or any(type(value) is not int or value < 0 for value in facts)
+                or not 0 <= facts[0] < 2**64 or not 0 < facts[1] < 2**64
+                or not stat.S_ISREG(facts[2]) or stat.S_IMODE(facts[2]) != 0o600
+                or facts[3] != os.geteuid() or facts[4] != 1 or not 0 < facts[5] <= _publication_validation.LIMIT):
+            raise ValueError('Invalid historical publication report facts')
+    return proof
+
+
+def _validate_admission_history(session, receipt):
+    """Validate historical facts only: never attest or renew live authority."""
+    authorization = receipt.get('authorization')
+    if ('publication' not in receipt
+            or not isinstance(authorization, dict) or set(authorization) != {'purpose', 'grant', 'stopped_generation'}
+            or authorization['purpose'] not in ('publication', 'application')
+            or not isinstance(authorization['grant'], str)
+            or not re.fullmatch('[0-9a-f]{32}', authorization['grant'])
+            or type(authorization['stopped_generation']) is not int or authorization['stopped_generation'] < 0):
+        raise ValueError('Invalid historical admission authorization')
+    state = session.state()
+    generation = authorization['stopped_generation']
+    proof = _historical_publication_proof(session, receipt)
+    phase = state['phase']
+    if authorization['purpose'] == 'publication':
+        if receipt.get('publication') is not None:
+            raise ValueError('Unexpected promoted proof in publication receipt')
+        if phase == 'prepared':
+            valid = proof is None and state['generation'] == state['stopped_generation'] == generation
+            expected = None if state['ended'] else 'publication'
+        elif phase == 'publication-consumed':
+            valid = (proof is None and generation <= state['generation'] <= generation + 4
+                     and state['stopped_generation'] in (None, state['generation']))
+            expected = None
+        elif phase == 'publication-checked':
+            valid = (proof is not None and proof['grant'] == authorization['grant']
+                     and proof['start_generation'] == generation
+                     and state['generation'] == state['stopped_generation'] == proof['stopped_generation'])
+            expected = None
+        else:
+            valid, expected = False, None
+    else:
+        if (proof is None or receipt.get('publication') != proof
+                or proof['stopped_generation'] != generation or proof['grant'] == authorization['grant']):
+            raise ValueError('Historical application receipt/proof mismatch')
+        if phase == 'publication-passed':
+            valid = state['generation'] == state['stopped_generation'] == generation
+            expected = None if state['ended'] else 'application'
+        elif phase == 'application-consumed':
+            valid = (state['generation'] in (generation, generation + 1)
+                     and (state['stopped_generation'] in (None, state['generation']))
+                     and (state['generation'] != generation or state['stopped_generation'] == generation))
+            expected = None
+        else:
+            valid, expected = False, None
+    if (not valid or state['authorized_for'] != expected
+            or state['grant'] != (authorization['grant'] if expected else None)):
+        raise ValueError('Inconsistent admission history/session generation')
 
 
 def _admitted_metadata(repo: Path, session: _prefix.Session) -> dict[str, object]:
@@ -402,7 +493,7 @@ def _admitted_metadata(repo: Path, session: _prefix.Session) -> dict[str, object
         tools = receipt["tools"]
         payload = receipt["payload"]
         bridge = receipt.get('bridge')
-        if (type(receipt['version']) is not int or receipt["version"] != 3
+        if (type(receipt['version']) is not int or receipt["version"] != 4
                 or not isinstance(bridge, dict) or set(bridge) != {'abi', 'build_id', 'toolchain', 'files', 'identity'}
                 or type(bridge['abi']) is not int or bridge['abi'] != 1
                 or not isinstance(bridge['build_id'], str) or len(bridge['build_id']) != 64
@@ -418,7 +509,17 @@ def _admitted_metadata(repo: Path, session: _prefix.Session) -> dict[str, object
         if (recognized is None or recognized[1]['runtime'] != session.owner['tools']['wine']
                 or bridge != _artifacts.validate_bridge_identity(recognized[1], bridge['identity'], repo)):
             raise ValueError('Invalid admission bridge metadata')
+        support = _build_publication._recognized_test_output(repo / 'build/wine-publication-tests')
+        authorization = receipt.get('authorization')
+        if (support is None or receipt.get('support') != support[1]
+                or support[1]['runtime'] != session.owner['tools']['wine']
+                or payload.get(_build_publication.TEST_DISCOVERY) != support[1]['files'][_build_publication.TEST_DISCOVERY]['sha256']):
+            raise ValueError('Invalid admission purpose/support metadata')
+        _validate_admission_history(session, receipt)
         return {"owned_session": session.binding(),
+                 'authorization': authorization, 'publication': receipt.get('publication'),
+                 'support': {'build_id': support[1]['build_id'],
+                             'inventory_sha256': hashlib.sha256(json.dumps(support[1]['files'], sort_keys=True).encode()).hexdigest()},
                 "wine": {key: tools['wine'][key] for key in ("executable", "version", "sha256")},
                 "backend": receipt["backend"],
                 'bridge': {'abi': bridge['abi'], 'build_id': bridge['build_id'], 'identity': bridge['identity'],
@@ -440,7 +541,7 @@ def _run_repro_step(repo: Path, run_dir: Path, step: str, args: Sequence[str],
     # internal stage table can supply argv; CLI accepts no command/env/profile.
     if (step, tuple(args)) not in _REPRO_STEPS:
         raise ValueError("Not a fixed Windows reproduction command")
-    if step in ('wine-publication-build', 'wine-admission', 'wine-fast'):
+    if step in ('wine-publication-build', 'wine-admission', 'wine-publication', 'wine-fast'):
         if not isinstance(session, _prefix.Session) or session.repo != repo:
             raise ValueError("Wine stage requires the generated owned session")
         session.validate()
@@ -499,7 +600,7 @@ def _terminal_cleanup(repo, run_dir, ledger, stage, session):
     state = cleanup['after']['state']
     result = attempt.get('server_result', {})
     cleanup['outcome'] = ('pass' if result.get('ok') is True and attempt['returncode'] == 0
-                          and state is not None and state['ended'] and not state['authorized']
+                          and state is not None and state['ended'] and state['authorized_for'] is None and state['grant'] is None
                           and state['stopped_generation'] == state['generation'] else 'fail')
     cleanup['finished_utc'] = _evidence._utc()
     cleanup['finished_monotonic'] = time.monotonic()
@@ -520,11 +621,11 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
         _evidence._save(repo, run_dir, ledger)
         for step, args in _REPRO_STEPS:
             record = _run_repro_step(repo, run_dir, step, args,
-                                     session if step in ('wine-publication-build', 'wine-admission', 'wine-fast') else None)
+                                     session if step in ('wine-publication-build', 'wine-admission', 'wine-publication', 'wine-fast') else None)
             # Keep the known history in memory, including the current record.
             # A stale disk checkpoint is never the recovery source of truth.
             ledger["stages"].append(record)
-            if session is not None and step in ('wine-publication-build', 'wine-admission', 'wine-fast'):
+            if session is not None and step in ('wine-publication-build', 'wine-admission', 'wine-publication', 'wine-fast'):
                 record['session_after'] = _session_state(session)
             if record["outcome"] != "pass":
                 failed = step
@@ -546,6 +647,16 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
                 _evidence._save(repo, run_dir, ledger)
             if record['step'] == "wine-admission":
                 ledger["metadata"].update(_admitted_metadata(repo, session))
+                _evidence._save(repo, run_dir, ledger)
+            if record['step'] == 'wine-publication':
+                build_fd = os.open(repo / 'build', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+                try:
+                    fcntl.flock(build_fd, fcntl.LOCK_EX)
+                    _artifacts.authorize_application(session, record)
+                finally:
+                    os.close(build_fd)
+                record['session_after'] = _session_state(session)
+                ledger['metadata']['publication'] = record['publication']['result']
                 _evidence._save(repo, run_dir, ledger)
     except _evidence._PersistenceError as error:
         ledger = error.ledger
@@ -578,7 +689,7 @@ def _reproduce_steps(repo: Path) -> dict[str, object]:
                     # Ownership can precede the builder's first checkpoint.
                     # Use the next fixed stage's logs, never an extra stage.
                     if stage['step'] != step:
-                        pending = step if step in ('wine-publication-build', 'wine-admission', 'wine-fast') else 'wine-publication-build'
+                        pending = step if step in ('wine-publication-build', 'wine-admission', 'wine-publication', 'wine-fast') else 'wine-publication-build'
                         stage = _evidence._record(pending, dict(_REPRO_STEPS)[pending])
                         for name in ('stdout', 'stderr'):
                             path = run_dir / f'{pending}.{name}.log'

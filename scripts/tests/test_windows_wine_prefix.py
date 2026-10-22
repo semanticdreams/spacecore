@@ -32,9 +32,45 @@ def setup_argv(session):
             [[reg, 'query', key, '/v', name, '/reg:64'] for key, name, _, _ in EXPECTED_POLICY])
 
 
+def publication_argv(runtime):
+    return [[str(runtime.overlay / 'test_record_publication.exe')]] * 2 + [
+        [str(runtime.overlay / 'space-cli.exe'), '-m', 'tests.wine-record-publication:' + operation]
+        for operation in ('write', 'read')]
+
+
+def launch_count(runtime):
+    return sum('wine' in call for call in runtime.calls())
+
+
 @pytest.fixture
 def runtime(tmp_path):
     return Fixture(tmp_path)
+
+
+def test_new_owner_has_closed_purpose_grant_lifecycle(runtime, monkeypatch):
+    module = prefix_module()
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    session = module.create_session(runtime.root)
+    assert session.owner['version'] == 4
+    assert session.state() == dict(nonce=session.nonce, generation=0, stopped_generation=None,
+                                   authorized_for=None, grant=None, phase='created', ended=False)
+
+
+@pytest.mark.parametrize('field,value', [('authorized_for', 'other'), ('grant', 'xyz'),
+                                        ('phase', 'old'), ('ended', 1)])
+def test_purpose_state_corruption_refuses_before_launch(runtime, monkeypatch, field, value):
+    module = prefix_module()
+    for key, val in runtime.env.items():
+        monkeypatch.setenv(key, val)
+    session = module.create_session(runtime.root)
+    state = session.state()
+    state[field] = value
+    module.write_control(session.directory / 'state.json', state)
+    before = runtime.calls()
+    with pytest.raises(ValueError):
+        module.initialize(session)
+    assert runtime.calls() == before
 
 
 def test_owned_roots_are_private_isolated_and_override_inherited_data(runtime, monkeypatch):
@@ -123,7 +159,8 @@ def test_owned_setup_precedes_probe_and_binds_receipt_and_native_tmp(runtime):
     assert module.CRASH_POLICY == EXPECTED_POLICY
     assert calls == setup_argv(session)
     assert [call['wine'] for call in runtime.calls() if 'wine' in call] == [
-        ['wineboot.exe', '--init'], *setup_argv(session), [str(runtime.overlay / 'process-prng-probe.exe')]]
+        ['wineboot.exe', '--init'], *setup_argv(session), [str(runtime.overlay / 'process-prng-probe.exe')],
+        *publication_argv(runtime)]
     utilities = [call for call in runtime.calls() if call.get('utility')]
     assert all(call['regular_streams'] for call in utilities)
     for index, call in enumerate(utilities):
@@ -136,13 +173,13 @@ def test_owned_setup_precedes_probe_and_binds_receipt_and_native_tmp(runtime):
     receipt = json.loads((runtime.overlay / 'admission.json').read_text())
     assert receipt['ownedSession'] == session.binding()
     assert session.binding()['crash_policy']['verified']
-    assert session.state()['generation'] == 10
+    assert session.state()['generation'] == launch_count(runtime)
     assert runtime.run('test-windows-under-wine.sh').returncode == 0
     app = [call for call in runtime.calls() if 'wine' in call][-1]
     assert app['env']['TEMP'] == app['env']['TMP'] == windows_tmp
     assert app['env']['TMPDIR'] == str(session.directory / 'tmp')
     assert app['env']['XDG_DATA_HOME'] == str(session.directory / 'data')
-    assert session.state()['generation'] == 11
+    assert session.state()['generation'] == launch_count(runtime)
 
 
 @pytest.mark.parametrize('name', ['Debugger', 'Auto', 'ShowCrashDialog'])
@@ -163,7 +200,7 @@ def test_fixed_registry_setup_failure_never_admits_and_cleans_owned_prefix(runti
     owner_file = next((runtime.root / 'build/wine/sessions').glob('*/owner.json'))
     session = prefix_module().load_session(runtime.root, owner_file.parent.name)
     state = session.state()
-    assert state['ended'] and not state['authorized']
+    assert state['ended'] and state['authorized_for'] is None
     assert not session.setup()['policy_verified']
     assert state['generation'] == 1 + len([call for call in runtime.calls() if call.get('utility')])
 
@@ -210,7 +247,7 @@ def test_setup_observation_damage_blocks_launch_not_immutable_owned_cleanup(runt
     assert [call['server'] for call in runtime.calls()[len(before):] if 'server' in call] == [['-k'], ['-w']]
     assert all(call['env'].get('SPACE_WINE_WINDOWS_TMP') == module.BOOTSTRAP_TEMP
                for call in runtime.calls()[len(before):] if 'server' in call)
-    assert session.state()['ended'] and not session.state()['authorized']
+    assert session.state()['ended'] and session.state()['authorized_for'] is None
 
 
 @pytest.mark.parametrize('name', ['data', 'cache', 'tmp'])
@@ -239,7 +276,7 @@ def test_one_owned_prefix_for_probe_app_cleanup(runtime):
     assert prefix.name == 'prefix'
     assert all(c['env']['WINEARCH'] == 'win64' for c in calls)
     assert all(c['env']['WINESERVER'] == str(runtime.bin / 'wineserver') for c in calls)
-    assert [c['server'] for c in calls if 'server' in c] == [['-k'], ['-w'], ['-k'], ['-w']]
+    assert [c['server'] for c in calls if 'server' in c] == [['-k'], ['-w']] * 3
     assert [c['wine'] for c in calls if 'wine' in c][0] == ['wineboot.exe', '--init']
     assert not Path(runtime.env['WINEPREFIX']).exists()
 
@@ -253,7 +290,7 @@ def test_cleanup_failure_is_failure_waits_and_can_retry(runtime):
     assert '37' in result.stderr
     receipt = json.loads((runtime.overlay / 'admission.json').read_text())
     state = runtime.root / 'build/wine/sessions' / receipt['ownedSession']['id'] / 'state.json'
-    assert not json.loads(state.read_text())['authorized']
+    assert json.loads(state.read_text())['authorized_for'] is None
     assert [c['server'] for c in runtime.calls() if 'server' in c][-2:] == [['-k'], ['-w']]
     runtime.env.pop('FIXTURE_STOP_CODE')
     command = [sys.executable, str(runtime.root / 'scripts/wine/artifacts.py'), 'terminal-stop']
@@ -295,22 +332,22 @@ def test_silent_kill_one_wait_zero_admits_cold_prefix_and_owns_consumer(runtime)
     assert result.returncode == 0, result.stderr
     module, session = load_owned(runtime)
     state = session.state()
-    assert state['authorized'] and not state['ended']
-    assert state['stopped_generation'] == state['generation'] == 10
+    assert state['authorized_for'] == 'application' and not state['ended']
+    assert state['stopped_generation'] == state['generation'] == launch_count(runtime)
     assert [call['wine'] for call in runtime.calls() if 'wine' in call and not call.get('utility')][:2] == [
         ['wineboot.exe', '--init'], [str(runtime.overlay / 'process-prng-probe.exe')]]
     result = runtime.run('test-windows-under-wine.sh')
     assert result.returncode == 0, result.stderr
     calls = [call for call in runtime.calls() if 'server' in call]
-    assert [call['server'] for call in calls] == [['-k'], ['-w'], ['-k'], ['-w']]
+    assert [call['server'] for call in calls] == [['-k'], ['-w']] * 3
     assert all(call['regular_streams'] for call in calls)
     assert all(call['env']['WINEPREFIX'] == str(session.prefix) for call in calls)
     assert all(call['env']['WINEARCH'] == 'win64' for call in calls)
     before = runtime.calls()
     assert module.stop_session(session, end=True).ok
     assert runtime.calls() == before
-    assert session.state()['ended'] and not session.state()['authorized']
-    assert session.state()['stopped_generation'] == session.state()['generation'] == 11
+    assert session.state()['ended'] and session.state()['authorized_for'] is None
+    assert session.state()['stopped_generation'] == session.state()['generation'] == launch_count(runtime)
 
 
 def test_silent_terminal_cleanup_marker_preserves_raw_pair_and_idempotence(runtime):
@@ -377,7 +414,7 @@ def test_cleanup_cli_completion_policy_preserves_status_and_retry(
     if any((stop_out, stop_err, wait_out, wait_err)):
         assert 'Wine server' in combined and 'bytes=' in combined
     assert '\x1b' not in combined and '\x00' not in combined and len(combined) < 2000
-    assert session.state()['ended'] and not session.state()['authorized']
+    assert session.state()['ended'] and session.state()['authorized_for'] is None
     assert session.state()['stopped_generation'] == (state['generation'] if ok else None)
     if not ok:
         for key in ['FIXTURE_STOP_CODE', 'FIXTURE_WAIT_CODE']:
@@ -446,7 +483,7 @@ def test_cli_cleanup_policy_preserves_helper_primary_result(runtime, app_code, d
     assert ('Owned Wine cleanup failed:' in result.stderr) == bool(diagnostic)
     _, session = load_owned(runtime)
     state = session.state()
-    assert state['ended'] and not state['authorized']
+    assert state['ended'] and state['authorized_for'] is None
     assert state['stopped_generation'] == (None if diagnostic else state['generation'])
 
 
@@ -545,13 +582,15 @@ def test_logical_sibling_server_can_resolve_to_backend(runtime, monkeypatch, bac
         *[(str(wine), args) for args in setup_argv(session)],
         (str(wine), [str(runtime.overlay / 'process-prng-probe.exe')]),
         (str(server), ['-k']), (str(server), ['-w']),
+        *[(str(wine), args) for args in publication_argv(runtime)],
+        (str(server), ['-k']), (str(server), ['-w']),
         (str(wine), [str(runtime.overlay / 'space-cli.exe'), '-m', 'tests.fast:main']),
         (str(server), ['-k']), (str(server), ['-w'])]
     assert all({key: c['env'][key] for key in ['WINEPREFIX', 'WINEARCH', 'WINESERVER']} ==
                {'WINEPREFIX': str(session.prefix), 'WINEARCH': 'win64', 'WINESERVER': str(server)} for c in calls)
     state = session.state()
-    assert state['ended'] and not state['authorized']
-    assert state['stopped_generation'] == state['generation'] == 11
+    assert state['ended'] and state['authorized_for'] is None
+    assert state['stopped_generation'] == state['generation'] == launch_count(runtime)
     assert not Path(runtime.env['WINEPREFIX']).exists()
 
 
@@ -662,7 +701,7 @@ def test_observed_stdout_stderr_vendor_layout_admits_and_owns_execution(runtime,
         ['-m', 'tests.fast:main'] if mode == 'fast1800' else ['--help'])]
     assert [call['args'] for call in calls[-2:]] == [['-k'], ['-w']]
     assert all(call['env']['WINEPREFIX'] == str(session.prefix) for call in calls)
-    assert session.state()['ended'] and not session.state()['authorized']
+    assert session.state()['ended'] and session.state()['authorized_for'] is None
     assert not Path(runtime.env['WINEPREFIX']).exists()
 
 
@@ -875,7 +914,7 @@ def test_verified_session_receipt_errors_end_authorization_before_return(runtime
     result = runtime.run('test-windows-under-wine.sh')
     assert result.returncode != 0
     state = session.state()
-    assert state['ended'] and not state['authorized']
+    assert state['ended'] and state['authorized_for'] is None
     added = runtime.calls()[len(before):]
     assert not [call for call in added if 'wine' in call]
     assert [call['server'] for call in added if 'server' in call] == ([['-k'], ['-w']] if active else [])
@@ -980,7 +1019,7 @@ def test_changed_immutable_ownership_refuses_cleanup(runtime, monkeypatch, chang
 
 @pytest.mark.parametrize('damage', [
     'invalid-json', 'missing-field', 'missing-nonce', 'missing-generation',
-    'missing-authorized', 'missing-ended', 'array', 'null', 'boolean',
+    'missing-authorized_for', 'missing-grant', 'missing-phase', 'missing-ended', 'array', 'null', 'boolean',
     'generation-bool', 'generation-negative', 'generation-string',
     'stopped-bool', 'stopped-negative', 'stopped-future', 'stopped-string',
     'authorized-number', 'ended-number', 'wrong-nonce', 'extra-field',
@@ -1018,12 +1057,12 @@ def test_mutable_state_failure_does_not_block_owned_stop_or_follow_dosdevices(ru
                 'stopped-negative': ('stopped_generation', -1),
                 'stopped-future': ('stopped_generation', state['generation'] + 1),
                 'stopped-string': ('stopped_generation', '2'),
-                'authorized-number': ('authorized', 1),
+                'authorized-number': ('authorized_for', 1),
                 'ended-number': ('ended', 0),
                 'wrong-nonce': ('nonce', '0' * 32),
                 'extra-field': ('unknown', 'not lifecycle data'),
                 'ended-string': ('ended', 'false'),
-                'authorized-null': ('authorized', None),
+                'authorized-null': ('authorized_for', None),
             }
             key, value = changes[damage]
             state[key] = value
@@ -1108,7 +1147,7 @@ else: sys.exit(77)
 if sys.argv[1].endswith('space-cli.exe'):
     receipt = json.loads((root/'build/wine/windows/admission.json').read_text())
     state = json.loads((root/'build/wine/sessions'/receipt['ownedSession']['id']/'state.json').read_text())
-    assert not state['authorized'], 'authorization was not revoked before launch'
+    assert state['authorized_for'] is None and state['grant'] is None, 'authorization was not revoked before launch'
 ''')
     runtime.env['FIXTURE_ROOT'] = str(runtime.root)
     assert runtime.prepare([0]).returncode == 0
@@ -1210,8 +1249,8 @@ with (directory/'fixture-cleanup').open('a') as stream: stream.write(sys.argv[1]
         stdout, stderr = process.communicate(timeout=4)
         assert process.returncode != 0, (stdout, stderr)
         assert b'interrupted by signal' in stderr
-        assert (session.directory/'fixture-cleanup').read_text().splitlines() == ['-k', '-w', '-k', '-w']
-        assert session.state()['ended'] and not session.state()['authorized']
+        assert (session.directory/'fixture-cleanup').read_text().splitlines() == ['-k', '-w'] * 3
+        assert session.state()['ended'] and session.state()['authorized_for'] is None
     finally:
         if process.poll() is None:
             os.killpg(process.pid, signal.SIGKILL)
