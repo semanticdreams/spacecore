@@ -3174,6 +3174,117 @@ def test_readonly_consumed_history_does_not_invent_authority_or_quiescence(tmp_p
     assert history_snapshot(runtime, session) == before and runtime.calls() == calls
 
 
+@pytest.mark.parametrize('entry,damage', [
+    (entry, damage) for entry in (0, 1) for damage in (
+        'null', 'empty', 'short', 'long', 'object', 'bool-device', 'negative-device', 'wide-device',
+        'string-inode', 'zero-inode', 'wide-inode', 'nonregular', 'mode', 'foreign-uid', 'bool-uid',
+        'links', 'bool-links', 'zero-size', 'oversize', 'bool-size', 'float-mtime', 'negative-mtime',
+        'bool-ctime', 'negative-ctime')
+] + [(None, damage) for damage in (
+    'version-bool', 'nonce-type', 'nonce-canonical', 'grant-type', 'grant-canonical',
+    'build-type', 'build-canonical', 'start-bool', 'start-negative', 'stop-float', 'stop-bool',
+    'stop-negative', 'foreign-uid-type', 'reports-type', 'facts-type')])
+def test_promotion_rejects_corrupt_report_facts(tmp_path, monkeypatch, entry, damage):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    authorize = windows_ci_repro._artifacts.authorize_application
+    checked = []
+    def corrupt(session, record):
+        assert record['outcome'] == 'pass' and record['capture_complete']
+        proof_path = session.directory / 'publication.json'
+        proof = windows_ci_repro._prefix.read_control(proof_path)
+        if entry is not None:
+            facts = proof['report_facts'][entry]
+            if damage == 'null': proof['report_facts'][entry] = None
+            elif damage == 'empty': proof['report_facts'][entry] = []
+            elif damage == 'short': proof['report_facts'][entry] = facts[:-1]
+            elif damage == 'long': proof['report_facts'][entry] = facts + [0]
+            elif damage == 'object': proof['report_facts'][entry] = {'device': facts[0]}
+            else:
+                changes = {
+                    'bool-device': (0, True), 'negative-device': (0, -1), 'wide-device': (0, 2**64),
+                    'string-inode': (1, str(facts[1])), 'zero-inode': (1, 0), 'wide-inode': (1, 2**64),
+                    'nonregular': (2, 0o040600), 'mode': (2, 0o100644),
+                    'foreign-uid': (3, os.geteuid() + 1), 'bool-uid': (3, True),
+                    'links': (4, 2), 'bool-links': (4, True), 'zero-size': (5, 0),
+                    'oversize': (5, windows_ci_repro._publication_validation.LIMIT + 1), 'bool-size': (5, True),
+                    'float-mtime': (6, float(facts[6])), 'negative-mtime': (6, -1),
+                    'bool-ctime': (7, True), 'negative-ctime': (7, -1),
+                }
+                field, value = changes[damage]
+                facts[field] = value
+        else:
+            changes = {
+                'version-bool': ('version', True), 'nonce-type': ('nonce', True),
+                'nonce-canonical': ('nonce', 'A' * 32), 'grant-type': ('grant', 1),
+                'grant-canonical': ('grant', 'A' * 32), 'build-type': ('bridge_build_id', []),
+                'build-canonical': ('bridge_build_id', 'A' * 64), 'start-bool': ('start_generation', True),
+                'start-negative': ('start_generation', -1),
+                'stop-float': ('stopped_generation', float(proof['stopped_generation'])),
+                'stop-bool': ('stopped_generation', True), 'stop-negative': ('stopped_generation', -1),
+                'foreign-uid-type': ('foreign_uid_probe', True), 'reports-type': ('reports', {}),
+                'facts-type': ('report_facts', {}),
+            }
+            field, value = changes[damage]
+            proof[field] = value
+        windows_ci_repro._prefix.write_control(proof_path, proof)
+        before, calls = history_snapshot(runtime, session), runtime.calls()
+        with pytest.raises(ValueError):
+            authorize(session, record)
+        assert history_snapshot(runtime, session) == before and runtime.calls() == calls
+        state = session.state()
+        assert state['phase'] == 'publication-checked' and state['authorized_for'] is None and state['grant'] is None
+        checked.append(True)
+        raise ValueError('Expected corrupt publication proof refusal')
+    monkeypatch.setattr(windows_ci_repro._artifacts, 'authorize_application', corrupt)
+    result = windows_ci_repro.reproduce(runtime.root)
+    assert checked == [True]
+    assert result['status'] == 'fail' and result['evidence']['failing_step'] == 'wine-publication'
+    assert result['evidence']['stages'][-1]['cleanup']['outcome'] == 'pass'
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['authorization']['purpose'] == 'publication' and receipt['publication'] is None
+    assert not [call for call in runtime.calls() if 'tests.fast:main' in call.get('wine', [])]
+
+
+@pytest.mark.parametrize('history', ['interrupted-init', 'stopped-after-init', 'generation-only',
+                                     'stopped-zero', 'prepared-grant', 'fresh'])
+def test_bootstrap_refuses_interrupted_created_generation(tmp_path, monkeypatch, history):
+    runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
+    run_step = windows_ci_repro._run_repro_step
+    observed = {}
+    def interrupted(repo, run_dir, step, args, session=None):
+        if step == 'wine-admission':
+            if history in ('interrupted-init', 'stopped-after-init'):
+                assert windows_ci_repro._prefix.initialize(session) == 0
+            if history in ('stopped-after-init', 'stopped-zero'):
+                assert windows_ci_repro._prefix.stop_session(session, end=False).ok
+            if history in ('generation-only', 'prepared-grant'):
+                state = session.state()
+                if history == 'generation-only': state['generation'] += 1
+                else: state.update(phase='prepared', authorized_for='publication', grant='c' * 32,
+                                   stopped_generation=state['generation'])
+                session.save(state)
+            observed.update(session=session, calls=runtime.calls(), state=session.state())
+        return run_step(repo, run_dir, step, args, session)
+    monkeypatch.setattr(windows_ci_repro, '_run_repro_step', interrupted)
+    result = windows_ci_repro.reproduce(runtime.root)
+    if history == 'fresh':
+        assert result['status'] == 'pass', result
+        assert sum(call.get('wine') == ['wineboot.exe', '--init'] for call in runtime.calls()) == 1
+        return
+    assert result['status'] == 'fail', result
+    assert result['evidence']['failing_step'] == 'wine-admission'
+    stage = result['evidence']['stages'][-1]
+    assert stage['returncode'] == 1 and stage['cleanup']['outcome'] == 'pass'
+    added = runtime.calls()[len(observed['calls']):]
+    assert not [call for call in added if 'wine' in call], 'stale handoff launched bootstrap work again'
+    state = observed['session'].state()
+    assert state['ended'] and state['authorized_for'] is None and state['grant'] is None
+    assert state['generation'] == observed['state']['generation'] == state['stopped_generation']
+    assert not (runtime.overlay / 'admission.json').exists()
+    servers = [call['server'] for call in added if 'server' in call]
+    assert servers == ([] if observed['state']['stopped_generation'] == observed['state']['generation'] else [['-k'], ['-w']])
+
+
 def test_promotion_grant_collision_refuses_before_any_authorization_write(tmp_path, monkeypatch):
     runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
     original = windows_ci_repro._artifacts.authorize_application

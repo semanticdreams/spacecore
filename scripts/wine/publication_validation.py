@@ -3,6 +3,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import signal
 import stat
 import sys
@@ -79,17 +80,33 @@ def validate_capture(session, record, proof):
             or set(proof) != {'version', 'nonce', 'grant', 'start_generation', 'stopped_generation',
                              'bridge_build_id', 'reports', 'report_facts', 'foreign_uid_probe'}
             or type(proof['version']) is not int or proof['version'] != 1
+            or not isinstance(proof['nonce'], str) or not re.fullmatch('[0-9a-f]{32}', proof['nonce'])
+            or not isinstance(proof['grant'], str) or not re.fullmatch('[0-9a-f]{32}', proof['grant'])
             or proof['nonce'] != session.nonce or proof['grant'] != authorization['grant']
-            or type(proof['start_generation']) is not int
+            or type(proof['start_generation']) is not int or proof['start_generation'] < 0
             or proof['start_generation'] != authorization['stopped_generation']
+            or type(proof['stopped_generation']) is not int or proof['stopped_generation'] < 0
             or proof['stopped_generation'] != proof['start_generation'] + 4
             or proof['stopped_generation'] != state['generation']
             or state['generation'] != state['stopped_generation'] or state['ended']
+            or not isinstance(proof['bridge_build_id'], str)
+            or not re.fullmatch('[0-9a-f]{64}', proof['bridge_build_id'])
             or proof['bridge_build_id'] != receipt['bridge']['build_id']
             or proof['foreign_uid_probe'] != 'not-configured'
             or not isinstance(proof['reports'], list) or len(proof['reports']) != 2
             or not isinstance(proof['report_facts'], list) or len(proof['report_facts']) != 2):
         raise ValueError('Invalid stopped publication proof')
+    # Both reports are authority-bearing history, including the first sink
+    # already removed after verification. Equality to the final stat alone
+    # cannot validate the first vector or distinguish bool from integer facts.
+    for report_facts in proof['report_facts']:
+        if (not isinstance(report_facts, list) or len(report_facts) != 8
+                or any(type(value) is not int or value < 0 for value in report_facts)
+                or not 0 <= report_facts[0] < 2**64 or not 0 < report_facts[1] < 2**64
+                or not stat.S_ISREG(report_facts[2]) or stat.S_IMODE(report_facts[2]) != 0o600
+                or report_facts[3] != os.geteuid() or report_facts[4] != 1
+                or not 0 < report_facts[5] <= LIMIT):
+            raise ValueError('Invalid publication report facts')
     identity = receipt['bridge']['identity']
     binding = f"{proof['bridge_build_id']}:{identity['module_device']}:{identity['module_inode']}"
     for report in proof['reports']:

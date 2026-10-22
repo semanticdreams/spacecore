@@ -430,8 +430,10 @@ def probe(session, backend, manifest):
 
 
 def _prepare_payload(session):
-    if session.state()['phase'] != 'created' or session.state()['ended']:
-        raise ValueError('Session bootstrap is one-shot')
+    state = session.state()
+    if state != dict(nonce=session.nonce, phase='created', generation=0, stopped_generation=None,
+                     authorized_for=None, grant=None, ended=False):
+        raise ValueError('Session bootstrap is one-shot; pristine unused Session required')
     manifest = publication_manifest(session)
     support = support_manifest(session)
     package_before = clean_native(PACKAGE)
