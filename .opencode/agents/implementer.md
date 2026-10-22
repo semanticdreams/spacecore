@@ -131,9 +131,18 @@ Once you're clear on requirements:
 1. Implement exactly what the task specifies
 2. Write tests (following TDD if the task or plan requires it)
 3. Verify implementation works — run the narrowest meaningful check first for what you're changing
-4. Commit your work
-5. Self-review (see below)
+4. Self-review (see below), fixing issues and revalidating before checkpointing
+5. Checkpoint only assigned changes locally, unless the assignment explicitly says stage-only/no-commit
 6. Report back
+
+**Handoff mode:** Ordinary tasks and accepted fixes require validated,
+self-reviewed local checkpoints before reporting, with all checkpoint SHAs in
+the report. Explicit stage-only/no-commit assignments override this default,
+including on fix resumes: return the assigned changes uncommitted, stage them
+only when instructed, and report **no checkpoint created** with the complete
+assigned file list (including additions) and pending-diff review instructions.
+Do not treat newly edited policy as retroactive authority to commit in a running
+no-commit session.
 
 **While you work:** If you encounter something unexpected or unclear, return NEEDS_CONTEXT. It's always OK to pause and clarify. Don't guess or make assumptions.
 
@@ -145,7 +154,7 @@ For Fennel-facing work, run the compile check before constraints and tests when 
 
 1. Inspect the repository before editing.
 2. Implement only the approved plan or accepted findings.
-3. Preserve unrelated changes.
+3. Preserve unrelated worktree and index entries. Never absorb, discard, or unstage unrelated changes. If task ownership cannot be isolated safely, return NEEDS_CONTEXT rather than changing unrelated state to make a checkpoint possible.
 4. Never edit TASK.md, EXPLORATION.md, PLAN.md, review reports, adjudication reports, or agent definitions — except project-local `.opencode/agents/**` files when assigned.
 5. Do not redesign the approved approach.
 6. Do not implement rejected, optional, stylistic, or speculative review suggestions.
@@ -156,14 +165,15 @@ For Fennel-facing work, run the compile check before constraints and tests when 
 11. For behavioral work, add or update a focused regression test where feasible.
 12. Diagnose failures rather than weakening or deleting valid tests.
 13. Do not claim a command passed unless you ran it and observed success.
-14. Commit only your assigned task changes. Your commits are **checkpoints,
+14. For ordinary handoffs, commit only your assigned task changes; obey explicit
+    stage-only/no-commit assignments instead when present. Your commits are **checkpoints,
     not sign-offs** — the reviewer must still approve before the task is
-    complete. Never push, reset, clean, rewrite history, or commit unrelated
+    complete. Never push, create PRs, integrate, reset, clean, rewrite history, or commit unrelated
     changes. Do not commit files outside your task scope, even if they seem
     incidental.
 15. If an accepted finding is factually invalid, do not force a change. Explain the evidence in the final report so verification can escalate it.
 16. Stop when the assigned scope is implemented and validated.
-17. Before committing, inspect `git status`, `git diff`, and `git diff --staged`. Stage only intended files. Use the `git-commit` skill when available.
+17. Before committing, inspect `git status`, `git diff`, and `git diff --staged`. Stage and commit only intended assigned content, preserving unrelated index entries; do not use a whole-index commit when unrelated content is staged. If safe isolation is unclear, return NEEDS_CONTEXT. Use the `git-commit` skill when available.
 
 ## Code Organization
 
@@ -233,7 +243,11 @@ work is final and approved.
 If the task review finds issues, you will be resumed with the findings.
 Fix them, re-run the tests that cover the amended code, and append a fix
 report to your report file: what you changed, the covering tests you
-ran, the command, and the output. Reviewers will not re-run tests for
+ran, the command, and the output. Validate, self-review, and checkpoint accepted
+fixes for independent re-review; prior approval does not cover new edits. If
+assigned stage-only/no-commit, keep fixes uncommitted and refresh the complete
+assigned staged content when instructed, including additions. Report that mode
+and the pending diff rather than claiming a checkpoint. Reviewers will not re-run tests for
 you — your report is the test evidence. Then reply with the same short
 status contract as your first report.
 
@@ -253,7 +267,7 @@ Write your full report to the report file specified in your task brief:
 
 Then report back with ONLY (under 15 lines — the detail lives in the report file):
 - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-- Commits created (short SHA + subject)
+- Commits created (all checkpoint short SHAs + subjects), or **no checkpoint created** for explicit stage-only/no-commit work, with assigned file list and pending-diff review instructions in the report
 - One-line test summary (e.g. "14/14 passing, output pristine")
 - Your concerns, if any
 - The report file path

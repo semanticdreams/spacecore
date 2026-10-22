@@ -28,6 +28,21 @@ ask for a one-off broad command permission.
 
 ## Workflow
 
+**Review-first handoff:** Every implementation and fix dispatch in this
+automation must explicitly say: **stage only assigned changes; return them
+uncommitted; do not commit, amend, push, or integrate**. This overrides ordinary
+implementer checkpoints, including validation repairs, conflict resolutions, and
+merge-queue fixes. Review the complete assigned staged diff, including new files,
+with `git diff --staged -- <assigned paths>` and a complete assigned file list.
+Confirm no assigned unstaged or untracked content was omitted; a commit-only
+BASE..HEAD package cannot represent this handoff. After fixes, refresh the whole
+assigned staged diff and dispatch reviewer again. Each handoff includes successful
+local validation; any validation-generated edits must be staged and reviewed too.
+Only after pass may the supervisor commit the exact approved, locally validated
+content, checking for subsequent edits and
+preserving unrelated worktree/index entries; if isolation is unsafe, return
+NEEDS_CONTEXT rather than absorbing or unstaging unrelated work.
+
 1. Dispatch `git-integrator` to fetch `origin/main` and collect current branch status.
 2. Create the run branch from `origin/main` (`automation/weekly-agent-workflow/YYYY-Www`) only when it does not already exist. If the branch already exists, switch to it, dispatch `git-integrator` to fetch `origin` and safe-merge `origin/main` when permitted, route conflicts or regenerated docs changes through `implementer` → `reviewer` → pass, and do not reset unless the human explicitly requests it.
 3. Run the analyzer and save sanitized evidence to a local scratch path that is not under `docs/`, for example:
@@ -46,13 +61,13 @@ ask for a one-off broad command permission.
 4. Fail closed if the analyzer fails, reports redaction failures, includes unrelated projects, or requires raw OpenCode browsing to justify findings.
 5. Read prior reports in `docs/dev/reports/agent-workflow/` and the feature contract in `docs/dev/features/weekly-agent-workflow-automation.md`.
 6. Choose only high-confidence improvements with sanitized evidence and clear maintenance value.
-7. Dispatch `implementer` for selected changes. For skill edits, the implementer must use `writing-skills` where practical.
-8. Dispatch `reviewer`; accepted findings go back through implementer and reviewer until the result is pass.
-9. Dispatch `git-integrator` to fetch `origin` and confirm the automation branch has accounted for current `origin/main`. If the branch is behind, use the safe-merge wrapper when permitted, route conflicts or regenerated docs changes through `implementer` → `reviewer` → pass, and rerun validation from a clean tree. Do not rebase or force-push unless the human explicitly requests it.
-10. Run validation. Use `systematic-debugging` for validation failures. A validation failure is not an immediate `BLOCKED` condition, even when it appears unrelated, flaky, timing-dependent, or environmental. Capture the failing command, failing tests, relevant output, current branch state, and `git status --porcelain`; establish root cause or the limits of available evidence; route any repository fix through `implementer` → `reviewer` → pass; commit reviewed fixes; re-fetch `origin`; recheck current `origin/main`; and rerun validation until green or a true human-input blocker is established. Do not weaken valid tests or ignore noise.
-11. Inspect the final diff and confirm it contains only reviewed, expected files.
-12. Dispatch `git-integrator` to re-fetch `origin` and recheck current `origin/main` before push or PR creation. If the branch is behind, use the safe-merge wrapper when permitted, route conflicts and fixes through `implementer` → `reviewer` → pass, and restart validation from a clean tree.
-13. Commit reviewed changes, push the automation branch through `git-integrator`, create the PR through `github-operator`, verify branch protection, required checks, and merge queue protection through `github-operator`, then enable auto-merge (or queue the PR) only when safe. After the PR enters merge queue, poll through `github-operator` wrapper evidence until `mergedAt` is present (PR merged). Do not run direct broad `gh pr`, `gh run list`, or `gh run watch` commands. Do not update the PR branch solely because origin/main advanced after PR creation — merge queue handles post-PR freshness. Resume only for actionable queue blockers: merge queue conflicts, merge-group `test` failures, missing merge queue protection, permission blockers, closed-unmerged PRs, and queue timeouts. For queue failures, invoke `systematic-debugging`, route any repository fix through `implementer` → `reviewer` → pass, commit reviewed fixes, validate from current `origin/main`, push through `git-integrator`, and requeue through `github-operator`. Do not rebase or force-push unless the human explicitly requests it.
+7. Dispatch `implementer` for selected changes and local validation, explicitly using the stage-only/no-commit handoff above. For skill edits, the implementer must use `writing-skills` where practical.
+8. Dispatch `reviewer` over the complete assigned staged content; accepted findings go back through implementer with stage-only/no-commit repeated and refreshed staged review until the result is pass.
+9. The supervisor commits only the exact independently approved, locally validated staged content and verifies a clean tree before any safe merge. Preserve unrelated state; do not bypass the wrapper's clean-tree guard.
+10. Dispatch `git-integrator` to fetch `origin` and confirm the automation branch has accounted for current `origin/main`. If behind, use the safe-merge wrapper when permitted. Route conflicts or regenerated docs repairs through the stage-only/no-commit handoff above: implementer locally validates, reviewer inspects the refreshed complete assigned staged diff, then supervisor commits only approved content and verifies a clean tree. Do not rebase or force-push unless the human explicitly requests it.
+11. Run final validation from the clean, current-base tree and inspect the final diff for only reviewed, expected files. If validation produces file changes, route them through the same locally validated staged-review/commit handoff, then restart at step 10; prior review does not cover generated edits. Use `systematic-debugging` for validation failures. A validation failure is not an immediate `BLOCKED` condition, even when it appears unrelated, flaky, timing-dependent, or environmental. Capture the failing command, failing tests, relevant output, current branch state, and `git status --porcelain`; establish root cause or the limits of available evidence; route any repository fix through the locally validated stage-only/no-commit implementation → refreshed staged review → supervisor commit handoff; re-fetch `origin`; recheck current `origin/main`; and rerun validation until green or a true human-input blocker is established. Do not weaken valid tests or ignore noise.
+12. Dispatch `git-integrator` to re-fetch `origin` and recheck current `origin/main` before push or PR creation. If behind, repeat step 10's safe-merge and repair handoff, then rerun final validation from a clean tree before rechecking.
+13. Push the automation branch through `git-integrator`, create the PR through `github-operator`, verify branch protection, required checks, and merge queue protection through `github-operator`, then enable auto-merge (or queue the PR) only when safe. After the PR enters merge queue, poll through `github-operator` wrapper evidence until `mergedAt` is present (PR merged). Do not run direct broad `gh pr`, `gh run list`, or `gh run watch` commands. Do not update the PR branch solely because origin/main advanced after PR creation — merge queue handles post-PR freshness. Resume only for actionable queue blockers: merge queue conflicts, merge-group `test` failures, missing merge queue protection, permission blockers, closed-unmerged PRs, and queue timeouts. For queue failures, invoke `systematic-debugging`, route any repository fix through `implementer` → `reviewer` → pass, commit reviewed fixes, validate from current `origin/main`, push through `git-integrator`, and requeue through `github-operator`. Do not rebase or force-push unless the human explicitly requests it.
 
 ## Improvement Selection
 

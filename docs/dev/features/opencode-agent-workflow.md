@@ -362,6 +362,45 @@ ready-to-merge before finishing validation and PR CI.
 
 Restart OpenCode after `.opencode/**` changes. Agent definitions, skill instructions, and permission rules are loaded at startup and are not hot-reloaded.
 
+### Strict-flow checkpoint and review ownership
+
+Ordinary strict-flow tasks, including tiny tasks, use implementer-owned local
+checkpoints followed by independent review:
+
+1. The supervisor records BASE before dispatch. The assigned implementer
+   implements, validates, self-reviews, checkpoints only assigned changes, and
+   reports all checkpoint SHAs.
+2. The supervisor packages the complete `BASE..HEAD` range for independent
+   reviewer approval, not only the latest checkpoint.
+3. For accepted fixes, record FIX_BASE before dispatch; the implementer validates,
+   self-reviews, and checkpoints the fixes. Independently verify the complete
+   `FIX_BASE..HEAD` range. Prior approval never covers subsequent edits.
+
+A checkpoint, clean tree, self-review, or DONE is not approval. Independent
+review and applicable finishing gates still block completion, publication, and
+integration. Supervisors may commit only their existing coordination allowlist
+or exact independently approved content. Ensure reviewed work is committed;
+already-reviewed checkpoints require no extra or empty post-review commit.
+Implementers gain no push, PR, integration, or history-rewrite authority.
+
+Explicit **stage-only/no-commit** assignments override ordinary checkpoints,
+including on fix resumes. Daily/weekly automation and workflow-debug's final
+staged landing retain review-first commits: repeat the no-commit restriction on
+every fix dispatch, review complete assigned staged content including new files,
+and refresh staged evidence after fixes. Check the assigned file list against
+staged, unstaged, and untracked state so no assigned content is omitted. A
+commit-only package does not represent pending changes. Only after pass may the
+supervisor commit the exact approved content, after checking for subsequent
+edits and unrelated staged entries.
+
+Preserve unrelated worktree and index entries; never commit, discard, or unstage
+them to satisfy a checkpoint or clean-tree gate. If task ownership cannot be
+isolated safely, return NEEDS_CONTEXT. Newly edited policy does not retroactively
+authorize commits in a running session assigned no-commit work; restart OpenCode
+before relying on updated agent/skill instructions. The selected fast-dev and
+live-dev exceptions above, permission mappings, and capability boundaries remain
+unchanged.
+
 ### Internal Space agent artifact handoffs
 
 Internal Space agent sessions get a session-scoped artifact directory under
@@ -577,9 +616,13 @@ tests, relevant output, current branch state, and `git status --porcelain`;
 invoke `systematic-debugging`; and continue investigating even when the failure
 appears unrelated, flaky, timing-dependent, or environmental.
 
-In the strict flow, repository fixes, generated-file repairs, and conflict resolutions go through
-`implementer` → `reviewer` → pass before commit. Selected fast-dev and live-dev fix
-these directly, self-review, and revalidate under their scoped exception. Agents rerun
+In the strict flow, repository fixes, generated-file repairs, and conflict
+resolutions follow [checkpoint and review ownership](#strict-flow-checkpoint-and-review-ownership):
+the assigned implementer validates, self-reviews, and checkpoints ordinary fixes
+before independent review; supervisor-owned commits require prior approval.
+Explicit stage-only/no-commit handoffs remain review-first, including fixes.
+Selected fast-dev and live-dev fix these directly, self-review, and revalidate
+under their scoped exception. Agents rerun
 validation from a clean tree and proceed only when the required suite is green, or when systematic
 debugging establishes a true human-input blocker such as missing credentials,
 inaccessible infrastructure, an unsafe git-history decision, unreproducible
