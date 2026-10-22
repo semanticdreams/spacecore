@@ -223,6 +223,20 @@ The throwaway branch is allowed to have many debugging commits. `main` is not.
 
 ## Final landing through a PR branch
 
+**Review-first final landing:** The throwaway-branch commit/push/poll lifecycle
+above is unchanged. The final PR-branch staged landing is different: every
+implementer dispatch editing that staged content, including staged-fix resumes,
+must explicitly say
+**stage only assigned changes; return them uncommitted; do not commit, amend,
+push, or integrate**. Review the complete assigned staged squash diff, including
+additions, not a commit-only package or only the trigger-removal delta. Check the
+assigned file manifest against staged, unstaged, and untracked state so no
+assigned content is omitted. Preserve unrelated worktree/index entries; if safe
+isolation is unclear, return NEEDS_CONTEXT rather than absorbing or unstaging
+unrelated work. Refresh staged evidence and independently re-review after every
+staged fix. Only the supervisor creates the exact reviewed final squash commit
+after staged-review pass and checking that no subsequent edits changed it.
+
 Once reviewer verification passes (status `pass`):
 
 1. Fetch `origin/main`.
@@ -230,13 +244,14 @@ Once reviewer verification passes (status `pass`):
 3. Squash-merge the throwaway debug branch into the final PR branch.
 4. Dispatch **implementer** to remove the temporary throwaway-branch workflow
    trigger from the workflow file while keeping all real workflow/build/test
-   fixes. Instruct implementer to stage the result. Verify the staged diff
-   before continuing.
+   fixes. Explicitly instruct: **stage only assigned changes; return them
+   uncommitted; do not commit, amend, push, or integrate**. Verify the complete
+   staged result and assigned file manifest before continuing.
 
 5. Generate the staged diff and dispatch the reviewer for staged verification:
    ```
    .opencode/skills/github-workflow-debug/scripts/ci-artifact-dir.sh
-   git diff --staged > .superpowers/sdd/ci-staged.diff
+   git diff --staged -- <assigned paths> > .superpowers/sdd/ci-staged.diff
    ```
    Dispatch the reviewer for staged review (CI DEBUG REVIEW MODE):
    ```
@@ -247,6 +262,7 @@ Once reviewer verification passes (status `pass`):
 
    Branch review package (approved): .superpowers/sdd/ci-review-pack.diff
    Staged squash diff: .superpowers/sdd/ci-staged.diff
+   Assigned file manifest (including additions): [complete assigned file list]
 
    Check: no debug scaffolding remains in the staged diff, no real fixes
    were dropped from the squash, and the only difference from the approved
@@ -256,7 +272,10 @@ Once reviewer verification passes (status `pass`):
    - **candidates_found** → assess the findings:
      - If the issues are mechanical (missing trigger removal, leftover debug
        scaffolding, dropped fix in squash): dispatch **implementer** to fix the
-       staged diff, then re-review.
+       staged diff with the explicit instruction **stage only assigned changes;
+       return them uncommitted; do not commit, amend, push, or integrate**.
+       Refresh the complete assigned staged squash diff, including additions,
+       then re-review before any final commit.
      - If the issues are substantive (a source, test, build, or workflow
        behavior problem): abort the landing, return to the throwaway branch,
        dispatch **implementer** to fix, verify the commit, push, poll until
