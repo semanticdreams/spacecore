@@ -878,6 +878,7 @@ set_tests_properties(${PROJECT_NAME}_runtime_fennel_paths PROPERTIES
 
 add_executable(test_record_publication
     tests/test_record_publication.cpp
+    tests/record_publication_wine_support.h
     src/record_publication.cpp
 )
 target_include_directories(test_record_publication PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -886,6 +887,10 @@ if(WIN32)
     target_link_libraries(test_record_publication advapi32)
 endif()
 add_test(NAME test_record_publication COMMAND test_record_publication)
+set_tests_properties(test_record_publication PROPERTIES TIMEOUT 120)
+# Test support is built/staged only by the private Wine builder, never as a
+# runtime dependency or an install target. The fixed PE test is likewise not
+# included in SPACE_INSTALL_TARGETS/native release packages.
 
 add_executable(test_record_publication_operation
     tests/test_record_publication_operation.cpp

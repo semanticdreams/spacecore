@@ -1,12 +1,18 @@
 #include "record_publication.h"
+#include "record_publication_wine_binding.h"
+#include "record_publication_wine_support.h"
 
 #include <array>
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -17,6 +23,10 @@
 #include <aclapi.h>
 #include <sddl.h>
 #include <winioctl.h>
+#include "record_publication_wine.h"
+#include "wine_owned_environment.h"
+
+extern "C" BOOLEAN WINAPI SystemFunction036(PVOID, ULONG);
 #else
 #include <cerrno>
 #include <csignal>
@@ -38,6 +48,259 @@ void check(bool condition, const std::string& message)
     if (!condition) throw std::runtime_error(message);
 }
 
+using Binding = rp::wine::detail::Binding;
+
+std::string build_id(const Binding& value)
+{
+    std::string text;
+    for (const auto byte : value.build_id) {
+        text += "0123456789abcdef"[byte >> 4];
+        text += "0123456789abcdef"[byte & 15];
+    }
+    return text;
+}
+
+void validate_support_identity(const SrptIdentity& identity, const Binding& expected, uint64_t original)
+{
+    check(identity.size == sizeof(identity) && identity.abi == SRPT_ABI
+        && identity.architecture == SRPT_ARCH_X86_64 && identity.features == SRPT_FEATURES
+        && identity.challenge == original && identity.echo == original
+        && std::equal(expected.build_id.begin(), expected.build_id.end(), identity.pe_build_id)
+        && std::equal(expected.build_id.begin(), expected.build_id.end(), identity.unix_build_id)
+        && identity.module_device == expected.module_device && identity.module_inode == expected.module_inode,
+        "independent support binding matches actual selected PE/Unix pair");
+}
+
+std::string report_json(const Binding& admitted)
+{
+    return "{\"version\":1,\"backend\":\"wine-posix\",\"build_id\":\"" + build_id(admitted)
+        + "\",\"module_device\":" + std::to_string(admitted.module_device)
+        + ",\"module_inode\":" + std::to_string(admitted.module_inode)
+        + ",\"categories\":{\"common\":\"passed\",\"host-policy\":\"passed\",\"mapping-authority\":\"passed\","
+          "\"native-windows\":\"not-exercised\"},\"foreign_uid_probe\":\"not-configured\"}\n";
+}
+
+#ifdef _WIN32
+bool under_wine = false;
+const char* child_phase = "entry";
+DWORD child_error = ERROR_SUCCESS;
+using WineEntry = int32_t (WINAPI *)(uint32_t, void*);
+
+void win_check(BOOL ok, const char* phase)
+{
+    if (!ok) {
+        child_error = ::GetLastError();
+        throw std::runtime_error(std::string(phase) + " error=" + std::to_string(child_error));
+    }
+}
+
+struct CheckedHandle {
+    HANDLE value = nullptr;
+    CheckedHandle() = default;
+    CheckedHandle(const CheckedHandle&) = delete;
+    CheckedHandle& operator=(const CheckedHandle&) = delete;
+    ~CheckedHandle() { if (value && value != INVALID_HANDLE_VALUE && !::CloseHandle(value)) std::abort(); }
+    void close()
+    {
+        const auto handle = value;
+        value = nullptr;
+        win_check(::CloseHandle(handle), "test handle close");
+    }
+};
+
+template<class Function>
+Function exported(HMODULE module, const char* name)
+{
+    const auto address = ::GetProcAddress(module, name);
+    win_check(address != nullptr, "test export");
+    HMODULE owner = nullptr;
+    win_check(::GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        reinterpret_cast<LPCSTR>(address), &owner), "test export owner");
+    check(owner == module, "test export belongs to selected module");
+    Function function;
+    static_assert(sizeof(function) == sizeof(address));
+    std::memcpy(&function, &address, sizeof(function));
+    return function;
+}
+
+std::wstring environment(const wchar_t* name)
+{
+    wchar_t value[32768] {};
+    ::SetLastError(ERROR_SUCCESS);
+    const auto size = ::GetEnvironmentVariableW(name, value, 32768);
+    win_check(size != 0 && size < 32768, "test environment");
+    check(value[size] == 0, "terminated test environment");
+    return {value, size};
+}
+
+Binding binding(const wchar_t* name)
+{
+    const auto value = environment(name);
+    check(value.size() <= 106, "bounded test binding");
+    std::string ascii;
+    for (const auto unit : value) {
+        check(unit > 0 && unit < 128, "ASCII test binding");
+        ascii.push_back(static_cast<char>(unit));
+    }
+    return rp::wine::detail::parse_binding(ascii);
+}
+
+std::wstring binding_text(const Binding& value)
+{
+    const auto text = build_id(value) + ":" + std::to_string(value.module_device) + ":" + std::to_string(value.module_inode);
+    return {text.begin(), text.end()};
+}
+
+uint64_t challenge()
+{
+    uint64_t value = 0;
+    check(SystemFunction036(&value, sizeof(value)) && value, "test identity challenge");
+    return value;
+}
+
+std::string host_path(const fs::path& path)
+{
+    using Mapper = char* (__cdecl *)(const wchar_t*);
+    const auto map = exported<Mapper>(::GetModuleHandleW(L"kernel32.dll"), "wine_get_unix_file_name");
+    char* allocation = map(fs::absolute(path).c_str());
+    win_check(allocation != nullptr, "fixture host mapping");
+    std::string bytes(allocation);
+    win_check(::HeapFree(::GetProcessHeap(), 0, allocation), "fixture host mapping free");
+    check(!bytes.empty() && bytes.front() == '/', "absolute raw host mapping");
+    while (bytes.size() > 1 && bytes.back() == '/') bytes.pop_back();
+    return bytes;
+}
+
+fs::path windows_path(const std::string& bytes)
+{
+    using Mapper = wchar_t* (__cdecl *)(const char*);
+    const auto map = exported<Mapper>(::GetModuleHandleW(L"kernel32.dll"), "wine_get_dos_file_name");
+    wchar_t* allocation = map(bytes.c_str());
+    win_check(allocation != nullptr, "fixture Windows mapping");
+    const fs::path path(allocation);
+    win_check(::HeapFree(::GetProcessHeap(), 0, allocation), "fixture Windows mapping free");
+    check(host_path(path) == bytes, "raw host mapping roundtrip (no UTF-8 assumption)");
+    return path;
+}
+
+WineEntry support_entry = nullptr;
+Binding support_binding {}, production_binding {};
+
+void verify_support()
+{
+    SrptIdentity identity {};
+    identity.size = sizeof(identity);
+    identity.abi = SRPT_ABI;
+    identity.challenge = challenge();
+    const auto original = identity.challenge;
+    check(support_entry(SRPT_ENTRY_IDENTITY, &identity) == SRPT_SUCCESS, "support identity status");
+    validate_support_identity(identity, support_binding, original);
+}
+
+void load_support()
+{
+    support_binding = binding(L"SPACE_WINE_PUBLICATION_TEST_BINDING");
+    production_binding = binding(L"SPACE_WINE_PUBLICATION_BINDING");
+    const auto module = ::LoadLibraryW(L"space_record_publication_tests.dll");
+    win_check(module != nullptr, "support builtin load");
+    support_entry = exported<WineEntry>(module, "SpaceRecordPublicationTestsCall");
+    verify_support();
+    // Intentionally retained until process exit; root contexts must not outlive it.
+}
+
+struct HostRoot {
+    uint64_t id = 0;
+    std::string base;
+    explicit HostRoot(const fs::path& path) : base(host_path(path))
+    {
+        auto frame = request(SRPT_RETAIN, base);
+        frame.root = 0;
+        invoke(frame);
+        id = frame.root;
+    }
+    HostRoot(const HostRoot&) = delete;
+    HostRoot& operator=(const HostRoot&) = delete;
+    ~HostRoot()
+    {
+        if (id) {
+            auto frame = request(SRPT_RELEASE, "");
+            if (support_entry(SRPT_ENTRY_FIXTURE, &frame) != SRPT_SUCCESS) std::abort();
+        }
+    }
+    SrptCall request(uint32_t opcode, const std::string& path) const
+    {
+        SrptCall frame {};
+        frame.size = sizeof(frame);
+        frame.abi = SRPT_ABI;
+        frame.opcode = opcode;
+        frame.root = id;
+        check(path.size() < sizeof(frame.path), "bounded fixture path");
+        std::memcpy(frame.path, path.c_str(), path.size() + 1);
+        return frame;
+    }
+    static void invoke(SrptCall& frame)
+    {
+        const auto status = support_entry(SRPT_ENTRY_FIXTURE, &frame);
+        check(status == SRPT_SUCCESS, "host fixture status=" + std::to_string(status) + " errno=" + std::to_string(frame.os_error));
+    }
+    std::string relative(const fs::path& path) const
+    {
+        const auto bytes = host_path(path);
+        if (bytes == base) return "";
+        check(bytes.size() > base.size() && bytes.compare(0, base.size() + 1, base + "/") == 0,
+            "fixture stays under retained host root");
+        return bytes.substr(base.size() + 1);
+    }
+    SrptCall observe(const fs::path& path, uint64_t offset = 0) const
+    {
+        auto frame = request(SRPT_OBSERVE, relative(path));
+        frame.offset = offset;
+        invoke(frame);
+        return frame;
+    }
+    void mutate(uint32_t opcode, const fs::path& path, uint32_t mode = 0,
+                const std::string& data = "", const fs::path& other = {}) const
+    {
+        auto frame = request(opcode, relative(path));
+        frame.mode = mode;
+        check(data.size() <= sizeof(frame.data), "bounded fixture data");
+        frame.data_size = static_cast<uint32_t>(data.size());
+        std::memcpy(frame.data, data.data(), data.size());
+        if (!other.empty()) {
+            const auto second = opcode == SRPT_SYMLINK ? other.generic_string() : relative(other);
+            check(second.size() < sizeof(frame.other), "bounded second fixture path");
+            std::memcpy(frame.other, second.c_str(), second.size() + 1);
+        }
+        invoke(frame);
+    }
+    std::string bytes(const fs::path& path) const
+    {
+        auto first = observe(path);
+        check((first.mode & 0170000) == 0100000 && first.file_size <= 64 * 1024 * 1024,
+            "bounded regular fixture read");
+        std::string result(reinterpret_cast<const char*>(first.data), first.data_size);
+        while (result.size() < first.file_size) {
+            const auto next = observe(path, result.size());
+            check(next.device == first.device && next.inode == first.inode && next.file_size == first.file_size
+                && next.data_size, "stable chunked host read");
+            result.append(reinterpret_cast<const char*>(next.data), next.data_size);
+        }
+        check(result.size() == first.file_size, "exact host read length");
+        return result;
+    }
+};
+
+std::unique_ptr<HostRoot> owned_tmp;
+
+void host_private(const fs::path& path, bool directory)
+{
+    const auto info = owned_tmp->observe(path);
+    const auto root = owned_tmp->observe(windows_path(owned_tmp->base));
+    check((info.mode & 0177777) == (directory ? 0040700u : 0100600u)
+        && info.uid == root.uid && (directory || info.links == 1), "actual owned host0700/0600 privacy");
+}
+#endif
+
 void write(const fs::path& path, const std::string& text)
 {
     std::ofstream output(path, std::ios::binary | std::ios::trunc);
@@ -49,6 +312,7 @@ void write(const fs::path& path, const std::string& text)
 std::string read(const fs::path& path)
 {
 #ifdef _WIN32
+    if (under_wine) return owned_tmp->bytes(path);
     auto absolute = fs::absolute(path);
     absolute.make_preferred();
     std::ifstream input(fs::path(L"\\\\?\\" + absolute.native()), std::ios::binary);
@@ -67,6 +331,45 @@ std::string rejects(Function action)
     throw std::runtime_error("expected explicit precommit failure");
 }
 
+void private_contract_models()
+{
+    // Pure consumer checks run natively too. These are not loaded-Wine proof.
+    const std::string id(64, 'a');
+    const auto expected = rp::wine::detail::parse_binding(id + ":12:34");
+    SrptIdentity identity {};
+    identity.size = sizeof(identity);
+    identity.abi = SRPT_ABI;
+    identity.challenge = identity.echo = 42;
+    std::fill(std::begin(identity.pe_build_id), std::end(identity.pe_build_id), 0xaa);
+    std::fill(std::begin(identity.unix_build_id), std::end(identity.unix_build_id), 0xaa);
+    identity.module_device = 12;
+    identity.module_inode = 34;
+    identity.architecture = SRPT_ARCH_X86_64;
+    identity.features = SRPT_FEATURES;
+    validate_support_identity(identity, expected, 42);
+    for (int field = 0; field < 11; ++field) {
+        auto bad = identity;
+        switch (field) {
+        case 0: ++bad.size; break;
+        case 1: ++bad.abi; break;
+        case 2: ++bad.challenge; break;
+        case 3: ++bad.echo; break;
+        case 4: ++bad.pe_build_id[31]; break;
+        case 5: ++bad.unix_build_id[0]; break;
+        case 6: ++bad.module_device; break;
+        case 7: bad.module_inode = 0; break;
+        case 8: ++bad.architecture; break;
+        case 9: bad.features = 1; break;
+        case 10: bad.features = 7; break;
+        }
+        rejects([&] { validate_support_identity(bad, expected, 42); });
+    }
+    check(report_json(expected) == "{\"version\":1,\"backend\":\"wine-posix\",\"build_id\":\"" + id
+        + "\",\"module_device\":12,\"module_inode\":34,\"categories\":{\"common\":\"passed\",\"host-policy\":\"passed\","
+          "\"mapping-authority\":\"passed\",\"native-windows\":\"not-exercised\"},\"foreign_uid_probe\":\"not-configured\"}\n",
+        "schema1 report producer has exactly the fixed fields/statuses");
+}
+
 struct Fixture {
     fs::path root;
     Fixture()
@@ -74,7 +377,8 @@ struct Fixture {
 #ifdef _WIN32
         root = fs::temp_directory_path() / ("record-publication-" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()));
-        check(fs::create_directory(root), "exclusive fixture creation");
+        if (under_wine) owned_tmp->mutate(SRPT_MKDIR, root, 0700);
+        else check(fs::create_directory(root), "exclusive fixture creation");
 #else
         auto pattern = (fs::temp_directory_path() / "record-publication-XXXXXX").string();
         std::vector<char> name(pattern.begin(), pattern.end());
@@ -138,8 +442,9 @@ Policy windows_policy(const fs::path& path)
     ::LocalFree(descriptor);
     return result;
 }
-void private_object(const fs::path& path, bool)
+void private_object(const fs::path& path, bool directory)
 {
+    if (under_wine) { host_private(path, directory); return; }
     const auto policy = windows_policy(path);
     auto* dacl = reinterpret_cast<PACL>(const_cast<unsigned char*>(policy.dacl.data()));
     check(dacl->AceCount == 1, "one owner-only ACE");
@@ -170,6 +475,7 @@ void basic_publication()
         };
         hooks.before_security = [&] {
             const auto attempt = only_attempt(fixture.root);
+            private_object(anchor(fixture.root), true);
             private_object(attempt, true);
             private_object(attempt / "record", false);
             check(read(attempt / "record") == payload, "native writer completes and flushes exact bytes before security hook");
@@ -181,6 +487,34 @@ void basic_publication()
         check(std::distance(fs::directory_iterator(fixture.root), fs::directory_iterator()) == 2,
             "exact entries: destination and persistent anchor");
     }
+}
+
+void unicode_long_paths_and_payload_snapshot()
+{
+    Fixture fixture;
+    auto parent = fixture.root;
+    for (int i = 0; i < 4; ++i) {
+        parent /= std::string(70, static_cast<char>('a' + i));
+#ifdef _WIN32
+        if (under_wine) owned_tmp->mutate(SRPT_MKDIR, parent, 0700);
+        else {
+            auto absolute = fs::absolute(parent);
+            absolute.make_preferred();
+            win_check(::CreateDirectoryW((L"\\\\?\\" + absolute.native()).c_str(), nullptr), "long parent fixture");
+        }
+#else
+        check(fs::create_directory(parent), "long parent fixture");
+#endif
+    }
+    const auto destination = parent / fs::u8path("record-雪-🌱");
+    std::string payload("owned\0binary", 12);
+    const auto original = payload;
+    rp::Hooks hooks;
+    hooks.before_write = [&] { std::fill(payload.begin(), payload.end(), 'x'); };
+    const auto result = rp::publish(destination, payload, hooks);
+    check(result.committed && !result.cleanup_error && read(destination) == original,
+        "Unicode long-path publication owns original binary snapshot");
+    clean_anchor(parent);
 }
 
 void phase_failures_and_cleanup()
@@ -856,12 +1190,633 @@ void windows_security()
 }
 #endif
 
+#ifdef _WIN32
+bool same_host_object(const SrptCall& left, const SrptCall& right)
+{
+    return left.device == right.device && left.inode == right.inode && left.uid == right.uid
+        && left.gid == right.gid && left.mode == right.mode && left.links == right.links
+        && left.file_size == right.file_size;
+}
+
+void wine_host_policy()
+{
+    {
+        Fixture layout;
+        const auto home = layout.root / "home";
+        const auto local = home / "local";
+        owned_tmp->mutate(SRPT_MKDIR, home, 0700);
+        owned_tmp->mutate(SRPT_MKDIR, local, 0700);
+        owned_tmp->mutate(SRPT_CHMOD, home, 0750);
+        owned_tmp->mutate(SRPT_CHMOD, local, 0775);
+        check(rp::publish(local / "record", "first").committed
+            && rp::publish(local / "record", "second").committed, "ordinary writable Wine host layout");
+        check((owned_tmp->observe(home).mode & 07777) == 0750
+            && (owned_tmp->observe(local).mode & 07777) == 0775, "ordinary host parents unchanged");
+        host_private(anchor(local), true);
+        host_private(local / "record", false);
+        clean_anchor(local);
+    }
+    for (const uint32_t mode : {0750u, 0770u}) {
+        Fixture fixture;
+        const auto path = anchor(fixture.root);
+        owned_tmp->mutate(SRPT_MKDIR, path, 0700);
+        const auto descriptor = windows_policy(path);
+        owned_tmp->mutate(SRPT_CHMOD, path, mode);
+        const auto before = owned_tmp->observe(path);
+        // Wine's synthesized descriptors may be indistinguishable from0700.
+        // The actual host mode, not DACL appearance, is the privacy authority.
+        check(windows_policy(path).dacl == descriptor.dacl, "Wine9 descriptor ambiguity positive control");
+        rejects([&] { rp::publish(fixture.root / "record", "secret"); });
+        check(same_host_object(before, owned_tmp->observe(path)) && fs::is_empty(path)
+            && !fs::exists(fixture.root / "record"), "unsafe host0750/0770 anchor rejected unchanged");
+    }
+    Fixture fixture;
+    const auto destination = fixture.root / "record";
+    owned_tmp->mutate(SRPT_CREATE, destination, 0600, "old");
+    for (const uint32_t mode : {0640u, 0400u, 0600u}) {
+        owned_tmp->mutate(SRPT_CHMOD, destination, mode);
+        auto group = owned_tmp->request(SRPT_SET_GID, owned_tmp->relative(destination));
+        group.gid = owned_tmp->observe(destination).gid; // Real supported host GID, never a fake UID.
+        HostRoot::invoke(group);
+        const auto before = owned_tmp->observe(destination);
+        const auto result = rp::publish(destination, "new");
+        const auto after = owned_tmp->observe(destination);
+        check(result.committed && !result.cleanup_error && read(destination) == "new"
+            && before.uid == after.uid && before.gid == after.gid && before.mode == after.mode,
+            "supported actual destination UID/GID/mode preserved");
+        clean_anchor(fixture.root);
+    }
+    owned_tmp->mutate(SRPT_LINK, destination, 0, "", fixture.root / "link");
+    const auto linked = owned_tmp->observe(destination);
+    rejects([&] { rp::publish(destination, "blocked"); });
+    check(same_host_object(linked, owned_tmp->observe(destination)) && read(destination) == "new", "multilink refusal unchanged");
+    owned_tmp->mutate(SRPT_UNLINK, fixture.root / "link");
+    owned_tmp->mutate(SRPT_SYMLINK, fixture.root / "symlink", 0, "", "record");
+    rejects([&] { rp::publish(fixture.root / "symlink", "blocked"); });
+    check((owned_tmp->observe(fixture.root / "symlink").mode & 0170000) == 0120000
+        && read(destination) == "new", "host symlink refused without following or deleting");
+
+    for (int kind = 0; kind < 5; ++kind) {
+        Fixture malicious;
+        const auto path = malicious.root / "record";
+        bool mutated = false;
+        fs::path staged;
+        rp::Hooks hooks;
+        hooks.before_commit = [&] {
+            staged = only_attempt(malicious.root) / "record";
+            if (kind == 0) owned_tmp->mutate(SRPT_CHMOD, staged, 0666);
+            if (kind == 1) owned_tmp->mutate(SRPT_LINK, staged, 0, "", malicious.root / "link");
+            if (kind == 2 || kind == 3) {
+                owned_tmp->mutate(SRPT_RENAME, staged, 0, "", staged.parent_path() / "saved");
+                if (kind == 2) owned_tmp->mutate(SRPT_CREATE, staged, 0600, "foreign");
+                else owned_tmp->mutate(SRPT_SYMLINK, staged, 0, "", "saved");
+            }
+            if (kind == 4) owned_tmp->mutate(SRPT_XATTR, staged, 0, "unsupported");
+            mutated = true;
+        };
+        rejects([&] { rp::publish(path, "secret", hooks); });
+        check(mutated && !fs::exists(path), "actual unsafe final policy/identity cannot commit");
+        if (kind == 1 || kind == 2 || kind == 3) check(fs::exists(staged), "foreign/multilink final entry not removed");
+    }
+    rp::Hooks changed;
+    changed.before_commit = [&] { owned_tmp->mutate(SRPT_CHMOD, destination, 0644); };
+    rejects([&] { rp::publish(destination, "blocked", changed); });
+    check((owned_tmp->observe(destination).mode & 07777) == 0644 && read(destination) == "new",
+        "destination final policy mutation retained, not overwritten");
+
+    for (int kind = 0; kind < 3; ++kind) {
+        Fixture metadata;
+        const auto path = metadata.root / "record";
+        if (kind == 0) owned_tmp->mutate(SRPT_CREATE, path, 0600, "old");
+        if (kind == 1) owned_tmp->mutate(SRPT_MKDIR, anchor(metadata.root), 0700);
+        const auto target = kind == 0 ? path : kind == 1 ? anchor(metadata.root) : metadata.root;
+        owned_tmp->mutate(SRPT_XATTR, target, 0, "unsupported");
+        const auto before = owned_tmp->observe(target);
+        rejects([&] { rp::publish(path, "secret"); });
+        check(same_host_object(before, owned_tmp->observe(target)), "unsupported metadata never repaired or adopted");
+        if (kind == 0) check(read(path) == "old", "unsupported destination bytes unchanged");
+        else check(!fs::exists(path), "unsupported parent/anchor has no publication");
+        if (kind == 2) check(!fs::exists(anchor(metadata.root)), "unsupported parent fails before namespace creation");
+    }
+}
+
+WineEntry production_entry()
+{
+    const auto module = ::GetModuleHandleW(L"space_record_publication.dll");
+    win_check(module != nullptr, "loaded production pair");
+    const auto entry = exported<WineEntry>(module, "SpaceRecordPublicationCall");
+    SrpIdentity identity {};
+    identity.size = sizeof(identity);
+    identity.abi = SRP_ABI;
+    identity.challenge = challenge();
+    const auto original = identity.challenge;
+    check(entry(SRP_ENTRY_IDENTITY, &identity) == SRP_SUCCESS, "production identity status");
+    rp::wine::detail::validate_identity(identity, production_binding, original);
+    return entry;
+}
+
+void wine_context_lifecycle()
+{
+    const auto entry = production_entry();
+    for (const uint32_t phase : {SRP_START, SRP_BEFORE_WRITE, SRP_BEFORE_SECURITY, SRP_BEFORE_COMMIT, SRP_BEFORE_CLEANUP}) {
+        for (bool cancel : {false, true}) {
+            Fixture fixture;
+            const auto destination = fixture.root / "record";
+            owned_tmp->mutate(SRPT_CREATE, destination, 0600, "old");
+            const auto path = host_path(destination);
+            const std::string payload("new\0binary", 10);
+            SrpCall call {};
+            call.size = sizeof(call);
+            call.abi = SRP_ABI;
+            call.opcode = SRP_BEGIN;
+            call.path = {reinterpret_cast<uintptr_t>(path.data()), path.size()};
+            call.payload = {reinterpret_cast<uintptr_t>(payload.data()), payload.size()};
+            check(entry(SRP_ENTRY_OPERATION, &call) == SRP_SUCCESS && call.context && call.event == SRP_START,
+                "real bridge captures context without publication");
+            while (call.event != phase) {
+                check(call.event < phase, "requested bridge lifecycle phase reachable");
+                call.opcode = SRP_ADVANCE;
+                check(entry(SRP_ENTRY_OPERATION, &call) == SRP_SUCCESS && call.primary_state == SRP_PRIMARY_ABSENT,
+                    "real bridge continuation");
+            }
+            const auto id = call.context;
+            if (cancel) {
+                call.opcode = SRP_CANCEL;
+                check(entry(SRP_ENTRY_OPERATION, &call) == SRP_SUCCESS, "explicit bridge cancel");
+            }
+            call.opcode = SRP_RELEASE;
+            check(entry(SRP_ENTRY_OPERATION, &call) == SRP_SUCCESS && (call.flags & SRP_DONE_FLAG)
+                && static_cast<bool>(call.flags & SRP_COMMITTED) == (phase == SRP_BEFORE_CLEANUP),
+                "release finalizes cleanup and preserves sticky commit");
+            check(read(destination) == (phase == SRP_BEFORE_CLEANUP ? payload : "old"), "cancel/release never resume publication");
+            if (phase != SRP_START) clean_anchor(fixture.root);
+            call.opcode = SRP_SNAPSHOT;
+            call.context = id;
+            check(entry(SRP_ENTRY_OPERATION, &call) == SRP_INVALID_ARGUMENT && !(call.flags & SRP_VALID),
+                "released context cannot be reused");
+        }
+    }
+}
+
+void wine_mapping_and_authority()
+{
+    Fixture fixture;
+    for (const auto* name : {L"NUL", L"con.txt", L"COM1", L"LPT\u00b9.txt", L"record:stream", L"trailing.", L"trailing "}) {
+        const auto diagnostic = rejects([&] { rp::publish(fixture.root / name, "blocked"); });
+        check(diagnostic.find("Wine path syntax") != std::string::npos || diagnostic.find("Wine reserved path component") != std::string::npos,
+            "reserved forms fail in production path adapter");
+    }
+    for (const auto* name : {L"\\\\server\\share\\record", L"\\\\?\\C:\\record", L"\\\\.\\NUL"}) {
+        check(rejects([&] { rp::publish(name, "blocked"); }).find("Wine UNC/device path") != std::string::npos,
+            "remote/device forms explicitly refused");
+    }
+    auto nul = (fixture.root / "record").native();
+    nul.append(L"\0tail", 5);
+    check(rejects([&] { rp::publish(fs::path(nul), "blocked"); }).find("Wine path syntax") != std::string::npos,
+        "embedded path NUL cannot be truncated by mapping");
+    // Discover an actually unavailable drive, never assume a Z: mapping.
+    bool missing_drive = false;
+    for (wchar_t drive = L'A'; drive <= L'Z'; ++drive) {
+        const wchar_t root[] {drive, L':', L'\\', 0};
+        if (::GetDriveTypeW(root) != DRIVE_NO_ROOT_DIR) continue;
+        check(rejects([&] { rp::publish(fs::path(root) / "record", "blocked"); }).find("Wine nonlocal drive") != std::string::npos,
+            "unmapped drive refuses before mapping/publication");
+        missing_drive = true;
+        break;
+    }
+    check(missing_drive, "mapping failure needs a real unavailable drive positive condition");
+    int hooks = 0;
+    rp::Hooks absent;
+    absent.before_write = absent.before_cleanup = [&] { ++hooks; };
+    rejects([&] { rp::publish(fixture.root / "missing" / "record", "blocked", absent); });
+    check(hooks == 0 && !fs::exists(anchor(fixture.root)), "missing parent has no hooks/namespace");
+
+    const auto real = fixture.root / "parent";
+    owned_tmp->mutate(SRPT_MKDIR, real, 0700);
+    owned_tmp->mutate(SRPT_CREATE, real / "mixed-Case", 0600, "old");
+    check(rp::publish(real / "MIXED-case", "case").committed && read(real / "mixed-Case") == "case",
+        "existing leaf case maps to actual host identity");
+    owned_tmp->mutate(SRPT_SYMLINK, fixture.root / "alias", 0, "", "parent");
+    check(rp::publish(fixture.root / "alias" / "alias-record", "alias").committed
+        && read(real / "alias-record") == "alias", "parent alias acquired once then pinned on host");
+    clean_anchor(real);
+    owned_tmp->mutate(SRPT_UNLINK, fixture.root / "alias");
+
+    CheckedHandle process, duplicate;
+    win_check(::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &process.value), "authority token");
+    win_check(::DuplicateToken(process.value, SecurityImpersonation, &duplicate.value), "authority duplicate");
+    for (int phase = -1; phase < 4; ++phase) {
+        Fixture attempt;
+        const auto destination = attempt.root / "record";
+        owned_tmp->mutate(SRPT_CREATE, destination, 0600, "old");
+        std::unique_ptr<Impersonation> impersonation;
+        const auto change = [&] { impersonation = std::make_unique<Impersonation>(duplicate.value); };
+        rp::Hooks callbacks;
+        if (phase == -1) change();
+        if (phase == 0) callbacks.before_write = change;
+        if (phase == 1) callbacks.before_security = change;
+        if (phase == 2) callbacks.before_commit = change;
+        if (phase == 3) callbacks.before_cleanup = change;
+        if (phase == 3) {
+            const auto result = rp::publish(destination, "new", callbacks);
+            check(result.committed && !result.cleanup_error, "cleanup remains available after postcommit authority loss");
+        } else {
+            const auto diagnostic = rejects([&] { rp::publish(destination, "new", callbacks); });
+            check(diagnostic.find("authority") != std::string::npos, "represented authority change explicitly refused");
+        }
+        check(impersonation != nullptr, "authority-changing hook actually executed");
+        impersonation.reset();
+        check(read(destination) == (phase == 3 ? "new" : "old"), "authority change preserves correct bytes");
+        if (phase >= 0) clean_anchor(attempt.root);
+        else check(!fs::exists(anchor(attempt.root)), "initial authority denial creates no private namespace");
+    }
+    duplicate.close();
+    process.close();
+}
+
+fs::path executable_path(HMODULE module = nullptr)
+{
+    wchar_t path[32768] {};
+    const auto count = ::GetModuleFileNameW(module, path, 32768);
+    win_check(count != 0 && count < 32768, "test executable path");
+    return fs::path(std::wstring(path, count));
+}
+
+std::set<std::string> host_names(const HostRoot& root, const fs::path& path)
+{
+    const auto listing = root.observe(path);
+    check((listing.mode & 0170000) == 0040000, "host directory listing");
+    std::set<std::string> names;
+    size_t offset = 0;
+    while (offset < listing.data_size) {
+        const auto* start = reinterpret_cast<const char*>(listing.data + offset);
+        const auto* end = static_cast<const char*>(std::memchr(start, 0, listing.data_size - offset));
+        check(end && end != start, "bounded complete directory entry");
+        check(names.emplace(start, end).second, "unique directory entry");
+        offset += static_cast<size_t>(end - start) + 1;
+    }
+    return names;
+}
+
+void verify_support_only_root(const fs::path& path)
+{
+    HostRoot root(path);
+    check(host_names(root, path) == std::set<std::string>{"x86_64-unix", "x86_64-windows"}
+        && host_names(root, path / "x86_64-windows") == std::set<std::string>{"space_record_publication_tests.dll"}
+        && host_names(root, path / "x86_64-unix") == std::set<std::string>{"space_record_publication_tests.so"},
+        "support-only loader root contains no production fallback");
+    const auto so = root.observe(path / "x86_64-unix/space_record_publication_tests.so");
+    check((so.mode & 0170000) == 0100000 && so.links == 1 && so.device == support_binding.module_device
+        && so.inode == support_binding.module_inode, "support-only root matches independently bound loaded SO");
+}
+
+// Wine's Unix environment encoding is not assumed to be UTF-8. This code page
+// is Wine's CP_UNIXCP (wine-9.0 include/winnls.h), used only for a checked roundtrip
+// of raw mapped bytes into the explicit Unicode child environment block.
+std::wstring unix_environment_text(const std::string& bytes)
+{
+    constexpr UINT unix_codepage = 65010;
+    check(!bytes.empty() && bytes.size() < 32768 && bytes.find('\0') == std::string::npos, "bounded Unix environment text");
+    const auto length = ::MultiByteToWideChar(unix_codepage, 0, bytes.data(), static_cast<int>(bytes.size()), nullptr, 0);
+    win_check(length > 0, "Unix environment decode length");
+    std::wstring text(length, L'\0');
+    win_check(::MultiByteToWideChar(unix_codepage, 0, bytes.data(), static_cast<int>(bytes.size()), text.data(), length) == length,
+        "Unix environment decode");
+    const auto size = ::WideCharToMultiByte(unix_codepage, 0, text.data(), length, nullptr, 0, nullptr, nullptr);
+    win_check(size > 0, "Unix environment encode length");
+    std::string roundtrip(size, '\0');
+    win_check(::WideCharToMultiByte(unix_codepage, 0, text.data(), length, roundtrip.data(), size, nullptr, nullptr) == size,
+        "Unix environment encode");
+    check(bytes == roundtrip && text.find(L'\0') == std::wstring::npos, "lossless raw Unix environment roundtrip");
+    return text;
+}
+
+const std::array<std::string, 5> child_cases {"control", "missing-pe", "bad-pe", "missing-unix", "bad-unix"};
+
+int wine_child(const std::string& selected)
+{
+    child_phase = "location";
+    const auto image = executable_path();
+    const auto root = image.parent_path();
+    check(image.filename() == L"test_record_publication.exe" && root.filename() == selected
+        && root.parent_path().filename().string().find("record-publication-") == 0,
+        "closed child fixture location derives from copied executable");
+    owned_tmp->relative(image); // Must be below the verified private TEMP root.
+    host_private(root, true);
+    check(host_path(fs::current_path()) == host_path(root), "child cwd is its owned case");
+    wchar_t path_probe[2] {};
+    ::SetLastError(ERROR_SUCCESS);
+    const auto path_length = ::GetEnvironmentVariableW(L"PATH", path_probe, 2);
+    const auto path_error = ::GetLastError();
+    check(path_length == 0 && (path_error == ERROR_SUCCESS || path_error == ERROR_ENVVAR_NOT_FOUND),
+        "child has no effective ambient PATH fallback after bootstrap");
+    const auto overrides = environment(L"WINEDLLOVERRIDES");
+    check(overrides == L"space_record_publication,space_record_publication_tests=b;bcryptprimitives=b;advapi32,cryptbase=b"
+        || overrides == L"space_record_publication,space_record_publication_tests=b;bcryptprimitives=n;advapi32,cryptbase=b",
+        "both fixed names remain forced builtin after child bootstrap");
+    for (const auto& item : fs::directory_iterator(root)) {
+        auto name = item.path().filename().wstring();
+        std::transform(name.begin(), name.end(), name.begin(), [](wchar_t unit) {
+            return unit >= L'A' && unit <= L'Z' ? unit - L'A' + L'a' : unit;
+        });
+        if (name.size() < 4 || name.substr(name.size() - 4) != L".dll"
+            || name == L"space_record_publication.dll" || name == L"space_record_publication_tests.dll") continue;
+        const auto loaded = ::GetModuleHandleW(item.path().filename().c_str());
+        if (loaded) check(host_path(executable_path(loaded)) == host_path(item.path()), "non-system runtime dependency loaded from owned copy");
+    }
+    check(::GetModuleHandleW(L"space_record_publication.dll") == nullptr, "production DLL absent before first child publish");
+    const auto module_roots = environment(L"WINEDLLPATH");
+    const auto expected_prefix = unix_environment_text(host_path(root / "modules") + ":");
+    check(module_roots.compare(0, expected_prefix.size(), expected_prefix) == 0, "child production module root fixed to its case");
+    const auto support_root_text = module_roots.substr(expected_prefix.size());
+    // Recover raw host bytes via the inverse codepage roundtrip, not a PE path
+    // interpretation of a Unix path. The support root is supplied only by parent.
+    constexpr UINT unix_codepage = 65010;
+    const auto size = ::WideCharToMultiByte(unix_codepage, 0, support_root_text.data(), static_cast<int>(support_root_text.size()),
+        nullptr, 0, nullptr, nullptr);
+    win_check(size > 0 && size < 32768, "child support root encoding");
+    std::string support_bytes(size, '\0');
+    win_check(::WideCharToMultiByte(unix_codepage, 0, support_root_text.data(), static_cast<int>(support_root_text.size()),
+        support_bytes.data(), size, nullptr, nullptr) == size, "child support root encoding");
+    check(unix_environment_text(support_bytes) == support_root_text && support_bytes.find(':') == std::string::npos,
+        "one independent support-only root, no extra fallback roots");
+    verify_support_only_root(windows_path(support_bytes));
+    child_phase = "fixture";
+    const auto data = root / "data";
+    owned_tmp->mutate(SRPT_MKDIR, data, 0700);
+    const auto destination = data / "record";
+    owned_tmp->mutate(SRPT_CREATE, destination, 0600, "old");
+    const auto before = owned_tmp->observe(destination);
+    int hooks = 0;
+    rp::Hooks callbacks;
+    callbacks.before_write = callbacks.before_security = callbacks.before_commit = callbacks.before_cleanup = [&] { ++hooks; };
+    child_phase = "publication";
+    if (selected == "control") {
+        const auto result = rp::publish(destination, std::string("new\0bytes", 9), callbacks);
+        child_phase = "identity";
+        production_entry(); // Independent actual loaded Unix identity equals the copy binding.
+        const auto after = owned_tmp->observe(destination);
+        check(result.committed && !result.cleanup_error && hooks == 4 && read(destination) == std::string("new\0bytes", 9)
+            && before.uid == after.uid && before.gid == after.gid && before.mode == after.mode && after.links == 1,
+            "intact copied control must publish exact bytes with supported host policy");
+        clean_anchor(data);
+    } else {
+        const auto diagnostic = rejects([&] { rp::publish(destination, "secret", callbacks); });
+        child_phase = "refusal";
+        const bool pe = selected == "missing-pe" || selected == "bad-pe";
+        const bool loader = diagnostic.find("record publication: Wine builtin load error=") == 0;
+        const bool identity = diagnostic.find("record publication: Wine identity NTSTATUS=") == 0;
+        check((pe ? loader : loader || identity) && diagnostic.size() < 160 && hooks == 0,
+            "negative first publish fails in loader/Unix association, not binding/authority/path/fixture setup");
+        check(read(destination) == "old" && same_host_object(before, owned_tmp->observe(destination))
+            && !fs::exists(anchor(data)), "negative child has no commit, hook, workspace or destination mutation");
+    }
+    return 0;
+}
+
+using Clock = std::chrono::steady_clock;
+void child_budget(const Clock::time_point& deadline, int reserve_ms = 0)
+{
+    check(Clock::now() + std::chrono::milliseconds(reserve_ms) < deadline, "bounded children setup/execution/cleanup deadline");
+}
+
+void exclusive_copy(const fs::path& source, const HostRoot& source_root, const fs::path& destination,
+                    const Clock::time_point& deadline)
+{
+    child_budget(deadline);
+    const auto before = source_root.observe(source);
+    check((before.mode & 0170000) == 0100000 && before.links == 1 && before.file_size <= 64 * 1024 * 1024,
+        "copy only bounded regular verified-layout artifacts");
+    win_check(::CopyFileW(source.c_str(), destination.c_str(), TRUE), "exclusive fixture artifact copy");
+    const auto after = owned_tmp->observe(destination);
+    check((after.mode & 0170000) == 0100000 && after.links == 1 && after.uid == owned_tmp->observe(windows_path(owned_tmp->base)).uid
+        && !(after.device == before.device && after.inode == before.inode)
+        && source_root.bytes(source) == owned_tmp->bytes(destination)
+        && same_host_object(before, source_root.observe(source)), "independent exact owned copy, never a link or source mutation");
+    child_budget(deadline);
+}
+
+std::vector<wchar_t> child_environment(const fs::path& root, const fs::path& support_root, const Binding& copied_binding)
+{
+    // Explicit allowlist: preserve session/temp ownership and required Windows
+    // runtime inputs, never parent PATH/loader injection or arbitrary ambient env.
+    std::map<std::wstring, std::wstring> values;
+    for (const auto* name : {L"SystemRoot", L"WINDIR", L"WINEPREFIX", L"WINEARCH", L"WINESERVER", L"HOME",
+                            L"XDG_DATA_HOME", L"XDG_CACHE_HOME", L"XDG_STATE_HOME", L"TMPDIR", L"TEMP", L"TMP",
+                            L"SPACE_WINE_WINDOWS_TMP"}) {
+        wchar_t buffer[32768] {};
+        const auto length = ::GetEnvironmentVariableW(name, buffer, 32768);
+        check(length < 32768, "bounded optional child environment");
+        if (length) values.emplace(name, std::wstring(buffer, length));
+        else check(::GetLastError() == ERROR_ENVVAR_NOT_FOUND, "optional child environment query");
+    }
+    for (const auto* required : {L"SystemRoot", L"TEMP", L"TMP", L"SPACE_WINE_WINDOWS_TMP"})
+        check(values.count(required), "required child owned/runtime environment");
+    auto production_root = host_path(root / "modules");
+    const auto support = host_path(support_root);
+    check(production_root.find(':') == std::string::npos && support.find(':') == std::string::npos,
+        "unambiguous two-root child module search");
+    values[L"WINEDLLPATH"] = unix_environment_text(production_root + ":" + support);
+    const auto original = environment(L"WINEDLLOVERRIDES");
+    const auto crypto = original.find(L"bcryptprimitives=n;") != std::wstring::npos ? L"n" : L"b";
+    check(original.find(L"bcryptprimitives=" + std::wstring(crypto) + L";advapi32,cryptbase=b") != std::wstring::npos,
+        "fixed admitted crypto backend for copied dependencies");
+    values[L"WINEDLLOVERRIDES"] = L"space_record_publication,space_record_publication_tests=b;bcryptprimitives="
+        + std::wstring(crypto) + L";advapi32,cryptbase=b";
+    values[L"SPACE_WINE_PUBLICATION_BINDING"] = binding_text(copied_binding);
+    values[L"SPACE_WINE_PUBLICATION_TEST_BINDING"] = binding_text(support_binding);
+    values[L"PATH"] = L""; // Imports resolve beside the copied PE, never through ambient PATH.
+    std::vector<wchar_t> block;
+    for (const auto& [name, value] : values) {
+        block.insert(block.end(), name.begin(), name.end());
+        block.push_back(L'=');
+        block.insert(block.end(), value.begin(), value.end());
+        block.push_back(0);
+    }
+    block.push_back(0);
+    check(block.size() < 32768, "bounded explicit Unicode child environment");
+    return block;
+}
+
+void run_child(const fs::path& root, const std::string& selected, std::vector<wchar_t>& environment_block,
+               const Clock::time_point& deadline)
+{
+    child_budget(deadline, 12000);
+    const auto application = root / "test_record_publication.exe";
+    check(application.is_absolute() && application.native().find(L'"') == std::wstring::npos, "absolute quotable child application");
+    const std::wstring argument(selected.begin(), selected.end());
+    auto command = L"\"" + application.native() + L"\" \"--wine-publication-child=" + argument + L"\"";
+    STARTUPINFOW startup {};
+    startup.cb = sizeof(startup);
+    PROCESS_INFORMATION process {};
+    win_check(::CreateProcessW(application.c_str(), command.data(), nullptr, nullptr, FALSE, CREATE_UNICODE_ENVIRONMENT,
+        environment_block.data(), root.c_str(), &startup, &process), "fixed publication child create");
+    CheckedHandle thread, child;
+    thread.value = process.hThread;
+    child.value = process.hProcess;
+    // Every path after successful creation reaps before any fixture deletion.
+    const auto waited = ::WaitForSingleObject(child.value, 10000);
+    if (waited != WAIT_OBJECT_0) {
+        const auto wait_error = waited == WAIT_FAILED ? ::GetLastError() : ERROR_SUCCESS;
+        const auto terminated = ::TerminateProcess(child.value, 124);
+        const auto reaped = ::WaitForSingleObject(child.value, 2000);
+        if (!terminated || reaped != WAIT_OBJECT_0) std::abort(); // Do not unwind into fixture deletion with a possibly live child.
+        thread.close();
+        child.close();
+        throw std::runtime_error("publication child wait=" + std::to_string(waited)
+            + " error=" + std::to_string(wait_error) + " (no retry)");
+    }
+    DWORD exit_code = STILL_ACTIVE;
+    const auto got_exit = ::GetExitCodeProcess(child.value, &exit_code);
+    thread.close();
+    child.close();
+    win_check(got_exit, "publication child exit query");
+    check(exit_code == 0, "publication child exact checked exit case=" + selected + " code=" + std::to_string(exit_code));
+    child_budget(deadline);
+}
+
+void wine_loader_children()
+{
+    const auto deadline = Clock::now() + std::chrono::seconds(60);
+    const auto image = executable_path();
+    const auto overlay = image.parent_path();
+    check(image.filename() == L"test_record_publication.exe" && overlay.filename() == L"windows"
+        && overlay.parent_path().filename() == L"wine", "fixed verified Wine overlay executable layout");
+    const auto build = overlay.parent_path().parent_path();
+    const auto production_root = build / "wine-publication/modules";
+    const auto support_root = build / "wine-publication-tests/modules";
+    HostRoot overlay_host(overlay), production_host(production_root), support_host(support_root);
+    verify_support_only_root(support_root);
+    const auto so_source = production_root / "x86_64-unix/space_record_publication.so";
+    const auto pe_source = production_root / "x86_64-windows/space_record_publication.dll";
+    const auto source_identity = production_host.observe(so_source);
+    check(source_identity.device == production_binding.module_device && source_identity.inode == production_binding.module_inode,
+        "fixed production artifact source equals admitted Unix binding");
+    check(overlay_host.bytes(overlay / "space_record_publication.dll") == production_host.bytes(pe_source)
+        && overlay_host.bytes(overlay / "space_record_publication_tests.dll")
+            == support_host.bytes(support_root / "x86_64-windows/space_record_publication_tests.dll"),
+        "verified fixed-layout discovery copies match architecture images");
+    Fixture fixture;
+    for (const auto& selected : child_cases) {
+        child_budget(deadline, 12000);
+        const auto root = fixture.root / selected;
+        for (const auto& directory : {root, root / "modules", root / "modules/x86_64-windows", root / "modules/x86_64-unix"})
+            owned_tmp->mutate(SRPT_MKDIR, directory, 0700);
+        exclusive_copy(image, overlay_host, root / image.filename(), deadline);
+        // All transitive non-system runtime imports are already loaded in this
+        // process. Copy their admitted siblings plus any selected crypto helper;
+        // unrelated application DLLs must not consume the fixed child budget.
+        for (const auto& item : fs::directory_iterator(overlay)) {
+            child_budget(deadline);
+            auto name = item.path().filename().wstring();
+            std::transform(name.begin(), name.end(), name.begin(), [](wchar_t unit) {
+                return unit >= L'A' && unit <= L'Z' ? unit - L'A' + L'a' : unit;
+            });
+            if (name.size() < 4 || name.substr(name.size() - 4) != L".dll" || name == L"space_record_publication.dll") continue;
+            if (!::GetModuleHandleW(item.path().filename().c_str()) && name != L"bcryptprimitives.dll") continue;
+            exclusive_copy(item.path(), overlay_host, root / item.path().filename(), deadline);
+        }
+        const auto pe = root / "modules/x86_64-windows/space_record_publication.dll";
+        const auto discovery = root / "space_record_publication.dll";
+        const auto so = root / "modules/x86_64-unix/space_record_publication.so";
+        exclusive_copy(pe_source, production_host, pe, deadline);
+        exclusive_copy(pe_source, production_host, discovery, deadline);
+        exclusive_copy(so_source, production_host, so, deadline);
+        const auto copied = owned_tmp->observe(so);
+        auto expected = production_binding;
+        expected.module_device = copied.device;
+        expected.module_inode = copied.inode;
+        // Bind the intact SO copy before intentionally omitting/corrupting it.
+        auto block = child_environment(root, support_root, expected);
+        if (selected == "missing-pe") {
+            owned_tmp->mutate(SRPT_UNLINK, pe);
+            owned_tmp->mutate(SRPT_UNLINK, discovery);
+        }
+        if (selected == "bad-pe") {
+            owned_tmp->mutate(SRPT_WRITE, pe, 0, "not-a-PE");
+            owned_tmp->mutate(SRPT_WRITE, discovery, 0, "not-a-PE");
+        }
+        if (selected == "missing-unix") owned_tmp->mutate(SRPT_UNLINK, so);
+        if (selected == "bad-unix") owned_tmp->mutate(SRPT_WRITE, so, 0, "not-an-ELF");
+        run_child(root, selected, block, deadline); // Intact control is first and blocking.
+    }
+    // Explicit checked cleanup is inside the same60s component bound.
+    check(fs::remove_all(fixture.root) > 0, "owned child fixture cleanup");
+    child_budget(deadline);
+}
+
+void wine_report()
+{
+    verify_support();
+    production_entry(); // Report the admitted production identity, never a child copy.
+    const auto report = fs::temp_directory_path() / "space-record-publication-report.json";
+    const auto before = owned_tmp->observe(report);
+    check((before.mode & 0177777) == 0100600 && before.links == 1 && before.file_size == 0
+        && before.uid == owned_tmp->observe(windows_path(owned_tmp->base)).uid, "parent-exclusive fresh0600 report origin");
+    const auto json = report_json(production_binding);
+    CheckedHandle output;
+    output.value = ::CreateFileW(report.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    win_check(output.value != INVALID_HANDLE_VALUE, "existing report open");
+    BY_HANDLE_FILE_INFORMATION info {};
+    win_check(::GetFileInformationByHandle(output.value, &info), "existing report handle inspect");
+    check(!(info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))
+        && info.nNumberOfLinks == 1 && info.nFileSizeHigh == 0 && info.nFileSizeLow == 0, "fresh regular report handle");
+    DWORD offset = 0;
+    while (offset < json.size()) {
+        DWORD written = 0;
+        win_check(::WriteFile(output.value, json.data() + offset, static_cast<DWORD>(json.size() - offset), &written, nullptr),
+            "report write");
+        check(written > 0 && written <= json.size() - offset, "complete bounded report write");
+        offset += written;
+    }
+    win_check(::FlushFileBuffers(output.value), "report flush");
+    output.close();
+    auto after = owned_tmp->observe(report);
+    after.file_size = before.file_size;
+    check(same_host_object(before, after) && owned_tmp->bytes(report) == json, "report origin and exact JSON preserved");
+}
+#endif
+
 } // namespace
 
-int main()
+int main(int argc, char** argv)
 {
     try {
+#ifdef _WIN32
+        under_wine = rp::wine::detected();
+        if (under_wine) {
+            child_phase = "owned-environment";
+            const auto error = space_wine_apply_owned_environment(TRUE);
+            check(error == ERROR_SUCCESS, "required owned environment error=" + std::to_string(error));
+        }
+#endif
+        std::string child;
+        if (argc != 1) {
+#ifdef _WIN32
+            const std::string prefix = "--wine-publication-child=";
+            check(under_wine && argc == 2 && std::string(argv[1]).compare(0, prefix.size(), prefix) == 0,
+                "only one fixed private Wine child argument is accepted");
+            child = std::string(argv[1]).substr(prefix.size());
+            check(std::find(child_cases.begin(), child_cases.end(), child) != child_cases.end(), "unknown private Wine child case");
+#else
+            (void)argv;
+            throw std::runtime_error("private Wine child modes require Wine");
+#endif
+        }
+#ifdef _WIN32
+        if (under_wine) {
+            child_phase = "support-identity";
+            check(::GetModuleHandleW(L"space_record_publication.dll") == nullptr, "production DLL not loaded before controlled test entry");
+            load_support();
+            owned_tmp = std::make_unique<HostRoot>(fs::temp_directory_path());
+            check(::GetModuleHandleW(L"space_record_publication.dll") == nullptr, "support setup must not preload production DLL");
+            if (!child.empty()) return wine_child(child); // No common suite or report in children.
+        }
+#endif
+        private_contract_models();
         basic_publication();
+        unicode_long_paths_and_payload_snapshot();
         phase_failures_and_cleanup();
         final_validation();
         independent_attempts();
@@ -873,14 +1828,28 @@ int main()
         unsafe_anchors();
         real_writer_failure();
 #else
-        windows_creation_boundary_diagnostics();
-        windows_foreign_parent_and_private_children();
-        windows_junction_anchor_attack();
-        windows_security();
+        if (under_wine) {
+            wine_host_policy();
+            wine_context_lifecycle();
+            wine_mapping_and_authority();
+            wine_loader_children();
+            wine_report(); // No report unless every mandatory category completed.
+        } else {
+            windows_creation_boundary_diagnostics();
+            windows_foreign_parent_and_private_children();
+            windows_junction_anchor_attack();
+            windows_security();
+        }
 #endif
         std::cout << "record publication tests passed\n";
         return 0;
     } catch (const std::exception& error) {
+#ifdef _WIN32
+        if (argc != 1) {
+            std::cerr << "record publication child failed phase=" << child_phase << " error=" << child_error << '\n';
+            return 1;
+        }
+#endif
         std::cerr << "record publication test failed: " << error.what() << '\n';
         return 1;
     }
