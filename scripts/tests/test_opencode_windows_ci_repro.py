@@ -721,6 +721,438 @@ def fatal_stream_record(step='wine-fast'):
     return record, {name: evidence._Stream(record, name, io.BytesIO()) for name in ('stdout', 'stderr')}
 
 
+PUBLICATION_COMPONENTS = [('cpp-022', 120, '0022'), ('cpp-002', 120, '0002'),
+                          ('store-write', 30, '0002'), ('store-read', 30, '0002')]
+
+
+def publication_frames():
+    frames = []
+    for index, (component, deadline, _) in enumerate(PUBLICATION_COMPONENTS):
+        start = 100. + index * 130.
+        frames.extend([dict(event='launch', component=component, launched_monotonic=start,
+                            hard_deadline_monotonic=start + deadline),
+                       dict(event='result', component=component, command_returncode=0)])
+    return frames + [dict(event='publication-result', version=1, passed=True,
+                          bridge_build_id='a' * 64, foreign_uid_probe='not-configured')]
+
+
+def encode_observations(frames):
+    return ''.join(json.dumps(frame) + '\n' for frame in frames).encode()
+
+
+def test_publication_private_observation_records_fixed_order_clocks_umasks_and_report():
+    import _windows_repro_evidence as evidence
+    record, _ = fatal_stream_record('wine-publication')
+    assert record.get('publication') is not None
+    publication = record['publication']
+    assert [(item['component'], item['deadline_seconds'], item['child_umask'])
+            for item in publication['components']] == PUBLICATION_COMPONENTS
+    assert all(item['command_returncode'] is None for item in publication['components'])
+    observer = evidence._PublicationObservation(record)
+    frames = publication_frames()
+    payload = encode_observations(frames)
+    for byte in payload:  # Private frames may split at any byte boundary.
+        observer.feed(bytes([byte]))
+    observer.eof()
+    for item, launch in zip(publication['components'], frames[::2]):
+        assert item['launched_monotonic'] == launch['launched_monotonic']
+        assert item['hard_deadline_monotonic'] == launch['hard_deadline_monotonic']
+        assert item['command_returncode'] == 0
+    assert publication['result'] == frames[-1]
+
+
+@pytest.mark.parametrize('damage', [
+    'wrong-id', 'duplicate-id', 'out-of-order', 'wrong-deadline', 'bool-clock', 'int-clock',
+    'nan-clock', 'infinite-clock', 'bool-code', 'missing-result', 'missing-report',
+    'extra-message', 'extra-field', 'wrong-version', 'bool-version', 'wrong-passed',
+    'bad-build-id', 'bad-foreign-uid', 'truncated', 'oversized', 'non-object',
+])
+def test_publication_private_observation_rejects_invalid_incomplete_or_extra_frames(damage):
+    import _windows_repro_evidence as evidence
+    record, _ = fatal_stream_record('wine-publication')
+    assert record.get('publication') is not None
+    frames = publication_frames()
+    if damage == 'wrong-id': frames[0]['component'] = 'arbitrary'
+    elif damage == 'duplicate-id': frames[2]['component'] = 'cpp-022'
+    elif damage == 'out-of-order': frames[0], frames[2] = frames[2], frames[0]
+    elif damage == 'wrong-deadline': frames[0]['hard_deadline_monotonic'] += 1
+    elif damage == 'bool-clock': frames[0]['launched_monotonic'] = True
+    elif damage == 'int-clock': frames[0]['launched_monotonic'] = 100
+    elif damage == 'nan-clock': frames[0]['launched_monotonic'] = float('nan')
+    elif damage == 'infinite-clock': frames[0]['hard_deadline_monotonic'] = float('inf')
+    elif damage == 'bool-code': frames[1]['command_returncode'] = False
+    elif damage == 'missing-result': del frames[1]
+    elif damage == 'missing-report': frames.pop()
+    elif damage == 'extra-message': frames.append(frames[-1])
+    elif damage == 'extra-field': frames[0]['status'] = 0
+    elif damage == 'wrong-version': frames[-1]['version'] = 2
+    elif damage == 'bool-version': frames[-1]['version'] = True
+    elif damage == 'wrong-passed': frames[-1]['passed'] = 1
+    elif damage == 'bad-build-id': frames[-1]['bridge_build_id'] = 'x' * 64
+    elif damage == 'bad-foreign-uid': frames[-1]['foreign_uid_probe'] = 'skipped'
+    elif damage == 'non-object': frames[0] = []
+    payload = encode_observations(frames)
+    if damage == 'truncated': payload = payload[:-1]
+    elif damage == 'oversized': payload = b'x' * 4097
+    observer = evidence._PublicationObservation(record)
+    with pytest.raises(ValueError):
+        observer.feed(payload)
+        observer.eof()
+
+
+def publication_fixture_args(repo, frames=None, body=''):
+    frames = publication_frames() if frames is None else frames
+    fixture_script(repo, 'publication-fixture.py', f'''
+fd = int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+os.set_inheritable(fd, False)
+os.write(fd, {encode_observations(frames)!r})
+os.close(fd)
+''' + body)
+    return [sys.executable, 'scripts/publication-fixture.py']
+
+
+def run_publication_fixture(repo, frames=None, body='', *, persist=True):
+    """Exercise dormant capture directly, never alter the production dispatch table."""
+    import _windows_repro_evidence as evidence
+    args = publication_fixture_args(repo, frames, body)
+    run_dir = evidence._new_run(repo)
+    ledger, record, logs = evidence._start(repo, run_dir, 'wine-publication', args)
+    try:
+        record = evidence._capture(repo, run_dir, ledger, record, logs, args, persist=persist)
+    except evidence._PersistenceError as error:
+        assert error.ledger is ledger
+    return record, run_dir, ledger
+
+
+@pytest.mark.parametrize('mode,outcome', [
+    ('pass', 'pass'), ('fail-marker', 'inconsistent_result'), ('fatal', 'native_fatal'),
+    ('nonzero', 'nonzero_exit'), ('timeout', 'timeout'), ('report-false', 'inconsistent_result'),
+    ('missing-report', 'capture_error'), ('missing-result', 'capture_error'),
+    ('spoof-only', 'capture_error'), ('spoof-failure', 'pass'),
+])
+def test_publication_capture_requires_private_complete_success_despite_helper_zero(tmp_path, monkeypatch, mode, outcome):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    frames = publication_frames()
+    body = "print('Wine publication: completed', flush=True)\n"
+    if mode == 'fail-marker': body += "print('[FAIL] publication failed', flush=True)\n"
+    elif mode == 'fatal': body += f"print({FATAL_BANNER!r}, file=sys.stderr, flush=True)\n"
+    elif mode in ('nonzero', 'timeout'): frames[1]['command_returncode'] = 124 if mode == 'timeout' else 17
+    elif mode == 'report-false': frames[-1]['passed'] = False
+    elif mode == 'missing-report': frames.pop()
+    elif mode == 'missing-result': frames = frames[:1]
+    elif mode.startswith('spoof'):
+        spoof = publication_frames()
+        if mode == 'spoof-only': frames = []
+        else: spoof[1]['command_returncode'] = 17
+        body += f'os.write(1, {encode_observations(spoof)!r})\n'
+    record, _, _ = run_publication_fixture(repo, frames, body)
+    assert record['returncode'] == 0
+    assert record['outcome'] == outcome
+    assert record['progress']['counts']['publication'] == 1
+    assert record['progress']['last_markers']['publication']['text'] == 'Wine publication: completed'
+    assert record['capture_complete'] is (outcome != 'capture_error')
+    if mode in ('missing-result', 'spoof-only'):
+        assert record['publication']['components'][0]['command_returncode'] is None
+    if mode == 'spoof-failure':
+        assert record['publication']['components'][0]['command_returncode'] == 0
+
+
+@pytest.mark.parametrize('helper_code', [0, 17])
+def test_publication_incomplete_eof_latches_error_but_keeps_late_output_and_natural_helper_status(
+        tmp_path, monkeypatch, helper_code):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    record, _, _ = run_publication_fixture(repo, publication_frames()[:1], f'''
+time.sleep(.2)
+print('Wine publication: after private EOF', flush=True)
+os.close(1); os.close(2)
+time.sleep(.2)
+sys.exit({helper_code})
+''')
+    assert record['returncode'] == helper_code
+    assert record['outcome'] == 'capture_error' and not record['capture_complete']
+    assert record['cleanup_signals'] == []
+    assert record['stdout']['eof'] and record['stderr']['eof']
+    assert 'after private EOF' in record['stdout']['tail']
+    assert record['capture_errors'] == ['Incomplete private publication observations']
+    assert all(item['command_returncode'] is None for item in record['publication']['components'])
+
+
+@pytest.mark.parametrize('mode', ['live-streams', 'early-eof', 'incomplete-eof'])
+def test_publication_outer_420_bounds_live_helpers_even_after_all_eof(tmp_path, monkeypatch, mode):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    clock = time.monotonic
+    origin = clock()
+    # Accelerate only the parent's clock, not the fixed bound or child protocol.
+    monkeypatch.setattr(evidence.time, 'monotonic', lambda: origin + (clock() - origin) * 1000)
+    frames = publication_frames()[:1] if mode == 'incomplete-eof' else publication_frames()
+    body = "print('Wine publication: active', flush=True)\n"
+    if mode != 'live-streams': body += 'os.close(1); os.close(2)\n'
+    record, _, _ = run_publication_fixture(repo, frames, body + 'time.sleep(60)')
+    assert clock() - origin < 5
+    assert record['publication']['outer_deadline_seconds'] == 420
+    assert record['elapsed_seconds'] >= 420
+    assert record['outcome'] == 'timeout' and not record['capture_complete']
+    assert record['returncode'] == -signal.SIGTERM
+    assert record['cleanup_signals'] == ['SIGTERM', 'SIGKILL']
+    if mode == 'incomplete-eof':
+        assert record['publication']['components'][0]['command_returncode'] is None
+        assert 'Incomplete private publication observations' in record['capture_errors']
+
+
+def test_publication_held_writer_keeps_private_status_and_bounds_owned_teardown(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    start = time.monotonic()
+    record, _, _ = run_publication_fixture(repo, body='''
+import signal
+pid = os.fork()
+if pid == 0:
+ signal.signal(signal.SIGTERM, signal.SIG_IGN)
+ print('Wine publication: held writer', flush=True)
+ time.sleep(60)
+else:
+ time.sleep(.1)
+''')
+    assert time.monotonic() - start < 7
+    assert record['returncode'] == 0 and record['outcome'] == 'capture_error'
+    assert not record['capture_complete']
+    assert record['cleanup_signals'] == ['SIGTERM', 'SIGKILL']
+    assert 'Descendant-held pipes' in ' '.join(record['capture_errors'])
+    assert record['publication']['result']['passed'] is True
+    assert all(item['command_returncode'] == 0 for item in record['publication']['components'])
+    assert 'held writer' in record['stdout']['tail']
+
+
+@pytest.mark.parametrize('payload', [b'x' * 4097, b'{"event":bad}\n'])
+def test_publication_malformed_frame_still_tears_down_live_helper(tmp_path, monkeypatch, payload):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    fixture_script(repo, 'publication-fixture.py', f'''
+fd = int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+os.write(fd, {payload!r})
+time.sleep(60)
+''')
+    args = [sys.executable, 'scripts/publication-fixture.py']
+    directory = evidence._new_run(repo)
+    ledger, record, logs = evidence._start(repo, directory, 'wine-publication', args)
+    start = time.monotonic()
+    evidence._capture(repo, directory, ledger, record, logs, args)
+    assert time.monotonic() - start < 5
+    assert record['outcome'] == 'capture_error' and not record['capture_complete']
+    assert record['returncode'] == -signal.SIGTERM
+    assert record['cleanup_signals'] == ['SIGTERM', 'SIGKILL']
+    assert record['publication']['components'][0]['command_returncode'] is None
+
+
+@pytest.mark.parametrize('mode', ['pass', 'incomplete', 'nonzero'])
+def test_publication_persist_false_uses_exclusive_session_logs_and_identical_private_authority(
+        tmp_path, monkeypatch, mode):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    session = windows_ci_repro._prefix.create_session(repo)
+    before = {path.name: path.read_bytes() for path in session.directory.glob('*.json')}
+    frames = publication_frames()
+    if mode == 'incomplete': frames = frames[:1]
+    elif mode == 'nonzero': frames[1]['command_returncode'] = 17
+    args = publication_fixture_args(repo, frames, '''
+assert os.environ['SPACE_WINE_SESSION_ID'] == pathlib.Path(os.environ['WINEPREFIX']).parent.name
+print('Wine publication: session-owned logs', flush=True)
+''')
+    record = evidence._record('wine-publication', args)
+    logs = {}
+    for name in ('stdout', 'stderr'):
+        path = session.directory / f'publication.{name}.log'
+        record[name] = evidence._stream_info(path.relative_to(repo).as_posix())
+        logs[name] = evidence._exclusive(path)
+        with pytest.raises(FileExistsError): evidence._exclusive(path)
+        assert path.stat().st_mode & 0o777 == 0o600
+    def forbidden_save(*args):
+        raise AssertionError('persist=False must not access a reproduction ledger')
+    monkeypatch.setattr(evidence, '_save', forbidden_save)
+    evidence._capture(repo, None, {}, record, logs, args, session, persist=False)
+    assert record['returncode'] == 0
+    assert record['outcome'] == {'pass': 'pass', 'incomplete': 'capture_error', 'nonzero': 'nonzero_exit'}[mode]
+    assert record['capture_complete'] is (mode != 'incomplete')
+    assert record['publication']['components'][0]['command_returncode'] == (
+        None if mode == 'incomplete' else 17 if mode == 'nonzero' else 0)
+    assert 'session-owned logs' in (repo / record['stdout']['path']).read_text()
+    assert before == {path.name: path.read_bytes() for path in session.directory.glob('*.json')}
+    assert not (repo / 'build/windows-ci-repro').exists()
+
+
+@pytest.mark.parametrize('fault', ['checkpoint', 'log-write'])
+def test_publication_storage_failure_keeps_private_result_and_continues_drain(tmp_path, monkeypatch, fault):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    failed = []
+    if fault == 'checkpoint':
+        atomic = evidence._atomic
+        def disk_full(path, value):
+            stages = value.get('stages', [])
+            if path.name == 'ledger.json' and stages and stages[-1]['progress']['counts']['publication']:
+                failed.append(path.name)
+                raise OSError(errno.ENOSPC, 'publication checkpoint full')
+            return atomic(path, value)
+        monkeypatch.setattr(evidence, '_atomic', disk_full)
+    else:
+        exclusive = evidence._exclusive
+        class BrokenLog:
+            def __init__(self, output): self.output = output
+            def write(self, data): raise OSError(errno.ENOSPC, 'publication log full')
+            def close(self): self.output.close()
+        def broken_log(path):
+            output = exclusive(path)
+            return BrokenLog(output) if path.name == 'wine-publication.stdout.log' else output
+        monkeypatch.setattr(evidence, '_exclusive', broken_log)
+    frames = publication_frames()
+    frames[1]['command_returncode'] = 17
+    record, directory, ledger = run_publication_fixture(repo, frames, '''
+print('Wine publication: before storage fault', flush=True)
+time.sleep(.4)
+print('Wine publication: after storage fault', flush=True)
+sys.exit(17)
+''')
+    assert record['returncode'] == 17 and not record['capture_complete']
+    assert record['publication']['components'][0]['command_returncode'] == 17
+    assert record['publication']['result']['passed'] is True  # contradiction retained
+    assert record['stdout']['eof'] and record['stderr']['eof']
+    assert 'after storage fault' in record['stdout']['tail']
+    if fault == 'checkpoint':
+        assert failed == ['ledger.json']
+        assert ledger['persistence_errors'] and record['outcome'] == 'nonzero_exit'
+    else:
+        assert record['capture_errors'] and record['outcome'] == 'capture_error'
+    response = evidence._bounded_response(dict(status='fail', evidence=dict(stages=[record], metadata={})))
+    assert len(json.dumps(response).encode()) <= 48 * 1024
+    assert (directory / 'ledger.json').stat().st_size <= 4 * 1024 * 1024
+
+
+def test_publication_real_stream_caps_keep_late_progress_and_private_status(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    size = 18 * 1024 * 1024
+    record, directory, _ = run_publication_fixture(repo, body=rf'''
+import threading
+def emit(fd):
+ for _ in range({size} // 65536): os.write(fd, b'x' * 65536)
+ os.write(fd, b'\nWine publication: final\n[PASS] final\n')
+threads = [threading.Thread(target=emit, args=(fd,)) for fd in (1, 2)]
+for thread in threads: thread.start()
+for thread in threads: thread.join()
+''')
+    assert record['outcome'] == 'pass' and record['capture_complete']
+    for name in ('stdout', 'stderr'):
+        stream = record[name]
+        assert stream['observed_bytes'] > size
+        assert stream['stored_bytes'] == (repo / stream['path']).stat().st_size == 16 * 1024 * 1024
+        assert len(stream['tail']) == 4000
+        assert stream['log_truncated'] and stream['excerpt_truncated']
+        assert stream['oversized_lines'] == 1 and stream['max_pending_line_bytes'] <= 4096
+    assert record['progress']['counts']['publication'] == 2
+    assert record['progress']['counts']['pass'] == 2
+    assert record['publication']['result']['passed'] is True
+    assert (directory / 'ledger.json').stat().st_size < 4 * 1024 * 1024
+
+
+@pytest.mark.parametrize('foreign_uid_probe', ['not-configured', 'passed'])
+def test_publication_terminal_report_accepts_only_evidence_not_foreign_uid_claim_in_stdout(foreign_uid_probe):
+    import _windows_repro_evidence as evidence
+    record, streams = fatal_stream_record('wine-publication')
+    frames = publication_frames()
+    frames[-1]['foreign_uid_probe'] = foreign_uid_probe
+    evidence._PublicationObservation(record).feed(encode_observations(frames))
+    streams['stdout'].feed(b'Wine publication: foreign_uid_probe=passed\n')
+    assert record['publication']['result']['foreign_uid_probe'] == foreign_uid_probe
+
+
+def test_publication_stage_is_dormant_and_public_command_vectors_stay_closed(tmp_path, monkeypatch):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    assert evidence._STEPS == tuple(step for step, _ in windows_ci_repro._REPRO_STEPS) + ('wine-publication',)
+    with pytest.raises(ValueError, match='fixed'):
+        windows_ci_repro._run_repro_step(repo, evidence._new_run(repo), 'wine-publication', ['arbitrary'])
+
+
+@pytest.mark.parametrize('failure', [False, True])
+def test_eight_stage_publication_evidence_budget_preserves_truth_and_owned_ledger(tmp_path, monkeypatch, failure):
+    import _windows_repro_evidence as evidence
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    directory = evidence._new_run(repo)
+    # Exercise every marker kind at nearly the raw 4KiB line limit. Controls
+    # expand sixfold and non-BMP Unicode twelvefold in the encoded JSON budget.
+    text = '\x00' * 3800 + '😀' * 40
+    lines = [f'[{kind}] {text}\n' for kind in ('LAUNCH', 'BOOT', 'LOAD', 'RUN', 'PASS', 'TIME')]
+    lines += [f'Wine admission: {text}\n', f'Wine publication: {text}\n']
+    stages = []
+    for step in evidence._STEPS:
+        ledger, record, logs = evidence._start(repo, directory, step, [])
+        for name, output in logs.items():
+            stream = evidence._Stream(record, name, output)
+            for line in lines: stream.feed(line.encode())
+            if failure and step == 'wine-publication':
+                stream.feed(b'[FAIL] important publication failure\n')
+            stream.eof()
+            output.close()
+        if step == 'wine-fast':
+            observer = evidence._ApplicationObservation(record)
+            observer.feed(encode_observations([
+                dict(event='launch', launched_monotonic=100., hard_deadline_monotonic=1900.),
+                dict(event='result', command_returncode=0)]))
+        elif step == 'wine-publication':
+            frames = publication_frames()
+            if failure: frames[1]['command_returncode'] = 17
+            observer = evidence._PublicationObservation(record)
+            observer.feed(encode_observations(frames))
+            observer.eof()
+        evidence._finish(repo, directory, ledger, record,
+                         'nonzero_exit' if failure and step == 'wine-publication' else 'pass',
+                         17 if failure and step == 'wine-publication' else 0, True)
+        stages.append(record)
+    # The terminal backstop remains inside the eighth stage, with its original
+    # log caps; it must not become a hidden ninth stage or erase primary status.
+    session = windows_ci_repro._prefix.create_session(repo)
+    attempt = evidence._cleanup_capture(repo, directory, stages[-1],
+                                        [sys.executable, '-c', "print('terminal cleanup evidence')"], session)
+    stages[-1]['cleanup'] = dict(outcome='pass', attempts=[attempt], capture_complete=True)
+    ledger = evidence._read_json(directory / 'ledger.json')
+    ledger.update(stages=stages, complete=not failure, outcome='fail' if failure else 'pass')
+    ledger['metadata'] = dict(windows_ci_repro._launch_metadata(repo),
+                              effective_prefix='/' + '😀' * 4000,
+                              wine={'version': 'wine-9.0 (' + '😀' * 1000 + ')'})
+    evidence._save(repo, directory, ledger)
+    evidence._seal(repo, directory)
+    assert (directory / 'ledger.json').stat().st_size <= 4 * 1024 * 1024
+    saved = evidence._read_json(directory / 'ledger.json')
+    assert saved['stages'] == stages
+    result = evidence._bounded_response(dict(status=ledger['outcome'], evidence=dict(
+        stages=stages, metadata=ledger['metadata'], complete=not failure,
+        ledger_path=(directory / 'ledger.json').relative_to(repo).as_posix())))
+    assert len(json.dumps(result, sort_keys=True).encode()) <= 48 * 1024
+    assert result['evidence']['response_truncated'] is True
+    returned = result['evidence']['stages']
+    assert len(returned) == 8 and [item['step'] for item in returned] == list(evidence._STEPS)
+    assert returned[-1]['publication'] == stages[-1]['publication']
+    assert returned[-1]['returncode'] == (17 if failure else 0)
+    if failure:
+        assert 'important publication failure' in returned[-1]['stderr']['tail']
+        assert returned[-1]['progress']['counts']['fail'] == 2
+        assert returned[-1]['stderr']['response_excerpt_truncated'] is True
+        assert returned[-1]['progress']['last_markers']['publication']['response_text_truncated'] is True
+    for stage, compacted in zip(stages, returned):
+        assert compacted['progress']['counts'] == stage['progress']['counts']
+        for key in ('returncode', 'outcome', 'capture_complete', 'capture_errors', 'cleanup_signals',
+                    'started_utc', 'started_monotonic', 'finished_utc', 'finished_monotonic', 'elapsed_seconds'):
+            assert compacted[key] == stage[key]
+        for name in ('stdout', 'stderr'):
+            assert len(stage[name]['tail']) <= 4000
+            assert stage[name]['max_pending_line_bytes'] <= 4096
+            assert stage[name]['path'] == compacted[name]['path']
+            assert stage[name]['eof'] == compacted[name]['eof']
+            assert stage[name]['errors'] == compacted[name]['errors']
+            cleanup_bytes = sum(item[name]['stored_bytes'] for item in stage.get('cleanup', {}).get('attempts', []))
+            assert (repo / stage[name]['path']).stat().st_size == stage[name]['stored_bytes'] + cleanup_bytes
+    assert evidence._read_json(directory / 'ledger.json') == saved
+
+
 def test_root_fatal_banner_split_and_repeated_latches_first_clock(monkeypatch):
     import _windows_repro_evidence as evidence
     record, streams = fatal_stream_record()
@@ -2207,12 +2639,13 @@ def test_wine_outer_vectors_are_exact_and_not_a_timeout_passthrough():
         'timeout', '--kill-after=5s', '1920s', 'scripts/test-windows-under-wine.sh')
 
 
-def test_seven_stage_table_and_log_inventory_are_migrated_together():
+def test_seven_live_stages_have_dormant_eighth_stage_log_inventory():
     import _windows_repro_evidence as evidence
     names = tuple(name for name, _ in windows_ci_repro._REPRO_STEPS)
-    assert names == evidence._STEPS == ('preflight', 'build-windows-from-linux',
+    assert names == ('preflight', 'build-windows-from-linux',
         'package-windows-runtime', 'verify-windows-outputs', 'wine-publication-build',
         'wine-admission', 'wine-fast')
+    assert evidence._STEPS == names + ('wine-publication',)
 
 
 @pytest.mark.parametrize('code', [0, 17, 124, 137])
@@ -2695,7 +3128,7 @@ def test_malformed_cleanup_markers_keep_bounded_history_after_log_cap(
     assert result['status'] == 'fail'
     data = result['evidence']
     assert data['complete'] is False
-    assert [s['step'] for s in data['stages']] == list(evidence._STEPS)
+    assert [s['step'] for s in data['stages']] == [step for step, _ in windows_ci_repro._REPRO_STEPS]
     assert all(s['outcome'] == 'pass' for s in data['stages'][:5])
     stage = data['stages'][-1]
     assert stage['returncode'] == primary_code

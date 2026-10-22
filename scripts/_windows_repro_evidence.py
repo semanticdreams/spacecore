@@ -29,10 +29,13 @@ _LOG_CAP = 16 * 1024 * 1024
 _TAIL_CAP = 4000
 _LINE_CAP = CLEANUP_LINE_BYTES
 _RESPONSE_CAP = 48 * 1024
-_LEDGER_CAP = 4 * 1024 * 1024  # Seven bounded stages, including JSON-escaped markers/tails.
+_LEDGER_CAP = 4 * 1024 * 1024  # Eight bounded stages, including JSON-escaped markers/tails.
 _MARKER = ".space-windows-repro-v1.json"
 _STEPS = ("preflight", "build-windows-from-linux", "package-windows-runtime",
-          "verify-windows-outputs", "wine-publication-build", "wine-admission", "wine-fast")
+          "verify-windows-outputs", "wine-publication-build", "wine-admission", "wine-fast", "wine-publication")
+_PUBLICATION_COMPONENTS = (("cpp-022", 120, "0022"), ("cpp-002", 120, "0002"),
+                           ("store-write", 30, "0002"), ("store-read", 30, "0002"))
+_PUBLICATION_OUTER = 420
 _RUN_NAME = re.compile(r"\d{8}T\d{12}Z-[0-9a-f]{32}")
 _FATAL_BANNER = re.compile(
     r'wine: Unhandled (?:page fault on (?:read|write|execute) access to [0-9A-Fa-f]{8,16}'
@@ -223,12 +226,20 @@ def _record(step, args):
               "finished_utc": None, "finished_monotonic": None, "elapsed_seconds": None,
               "returncode": None, "outcome": "started", "capture_complete": False,
               "capture_errors": [], "cleanup_signals": [],
-              "progress": {"counts": dict.fromkeys(("launch", "boot", "load", "run", "pass", "fail", "timing", "admission"), 0),
+              "progress": {"counts": dict.fromkeys(("launch", "boot", "load", "run", "pass", "fail", "timing", "admission", "publication"), 0),
                             "latest": None, "last_markers": {}, "admission_phases": []}}
     if step == 'wine-fast':
         record.update(application={'launched_monotonic': None, 'hard_deadline_monotonic': None,
                                    'command_returncode': None}, debugger_returncode=None,
-                      fatal_report={'first': None, 'deadline_monotonic': None, 'termination': None})
+                       fatal_report={'first': None, 'deadline_monotonic': None, 'termination': None})
+    elif step == 'wine-publication':
+        record.update(publication={
+            'outer_deadline_seconds': _PUBLICATION_OUTER,
+            'components': [dict(component=name, deadline_seconds=deadline, child_umask=umask,
+                                launched_monotonic=None, hard_deadline_monotonic=None, command_returncode=None)
+                           for name, deadline, umask in _PUBLICATION_COMPONENTS],
+            'result': None},
+            fatal_report={'first': None, 'deadline_monotonic': None, 'termination': None})
     return record
 
 
@@ -285,13 +296,14 @@ def _finish(repo, run_dir, ledger, record, outcome, code, complete):
 def _marker_line(record, raw, stream):
     # Only newline-terminated, bounded lines are treated as flushed markers.
     text = raw.decode("utf-8", errors="replace").rstrip("\r")
-    if (record['step'] == 'wine-fast' and stream == 'stderr'
+    if (record['step'] in ('wine-fast', 'wine-publication') and stream == 'stderr'
             and _FATAL_BANNER.fullmatch(text) and record['fatal_report']['first'] is None):
         now = time.monotonic()
         report = record['fatal_report']
         report['first'] = {'text': text, 'stream': stream, 'observed_utc': _utc(), 'observed_monotonic': now}
-        hard = record['application']['hard_deadline_monotonic']
-        report['deadline_monotonic'] = min(now + 30, hard) if hard is not None else now + 30
+        if record['step'] == 'wine-fast':
+            hard = record['application']['hard_deadline_monotonic']
+            report['deadline_monotonic'] = min(now + 30, hard) if hard is not None else now + 30
     if record["step"] == "terminal-stop" and text.startswith(CLEANUP_MARKER):
         try:
             value = json.loads(text.removeprefix(CLEANUP_MARKER))
@@ -319,6 +331,8 @@ def _marker_line(record, raw, stream):
     kind = None
     if match:
         kind = {"TIME": "timing", "TIMINGS": "timing"}.get(match[1], match[1].lower())
+    elif text.startswith("Wine publication:"):
+        kind = "publication"
     elif text.startswith("Wine admission:"):
         kind = "admission"
         phases = record["progress"]["admission_phases"]
@@ -413,30 +427,83 @@ class _ApplicationObservation:
                 continue
             value = json.loads(self.pending)
             self.pending.clear()
-            app = self.record['application']
-            if self.count == 0:
-                if (set(value) != {'event', 'launched_monotonic', 'hard_deadline_monotonic'}
-                        or value['event'] != 'launch'
-                        or any(type(value[key]) not in (int, float) or not math.isfinite(value[key])
-                               for key in ('launched_monotonic', 'hard_deadline_monotonic'))
-                        or value['hard_deadline_monotonic'] != value['launched_monotonic'] + 1800):
-                    raise ValueError('Invalid private application launch observation')
-                app.update({key: value[key] for key in ('launched_monotonic', 'hard_deadline_monotonic')})
-                report = self.record['fatal_report']
-                if report['first'] is not None:
-                    report['deadline_monotonic'] = min(report['deadline_monotonic'], app['hard_deadline_monotonic'])
-            elif self.count == 1:
-                if (set(value) != {'event', 'command_returncode'} or value['event'] != 'result'
-                        or type(value['command_returncode']) is not int):
-                    raise ValueError('Invalid private application result observation')
-                app['command_returncode'] = value['command_returncode']
-            else:
-                raise ValueError('Repeated private application observation')
+            self._message(value)
             self.count += 1
+
+    def _message(self, value):
+        app = self.record['application']
+        if self.count == 0:
+            if (set(value) != {'event', 'launched_monotonic', 'hard_deadline_monotonic'}
+                    or value['event'] != 'launch'
+                    or any(type(value[key]) not in (int, float) or not math.isfinite(value[key])
+                           for key in ('launched_monotonic', 'hard_deadline_monotonic'))
+                    or value['hard_deadline_monotonic'] != value['launched_monotonic'] + 1800):
+                raise ValueError('Invalid private application launch observation')
+            app.update({key: value[key] for key in ('launched_monotonic', 'hard_deadline_monotonic')})
+            report = self.record['fatal_report']
+            if report['first'] is not None:
+                report['deadline_monotonic'] = min(report['deadline_monotonic'], app['hard_deadline_monotonic'])
+        elif self.count == 1:
+            if (set(value) != {'event', 'command_returncode'} or value['event'] != 'result'
+                    or type(value['command_returncode']) is not int):
+                raise ValueError('Invalid private application result observation')
+            app['command_returncode'] = value['command_returncode']
+        else:
+            raise ValueError('Repeated private application observation')
 
     def eof(self):
         if self.pending:
             raise ValueError('Unterminated private application observation')
+
+
+class _IncompletePublicationObservation(ValueError):
+    """An orderly private EOF is incomplete, but must not preempt helper exit."""
+
+
+class _PublicationObservation(_ApplicationObservation):
+    """Four fixed private launch/result pairs and one exact terminal report.
+
+    The owning publication helper uses the same private descriptor handoff as
+    fast. Neither stdout markers nor the helper's exit code establish raw status.
+    """
+
+    def _message(self, value):
+        if not isinstance(value, dict):
+            raise ValueError('Invalid private publication observation object')
+        publication = self.record['publication']
+        if self.count < 8:
+            component = publication['components'][self.count // 2]
+            if self.count % 2 == 0:
+                if (set(value) != {'event', 'component', 'launched_monotonic', 'hard_deadline_monotonic'}
+                        or value['event'] != 'launch' or value['component'] != component['component']
+                        or any(type(value[key]) is not float or not math.isfinite(value[key])
+                               for key in ('launched_monotonic', 'hard_deadline_monotonic'))
+                        or value['hard_deadline_monotonic'] != value['launched_monotonic'] + component['deadline_seconds']):
+                    raise ValueError('Invalid private publication launch observation')
+                component.update({key: value[key] for key in ('launched_monotonic', 'hard_deadline_monotonic')})
+            else:
+                if (set(value) != {'event', 'component', 'command_returncode'}
+                        or value['event'] != 'result' or value['component'] != component['component']
+                        or type(value['command_returncode']) is not int):
+                    raise ValueError('Invalid private publication result observation')
+                component['command_returncode'] = value['command_returncode']
+        elif self.count == 8:
+            if (set(value) != {'event', 'version', 'passed', 'bridge_build_id', 'foreign_uid_probe'}
+                    or value['event'] != 'publication-result'
+                    or type(value['version']) is not int or value['version'] != 1
+                    or type(value['passed']) is not bool
+                    or not isinstance(value['bridge_build_id'], str)
+                    or not re.fullmatch('[0-9a-fA-F]{64}', value['bridge_build_id'])
+                    or value['foreign_uid_probe'] not in ('not-configured', 'passed')):
+                raise ValueError('Invalid private publication terminal report')
+            publication['result'] = value
+        else:
+            raise ValueError('Repeated private publication observation')
+
+    def eof(self):
+        super().eof()
+        if self.count != 9:
+            raise _IncompletePublicationObservation('Incomplete private publication observations')
 
 
 def _signal_group(proc, sig, record):
@@ -477,7 +544,7 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
             owned_env = session._server_environment() if record['step'] == 'terminal-stop' else session.environment()
             env.update(owned_env, SPACE_WINE_SESSION_ID=session.id)
         env.update(TEST_VERBOSE="1", SPACE_TEST_TIMINGS="1")
-        if record['step'] == 'wine-fast':
+        if record['step'] in ('wine-fast', 'wine-publication'):
             observer_read, observer_write = os.pipe()
             env[APPLICATION_OBSERVER_ENV] = str(observer_write)
         proc = subprocess.Popen(args, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -490,7 +557,8 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
             pipe = os.fdopen(observer_read, 'rb', buffering=0)
             observer_read = None
             os.set_blocking(pipe.fileno(), False)
-            selector.register(pipe, selectors.EVENT_READ, _ApplicationObservation(record))
+            observer = _PublicationObservation if record['step'] == 'wine-publication' else _ApplicationObservation
+            selector.register(pipe, selectors.EVENT_READ, observer(record))
         for name in streams:
             pipe = getattr(proc, name)
             os.set_blocking(pipe.fileno(), False)
@@ -500,7 +568,12 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
         while selector.get_map() or proc.poll() is None:
             now = time.monotonic()
             report = record.get('fatal_report')
-            fatal = report is not None and report['first'] is not None
+            fatal = report is not None and report['deadline_monotonic'] is not None
+            outer = (record['started_monotonic'] + _PUBLICATION_OUTER
+                     if record['step'] == 'wine-publication' else None)
+            if outer is not None and now >= outer:
+                outcome = 'timeout'
+                break
             if fatal and now >= report['deadline_monotonic']:
                 report['termination'] = 'deadline_expired'
                 # A report timeout is secondary to an already observed failure;
@@ -519,19 +592,22 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
                     outcome = "capture_error"
                     break
             if not selector.get_map():
-                if not fatal:
+                if not fatal and outer is None:
                     # Ordinary EOF retains the existing blocking wait behavior.
                     if persist:
                         _capture_checkpoint(repo, run_dir, ledger)
                     proc.wait()
                     break
-                # Fatal EOF/live leader must still honor the reporting deadline.
+                # Fatal/publication EOF with a live leader still honors its bound.
+                deadline = report['deadline_monotonic'] if fatal else outer
                 try:
-                    proc.wait(timeout=min(.1, max(0, report['deadline_monotonic'] - now)))
+                    proc.wait(timeout=min(.1, max(0, deadline - now)))
                 except subprocess.TimeoutExpired:
                     pass
                 continue
             wait = min(.1, max(0, report['deadline_monotonic'] - now)) if fatal else .1
+            if outer is not None:
+                wait = min(wait, max(0, outer - now))
             for key, _ in selector.select(wait):
                 try:
                     data = _read_pipe(key.fd)
@@ -540,7 +616,13 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
                 if data:
                     key.data.feed(data)
                 else:
-                    key.data.eof()
+                    try:
+                        key.data.eof()
+                    except _IncompletePublicationObservation as error:
+                        # Missing messages cannot establish success. Keep draining
+                        # and waiting within the outer bound without changing the
+                        # actual helper status through premature owned teardown.
+                        record['capture_errors'].append(str(error))
                     selector.unregister(key.fileobj)
                     key.fileobj.close()
             if persist and time.monotonic() - checkpoint >= .25:
@@ -593,8 +675,17 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
     app_code = record.get('application', {}).get('command_returncode')
     if outcome in ('pass', 'nonzero_exit') and app_code not in (None, 0):
         outcome = 'timeout' if app_code == 124 else 'nonzero_exit'
-    if outcome == "pass" and record["step"] == "wine-fast" and record["progress"]["counts"]["fail"]:
+    if outcome == "pass" and record["step"] in ("wine-fast", "wine-publication") and record["progress"]["counts"]["fail"]:
         outcome = "inconsistent_result"  # Keep actual code 0, but never a contradictory runner PASS.
+    if record['step'] == 'wine-publication':
+        publication = record['publication']
+        codes = [item['command_returncode'] for item in publication['components']]
+        if outcome in ('pass', 'nonzero_exit') and any(code not in (None, 0) for code in codes):
+            outcome = 'timeout' if 124 in codes else 'nonzero_exit'
+        if outcome == 'pass' and (publication['result'] is None or None in codes):
+            outcome = 'evidence_error'
+        if outcome == 'pass' and not publication['result']['passed']:
+            outcome = 'inconsistent_result'
     report = record.get('fatal_report')
     if report is not None and report['first'] is not None:
         report['termination'] = report['termination'] or ('completed' if complete else outcome)
@@ -703,11 +794,15 @@ def _bounded_response(result):
         if "error" in evidence:
             evidence["error"] = compact(evidence["error"])
         evidence["response_truncated"] = True
-    for stage in stages:
-        if size() <= _RESPONSE_CAP:
-            return result
-        if stage["outcome"] != "pass":
-            excerpts(stage, 512, 128)
+    # Eight stages can leave less room for escaped failure excerpts. Reduce
+    # those progressively, only while needed, retaining a useful tail suffix.
+    # Status/observation/error fields and the full owned ledger stay untouched.
+    for tail_limit, marker_limit in ((512, 128), (256, 64), (128, 32)):
+        for stage in stages:
+            if size() <= _RESPONSE_CAP:
+                return result
+            if stage["outcome"] != "pass":
+                excerpts(stage, tail_limit, marker_limit)
     if size() > _RESPONSE_CAP:
         raise ValueError("Fixed reproduction evidence exceeded encoded response budget")
     return result
