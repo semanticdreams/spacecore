@@ -1406,7 +1406,7 @@ bool same_host_object(const SrptCall& left, const SrptCall& right)
 }
 
 struct WineCleanupDiagnostics {
-    std::ostringstream output;
+    std::stringstream output;
     std::streambuf* previous = std::cerr.rdbuf(output.rdbuf());
     ~WineCleanupDiagnostics() noexcept { std::cerr.rdbuf(previous); }
 };
@@ -1422,45 +1422,49 @@ void wine_symlink_cleanup_regressions()
         std::string diagnostics;
         {
             WineCleanupDiagnostics capture;
-            {
-                Fixture fixture;
-                root = fixture.root;
-                WineSymlinkFixture link(fixture);
-                std::exception_ptr primary, observed;
-                try {
-                    owned_tmp->mutate(SRPT_CREATE, root / "record", 0600, "old");
-                    link.create(root / "symlink", "record");
-                    original_link = owned_tmp->observe(root / "symlink");
-                    original_target = owned_tmp->observe(root / "record");
-                    check((original_link.mode & 0170000) == 0120000
-                        && (original_target.mode & 0170000) == 0100000 && read(root / "record") == "old",
-                        "real symlink probe fixture before finalization");
-                    if (primary_fault) throw std::runtime_error(primary_message);
-                } catch (...) { primary = std::current_exception(); }
-                try {
-                    link.finish(primary, [&](bool) {
-                        check(host_names(*owned_tmp, root) == std::set<std::string>{"record"}
+            try {
+                {
+                    Fixture fixture;
+                    root = fixture.root;
+                    WineSymlinkFixture link(fixture);
+                    std::exception_ptr primary, observed;
+                    try {
+                        owned_tmp->mutate(SRPT_CREATE, root / "record", 0600, "old");
+                        link.create(root / "symlink", "record");
+                        original_link = owned_tmp->observe(root / "symlink");
+                        original_target = owned_tmp->observe(root / "record");
+                        check((original_link.mode & 0170000) == 0120000
+                            && (original_target.mode & 0170000) == 0100000 && read(root / "record") == "old",
+                            "real symlink probe fixture before finalization");
+                        if (primary_fault) throw std::runtime_error(primary_message);
+                    } catch (...) { primary = std::current_exception(); }
+                    try {
+                        link.finish(primary, [&](bool) {
+                            check(host_names(*owned_tmp, root) == std::set<std::string>{"record"}
+                                && same_host_object(original_target, owned_tmp->observe(root / "record"))
+                                && read(root / "record") == "old", "primary cleanup unlinks only the symlink");
+                        }, cleanup_fault);
+                    } catch (...) { observed = std::current_exception(); }
+                    check(static_cast<bool>(observed), "symlink probe must propagate its expected failure");
+                    const auto message = rejects([&] { std::rethrow_exception(observed); });
+                    if (message != (primary_fault ? primary_message : cleanup_message)) std::rethrow_exception(observed);
+                    if (primary_fault) check(observed == primary, "original primary exception identity retained");
+                    check(fixture.preserve_wine_fixture == cleanup_fault, "only failed finalization retains fixture");
+                    if (cleanup_fault) {
+                        check(host_names(*owned_tmp, root) == std::set<std::string>{"record", "symlink"}
+                            && same_host_object(original_link, owned_tmp->observe(root / "symlink"))
                             && same_host_object(original_target, owned_tmp->observe(root / "record"))
-                            && read(root / "record") == "old", "primary cleanup unlinks only the symlink");
-                    }, cleanup_fault);
-                } catch (...) { observed = std::current_exception(); }
-                check(static_cast<bool>(observed), "symlink probe must propagate its expected failure");
-                const auto message = rejects([&] { std::rethrow_exception(observed); });
-                if (message != (primary_fault ? primary_message : cleanup_message)) {
-                    std::cerr.rdbuf(capture.previous);
-                    std::cerr << capture.output.str() << std::flush;
-                    std::rethrow_exception(observed);
-                }
-                if (primary_fault) check(observed == primary, "original primary exception identity retained");
-                check(fixture.preserve_wine_fixture == cleanup_fault, "only failed finalization retains fixture");
-                if (cleanup_fault) {
-                    check(host_names(*owned_tmp, root) == std::set<std::string>{"record", "symlink"}
-                        && same_host_object(original_link, owned_tmp->observe(root / "symlink"))
-                        && same_host_object(original_target, owned_tmp->observe(root / "record"))
-                        && read(root / "record") == "old", "failed unlink leaves both owned names unchanged");
-                }
-            } // The real Fixture destructor must return, including retention paths.
-            diagnostics = capture.output.str();
+                            && read(root / "record") == "old", "failed unlink leaves both owned names unchanged");
+                    }
+                } // The real Fixture destructor must return, including retention paths.
+                diagnostics = capture.output.str();
+            } catch (...) {
+                std::cerr.rdbuf(capture.previous);
+                auto* buffer = capture.output.rdbuf();
+                if (buffer->sgetc() != std::char_traits<char>::eof()) std::cerr << buffer;
+                std::cerr << std::flush;
+                throw;
+            }
         }
         if (cleanup_fault) {
             check(diagnostics == "primary: " + (primary_fault ? primary_message : "none")
