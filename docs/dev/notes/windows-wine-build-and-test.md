@@ -352,6 +352,71 @@ Windows binary under Wine:
 
 ## Reproducible Workflow (Current)
 
+### Current publication contract (source, not final Wine acceptance)
+
+[Record publication](../features/record-publication.md) is the canonical phase,
+ABI, loader, authority/lifetime and host-policy reference. The approved real POSIX
+Wine backend supersedes the old native-substitution proposal and six-stage wording
+in this note. Native Windows keeps its strict NT backend and native-host authority;
+it is not a substitute for the required local Wine publication gate. Historical
+observations and intermediate implementation checkpoints below are not current
+acceptance claims.
+
+The current ordered guarded reproduction is:
+
+<!-- publication-stages -->
+| Stage | Bound/role |
+| --- | --- |
+| `preflight` | Fixed prerequisites |
+| `build-windows-from-linux` | Existing cross-build |
+| `package-windows-runtime` | Clean native package |
+| `verify-windows-outputs` | Native verification |
+| `wine-publication-build` | 900 seconds for matched production/support pairs |
+| `wine-admission` | 480 seconds outer helper |
+| `wine-publication` | 420 seconds independent outer helper |
+| `wine-fast` | 1920 seconds outer; application1800 seconds |
+<!-- /publication-stages -->
+
+Publication has four fixed components: cpp-022 and cpp-002 each120 seconds with
+child umasks0022/0002, then store-write and store-read each30 seconds with0002.
+The separate test-support PE/Unix pair has its own binding and discovery copy.
+Each C++ run contains five private PE children (intact control, missing/bad PE,
+missing/bad SO), within one60-second sequence inside C++120, not extra host stages.
+These are bounds, not observed PASS timings. Admission remains480 seconds,
+application1800 seconds, fast outer1920 seconds, cleanup backstop45 seconds;
+each host-launched publication component retains its specified120-second or
+30-second bound plus fixed escalation. The five private PE children share the
+separate60-second sequence within each C++ component; they do not each get120 seconds.
+
+Schema-4 owner/receipt checks bind both pairs and discovery copies. Admission
+issues a one-shot publication grant, consumed durably before any component. Only
+the parent's independent complete capture/report/generation validation after all
+four components and stopped acknowledgment can promote a distinct application
+grant. Each launch increments generation; application consumes its grant before
+launch. Interrupted/replayed work cannot authorize or bootstrap again. There is
+one initialized owned session, not a fresh prefix per component.
+
+Each C++ report is parent-pinned: exclusive0600 regular/current-UID/single-link
+allocation, retained noninherited nofollow/CLOEXEC descriptor, child OPEN_EXISTING
+write without create/truncate, checked close and original/path identity comparison.
+Both report histories are validated at promotion. The separate writer/reader use
+the approved test-only fixed base-dir constructor options under the fresh owned
+`session/tmp/space-record-publication-store`, derived from verified Windows temp.
+This is not default-root coverage; production stores/appdirs remain unchanged.
+
+<!-- publication-evidence -->
+The source contract is reviewed through
+`a8012ef002c1bc21ae2c2685e788ddbcc7bb2c8e`; it is not a final runtime-tested Wine
+revision. Earlier compatibility proof is not final Wine publication success.
+Actual Wine/PE publication categories and the full Wine gate remain pending.
+Native NT assertions remain intact and unexercised under Wine;
+foreign_uid_probe=not-configured. No final all-category PASS or measured final-run
+timing is claimed here. Whole-branch review and capability-owned controlled actual
+Wine execution remain required; later measured-source documentation may follow in
+a separate checkpoint. No stronger crash guarantee than native publication is
+claimed for application death, memory corruption or power loss.
+<!-- /publication-evidence -->
+
 For OpenCode Windows CI failure reproduction, use the guarded wrapper sequence:
 
 ```bash
@@ -389,18 +454,26 @@ Prepare native Windows runtime payload (for packaging):
 scripts/package-windows-runtime.sh
 ```
 
-Prepare/admit the isolated Wine overlay, then run the full Windows fast suite:
+Prepare/admit the isolated Wine overlay and independently validate focused
+publication, then run the full Windows fast suite:
 
 ```bash
 scripts/prepare-windows-wine-runtime.sh
 scripts/test-windows-under-wine.sh
 ```
 
+The public prepare script is a composite parent: it builds the publication pairs,
+initializes/admit-tests the session, captures the fixed publication components and
+independently validates their proof before promoting an application grant. API
+admission alone is not sufficient. Agents still use `windows-ci-reproducer` rather
+than invoking this lower-level sequence directly.
+
 ### Artifact ownership and ProcessPrng admission
 
 `build/windows` is native build output; `build/dist/windows` is the native package.
 Packaging excludes `bcryptprimitives.dll` case-insensitively, including stale
-helpers left in the build tree, and verifies the final payload. It does not
+helpers left in the build tree, and both publication production/test-support
+DLL/SO pairs. It verifies the final payload. It does not
 silently remove the stale build helper. The old standard unmarked package is
 preserved intact at `build/dist/windows.pre-diagnostics` if recognizable; a
 collision or ambiguous ownership fails. New output has a versioned ownership and
@@ -423,10 +496,13 @@ and other contract failures (exit20), crashes and the60-second admission timeout
 never authorize fallback. Admission uses a further5-second kill escalation if
 TERM is ignored; SIGKILL/forced timeout fails without fallback or a receipt.
 Load errors other than module absence are diagnosed as failures. Probe
-phases/results are flushed. Successful admission records a schema-2 JSON receipt
+phases/results are flushed. Successful admission records a schema-4 JSON receipt
 tying the payload/package inventory, generated owned session (ID, nonce, prefix
 inode identity and `win64` architecture), pinned Wine and matching wineserver
-executable/version/hash, and display conditions to the fixed backend.
+executable/version/hash, display conditions, both publication pairs/discovery
+copies and the publication-only grant to the fixed backend. Admission alone no
+longer authorizes application launch; the current publication contract above
+describes promotion after independent capture validation.
 Consumers validate the receipt as data, never shell code. The guarded parent
 creates and retains immutable ownership through `prefix.create_session` after
 output verification, **before initialization or admission can launch**. Only
@@ -460,6 +536,10 @@ Fixed GNU timeout budgets (each with a further5-second kill escalation):
 | Full application `tests.fast:main` | 1800 seconds |
 | Prefix-scoped wineserver stop / wait | 10 / 15 seconds |
 | Guarded admission outer helper | 480 seconds |
+| Publication pair build helper | 900 seconds |
+| Publication validation outer helper | 420 seconds |
+| Each publication C++ component (0022 / 0002) | 120 seconds |
+| Each publication store writer / reader | 30 seconds |
 | Guarded fast outer helper | 1920 seconds |
 | Parent terminal cleanup backstop helper | 45 seconds |
 
@@ -561,11 +641,11 @@ Preexisting paths are never adopted/repaired/removed. Only a fully verified10
 permits existing verified removal and a fresh exclusive sink for the next probe;
 failed empty/partial reports can remain as evidence without admission.
 
-Application/test entry-point initialization remains future Tasks6/7 work: neither
-launch inputs nor probe initialization proves universal application startup.
-Actual Wine runtime correction remains unproved until the guarded experiment
-after source review/commit; host adapters and tiny PE compilation are not that
-proof. The prior missing report's effective Windows location was not observed and
+Application/test entry points now use the generic initializer in source before
+their own temporary work. Actual execution of those new paths remains pending;
+neither launch inputs, probe initialization, host models nor tiny PE compilation
+proves universal application startup under Wine. The prior missing report's
+effective Windows location was not observed and
 is not recovered by browsing prefix contents. Windows profile data remains within
 the private prefix; old shared/home data is neither inspected nor cleaned. Data
 isolation is not claimed to fix a DACL mismatch.
@@ -638,7 +718,16 @@ not establish later full-suite success, nor close the
 historical Linux native SIG investigation. Agents must use the existing guarded
 capability, not the manual shell examples above, for real reproduction.
 
-### Private publication operation ABI (source/host-model admission stage)
+### Historical integration checkpoints (not current activation status)
+
+The following Task5/6 subsections retain intermediate source/host-model boundaries
+for audit, including what was inactive at that time. Their WIP and future-task
+wording does not describe current activation: Tasks7–9 are reviewed source
+checkpoints, and the current contract above and canonical feature page supersede
+their stage/receipt/authorization descriptions. Actual final Wine acceptance is
+still pending.
+
+#### Private publication operation ABI (Task5 source/host-model admission stage)
 
 The shared private header now defines the first operation frame: ABI1, **168 bytes**,
 with separate caller-owned primary, cleanup and transport byte buffers. Identity
@@ -860,10 +949,9 @@ adapter/core symbol import.
 
 ### Bounded reproduction evidence
 
-The same `reproduce --repo-root .` action records these ordered stages:
-`preflight`, `build-windows-from-linux`, `package-windows-runtime`,
-`verify-windows-outputs`, `wine-admission`, then `wine-fast`. API admission must
-succeed before the full application launches. Builtin/compat probe phases and
+The same `reproduce --repo-root .` action records the eight ordered stages in the
+current table above. API admission and independently validated focused publication
+must succeed before the full application launches. Builtin/compat probe phases and
 their observed exit codes are separate from full-suite progress. The four public
 commands and their status/CLI exit conventions are unchanged; there is no command,
 environment, timeout, module, or profile passthrough.
@@ -969,7 +1057,8 @@ JSON escaping; diagnostic excerpts carry explicit truncation flags and total err
 counts without losing stop/wait codes. Malformed cleanup markers retain an aggregate
 count and one diagnostic, even after log caps; they make capture incomplete rather
 than growing the in-memory error list or replacing retained history with a generic failure.
-No seventh stage or extra log inventory is introduced. Cleanup capture has its own
+Cleanup adds no stage or separate log inventory to the current eight-stage flow.
+Cleanup capture has its own
 EOF/completeness fields: stopping a writer cannot retroactively make the primary
 capture complete. Primary return codes/outcomes (including124/137, or an actual
 negative signal status) are preserved. Cleanup never converts a primary failure
@@ -989,7 +1078,7 @@ deadlines, assertions, Windows skips and module lists are not changed.
 Metadata is allowlisted: module/deadline/diagnostic settings, effective uid/gid,
 generated session/prefix identity and architecture, all fixed budgets,
 display-presence booleans, and pinned tool identities, backend and payload identity.
-Tool facts come from the retained session and existing schema-2 admission receipt
+Tool facts come from the retained session and current schema-4 admission receipt
 under the build lock; metadata collection does not execute a second Wine version
 query or modify/reseal the receipt/overlay. HOME/default-prefix identity is not
 guessed from the ambient environment.
@@ -1083,14 +1172,14 @@ default store override referring to a removed temporary directory; later engine
 stub/get-asset-path failures may also be fixture cascades. Those remain hypotheses,
 not demonstrated identities or fixed defects. No guessed cascade fix is included.
 
-#### Human/infrastructure block: validation policy is unchanged
+#### Historical native-substitution proposal (superseded)
 
-Advisor `ses_eb6e4928cffe1uGagsdt54R5O4` assessed the final correlated evidence as
-**requires_human**. The next requirements are native Windows persistent-ACL
-validation and an explicit decision whether that native validation may substitute
-for the mandatory Wine-green gate for this work. **The user has not approved that
-substitution.** If substitution is not approved, the work remains blocked on the
-Wine gate; native validation alone does not silently waive it.
+Advisor `ses_eb6e4928cffe1uGagsdt54R5O4` assessed that correlated evidence as
+**requires_human** and proposed native Windows persistent-ACL validation with a
+possible gate substitution. The user instead required real private publication
+under local Wine, leading to the approved in-process POSIX backend. That proposal
+is superseded, not an outstanding product decision or a new native-only execution
+prerequisite. Native validation does not waive the mandatory Wine-green gate.
 
 Repeated unchanged Wine probes are not useful next evidence. No additional skip,
 production security-policy relaxation, post-create ACL repair, budget increase or

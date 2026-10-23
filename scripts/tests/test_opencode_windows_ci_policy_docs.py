@@ -115,3 +115,83 @@ def test_actual_reporter_evidence_guard_rejects_overclaims(limitation, overclaim
     assert limitation in text
     with pytest.raises(AssertionError):
         assert_actual_reporter_evidence_limitations(text.replace(limitation, overclaim, 1))
+
+
+PUBLICATION_PAGE = 'docs/dev/features/record-publication.md'
+WINE_NOTES = 'docs/dev/notes/windows-wine-build-and-test.md'
+
+
+def normalized(text):
+    return ' '.join(text.split())
+
+
+def test_record_publication_documents_phase_abi_and_host_security_boundaries():
+    text = normalized(read(PUBLICATION_PAGE))
+    for phrase in (
+        'publish(destination, payload, hooks) -> Result',
+        'before-write', 'before-security', 'before-commit', 'before-cleanup',
+        'final validation, rename and immediate committed assignment',
+        'ABI1/112', 'ABI1/168', 'SNAPSHOT', 'CANCEL', 'RELEASE',
+        'MemoryWineUnixFuncs', '__wine_unix_call', 'WINEDLLPATH',
+        'SPACE_WINE_PUBLICATION_BINDING', 'HeapFree', 'process lifetime',
+        'TokenGroups', 'TokenPrivileges', 'TokenElevationType',
+        '0700', '0600', '0750', '0770', 'No parent chmod',
+        'No C++ objects', 'creating module',
+        'Application death, memory corruption and power loss have no stronger guarantee',
+    ):
+        assert phrase in text
+
+
+@pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
+def test_publication_docs_describe_current_eight_stage_closed_harness(path):
+    text = normalized(read(path))
+    stages = ('preflight', 'build-windows-from-linux', 'package-windows-runtime',
+              'verify-windows-outputs', 'wine-publication-build', 'wine-admission',
+              'wine-publication', 'wine-fast')
+    # The current table is deliberately separate from historical run evidence.
+    table = text.split('<!-- publication-stages -->', 1)[1].split('<!-- /publication-stages -->', 1)[0]
+    assert tuple(part.split('`')[0] for part in table.split('| `')[1:]) == stages
+    for phrase in ('900 seconds', '480 seconds', '420 seconds', '1920 seconds',
+                   '1800 seconds', '45 seconds', '120 seconds', '30 seconds',
+                   'cpp-022', 'cpp-002', 'store-write', 'store-read',
+                   'schema-4', 'publication grant', 'application grant',
+                   'five private PE children', '60-second', 'discovery copy',
+                   'parent-pinned', 'fixed base-dir', 'not default-root coverage'):
+        assert phrase in text
+
+
+def assert_publication_evidence_limits(text):
+    evidence = normalized(text.split('<!-- publication-evidence -->', 1)[1]
+                          .split('<!-- /publication-evidence -->', 1)[0])
+    for phrase in ('a8012ef002c1bc21ae2c2685e788ddbcc7bb2c8e',
+                   'Earlier compatibility proof is not final Wine publication success',
+                   'Actual Wine/PE publication categories and the full Wine gate remain pending',
+                   'Native NT assertions remain intact and unexercised under Wine',
+                   'foreign_uid_probe=not-configured'):
+        assert phrase in evidence
+
+
+@pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
+def test_publication_docs_separate_source_contract_from_actual_wine_evidence(path):
+    assert_publication_evidence_limits(read(path))
+
+
+@pytest.mark.parametrize('limitation,overclaim', [
+    ('not final Wine publication success', 'final Wine publication success'),
+    ('full Wine gate remain pending', 'full Wine gate passed'),
+    ('intact and unexercised under Wine', 'verified under Wine'),
+    ('foreign_uid_probe=not-configured', 'foreign_uid_probe=passed'),
+])
+def test_publication_evidence_guard_rejects_overclaims(limitation, overclaim):
+    text = read(PUBLICATION_PAGE)
+    assert limitation in text
+    with pytest.raises(AssertionError):
+        assert_publication_evidence_limits(text.replace(limitation, overclaim, 1))
+
+
+def test_wine_notes_supersede_native_substitution_and_six_stage_contract():
+    text = normalized(read(WINE_NOTES))
+    assert 'supersedes the old native-substitution proposal and six-stage wording' in text
+    assert 'The next requirements are native Windows persistent-ACL validation' not in text
+    assert 'No seventh stage or extra log inventory is introduced' not in text
+    assert '[Record publication](../features/record-publication.md)' in text
