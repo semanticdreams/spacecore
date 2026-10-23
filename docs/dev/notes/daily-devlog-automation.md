@@ -58,7 +58,7 @@ durable scheduled host-side automation on current Orca versions.
 ## Prompt
 
 ```text
-Run the repo's daily devlog automation. Inspect recent meaningful development changes, write today's brief narrative devlog entry if warranted, validate it, commit it, push an automation branch, and open/auto-merge a pull request when repository policy allows.
+Run the repo's daily devlog automation. Recover meaningful uncovered work since the latest journal, creating a brief narrative entry for each warranted missing landing date; preserve all existing dated sources. Review and validate the changes, then publish through a protected pull request on the run's automation branch and auto-merge when repository policy allows.
 ```
 
 The UI prompt is intentionally short because `.opencode/skills/daily-devlog-automation/SKILL.md` owns the durable workflow.
@@ -69,13 +69,42 @@ The UI prompt is intentionally short because `.opencode/skills/daily-devlog-auto
 - The skill name is `daily-devlog-automation`.
 - Daily runs push `automation/daily-devlog/YYYY-MM-DD`, open a PR, and attempt auto-merge when available.
 - Direct pushes to `origin/main` are not the default path.
-- Daily runs skip entry creation when no meaningful changes exist.
+- Daily runs include prior-day catch-up without a separate request. No-op requires a fully examined interval and no unresolved meaningful work, not merely a quiet run date.
+
+The guarded `create-daily-devlog-branch` wrapper prepares the branch and supplies
+`origin_main_sha`, `utc_date`, and `target_branch` evidence. The agent owns
+meaningfulness and semantic coverage assessment, journal writing, and review
+handoffs. Existing index generators list existing sources; they cannot detect
+missing narratives or prove coverage. The manual devlog opener/publisher does not
+assess coverage or discover missed landing days; it is not the scheduled agent's
+discovery mechanism. No new CLI, coverage schema, or persistent ledger is needed.
 
 ## Landing-date attribution
 
 `origin/main` is the source of truth for deciding what recent work belongs in a daily entry. The automation attributes work to the date it lands or merges into `origin/main`, regardless of the original author date or feature-branch commit date. Older feature-branch commits merged today are eligible for today's entry; author or original commit dates must not cause landed work to be skipped or backdated into an already-published entry.
 
-Agents should inspect mainline/first-parent history, merge commits, PR merges, or equivalent landed ranges on `origin/main` since the latest relevant journal entry or recent day boundary. If `origin/main` cannot be fetched or inspected, or if the mainline/merge evidence is ambiguous, the run fails closed with a BLOCKED summary instead of guessing from local branch history.
+Pin fetched `origin/main` and read the latest dated journal source's actual
+narrative at that snapshot. Inspect every first-parent landing day from the start
+of that journal date in UTC (00:00:00Z), inclusively, through the pinned tip,
+including landed deltas and references. Do not substitute today, a fixed lookback,
+or the journal publication commit. Source presence and generated indexes do not
+prove semantic coverage; document filenames and author dates do not prove landing
+dates. If the boundary or mainline evidence is unavailable or ambiguous,
+investigate and fail closed with the missing evidence/decision rather than guess.
+
+The UTC run date is independent of journal dates: one run may create several
+warranted missing landing-date entries, with timestamps converted to UTC. An
+October 23 branch can recover October 22 without creating an October 23 entry.
+Skip already-covered or non-meaningful candidates with reasons, not filler.
+Preserve all pre-existing dated journal sources byte-for-byte. Meaningful uncovered
+work on an existing published source requires a human publication-treatment
+decision, not a rewrite, misdated entry, or successful no-op.
+
+Before no-op, account for the whole interval with the pinned tip, inclusive
+boundary, and concise covered/skipped reasons in the normal review handoff. If
+pre-PR freshness finds a different main tip, pin it and repeat discovery,
+reconciling pending entries with newly published sources and reviewing any repairs.
+After PR queue entry, merge queue handles freshness; do not chase main movement.
 
 ## Safety model
 
@@ -97,7 +126,15 @@ npm run devlog:indices
 npm run docs:build
 ```
 
-Generated indexes are kept up to date by the automation workflow. If a run produces a stale or malformed entry, discard the branch and re-run from a clean state.
+Generated indexes are kept up to date by the automation workflow. If a run
+produces a stale or malformed entry, diagnose it and route a reviewed repair
+through the owning skill's validation-failure workflow, not blanket branch
+discard. Every implementation/fix handoff is stage-only and uncommitted: review
+the complete assigned staged diff, including generated changes, before the
+supervisor commits exact approved content. Never rewrite a pre-existing dated
+source; unresolved published-source treatment requires a human decision. Keep
+guarded capability boundaries, clean-tree checks, branch protection, required
+tests, and merge-queue polling through actual merge unchanged.
 
 ## Orca / OpenCode project-config caveat
 
