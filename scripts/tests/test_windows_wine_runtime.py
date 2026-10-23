@@ -21,6 +21,9 @@ MARKER = ".space-windows-artifact-v1.json"
 CATALOG_RESOURCE = 'docs/dev/features/entity-type-catalog.md'
 SHA256_RESOURCE = 'docs/dev/notes/native-sha256.md'
 REQUIRED_RESOURCE_PATHS = (CATALOG_RESOURCE, SHA256_RESOURCE)
+NATIVE_HELPER_BASENAMES = ('BCryptPrimitives.DLL', 'SpAcE_ReCoRd_PuBlIcAtIoN.DlL',
+                          'SpAcE_ReCoRd_PuBlIcAtIoN.So', 'SpAcE_ReCoRd_PuBlIcAtIoN_TeStS.DlL',
+                          'SpAcE_ReCoRd_PuBlIcAtIoN_TeStS.So', 'TeSt_ReCoRd_PuBlIcAtIoN.ExE')
 PUBLICATION_INPUTS = ('src/record_publication_wine_abi.h', 'src/record_publication_wine_authority.h',
                       'src/record_publication_unix.h', 'src/record_publication_unix.cpp',
                       'src/record_publication_operation.h', 'src/record_publication.h',
@@ -1763,11 +1766,51 @@ def test_unowned_arbitrary_package_argument_is_not_removed(runtime, tmp_path):
     assert (output / "sentinel").read_text() == "keep"
 
 
-@pytest.mark.parametrize('name', ['BCryptPrimitives.DLL', 'space_record_publication.dll', 'space_record_publication.so'])
-def test_forbidden_helper_in_packaged_assets_fails_final_verification(runtime, name):
-    (runtime.root / 'assets' / name).write_text("hidden helper")
+@pytest.mark.parametrize('name', [*NATIVE_HELPER_BASENAMES, 'space_record_publication.dll', 'space_record_publication.so'])
+@pytest.mark.parametrize('relative', ['assets', 'assets/lua/nested'])
+def test_forbidden_helper_in_packaged_assets_fails_final_verification(runtime, name, relative):
+    source = runtime.root / relative / name
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("hidden helper")
+    before = hashes(runtime.build), hashes(runtime.root / 'assets')
     assert runtime.run("package-windows-runtime.sh").returncode != 0
     assert not runtime.dist.exists()
+    assert before == (hashes(runtime.build), hashes(runtime.root / 'assets'))
+
+
+def test_native_package_excludes_fixed_wine_helpers_without_changing_sources(runtime):
+    for name in NATIVE_HELPER_BASENAMES:
+        (runtime.build / name).write_text('stale Wine helper')
+    assets = runtime.root / 'assets/lua/nested'
+    assets.mkdir()
+    for name in ('unrelated.so', 'unrelated.exe'):
+        (assets / name).write_text('ordinary asset')
+    before = hashes(runtime.build), hashes(runtime.root / 'assets')
+    forbidden = {name.casefold() for name in NATIVE_HELPER_BASENAMES}
+    for _ in range(2):
+        runtime.package()
+        assert not forbidden & {path.name.casefold() for path in runtime.dist.rglob('*')}
+        for name in ('space.exe', 'space-cli.exe', 'runtime.dll'):
+            assert (runtime.dist / name).read_bytes() == (runtime.build / name).read_bytes()
+        for name in ('unrelated.so', 'unrelated.exe'):
+            assert (runtime.dist / 'assets/lua/nested' / name).read_text() == 'ordinary asset'
+        assert before == (hashes(runtime.build), hashes(runtime.root / 'assets'))
+
+
+@pytest.mark.parametrize('name', NATIVE_HELPER_BASENAMES)
+def test_clean_native_rejects_resealed_nested_wine_helpers(runtime, monkeypatch, name):
+    from wine import artifacts
+    runtime.package()
+    helper = runtime.dist / 'assets/lua/nested' / name
+    helper.parent.mkdir()
+    helper.write_text('sealed but forbidden helper')
+    artifacts.seal(runtime.dist, 'native-package')
+    assert helper.relative_to(runtime.dist).as_posix() in artifacts.verify(runtime.dist, 'native-package')
+    before = hashes(runtime.dist), hashes(runtime.build), hashes(runtime.root / 'assets')
+    monkeypatch.setattr(artifacts, 'ROOT', runtime.root)
+    with pytest.raises(ValueError, match='Forbidden Wine helper'):
+        artifacts.clean_native(runtime.dist)
+    assert before == (hashes(runtime.dist), hashes(runtime.build), hashes(runtime.root / 'assets'))
 
 
 def test_workflow_smoke_executes_admitted_overlay_under_same_configuration(runtime):

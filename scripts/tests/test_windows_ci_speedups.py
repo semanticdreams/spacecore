@@ -49,7 +49,7 @@ def test_main_push_manual_windows_validation_keeps_native_fast_and_no_installer(
     assert "build-windows" in jobs
     assert "test-windows" in jobs
     assert "build-windows-installer" not in jobs
-    assert jobs["build-windows"]["runs-on"] == "ubuntu-22.04"
+    assert jobs["build-windows"]["runs-on"] == "ubuntu-24.04"
     assert jobs["test-windows"]["needs"] == "build-windows"
     assert jobs["test-windows"]["runs-on"] == "windows-latest"
     fast = find_step(jobs["test-windows"], "name", "Run Windows fast suite")
@@ -85,6 +85,7 @@ def test_release_workflow_keeps_windows_zip_and_installer_packaging_paths() -> N
 
     assert "build-windows" in jobs
     assert "build-windows-installer" in jobs
+    assert jobs["build-windows"]["runs-on"] == "ubuntu-24.04"
     assert jobs["build-windows-installer"]["needs"] == "build-windows"
     assert set(workflow["on"]) == {"push", "workflow_dispatch"}
     assert workflow["on"]["push"] == {"tags": ["v*"]}

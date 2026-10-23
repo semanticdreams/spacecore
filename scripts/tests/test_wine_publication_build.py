@@ -727,6 +727,54 @@ def test_setup_plan_pins_exact_development_and_existing_runtime_packages(fixture
     assert not [call for call in fixture.calls() if Path(call[0]).name in ('sudo', 'wine64')]
 
 
+# Official primary-archive metadata observed during the fix diagnosis; offline
+# fixtures deliberately do not consult the runner's packages or the network.
+UBUNTU_WINE_CATALOGS = {
+    'ubuntu-22.04': ('jammy', '6.0.3~repack-1'),
+    'ubuntu-24.04': ('noble', '9.0~repack-4build3'),
+}
+
+
+def use_ubuntu_wine_catalog(fixture, host):
+    archive, version = UBUNTU_WINE_CATALOGS[host]
+    for package in fixture.packages.values():
+        package.update(installed=version, version=version, source_version=version)
+        package['origins'][0]['archive'] = archive
+    fixture.save()
+    return version
+
+
+@pytest.mark.parametrize('workflow', ['windows.yml', 'build.yml'])
+def test_workflow_cross_build_hosts_have_matched_official_wine9_setup(fixture, workflow):
+    import yaml
+    job = yaml.safe_load((ROOT / '.github/workflows' / workflow).read_text())['jobs']['build-windows']
+    version = use_ubuntu_wine_catalog(fixture, job['runs-on'])
+    plan = fixture.resolver().plan_setup(fixture.root)
+    runtime = {'wine:all', 'wine64:amd64', 'libwine:amd64'}
+    assert plan['protected'] == dict.fromkeys(runtime, version)
+    for name in runtime | {'wine64-tools:amd64', 'libwine-dev:amd64'}:
+        selector = name.removesuffix(':all')
+        assert f'{selector}={version}' in plan['packages']
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('sudo', 'wine64', 'wine-stable')]
+    assert any(Path(call[0]).name == 'apt-get' and '--simulate' in call for call in fixture.calls())
+
+
+@pytest.mark.parametrize('selected', [True, False])
+def test_jammy_catalog_cannot_provision_supported_wine9(fixture, monkeypatch, selected):
+    use_ubuntu_wine_catalog(fixture, 'ubuntu-22.04')
+    module = fixture.resolver()
+    if not selected:
+        for package in fixture.packages.values():
+            package['installed'] = None
+        fixture.save()
+        monkeypatch.delenv('WINE_CMD')
+        which = module.shutil.which
+        monkeypatch.setattr(module.shutil, 'which', lambda name: None if name in ('wine', 'wine64') else which(name))
+    with pytest.raises(module.ToolchainError, match='Wine9'):
+        module.plan_setup(fixture.root)
+    assert not [call for call in fixture.calls() if Path(call[0]).name in ('sudo', 'wine64', 'wine-stable', 'apt-get')]
+
+
 def test_setup_refuses_unavailable_exact_dev_package_even_with_newer_candidate(fixture):
     module = fixture.resolver()
     fixture.packages['wine64-tools:amd64']['version'] = '10.0'

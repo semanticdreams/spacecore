@@ -691,6 +691,14 @@ def _capture(repo, run_dir, ledger, record, logs, args, session=None, *, persist
         report['termination'] = report['termination'] or ('completed' if complete else outcome)
         if outcome == 'pass':
             outcome = 'native_fatal'
+    if outcome == 'pass' and record['step'] == 'wine-fast':
+        app = record['application']
+        if (app['launched_monotonic'] is None or app['hard_deadline_monotonic'] is None
+                or app['command_returncode'] != 0):
+            # Orderly private EOF must not preempt late output/natural helper
+            # exit. Only now reject missing proof, after stronger failures.
+            record['capture_errors'].append('Incomplete private application observations')
+            outcome, complete = 'evidence_error', False
     if persist:
         return _finish(repo, run_dir, ledger, record, outcome, code, complete)
     end = time.monotonic()

@@ -31,7 +31,9 @@ PACKAGE = BUILD / "dist/windows"
 OVERLAY = BUILD / "wine/windows"
 MARKER = ".space-windows-artifact-v1.json"
 FORBIDDEN = "bcryptprimitives.dll"
-PAIR_NAMES = {'space_record_publication.dll', 'space_record_publication.so'}
+NATIVE_HELPER_NAMES = frozenset({FORBIDDEN, 'space_record_publication.dll', 'space_record_publication.so',
+                                'space_record_publication_tests.dll', 'space_record_publication_tests.so',
+                                'test_record_publication.exe'})
 REQUIRED_RESOURCES: tuple[str, ...] = ('docs/dev/features/entity-type-catalog.md',
                                     'docs/dev/notes/native-sha256.md')
 IDENTITY_REPORT = 'space-record-publication-identity.json'
@@ -110,7 +112,7 @@ def verify_required_resources(path: Path) -> None:
 def clean_native(path):
     entries = verify(path, "native-package")
     verify_required_resources(path)
-    if any(Path(name).name.casefold() in {FORBIDDEN, *PAIR_NAMES} for name in entries):
+    if any(Path(name).name.casefold() in NATIVE_HELPER_NAMES for name in entries):
         raise ValueError(f"Forbidden Wine helper in native package: {path}")
     for name in ("space.exe", "space-cli.exe", "assets"):
         if name not in entries:
@@ -226,7 +228,7 @@ def package(destination):
             dest.mkdir(parents=True)
             shutil.copy2(manifest, dest / manifest.name)
         for dll in source.iterdir():
-            if dll.suffix.casefold() == ".dll" and dll.name.casefold() not in {FORBIDDEN, *PAIR_NAMES}:
+            if dll.suffix.casefold() == ".dll" and dll.name.casefold() not in NATIVE_HELPER_NAMES:
                 safe_path(dll)
                 if not dll.is_file():
                     raise ValueError(f"Invalid native DLL: {dll}")

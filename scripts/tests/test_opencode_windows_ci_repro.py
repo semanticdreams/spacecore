@@ -626,7 +626,11 @@ def reproduction_fixture(tmp_path, monkeypatch):
     for script, label in [("build-windows-from-linux.sh", "build"), ("package-windows-runtime.sh", "package"),
                           ('wine/build_publication.py', 'builder'),
                           ("prepare-windows-wine-runtime.sh", "admission"), ("test-windows-under-wine.sh", "fast")]:
-        fixture_script(repo, script, f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)")
+        body = f"with open('dispatch', 'a') as f: f.write('{label}\\n')\nprint('successful {label}', flush=True)"
+        if label == 'fast':
+            observed_fast_fixture(repo, body)
+        else:
+            fixture_script(repo, script, body)
     receipt = repo / "build/wine/windows/admission.json"
     receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.parent.chmod(0o700)
@@ -1333,6 +1337,103 @@ observe('launch', launched_monotonic=start, hard_deadline_monotonic=start+1800)
     return windows_ci_repro.reproduce(repo)
 
 
+def observed_fast_fixture(repo, body):
+    """Model the owning helper's private receipt around actual host child work."""
+    child = 'import os, sys, time, pathlib, json\n' + body
+    fixture_script(repo, 'test-windows-under-wine.sh', f'''
+import subprocess
+fd = int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))
+os.set_inheritable(fd, False)
+at = time.monotonic()
+child = subprocess.Popen([sys.executable, '-c', {child!r}], close_fds=True)
+os.write(fd, (json.dumps(dict(event='launch', launched_monotonic=at, hard_deadline_monotonic=at+1800))+'\\n').encode())
+code = child.wait()
+os.write(fd, (json.dumps(dict(event='result', command_returncode=code))+'\\n').encode())
+os.close(fd)
+sys.exit(code)
+''')
+
+
+def run_fast_observation_fixture(repo, mode, helper_code=0, suffix=''):
+    late_output = "print('[PASS] late stdout after private EOF', flush=True)\nprint('late stderr after private EOF', file=sys.stderr, flush=True)\n"
+    if mode == 'complete':
+        observed_fast_fixture(repo, late_output + f'sys.exit({helper_code})')
+    else:
+        frames = [dict(event='launch', launched_monotonic=100., hard_deadline_monotonic=1900.),
+                  dict(event='result', command_returncode=0)]
+        launch = ("at=time.monotonic()\nos.write(fd, (json.dumps(dict(event='launch', launched_monotonic=at, "
+                  "hard_deadline_monotonic=at+1800))+'\\n').encode())\n") if mode == 'launch-only' else ''
+        spoof = (f'os.write(1, {encode_observations(frames)!r})\nos.write(2, {encode_observations(frames)!r})\n'
+                 if mode == 'spoof-only' else '')
+        fixture_script(repo, 'test-windows-under-wine.sh',
+                       "fd=int(os.environ.pop('SPACE_WINE_APPLICATION_OBSERVER_FD'))\n" + launch +
+                       'os.close(fd)\ntime.sleep(.1)\n' + spoof + late_output + suffix +
+                       f'os.close(1); os.close(2)\ntime.sleep(.1)\nsys.exit({helper_code})\n')
+    return windows_ci_repro.reproduce(repo)
+
+
+@pytest.mark.parametrize('mode', ['zero', 'launch-only', 'spoof-only', 'complete'])
+def test_fast_capture_requires_complete_private_success_despite_helper_zero(tmp_path, monkeypatch, mode):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    result = run_fast_observation_fixture(repo, mode)
+    data = result['evidence']
+    stage = data['stages'][-1]
+    passed = mode == 'complete'
+    assert stage['step'] == 'wine-fast' and stage['returncode'] == 0
+    assert result['status'] == ('pass' if passed else 'fail')
+    assert stage['outcome'] == ('pass' if passed else 'evidence_error')
+    assert data['complete'] is passed and stage['capture_complete'] is passed
+    app = stage['application']
+    assert app['command_returncode'] == (0 if passed else None)
+    if mode in ('zero', 'spoof-only'):
+        assert app['launched_monotonic'] is None and app['hard_deadline_monotonic'] is None
+    else:
+        assert app['hard_deadline_monotonic'] == app['launched_monotonic'] + 1800
+    if not passed:
+        assert data['failing_step'] == 'wine-fast'
+        assert stage['capture_errors'] == ['Incomplete private application observations']
+    assert stage['cleanup_signals'] == [] and stage['cleanup']['outcome'] == 'pass'
+    ledger = json.loads((repo / data['ledger_path']).read_text())
+    assert ledger['stages'][-1] == stage
+    assert ledger['outcome'] == result['status'] and ledger['complete'] is passed
+    assert len(json.dumps(result).encode()) <= 48 * 1024
+
+
+@pytest.mark.parametrize('mode', ['zero', 'launch-only'])
+@pytest.mark.parametrize('helper_code', [0, 17, 124])
+def test_fast_incomplete_eof_preserves_late_output_and_natural_helper_status(tmp_path, monkeypatch, mode, helper_code):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    result = run_fast_observation_fixture(repo, mode, helper_code)
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'fail' and not result['evidence']['complete']
+    assert stage['returncode'] == helper_code
+    assert stage['application']['command_returncode'] is None
+    assert stage['outcome'] == {0: 'evidence_error', 17: 'nonzero_exit', 124: 'timeout'}[helper_code]
+    assert stage['capture_complete'] is (helper_code != 0)
+    assert stage['cleanup_signals'] == []
+    for stream in ('stdout', 'stderr'):
+        assert stage[stream]['eof']
+        text = f'late {stream} after private EOF'
+        assert text in stage[stream]['tail']
+        assert text in (repo / stage[stream]['path']).read_text()
+    ledger = json.loads((repo / result['evidence']['ledger_path']).read_text())
+    assert ledger['stages'][-1] == stage
+
+
+@pytest.mark.parametrize('mode', ['zero', 'launch-only'])
+@pytest.mark.parametrize('kind', ['fatal', 'fail'])
+def test_fast_missing_receipt_preserves_failure_and_fatal_precedence(tmp_path, monkeypatch, mode, kind):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    text = FATAL_BANNER if kind == 'fatal' else '[FAIL] runner failure'
+    result = run_fast_observation_fixture(repo, mode, suffix=f'print({text!r}, file=sys.stderr, flush=True)\n')
+    stage = result['evidence']['stages'][-1]
+    assert result['status'] == 'fail'
+    assert stage['returncode'] == 0 and stage['application']['command_returncode'] is None
+    assert stage['outcome'] == ('native_fatal' if kind == 'fatal' else 'inconsistent_result')
+    assert stage['capture_complete'] is True and stage['capture_errors'] == []
+    assert stage['cleanup_signals'] == []
+
+
 def test_root_fatal_exit_zero_retains_both_traces_and_unknown_application_status(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
     result = run_fatal_fixture(repo, f'''
@@ -1905,7 +2006,10 @@ def test_encoded_total_response_budget_with_real_controls_unicode_and_all_stages
     repo = reproduction_fixture(tmp_path, monkeypatch)
     body = "os.write(1, ('\\x00😀' * 6000 + '\\n[PASS] final\\n').encode()); os.write(2, ('\\x01😀'*6000).encode())"
     for script in ("build-windows-from-linux.sh", "package-windows-runtime.sh", 'wine/build_publication.py', "prepare-windows-wine-runtime.sh", "test-windows-under-wine.sh"):
-        fixture_script(repo, script, body)
+        if script == 'test-windows-under-wine.sh':
+            observed_fast_fixture(repo, body)
+        else:
+            fixture_script(repo, script, body)
     monkeypatch.setenv("SECRET_TOKEN", "do-not-copy")
     result = windows_ci_repro.reproduce(repo)
     assert result["status"] == "pass"
@@ -2482,7 +2586,7 @@ def test_persistent_checkpoint_enospc_keeps_memory_progress_history_and_pointers
 def test_finalization_storage_failure_keeps_actual_status_and_complete_history(tmp_path, monkeypatch, fault, code):
     import _windows_repro_evidence as evidence
     repo = reproduction_fixture(tmp_path, monkeypatch)
-    fixture_script(repo, "test-windows-under-wine.sh", f"print('[RUN] finalized fixture', flush=True)\nsys.exit({code})")
+    observed_fast_fixture(repo, f"print('[RUN] finalized fixture', flush=True)\nsys.exit({code})")
     original = evidence._atomic
     failed_calls = []
     before = {}
@@ -3359,7 +3463,7 @@ time.sleep(30)
 
 def test_primary_success_plus_backstop_failure_is_fail_without_rewriting_primary(tmp_path, monkeypatch):
     runtime = owned_reproduction_fixture(tmp_path, monkeypatch)
-    fixture_script(runtime.root, 'test-windows-under-wine.sh', '''
+    observed_fast_fixture(runtime.root, '''
 directory = pathlib.Path('build/wine/sessions')/os.environ['SPACE_WINE_SESSION_ID']
 state_file = directory/'state.json'
 state = json.loads(state_file.read_text())
@@ -3480,8 +3584,7 @@ def test_real_gnu_backstop_bound_terminates_term_resistant_helper_after_early_eo
 def test_cleanup_appends_within_existing_full_log_cap_and_keeps_marker_in_memory(tmp_path, monkeypatch):
     repo = reproduction_fixture(tmp_path, monkeypatch)
     cap = 16 * 1024 * 1024
-    fixture_script(repo, 'test-windows-under-wine.sh',
-                   f"os.write(1, b'x'*{cap} + b'\\n[PASS] capped primary\\n')")
+    observed_fast_fixture(repo, f"os.write(1, b'x'*{cap} + b'\\n[PASS] capped primary\\n')")
     result = windows_ci_repro.reproduce(repo)
     assert result['status'] == 'pass'
     stage = result['evidence']['stages'][-1]
