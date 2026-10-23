@@ -292,6 +292,8 @@ struct HostRoot {
 
 std::unique_ptr<HostRoot> owned_tmp;
 
+std::set<std::string> host_names(const HostRoot& root, const fs::path& path);
+
 void host_private(const fs::path& path, bool directory)
 {
     const auto info = owned_tmp->observe(path);
@@ -372,9 +374,13 @@ void private_contract_models()
 
 struct Fixture {
     fs::path root, cleanup_root;
+#ifdef _WIN32
+    bool wine_long_paths = false;
+#endif
     explicit Fixture(bool long_paths = false)
     {
 #ifdef _WIN32
+        wine_long_paths = long_paths && under_wine;
         root = fs::temp_directory_path() / ("record-publication-" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()));
         if (under_wine) owned_tmp->mutate(SRPT_MKDIR, root, 0700);
@@ -399,6 +405,11 @@ struct Fixture {
     }
     ~Fixture()
     {
+#ifdef _WIN32
+        // Long Wine fixtures use checked fixed-name host cleanup, armed only
+        // after publication/observation checks pass. Preserve failed evidence.
+        if (wine_long_paths) return;
+#endif
         std::error_code ignored;
         fs::remove_all(cleanup_root, ignored); // Test-owned fixture only; production never sweeps.
     }
@@ -416,6 +427,14 @@ fs::path only_attempt(const fs::path& parent)
 
 void clean_anchor(const fs::path& parent)
 {
+#ifdef _WIN32
+    if (under_wine) {
+        // The support observer checks the actual directory type and reports
+        // all host entries or an explicit error, without MinGW MAX_PATH limits.
+        check(host_names(*owned_tmp, anchor(parent)).empty(), "no attempt residue inside persistent anchor");
+        return;
+    }
+#endif
     check(fs::is_directory(anchor(parent)), "persistent anchor intentionally retained");
     check(fs::is_empty(anchor(parent)), "no attempt residue inside persistent anchor");
 }
@@ -499,6 +518,46 @@ void basic_publication()
     }
 }
 
+#ifdef _WIN32
+struct WineLongFixtureCleanup {
+    const fs::path root;
+    bool removed = false;
+    explicit WineLongFixtureCleanup(const fs::path& path) : root(path) {}
+    WineLongFixtureCleanup(const WineLongFixtureCleanup&) = delete;
+    WineLongFixtureCleanup& operator=(const WineLongFixtureCleanup&) = delete;
+    void remove()
+    {
+        auto parent = root;
+        for (int i = 0; i < 4; ++i) parent /= std::string(70, static_cast<char>('a' + i));
+        // Never remove evidence of a supposedly clean publication's residue.
+        clean_anchor(parent);
+        const auto destination = parent / fs::u8path("record-雪-🌱");
+        const auto mapped = host_path(destination);
+        check(host_names(*owned_tmp, parent) == std::set<std::string>{".space-publication", mapped.substr(mapped.rfind('/') + 1)},
+            "only fixed long fixture descendants are eligible for cleanup");
+        owned_tmp->mutate(SRPT_UNLINK, destination);
+        owned_tmp->mutate(SRPT_RMDIR, anchor(parent));
+        for (int i = 0; i < 4; ++i) {
+            owned_tmp->mutate(SRPT_RMDIR, parent);
+            parent = parent.parent_path();
+        }
+        check(parent == root, "fixed long fixture cleanup stays below its root");
+        owned_tmp->mutate(SRPT_RMDIR, root);
+        removed = true;
+    }
+    ~WineLongFixtureCleanup()
+    {
+        if (!removed) {
+            try { remove(); }
+            catch (const std::exception& error) {
+                std::cerr << "Wine long fixture cleanup failed: " << error.what() << '\n';
+                std::abort();
+            }
+        }
+    }
+};
+#endif
+
 void unicode_long_paths_and_payload_snapshot()
 {
     struct FixtureUnwind {};
@@ -540,14 +599,51 @@ void unicode_long_paths_and_payload_snapshot()
             // Lexical suffix only: querying the ordinary long path here would
             // reintroduce a native Windows MAX_PATH dependency into the fixture.
             clean_anchor(fixture.cleanup_root / parent.lexically_relative(fixture.root));
+#ifdef _WIN32
+            if (under_wine) {
+                const auto private_anchor = anchor(parent);
+                check(host_names(*owned_tmp, private_anchor).empty(), "actual long host anchor is empty immediately after publication");
+                const auto control = private_anchor / "observer-control";
+                owned_tmp->mutate(SRPT_CREATE, control, 0600, "keep");
+                const std::set<std::string> expected {"observer-control"};
+                check(host_names(*owned_tmp, private_anchor) == expected, "actual long host anchor has exactly one control child");
+                check(rejects([&] { clean_anchor(parent); }) == "no attempt residue inside persistent anchor",
+                    "long host anchor observer must reject a real child");
+                check(host_names(*owned_tmp, private_anchor) == expected && read(control) == "keep",
+                    "failed emptiness predicate never removes the real control child");
+                owned_tmp->mutate(SRPT_UNLINK, control);
+                clean_anchor(parent);
+                check(host_names(*owned_tmp, private_anchor).empty(), "long host anchor is empty only after explicit control removal");
+                check(rejects([&] { clean_anchor(parent / "missing-observer-control"); }).find("host fixture status=") == 0,
+                    "long host anchor observation errors must propagate, never look empty");
+            }
+            std::unique_ptr<WineLongFixtureCleanup> wine_cleanup;
+            if (under_wine) wine_cleanup = std::make_unique<WineLongFixtureCleanup>(fixture.root);
+#endif
             if (unwind) throw FixtureUnwind {};
+#ifdef _WIN32
+            if (under_wine) {
+                wine_cleanup->remove();
+                check(!host_names(*owned_tmp, windows_path(owned_tmp->base)).count(fixture.root.filename().string()),
+                    "checked long host fixture removal completed before destructor");
+            } else {
+#endif
             check(fs::remove_all(fixture.cleanup_root) > 0, "checked recursive long fixture removal");
             check(!fs::exists(fixture.cleanup_root), "checked long fixture removal completed before destructor");
+#ifdef _WIN32
+            }
+#endif
         } catch (const FixtureUnwind&) {
             // Only this deliberate fault is swallowed; real test failures escape.
         }
-        check(!fs::exists(removed_root), unwind ? "exceptional long fixture fallback removed all descendants"
-                                              : "normal long fixture removal left no descendants");
+        bool remains;
+#ifdef _WIN32
+        if (under_wine) remains = host_names(*owned_tmp, windows_path(owned_tmp->base)).count(removed_root.filename().string()) != 0;
+        else
+#endif
+        remains = fs::exists(removed_root);
+        check(!remains, unwind ? "exceptional long fixture fallback removed all descendants"
+                               : "normal long fixture removal left no descendants");
     }
 }
 
