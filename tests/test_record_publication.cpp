@@ -614,8 +614,11 @@ void unicode_long_paths_and_payload_snapshot()
                 owned_tmp->mutate(SRPT_UNLINK, control);
                 clean_anchor(parent);
                 check(host_names(*owned_tmp, private_anchor).empty(), "long host anchor is empty only after explicit control removal");
-                check(rejects([&] { clean_anchor(parent / "missing-observer-control"); }).find("host fixture status=") == 0,
+                const auto control_parent = parent / "missing-observer-control";
+                owned_tmp->mutate(SRPT_MKDIR, control_parent, 0700);
+                check(rejects([&] { clean_anchor(control_parent); }).find("host fixture status=") == 0,
                     "long host anchor observation errors must propagate, never look empty");
+                owned_tmp->mutate(SRPT_RMDIR, control_parent);
             }
             std::unique_ptr<WineLongFixtureCleanup> wine_cleanup;
             if (under_wine) wine_cleanup = std::make_unique<WineLongFixtureCleanup>(fixture.root);
