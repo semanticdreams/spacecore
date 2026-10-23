@@ -166,7 +166,10 @@ before implementation skills.
   before planning or implementation.
 - If a request says "Run the repo's daily devlog automation" or otherwise asks
   for scheduled/daily devlog automation, invoke `daily-devlog-automation`
-  before dispatching implementation work.
+  before dispatching implementation work. Ordinary daily scope includes catch-up
+  for warranted missing landing dates; prior-day recovery needs no separate request.
+  Before declaring no-op, apply the whole-window discovery/decision contract in
+  the owning skill, not a today-only boundary.
 - If a request says "Run the weekly agent workflow automation" or otherwise asks
   for scheduled/weekly agent workflow automation, invoke
   `weekly-agent-workflow-automation` before dispatching implementation work.

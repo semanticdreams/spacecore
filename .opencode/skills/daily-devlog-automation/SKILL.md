@@ -43,16 +43,16 @@ preserving unrelated worktree/index entries; if isolation is unsafe, return
 NEEDS_CONTEXT rather than absorbing or unstaging unrelated work.
 
 1. Fetch `origin/main` through `git-integrator`.
-2. Create or switch to `automation/daily-devlog/YYYY-MM-DD` from `origin/main`.
-3. Inspect the latest relevant journal entry or recent day boundary, docs notes, plans/specs, and `origin/main` mainline/first-parent history to identify work that landed since that boundary.
-4. Apply the meaningful-change filter.
-5. If no entry is warranted, stop without edits, commits, pushes, or PRs.
-6. If an entry is warranted, dispatch `implementer` to write/update the journal entry, regenerate indexes, and run local validation, explicitly using the stage-only/no-commit handoff above.
+2. Dispatch `git-integrator` to run `create-daily-devlog-branch`. Consume its `utc_date` and `target_branch` evidence for the UTC run branch `automation/daily-devlog/YYYY-MM-DD`, not the journal dates.
+3. Perform Catch-up Discovery and Decision below against the fetched main snapshot.
+4. Apply the meaningful-change filter to every candidate in that window, comparing actual narratives rather than source presence.
+5. A no-op must satisfy the whole-window accounting in Catch-up Discovery and Decision; only then stop without edits, commits, pushes, or PRs.
+6. For each warranted missing landing date, dispatch `implementer` to create the journal entry, regenerate indexes, and run local validation, explicitly using the stage-only/no-commit handoff above. Preserve pre-existing dated sources; unresolved work on an existing source follows the decision table below.
 7. Dispatch `reviewer` over the complete assigned staged content before commit and before push. Every fix dispatch repeats stage-only/no-commit and is followed by refreshed staged review.
 8. The supervisor commits only the exact independently approved, locally validated staged devlog automation content and verifies a clean tree before any safe merge. Preserve unrelated state; do not bypass the wrapper's clean-tree guard.
 9. Dispatch `git-integrator` to fetch `origin` and confirm the automation branch has accounted for current `origin/main`. If behind, use the safe-merge wrapper when permitted. Route conflicts or regenerated docs repairs through the stage-only/no-commit handoff above: implementer locally validates, reviewer inspects the refreshed complete assigned staged diff, then supervisor commits only approved content and verifies a clean tree. Do not rebase or force-push unless the human explicitly requests it.
 10. Run final validation from the clean, current-base tree. If validation produces file changes, route them through the same locally validated staged-review/commit handoff, then restart at step 9; prior review does not cover generated edits. Handle failures through Validation Failure Recovery below.
-11. Re-fetch `origin` and recheck current `origin/main` through `git-integrator` before push or PR creation. If behind, repeat step 9's safe-merge and repair handoff, then rerun final validation from a clean tree before rechecking. Do not rebase or force-push unless the human explicitly requests it.
+11. Re-fetch `origin` and recheck current `origin/main` through `git-integrator` before push or PR creation. If the fetched tip differs from the assessed snapshot, pin the new tip and repeat Catch-up Discovery and Decision, reconciling pending entries with newly published sources. Route newly warranted entries or repairs through stage-only implementation and refreshed review before commit. If behind, repeat step 9's safe-merge and repair handoff. Rerun final validation from a clean tree after changes, then recheck freshness. Do not rebase or force-push unless the human explicitly requests it.
 12. Push only the dated automation branch through `git-integrator`.
 13. Open a PR, enable auto-merge (or queue the PR), and poll merge queue through `github-operator` when branch protection
     allows it. After the PR enters merge queue, poll with
@@ -69,11 +69,53 @@ NEEDS_CONTEXT rather than absorbing or unstaging unrelated work.
     or force-push unless the human
     explicitly requests it.
 
+## Catch-up Discovery and Decision
+
+Pin the fetched `origin/main` tip from the wrapper's `origin_main_sha` evidence.
+Read the latest dated journal source at that snapshot, including its actual narrative.
+Inspect every first-parent landing day from the start of that source's UTC date
+(00:00:00Z), inclusively, through the pinned tip. Inspect landed deltas and their
+references (docs notes, plans/specs, PR merges), not only commit subjects. Starting
+inclusively catches meaningful work that landed later on the latest journal's date.
+Do not substitute today, yesterday, a fixed lookback, or the journal publication
+commit for this boundary. If there is no reliable initial boundary or mainline
+evidence, report BLOCKED or HUMAN_DECISION_REQUIRED with the missing evidence or
+decision rather than guessing.
+
+Classify each candidate as already covered, not meaningful, or meaningful uncovered
+by comparing landed changes with actual journal narratives. Source presence and
+generated indexes are not semantic coverage evidence; document filenames and author
+dates are not landing evidence. Meaningfulness and coverage require agent judgment,
+not automatic title classification. Ordinary daily scope includes recovery for
+every warranted missing date in the window, without asking permission or a separate
+request merely because the landing date predates the run.
+
+| Evidence | Action |
+| --- | --- |
+| Missing dated source + meaningful uncovered work | Create one brief entry for that landing date. |
+| Already covered or not meaningful | Skip with a concise reason; do not create filler. |
+| Meaningful uncovered work on an existing published source | Preserve the source and request a human publication-treatment decision; do not rewrite it or misdate the work. |
+| Uncertain evidence or boundary | Investigate; fail closed with the unresolved question if uncertainty remains, not guess or no-op. |
+
+Preserve all pre-existing dated journal sources byte-for-byte. An existing source
+with unresolved meaningful work is not a successful no-op. No-op requires a fully
+examined interval and no unresolved meaningful work. Report the pinned tip,
+inclusive boundary, and concise covered/skipped reasons for the whole window,
+including any created dates or unresolved publication decisions. Keep this evidence
+in normal review handoffs; introduce no persistent ledger or state schema.
+
 ## Landing-Date Attribution
 
 Treat `origin/main` as the source of truth for recent work. Attribute work to the daily entry for the date it lands or merges into `origin/main`, regardless of the original author date or feature-branch commit date. Older feature-branch commits merged today are eligible for today's entry; author or original commit dates must not cause landed work to be skipped or backdated into an already-published journal entry.
 
-Use mainline/first-parent history, merge commits, PR merges, or equivalent landed ranges on `origin/main` to decide what changed since the latest relevant journal entry or recent day boundary. Do not guess from local branch history when the `origin/main` landing evidence is unavailable.
+Use mainline/first-parent history, merge commits, PR merges, or equivalent landed ranges on the pinned `origin/main` snapshot for Catch-up Discovery and Decision. Convert landing timestamps with offsets to UTC before choosing a date. Do not guess from local branch history when the `origin/main` landing evidence is unavailable.
+
+The UTC run date and branch name are independent of journal source filenames,
+frontmatter, and headings. Create one brief narrative entry per warranted missing
+landing date, potentially several in one run. For example, an October 23 run with
+meaningful uncovered October 22 landings creates an October 22 entry on the
+October 23 automation branch, even if nothing landed on October 23. It does not
+require a separate backfill request or an October 23 filler entry.
 
 ## Meaningful Change Filter
 
