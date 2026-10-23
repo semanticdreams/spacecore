@@ -411,7 +411,13 @@ struct Fixture {
         if (wine_long_paths) return;
 #endif
         std::error_code ignored;
+#ifdef _WIN32
+        if (under_wine) std::cerr << "record publication diagnostic: fixture-cleanup-begin\n" << std::flush;
+#endif
         fs::remove_all(cleanup_root, ignored); // Test-owned fixture only; production never sweeps.
+#ifdef _WIN32
+        if (under_wine) std::cerr << "record publication diagnostic: fixture-cleanup-returned\n" << std::flush;
+#endif
     }
 };
 
@@ -1407,9 +1413,12 @@ void wine_host_policy()
             if (kind == 4) owned_tmp->mutate(SRPT_XATTR, staged, 0, "unsupported");
             mutated = true;
         };
+        if (kind == 3) std::cerr << "record publication diagnostic: kind3-rejects-begin\n" << std::flush;
         rejects([&] { rp::publish(path, "secret", hooks); });
+        if (kind == 3) std::cerr << "record publication diagnostic: kind3-rejects-returned\n" << std::flush;
         check(mutated && !fs::exists(path), "actual unsafe final policy/identity cannot commit");
         if (kind == 1 || kind == 2 || kind == 3) check(fs::exists(staged), "foreign/multilink final entry not removed");
+        if (kind == 3) std::cerr << "record publication diagnostic: kind3-assertions-complete\n" << std::flush;
     }
     rp::Hooks changed;
     changed.before_commit = [&] { owned_tmp->mutate(SRPT_CHMOD, destination, 0644); };
@@ -1916,6 +1925,7 @@ void wine_report()
 int main(int argc, char** argv)
 {
     try {
+        std::cerr << "record publication diagnostic: main-entry\n" << std::flush;
 #ifdef _WIN32
         under_wine = rp::wine::detected();
         if (under_wine) {
@@ -1962,7 +1972,9 @@ int main(int argc, char** argv)
         real_writer_failure();
 #else
         if (under_wine) {
+            std::cerr << "record publication diagnostic: wine-host-policy-begin\n" << std::flush;
             wine_host_policy();
+            std::cerr << "record publication diagnostic: wine-host-policy-returned\n" << std::flush;
             wine_context_lifecycle();
             wine_mapping_and_authority();
             wine_loader_children();
