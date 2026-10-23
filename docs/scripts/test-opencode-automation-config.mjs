@@ -213,6 +213,109 @@ test('daily devlog skill attributes work by origin/main landing date, not author
         'SKILL.md should not keep the ambiguous commits-since workflow wording')
 })
 
+// Keep contract assertions local to their owning section and insensitive to line wrapping.
+function sectionText(content, heading) {
+    const start = content.indexOf(`${heading}\n`)
+    assert.notEqual(start, -1, `missing section: ${heading}`)
+    const bodyStart = start + heading.length + 1
+    const end = content.indexOf('\n## ', bodyStart)
+    return content.slice(bodyStart, end === -1 ? undefined : end).replace(/\s+/g, ' ')
+}
+
+test('daily discovery pins fetched main and examines the latest journal date inclusively', async () => {
+    await loadFiles()
+    const discovery = sectionText(skillContent, '## Catch-up Discovery and Decision')
+    assert.match(discovery, /pin.{0,100}origin_main_sha/i)
+    assert.match(discovery, /latest dated journal.{0,100}actual narrative/i)
+    assert.match(discovery, /start of.{0,100}UTC date.{0,100}inclusiv.{0,100}pinned tip/i)
+    assert.match(discovery, /every first-parent landing day/i)
+    assert.match(discovery, /landed deltas.{0,80}references/i)
+    assert.doesNotMatch(skillContent, /latest relevant journal entry or recent day boundary/i)
+    assert.match(discovery, /do not.{0,180}today.{0,180}fixed lookback.{0,180}publication commit/i)
+    assert.match(discovery, /source presence.{0,100}generated indexes.{0,160}not.{0,60}coverage evidence/i)
+})
+
+test('daily workflow separates wrapper run date from one or more UTC landing dates', async () => {
+    await loadFiles()
+    const workflow = sectionText(skillContent, '## Workflow')
+    assert.match(workflow, /git-integrator.{0,100}create-daily-devlog-branch/)
+    assert.match(workflow, /utc_date.{0,100}target_branch/)
+    const attribution = sectionText(skillContent, '## Landing-Date Attribution')
+    assert.match(attribution, /run date.{0,150}(?:separate|independent).{0,100}journal/i)
+    assert.match(attribution, /convert.{0,100}UTC/i)
+    assert.match(attribution, /one.{0,60}entry per.{0,100}landing date/i)
+    assert.match(attribution, /October 23.{0,180}October 22/i)
+})
+
+test('daily catch-up recovers every warranted missing day without a separate request', async () => {
+    await loadFiles()
+    const discovery = sectionText(skillContent, '## Catch-up Discovery and Decision')
+    assert.match(discovery, /ordinary daily scope.{0,100}every warranted missing date/i)
+    assert.match(discovery, /without.{0,120}(?:permission|separate request).{0,100}predates/i)
+    assert.match(discovery, /missing dated source.{0,100}meaningful uncovered work.{0,100}create/i)
+    assert.match(discovery, /already covered.{0,100}not meaningful.{0,100}skip.{0,100}reason/i)
+})
+
+test('daily catch-up preserves existing sources and escalates unresolved published work', async () => {
+    await loadFiles()
+    const discovery = sectionText(skillContent, '## Catch-up Discovery and Decision')
+    assert.match(discovery, /preserve all pre-existing dated journal sources byte-for-byte/i)
+    assert.match(discovery, /meaningful uncovered work.{0,100}existing.{0,100}source.{0,100}preserve.{0,100}human publication-treatment decision/i)
+    assert.match(discovery, /uncertain.{0,100}boundary.{0,100}investigate.{0,100}fail closed/i)
+    assert.match(discovery, /no reliable.{0,100}boundary.{0,100}(?:BLOCKED|HUMAN_DECISION_REQUIRED)/)
+})
+
+test('daily no-op requires whole-window accounting with no unresolved meaningful work', async () => {
+    await loadFiles()
+    const discovery = sectionText(skillContent, '## Catch-up Discovery and Decision')
+    assert.match(discovery, /no-op requires a fully examined interval and no unresolved meaningful work/i)
+    assert.match(discovery, /report.{0,100}pinned tip.{0,100}inclusive boundary.{0,100}covered\/skipped reasons/i)
+    assert.match(discovery, /normal review handoffs.{0,100}no persistent ledger/i)
+    const workflow = sectionText(skillContent, '## Workflow')
+    assert.match(workflow, /no-op.{0,100}whole-window.{0,100}Discovery/i)
+})
+
+test('daily pre-PR freshness repeats discovery when the assessed main snapshot changes', async () => {
+    await loadFiles()
+    const workflow = sectionText(skillContent, '## Workflow')
+    assert.match(workflow, /before push or PR creation.{0,220}tip differs.{0,160}repeat Catch-up Discovery and Decision/i)
+    assert.match(workflow, /newly warranted entries.{0,100}stage-only.{0,100}review/i)
+    assert.match(workflow, /do not update the PR branch solely because origin\/main advanced after PR creation/i)
+})
+
+test('supervisor daily routing delegates prior-day catch-up and no-op assessment to the owning skill', async () => {
+    await loadFiles()
+    const routing = sectionText(supervisorContent, '### Space Project Skill Routing')
+    assert.match(routing, /daily-devlog-automation.{0,180}catch-up/i)
+    assert.match(routing, /prior-day.{0,100}(?:separate request|permission)/i)
+    assert.match(routing, /no-op.{0,100}whole-window.{0,100}owning skill/i)
+})
+
+test('daily canonical trigger requests recovery since latest journal rather than today only', async () => {
+    await loadFiles()
+    const prompt = sectionText(notesContent, '## Prompt')
+    assert.match(prompt, /recover.{0,120}since the latest journal/i)
+    assert.match(prompt, /each warranted missing landing date/i)
+    assert.match(prompt, /preserve.{0,80}existing.{0,40}sources/i)
+    assert.match(prompt, /validate.{0,160}protected pull request/i)
+    assert.doesNotMatch(prompt, /write today's/i)
+})
+
+test('daily canonical note distinguishes wrapper, agent, generators and manual opener responsibilities', async () => {
+    await loadFiles()
+    const workflow = sectionText(notesContent, '## Repo-owned workflow')
+    assert.match(workflow, /create-daily-devlog-branch.{0,160}origin_main_sha.{0,100}utc_date.{0,100}target_branch/i)
+    assert.match(workflow, /agent.{0,100}(?:meaningfulness|meaningful).{0,100}coverage/i)
+    assert.match(workflow, /generators.{0,100}existing sources.{0,100}cannot.{0,100}(?:omission|missing)/i)
+    assert.match(workflow, /manual.{0,100}opener.{0,100}(?:does not|cannot).{0,100}coverage/i)
+    const attribution = sectionText(notesContent, '## Landing-date attribution')
+    assert.match(attribution, /inclusiv/i)
+    assert.match(attribution, /run date.{0,120}(?:independent|separate)/i)
+    const recovery = sectionText(notesContent, '## Validation and recovery')
+    assert.match(recovery, /reviewed repair/i)
+    assert.doesNotMatch(recovery, /discard the branch and re-run/i)
+})
+
 test('daily devlog skill preserves one-paragraph inline-link and compression style policy', async () => {
     await loadFiles()
 

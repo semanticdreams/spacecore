@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-22
+Strict agent work now separates [local checkpoints from independent approval](/dev/features/opencode-agent-workflow#strict-flow-checkpoint-and-review-ownership): implementers can checkpoint validated tasks and fixes, while complete change ranges still require review before completion or publication. Daily and weekly automation retain their stage-only, review-first handoffs, keeping unattended publication safeguards intact as ordinary iteration becomes more direct.
+
 ## 2026-10-21
 Scheduled devlog automation can now prepare its writing branch through a [guarded capability](/dev/features/opencode-agent-workflow#strict-daily-devlog-branch-preparation) that pins freshly fetched `origin/main`, derives the UTC-dated branch internally, and fails closed on collisions or ambiguous safety evidence rather than resetting existing work. This removes a branch-creation blocker without broadening Git permissions, while keeping reviewed writing and publication as separate steps.
 
