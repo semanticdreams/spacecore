@@ -176,9 +176,10 @@ Each C++ run uses an independent test-only support pair
 `SPACE_WINE_PUBLICATION_TEST_BINDING`; production entrypoints expose no fixture
 mutation/inspection commands. It also runs five private PE children: intact
 control, missing/bad PE, missing/bad Unix SO. Owned copied fixtures have rebound
-identities and isolated loader environments. Their shared60-second sequence stays
-inside each C++120-second limit; they add no host component/grant or production
-subprocess.
+identities and isolated loader environments. Each child has a10-second wait and,
+if needed, a further2-second termination/reap wait. Both waits remain within the
+shared60-second sequence inside each C++120-second limit; they add no host
+component/grant or production subprocess.
 
 Each C++ result is a **parent-pinned** report: exclusively allocated0600,
 regular/current-UID/single-link/zero-length, nofollow/CLOEXEC, retained noninherited
@@ -235,4 +236,6 @@ No native Windows/macOS security certification,32-bit/WoW64, remote-filesystem,
 hostile same-UID or power-loss durability claim follows from this source contract.
 See [Windows/Wine build and test](../notes/windows-wine-build-and-test.md), the
 [approved design](../../specs/2026-10-17-wine-posix-publication-design.md), and
-`src/record_publication_wine_{abi,driver,client,authority}.h` for private boundaries.
+`src/record_publication_wine_{abi,driver,authority}.h`,
+`src/record_publication_wine.cpp` and `src/record_publication_wine.h` for private
+boundaries.

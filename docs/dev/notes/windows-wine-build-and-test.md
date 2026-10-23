@@ -387,6 +387,8 @@ application1800 seconds, fast outer1920 seconds, cleanup backstop45 seconds;
 each host-launched publication component retains its specified120-second or
 30-second bound plus fixed escalation. The five private PE children share the
 separate60-second sequence within each C++ component; they do not each get120 seconds.
+Each private PE child has a10-second wait plus, if needed, a further2-second
+termination/reap wait, both within that shared60-second sequence and C++120 bound.
 
 Schema-4 owner/receipt checks bind both pairs and discovery copies. Admission
 issues a one-shot publication grant, consumed durably before any component. Only
