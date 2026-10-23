@@ -1824,25 +1824,36 @@ const std::array<std::string, 5> child_cases {"control", "missing-pe", "bad-pe",
 
 int wine_child(const std::string& selected)
 {
-    child_phase = "location";
+    child_phase = "location-01";
     const auto image = executable_path();
     const auto root = image.parent_path();
+    child_phase = "location-02";
+    const unsigned location_mask = (image.filename() == L"test_record_publication.exe" ? 1u : 0u)
+        | (root.filename() == selected ? 2u : 0u)
+        | (root.parent_path().filename().string().find("record-publication-") == 0 ? 4u : 0u);
+    std::cerr << "record publication diagnostic: location-mask=" << location_mask << '\n' << std::flush;
     check(image.filename() == L"test_record_publication.exe" && root.filename() == selected
         && root.parent_path().filename().string().find("record-publication-") == 0,
         "closed child fixture location derives from copied executable");
+    child_phase = "location-03";
     owned_tmp->relative(image); // Must be below the verified private TEMP root.
+    child_phase = "location-04";
     host_private(root, true);
+    child_phase = "location-05";
     check(host_path(fs::current_path()) == host_path(root), "child cwd is its owned case");
+    child_phase = "location-06";
     wchar_t path_probe[2] {};
     ::SetLastError(ERROR_SUCCESS);
     const auto path_length = ::GetEnvironmentVariableW(L"PATH", path_probe, 2);
     const auto path_error = ::GetLastError();
     check(path_length == 0 && (path_error == ERROR_SUCCESS || path_error == ERROR_ENVVAR_NOT_FOUND),
         "child has no effective ambient PATH fallback after bootstrap");
+    child_phase = "location-07";
     const auto overrides = environment(L"WINEDLLOVERRIDES");
     check(overrides == L"space_record_publication,space_record_publication_tests=b;bcryptprimitives=b;advapi32,cryptbase=b"
         || overrides == L"space_record_publication,space_record_publication_tests=b;bcryptprimitives=n;advapi32,cryptbase=b",
         "both fixed names remain forced builtin after child bootstrap");
+    child_phase = "location-08";
     for (const auto& item : fs::directory_iterator(root)) {
         auto name = item.path().filename().wstring();
         std::transform(name.begin(), name.end(), name.begin(), [](wchar_t unit) {
@@ -1853,10 +1864,15 @@ int wine_child(const std::string& selected)
         const auto loaded = ::GetModuleHandleW(item.path().filename().c_str());
         if (loaded) check(host_path(executable_path(loaded)) == host_path(item.path()), "non-system runtime dependency loaded from owned copy");
     }
+    child_phase = "location-09";
     check(::GetModuleHandleW(L"space_record_publication.dll") == nullptr, "production DLL absent before first child publish");
+    child_phase = "location-10";
     const auto module_roots = environment(L"WINEDLLPATH");
+    child_phase = "location-11";
     const auto expected_prefix = unix_environment_text(host_path(root / "modules") + ":");
+    child_phase = "location-12";
     check(module_roots.compare(0, expected_prefix.size(), expected_prefix) == 0, "child production module root fixed to its case");
+    child_phase = "location-13";
     const auto support_root_text = module_roots.substr(expected_prefix.size());
     // Recover raw host bytes via the inverse codepage roundtrip, not a PE path
     // interpretation of a Unix path. The support root is supplied only by parent.
@@ -1867,8 +1883,10 @@ int wine_child(const std::string& selected)
     std::string support_bytes(size, '\0');
     win_check(::WideCharToMultiByte(unix_codepage, 0, support_root_text.data(), static_cast<int>(support_root_text.size()),
         support_bytes.data(), size, nullptr, nullptr) == size, "child support root encoding");
+    child_phase = "location-14";
     check(unix_environment_text(support_bytes) == support_root_text && support_bytes.find(':') == std::string::npos,
         "one independent support-only root, no extra fallback roots");
+    child_phase = "location-15";
     verify_support_only_root(windows_path(support_bytes));
     child_phase = "fixture";
     const auto data = root / "data";
@@ -2179,7 +2197,7 @@ int main(int argc, char** argv)
     } catch (const std::exception& error) {
 #ifdef _WIN32
         if (argc != 1) {
-            std::cerr << "record publication child failed phase=" << child_phase << " error=" << child_error << '\n';
+            std::cerr << "record publication child failed phase=" << child_phase << " error=" << child_error << '\n' << std::flush;
             return 1;
         }
 #endif
