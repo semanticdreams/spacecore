@@ -7,12 +7,14 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -376,6 +378,7 @@ struct Fixture {
     fs::path root, cleanup_root;
 #ifdef _WIN32
     bool wine_long_paths = false;
+    bool preserve_wine_fixture = false;
 #endif
     explicit Fixture(bool long_paths = false)
     {
@@ -409,6 +412,7 @@ struct Fixture {
         // Long Wine fixtures use checked fixed-name host cleanup, armed only
         // after publication/observation checks pass. Preserve failed evidence.
         if (wine_long_paths) return;
+        if (under_wine && preserve_wine_fixture) return; // Explicit finalizer already reported retained evidence.
 #endif
         std::error_code ignored;
 #ifdef _WIN32
@@ -1330,11 +1334,155 @@ void windows_security()
 #endif
 
 #ifdef _WIN32
+struct WineSymlinkFixture {
+    Fixture& owner;
+    fs::path link, target;
+    bool live = false;
+    explicit WineSymlinkFixture(Fixture& fixture) : owner(fixture) {}
+    WineSymlinkFixture(const WineSymlinkFixture&) = delete;
+    WineSymlinkFixture& operator=(const WineSymlinkFixture&) = delete;
+
+    void create(const fs::path& path, const char* other)
+    {
+        check(link.empty(), "one exclusive symlink per fixture finalizer");
+        link = path;
+        target = link.parent_path() / other;
+        auto frame = owned_tmp->request(SRPT_SYMLINK, owned_tmp->relative(link));
+        const auto length = std::strlen(other);
+        check(length < sizeof(frame.other), "bounded fixed symlink target");
+        std::memcpy(frame.other, other, length + 1);
+        const auto status = support_entry(SRPT_ENTRY_FIXTURE, &frame);
+        if (status == SRPT_SUCCESS) live = true; // Before diagnostic allocation or any other throwing work.
+        check(status == SRPT_SUCCESS, "host fixture status=" + std::to_string(status) + " errno=" + std::to_string(frame.os_error));
+    }
+
+    static void diagnostic(const char* label, const std::exception_ptr& error)
+    {
+        std::cerr << label;
+        try {
+            if (error) std::rethrow_exception(error);
+            std::cerr << "none";
+        } catch (const std::exception& failure) { std::cerr << failure.what(); }
+        catch (...) { std::cerr << "unknown exception"; }
+        std::cerr << '\n' << std::flush;
+    }
+
+    template<class Tail>
+    void finish(const std::exception_ptr& primary, Tail&& after_unlink, bool refuse_unlink = false)
+    {
+        std::exception_ptr cleanup_failure;
+        try {
+            if (live) {
+                check((owned_tmp->observe(link).mode & 0170000) == 0120000, "owned cleanup entry remains a symlink");
+                auto frame = owned_tmp->request(SRPT_UNLINK, owned_tmp->relative(link));
+                if (refuse_unlink) frame.root = 0; // Fixed regression probes only: actual support refuses before mutation.
+                const auto status = support_entry(SRPT_ENTRY_FIXTURE, &frame);
+                if (status == SRPT_SUCCESS) live = false;
+                check(status == SRPT_SUCCESS, "host fixture status=" + std::to_string(status) + " errno=" + std::to_string(frame.os_error));
+                check(!host_names(*owned_tmp, link.parent_path()).count(link.filename().string())
+                    && (owned_tmp->observe(target).mode & 0170000) == 0100000,
+                    "link-only cleanup leaves its regular target intact");
+                after_unlink(!primary);
+            }
+        } catch (...) {
+            owner.preserve_wine_fixture = true; // No recursive fallback, even if later diagnostics fail.
+            cleanup_failure = std::current_exception();
+        }
+        if (cleanup_failure) {
+            diagnostic("primary: ", primary);
+            diagnostic("cleanup: ", cleanup_failure);
+            std::cerr << "Wine symlink fixture retained; recursive cleanup disabled\n" << std::flush;
+        }
+        if (primary) std::rethrow_exception(primary); // Outside cleanup catch: never replace the primary.
+        if (cleanup_failure) std::rethrow_exception(cleanup_failure);
+    }
+};
+
 bool same_host_object(const SrptCall& left, const SrptCall& right)
 {
     return left.device == right.device && left.inode == right.inode && left.uid == right.uid
         && left.gid == right.gid && left.mode == right.mode && left.links == right.links
         && left.file_size == right.file_size;
+}
+
+struct WineCleanupDiagnostics {
+    std::ostringstream output;
+    std::streambuf* previous = std::cerr.rdbuf(output.rdbuf());
+    ~WineCleanupDiagnostics() noexcept { std::cerr.rdbuf(previous); }
+};
+
+void wine_symlink_cleanup_regressions()
+{
+    const std::string primary_message = "symlink fixture primary probe";
+    const auto cleanup_message = "host fixture status=" + std::to_string(SRPT_INVALID_ARGUMENT) + " errno=0";
+    for (int probe = 0; probe < 3; ++probe) {
+        const bool primary_fault = probe != 1, cleanup_fault = probe != 0;
+        fs::path root;
+        SrptCall original_link {}, original_target {};
+        std::string diagnostics;
+        {
+            WineCleanupDiagnostics capture;
+            {
+                Fixture fixture;
+                root = fixture.root;
+                WineSymlinkFixture link(fixture);
+                std::exception_ptr primary, observed;
+                try {
+                    owned_tmp->mutate(SRPT_CREATE, root / "record", 0600, "old");
+                    link.create(root / "symlink", "record");
+                    original_link = owned_tmp->observe(root / "symlink");
+                    original_target = owned_tmp->observe(root / "record");
+                    check((original_link.mode & 0170000) == 0120000
+                        && (original_target.mode & 0170000) == 0100000 && read(root / "record") == "old",
+                        "real symlink probe fixture before finalization");
+                    if (primary_fault) throw std::runtime_error(primary_message);
+                } catch (...) { primary = std::current_exception(); }
+                try {
+                    link.finish(primary, [&](bool) {
+                        check(host_names(*owned_tmp, root) == std::set<std::string>{"record"}
+                            && same_host_object(original_target, owned_tmp->observe(root / "record"))
+                            && read(root / "record") == "old", "primary cleanup unlinks only the symlink");
+                    }, cleanup_fault);
+                } catch (...) { observed = std::current_exception(); }
+                check(static_cast<bool>(observed), "symlink probe must propagate its expected failure");
+                const auto message = rejects([&] { std::rethrow_exception(observed); });
+                if (message != (primary_fault ? primary_message : cleanup_message)) {
+                    std::cerr.rdbuf(capture.previous);
+                    std::cerr << capture.output.str() << std::flush;
+                    std::rethrow_exception(observed);
+                }
+                if (primary_fault) check(observed == primary, "original primary exception identity retained");
+                check(fixture.preserve_wine_fixture == cleanup_fault, "only failed finalization retains fixture");
+                if (cleanup_fault) {
+                    check(host_names(*owned_tmp, root) == std::set<std::string>{"record", "symlink"}
+                        && same_host_object(original_link, owned_tmp->observe(root / "symlink"))
+                        && same_host_object(original_target, owned_tmp->observe(root / "record"))
+                        && read(root / "record") == "old", "failed unlink leaves both owned names unchanged");
+                }
+            } // The real Fixture destructor must return, including retention paths.
+            diagnostics = capture.output.str();
+        }
+        if (cleanup_fault) {
+            check(diagnostics == "primary: " + (primary_fault ? primary_message : "none")
+                + "\ncleanup: " + cleanup_message
+                + "\nWine symlink fixture retained; recursive cleanup disabled\n",
+                "unexpected symlink probe diagnostics: " + diagnostics);
+            check(host_names(*owned_tmp, root) == std::set<std::string>{"record", "symlink"}
+                && same_host_object(original_link, owned_tmp->observe(root / "symlink"))
+                && same_host_object(original_target, owned_tmp->observe(root / "record"))
+                && read(root / "record") == "old", "fixture retained intact across owner destruction");
+            owned_tmp->mutate(SRPT_UNLINK, root / "symlink");
+            check(host_names(*owned_tmp, root) == std::set<std::string>{"record"}
+                && read(root / "record") == "old", "retention probe recovery removes link before target");
+            owned_tmp->mutate(SRPT_UNLINK, root / "record");
+            check(host_names(*owned_tmp, root).empty(), "only known probe names removed");
+            owned_tmp->mutate(SRPT_RMDIR, root);
+        } else {
+            check(diagnostics.find("retained") == std::string::npos, "successful cleanup never retains fixture");
+        }
+        check(!host_names(*owned_tmp, windows_path(owned_tmp->base)).count(root.filename().string()),
+            "probe fixture absent after normal destruction or checked recovery");
+    }
 }
 
 void wine_host_policy()
@@ -1390,35 +1538,70 @@ void wine_host_policy()
     rejects([&] { rp::publish(destination, "blocked"); });
     check(same_host_object(linked, owned_tmp->observe(destination)) && read(destination) == "new", "multilink refusal unchanged");
     owned_tmp->mutate(SRPT_UNLINK, fixture.root / "link");
-    owned_tmp->mutate(SRPT_SYMLINK, fixture.root / "symlink", 0, "", "record");
-    rejects([&] { rp::publish(fixture.root / "symlink", "blocked"); });
-    check((owned_tmp->observe(fixture.root / "symlink").mode & 0170000) == 0120000
-        && read(destination) == "new", "host symlink refused without following or deleting");
+    {
+        WineSymlinkFixture symlink(fixture);
+        std::exception_ptr primary;
+        try {
+            symlink.create(fixture.root / "symlink", "record");
+            rejects([&] { rp::publish(fixture.root / "symlink", "blocked"); });
+            check((owned_tmp->observe(fixture.root / "symlink").mode & 0170000) == 0120000
+                && read(destination) == "new", "host symlink refused without following or deleting");
+        } catch (...) { primary = std::current_exception(); }
+        symlink.finish(primary, [&](bool) {
+            check(host_names(*owned_tmp, fixture.root) == std::set<std::string>{".space-publication", "record"}
+                && read(destination) == "new", "outer link-only teardown preserves destination bytes");
+        });
+    }
 
     for (int kind = 0; kind < 5; ++kind) {
         Fixture malicious;
+        WineSymlinkFixture symlink(malicious);
         const auto path = malicious.root / "record";
         bool mutated = false;
         fs::path staged;
         rp::Hooks hooks;
-        hooks.before_commit = [&] {
-            staged = only_attempt(malicious.root) / "record";
-            if (kind == 0) owned_tmp->mutate(SRPT_CHMOD, staged, 0666);
-            if (kind == 1) owned_tmp->mutate(SRPT_LINK, staged, 0, "", malicious.root / "link");
-            if (kind == 2 || kind == 3) {
-                owned_tmp->mutate(SRPT_RENAME, staged, 0, "", staged.parent_path() / "saved");
-                if (kind == 2) owned_tmp->mutate(SRPT_CREATE, staged, 0600, "foreign");
-                else owned_tmp->mutate(SRPT_SYMLINK, staged, 0, "", "saved");
+        std::exception_ptr primary;
+        try {
+            hooks.before_commit = [&] {
+                staged = only_attempt(malicious.root) / "record";
+                if (kind == 0) owned_tmp->mutate(SRPT_CHMOD, staged, 0666);
+                if (kind == 1) owned_tmp->mutate(SRPT_LINK, staged, 0, "", malicious.root / "link");
+                if (kind == 2 || kind == 3) {
+                    owned_tmp->mutate(SRPT_RENAME, staged, 0, "", staged.parent_path() / "saved");
+                    if (kind == 2) owned_tmp->mutate(SRPT_CREATE, staged, 0600, "foreign");
+                    else symlink.create(staged, "saved");
+                }
+                if (kind == 4) owned_tmp->mutate(SRPT_XATTR, staged, 0, "unsupported");
+                mutated = true;
+            };
+            if (kind == 3) std::cerr << "record publication diagnostic: kind3-rejects-begin\n" << std::flush;
+            rejects([&] { rp::publish(path, "secret", hooks); });
+            if (kind == 3) std::cerr << "record publication diagnostic: kind3-rejects-returned\n" << std::flush;
+            check(mutated && !fs::exists(path), "actual unsafe final policy/identity cannot commit");
+            if (kind == 1 || kind == 2 || kind == 3) check(fs::exists(staged), "foreign/multilink final entry not removed");
+            if (kind == 3) std::cerr << "record publication diagnostic: kind3-assertions-complete\n" << std::flush;
+            if (kind == 3) {
+                check(host_names(*owned_tmp, staged.parent_path()) == std::set<std::string>{"record", "saved"}
+                    && (owned_tmp->observe(staged).mode & 0170000) == 0120000
+                    && (owned_tmp->observe(staged.parent_path() / "saved").mode & 0170000) == 0100000
+                    && read(staged.parent_path() / "saved") == "secret", "known kind3 names and bytes before teardown");
             }
-            if (kind == 4) owned_tmp->mutate(SRPT_XATTR, staged, 0, "unsupported");
-            mutated = true;
-        };
-        if (kind == 3) std::cerr << "record publication diagnostic: kind3-rejects-begin\n" << std::flush;
-        rejects([&] { rp::publish(path, "secret", hooks); });
-        if (kind == 3) std::cerr << "record publication diagnostic: kind3-rejects-returned\n" << std::flush;
-        check(mutated && !fs::exists(path), "actual unsafe final policy/identity cannot commit");
-        if (kind == 1 || kind == 2 || kind == 3) check(fs::exists(staged), "foreign/multilink final entry not removed");
-        if (kind == 3) std::cerr << "record publication diagnostic: kind3-assertions-complete\n" << std::flush;
+        } catch (...) { primary = std::current_exception(); }
+        if (kind == 3) {
+            symlink.finish(primary, [&](bool normal) {
+                const auto workspace = staged.parent_path(), saved = workspace / "saved";
+                check(host_names(*owned_tmp, workspace) == std::set<std::string>{"saved"}
+                    && read(saved) == "secret", "kind3 link-only teardown preserves saved bytes");
+                if (normal) {
+                    owned_tmp->mutate(SRPT_UNLINK, saved);
+                    check(host_names(*owned_tmp, workspace).empty(), "known kind3 workspace empty");
+                    owned_tmp->mutate(SRPT_RMDIR, workspace);
+                    clean_anchor(malicious.root);
+                    owned_tmp->mutate(SRPT_RMDIR, anchor(malicious.root));
+                    check(host_names(*owned_tmp, malicious.root).empty(), "kind3 root empty before ordinary teardown");
+                }
+            });
+        } else if (primary) std::rethrow_exception(primary);
     }
     rp::Hooks changed;
     changed.before_commit = [&] { owned_tmp->mutate(SRPT_CHMOD, destination, 0644); };
@@ -1975,6 +2158,7 @@ int main(int argc, char** argv)
             std::cerr << "record publication diagnostic: wine-host-policy-begin\n" << std::flush;
             wine_host_policy();
             std::cerr << "record publication diagnostic: wine-host-policy-returned\n" << std::flush;
+            wine_symlink_cleanup_regressions();
             wine_context_lifecycle();
             wine_mapping_and_authority();
             wine_loader_children();
