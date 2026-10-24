@@ -2399,8 +2399,30 @@ static void host_clock_event(int kind, int64_t first, int64_t second) {
     host_clock_rows[host_clock_count++] = {kind, first, second};
 }
 static std::atomic<bool> host_child_clock_failure {false};
+static std::atomic<unsigned> host_monotonic_calls {0};
 static std::atomic<bool> host_fail_allocation {false};
 static std::atomic<bool> host_fail_identity {false};
+static std::atomic<bool> host_move_retained_admission {false};
+static dev_t host_admission_device = 0;
+static ino_t host_admission_inode = 0;
+static std::string host_admission_from, host_admission_to;
+extern "C" int __real_fstat(int, struct stat*);
+extern "C" int __wrap_fstat(int fd, struct stat* info) {
+    const int result = __real_fstat(fd, info);
+    if (!result && host_move_retained_admission.load() && info->st_dev == host_admission_device
+        && info->st_ino == host_admission_inode && host_move_retained_admission.exchange(false)) {
+        if (::rename(host_admission_from.c_str(), host_admission_to.c_str())) std::abort();
+    }
+    return result;
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_arm_retained_admission() {
+    host_admission_from = configuration->temp_path.substr(0, configuration->temp_path.rfind('/')) + "/retained-late";
+    host_admission_to = configuration->temp_path + "/record-publication-123/control/late-root";
+    struct stat info {};
+    if (::stat(host_admission_from.c_str(), &info)) std::abort();
+    host_admission_device = info.st_dev; host_admission_inode = info.st_ino;
+    host_move_retained_admission = true;
+}
 extern "C" FILE* __real_fopen(const char*, const char*);
 extern "C" FILE* __wrap_fopen(const char* path, const char* mode) {
     if (!std::strcmp(path, "/proc/self/maps") && host_fail_identity.exchange(false)) { errno = EACCES; return nullptr; }
@@ -2415,6 +2437,7 @@ extern "C" void* __wrap__Znwm(size_t size) {
 extern "C" __attribute__((visibility("default"))) void srpt_host_fail_allocation() { host_fail_allocation = true; }
 extern "C" int __real_clock_gettime(clockid_t, struct timespec*);
 extern "C" int __wrap_clock_gettime(clockid_t clock, struct timespec* value) {
+    if (clock == CLOCK_MONOTONIC) ++host_monotonic_calls;
     if (clock == CLOCK_MONOTONIC && host_child_clock_failure.exchange(false)) { errno = EIO; return -1; }
     const int result = __real_clock_gettime(clock, value);
     if (!result && clock == CLOCK_MONOTONIC) {
@@ -2435,6 +2458,8 @@ extern "C" int __wrap_clock_nanosleep(clockid_t clock, int flags, const struct t
     return __real_clock_nanosleep(clock, flags, &translated, remainder);
 }
 extern "C" __attribute__((visibility("default"))) void srpt_host_no_reserve() { host_advance = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_initial_clock_failure() { host_child_clock_failure = true; }
+extern "C" __attribute__((visibility("default"))) unsigned srpt_host_monotonic_calls() { return host_monotonic_calls; }
 extern "C" ssize_t __real_pread(int, void*, size_t, off_t);
 extern "C" ssize_t __wrap_pread(int fd, void* data, size_t size, off_t offset) {
     if (host_pause.exchange(false)) {
@@ -2472,7 +2497,7 @@ extern "C" __attribute__((visibility("default"))) const char* srpt_host_prepared
 extern "C" __attribute__((visibility("default"))) int srpt_host_cwd() { return host_prepared ? host_prepared->cwd.value : -1; }
 ''' + SUPPORT_CHILD_SYSCALL_WRAPPERS)
     definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(value) for value in support_id) + '}'
-    child_wrappers = ['posix_spawn', 'waitid', 'waitpid', 'kill', 'close', 'posix_spawn_file_actions_init',
+    child_wrappers = ['posix_spawn', 'waitid', 'waitpid', 'kill', 'close', 'fstat', 'posix_spawn_file_actions_init',
                       'posix_spawnattr_init', 'posix_spawn_file_actions_addopen', 'posix_spawn_file_actions_addfchdir_np',
                       'posix_spawn_file_actions_addclosefrom_np', 'posix_spawnattr_setsigmask',
                       'posix_spawnattr_setsigdefault', 'posix_spawnattr_setpgroup', 'posix_spawnattr_setflags',
@@ -2564,6 +2589,36 @@ def native_run(call):
         library.srpt_host_cleanup_child()
 root = SupportCall(size=ctypes.sizeof(SupportCall), abi=2, opcode=1, path=os.fsencode(sys.argv[5]))
 assert fixture(ctypes.byref(root)) == 0
+if 'moved_retained_root' in sys.argv[6]:
+    staging_path = os.path.dirname(sys.argv[5]) + '/retained-staging'
+    os.mkdir(staging_path, 0o700)
+    moved = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(staging_path))
+    assert fixture(ctypes.byref(moved)) == 0
+    fresh_path = os.path.dirname(sys.argv[5]) + '/fresh-unrelated'
+    os.mkdir(fresh_path, 0o700)
+    fresh = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(fresh_path))
+    assert fixture(ctypes.byref(fresh)) == 0
+    if sys.argv[6].startswith('busy'):
+        with open(staging_path + '/marker', 'wb') as output: output.write(b'intact')
+        os.rename(staging_path, sys.argv[5] + '/moved-ordinary')
+def fixture_request(opcode, token, name=b'', data=b'', mode=0):
+    request = SupportCall(size=12376, abi=2, opcode=opcode, root=token, path=name, data_size=len(data), mode=mode)
+    request.data[:len(data)] = data
+    return [fixture(ctypes.byref(request)), request.os_error], request
+def moved_root_probe(name):
+    written, _ = fixture_request(6, moved.root, name, b'forbidden-during-lease')
+    released, _ = fixture_request(2, moved.root)
+    fresh_write, _ = fixture_request(5, fresh.root, b'marker', b'unrelated', 0o600)
+    fresh_read, observed = fixture_request(3, fresh.root, b'marker')
+    fresh_release, _ = fixture_request(2, fresh.root)
+    return dict(write=written, release=released, fresh_write=fresh_write, fresh_read=fresh_read,
+                fresh_match=bytes(observed.data[:observed.data_size]) == b'unrelated', fresh_release=fresh_release)
+def moved_root_after_lease(name):
+    written, _ = fixture_request(6, moved.root, name, b'ordinary-after-lease')
+    observed, data = fixture_request(3, moved.root, name)
+    released, _ = fixture_request(2, moved.root)
+    return dict(write=written, observe=observed, bytes_match=bytes(data.data[:data.data_size]) == b'ordinary-after-lease',
+                release=released)
 if sys.argv[6] == 'path-replace':
     os.rename(sys.argv[5], sys.argv[5] + '-moved'); os.mkdir(sys.argv[5], 0o700)
 value = Launch(size=152, abi=2, action=1, root=root.root)
@@ -2574,6 +2629,7 @@ for prefix, text in [('production', sys.argv[3]), ('support', sys.argv[4])]:
 before = parent_state()
 fd_count = len(os.listdir('/proc/self/fd'))
 if sys.argv[6] == 'identity-host-failure': library.srpt_host_fail_identity()
+if sys.argv[6] == 'initial_clock_failure': library.srpt_host_initial_clock_failure()
 busy_results = {}
 if sys.argv[6].startswith('busy'):
     library.srpt_host_arm()
@@ -2607,6 +2663,9 @@ if sys.argv[6].startswith('busy'):
         assert fixture(ctypes.byref(call)) == 0
         call.opcode = 2
         busy_results['unrelated'] = (fixture(ctypes.byref(call)), call.os_error)
+        if sys.argv[6] == 'busy-moved_retained_root':
+            busy_results['moved'] = moved_root_probe(b'marker')
+            fd_count -= int(busy_results['moved']['release'][0] == 0) + int(busy_results['moved']['fresh_release'][0] == 0)
         if sys.argv[6] == 'busy-path-replace':
             os.rename(sys.argv[5], sys.argv[5] + '-moved'); os.mkdir(sys.argv[5], 0o700)
         if sys.argv[6] == 'busy-pin-change':
@@ -2647,11 +2706,17 @@ for index in range(32):
 else: raise AssertionError('unbounded native environment')
 result['environment'] = dict(item.split('=', 1) for item in values)
 result['retained_fd_delta'] = len(os.listdir('/proc/self/fd')) - fd_count
-if sys.argv[6] in ('replay', 'failed-replay'):
+if sys.argv[6] == 'busy-moved_retained_root' and busy_results['moved']['release'][0] != 0:
+    result['after_lease'] = moved_root_after_lease(b'marker')
+if sys.argv[6] in ('replay', 'failed-replay', 'initial_clock_failure'):
+    result['first_clock_calls'] = library.srpt_host_monotonic_calls()
     if sys.argv[6] == 'failed-replay': os.environ['WINEARCH'] = 'win64'
     value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
     result['replay'] = launch(ctypes.byref(value))
-    assert len(os.listdir('/proc/self/fd')) - fd_count == result['retained_fd_delta']
+    result['replay_fd_delta'] = len(os.listdir('/proc/self/fd')) - fd_count
+    result['final_clock_calls'] = library.srpt_host_monotonic_calls()
+    result['created'] = library.srpt_host_created()
+    if sys.argv[6] != 'initial_clock_failure': assert result['replay_fd_delta'] == result['retained_fd_delta']
 if sys.argv[6].startswith('run-context-'):
     assert status == 0
     name = 'record-publication-123' if sys.argv[6] != 'run-context-wrong-name' else 'record-publication-x'
@@ -2696,8 +2761,10 @@ if sys.argv[6].startswith('prepare-'):
     assert fixture(ctypes.byref(retained)) == 0
     scenario = sys.argv[6].removeprefix('prepare-')
     def make_case(selected):
-        case = owned + '/' + selected
+        relocate = scenario.startswith('execute-moved_retained_root') and selected == 'control'
+        case = staging_path if relocate else owned + '/' + selected
         for directory in ('', '/modules', '/modules/x86_64-windows', '/modules/x86_64-unix'):
+            if relocate and directory == '': continue
             os.mkdir(case + directory, 0o700)
         overlay = repo + '/wine/windows'
         production = repo + '/wine-publication/modules'
@@ -2710,6 +2777,10 @@ if sys.argv[6].startswith('prepare-'):
                  ('modules/x86_64-unix/space_record_publication.so', production + '/x86_64-unix/space_record_publication.so')]
         for name, source in pairs:
             shutil.copyfile(source, case + '/' + name); os.chmod(case + '/' + name, 0o600)
+        if relocate:
+            os.rename(staging_path, owned + '/control'); case = owned + '/control'
+            if scenario.endswith('-replaced'): os.mkdir(staging_path, 0o700)
+            elif scenario.endswith('-symlink'): os.symlink(case, staging_path, target_is_directory=True)
         copied = os.stat(case + '/modules/x86_64-unix/space_record_publication.so')
         for name in ('space_record_publication.dll', 'modules/x86_64-windows/space_record_publication.dll',
                      'modules/x86_64-unix/space_record_publication.so'):
@@ -2848,7 +2919,7 @@ if sys.argv[6].startswith('prepare-'):
             assert not worker.is_alive() and len(returned) == len(caller_states) == 1
             assert caller_states[0][0] == caller_states[0][1]
             prepared_status = returned[0]
-        elif scenario == 'execute-busy' and index == 1:
+        elif (scenario == 'execute-busy' or scenario.startswith('execute-moved_retained_root')) and index == 1:
             concurrent = Launch.from_buffer_copy(value)
             ready, proceed = threading.Event(), threading.Event()
             returned = []
@@ -2867,6 +2938,26 @@ if sys.argv[6].startswith('prepare-'):
                     if stopped and stopped.si_pid == child: break
                     assert time.monotonic() < until; time.sleep(0.001)
                 assert stopped.si_code == os.CLD_STOPPED and stopped.si_status == signal.SIGSTOP
+                if scenario.startswith('execute-moved_retained_root'):
+                    original_bytes = open(case + '/libfixture.dll', 'rb').read()
+                    result['moved'] = moved_root_probe(b'libfixture.dll')
+                    result['moved']['bytes_unchanged'] = open(case + '/libfixture.dll', 'rb').read() == original_bytes
+                    base_fds -= int(result['moved']['release'][0] == 0) + int(result['moved']['fresh_release'][0] == 0)
+                    if scenario.endswith('-replaced'):
+                        admission = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(staging_path))
+                        admitted = fixture(ctypes.byref(admission))
+                        result['moved']['new_fresh_admission'] = [admitted, admission.os_error]
+                        if admitted == 0:
+                            used, _ = fixture_request(5, admission.root, b'new-marker', b'fresh-name', 0o600)
+                            released, _ = fixture_request(2, admission.root)
+                            result['moved']['new_fresh_use'] = used
+                            result['moved']['new_fresh_release'] = released
+                    if scenario.endswith('-late'):
+                        late_path = os.path.dirname(sys.argv[5]) + '/retained-late'
+                        os.mkdir(late_path, 0o700)
+                        library.srpt_host_arm_retained_admission()
+                        admission = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(late_path))
+                        result['moved']['new_stale_admission'] = [fixture(ctypes.byref(admission)), admission.os_error]
                 assert launch(ctypes.byref(concurrent)) == ctypes.c_int32(0xc000000d).value
                 for token in (root.root, retained.root):
                     request = SupportCall(size=12376, abi=2, opcode=2, root=token)
@@ -2909,6 +3000,9 @@ if sys.argv[6].startswith('prepare-'):
             break
         if scenario.startswith('execute'):
             assert len(os.listdir('/proc/self/fd')) == base_fds
+            if scenario.startswith('execute-moved_retained_root') and index == 1 and result['moved']['release'][0] != 0:
+                result['after_lease'] = moved_root_after_lease(b'libfixture.dll')
+                base_fds -= int(result['after_lease']['release'][0] == 0)
             continue
         def texts(name):
             function = getattr(library, name); function.restype = ctypes.c_char_p
@@ -3024,6 +3118,49 @@ def test_support_native_configure_failed_attempt_cannot_reset(support_native_con
     result = run_support_configuration(fixture, env=dict(fixture.env, WINEARCH='win32'), mode='failed-replay')
     assert result['status'] == result['replay'] == ctypes.c_int32(0xc000000d).value
     assert result['retained_fd_delta'] == 0
+
+
+def test_support_native_configure_initial_clock_failure_consumes_attempt(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='initial_clock_failure')
+    assert result['status'] == ctypes.c_int32(0xc0000001).value and result['error'] == 5 and result['outcome'] == 4
+    assert result['exit'] == 0xffffffff and result['remaining'] == 0 and result['first_clock_calls'] == 1
+    assert result['replay'] == ctypes.c_int32(0xc000000d).value
+    assert result['final_clock_calls'] == 1 and result['retained_fd_delta'] == result['replay_fd_delta'] == 0
+    assert result['environment'] == {} and result['created'] == 0
+
+
+def assert_moved_retained_root_protected(result):
+    failure = [ctypes.c_int32(0xc0000001).value, 16]
+    assert result['write'] == result['release'] == failure
+    assert result['fresh_write'] == result['fresh_read'] == result['fresh_release'] == [0, 0]
+    assert result['fresh_match']
+
+
+def assert_moved_root_usable_after_lease(result):
+    assert result['write'] == result['observe'] == result['release'] == [0, 0]
+    assert result['bytes_match']
+
+
+def test_support_native_configure_moved_retained_root_is_protected(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='busy-moved_retained_root')
+    assert result['status'] == 0
+    assert_moved_retained_root_protected(result['busy']['moved'])
+    assert_moved_root_usable_after_lease(result['after_lease'])
+
+
+@pytest.mark.parametrize('witness', ['missing', 'replaced', 'symlink', 'late'])
+@pytest.mark.parametrize('support_native_configuration', ['paused'], indirect=True)
+def test_support_native_launch_moved_retained_root_is_protected(support_native_configuration, witness):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-moved_retained_root-' + witness)
+    assert_moved_retained_root_protected(result['moved'])
+    assert result['moved']['bytes_unchanged']
+    assert_moved_root_usable_after_lease(result['after_lease'])
+    assert len(result['stages']) == 5 and all(stage['status'] == 0 for stage in result['stages'])
+    assert result['created'] == result['native_reaps'] == 5
+    assert result['backstop_reaps'] == result['backstop_kills'] == 0
+    if witness == 'replaced':
+        assert result['moved']['new_fresh_admission'] == result['moved']['new_fresh_use'] == result['moved']['new_fresh_release'] == [0, 0]
+    if witness == 'late': assert result['moved']['new_stale_admission'] == [ctypes.c_int32(0xc0000001).value, 16]
 
 
 def test_support_native_configure_identity_io_failure_is_host_failure(support_native_configuration):

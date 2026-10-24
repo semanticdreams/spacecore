@@ -267,6 +267,7 @@ int mutate(int root, const std::string& path, const std::string& other, const Sr
 }
 
 void record_intact_observation(const Root& root, const std::string& path, const SrptCall& call);
+bool root_is_busy(const Root& root, const std::vector<std::string>& targets) noexcept;
 
 int32_t fixture(void* args) noexcept
 {
@@ -297,6 +298,9 @@ int32_t fixture(void* args) noexcept
                 call->os_error = EPERM; return SRPT_UNSUCCESSFUL;
             }
             Root retained {next_id, acquired.value, path, false};
+            if (root_is_busy(retained, launch_busy_paths)) {
+                call->os_error = EBUSY; return SRPT_UNSUCCESSFUL;
+            }
             *slot = std::move(retained);
             acquired.value = -1;
             ++next_id;
@@ -572,14 +576,34 @@ std::vector<std::string> busy_targets(const std::string& temp)
     return paths;
 }
 
+bool root_is_busy(const Root& root, const std::vector<std::string>& targets) noexcept
+{
+    try {
+        if (targets.empty()) return false;
+        for (const auto& target : targets) if (overlaps(root.path, target)) return true;
+        // An acquisition-time name cannot prove the current authority of a
+        // retained FD after rename. Only a fresh nofollow same-object witness
+        // may establish lexical disjointness; unknown/stale roots stay busy.
+        const auto held = file_info(root.fd);
+        if (!S_ISDIR(held.st_mode) || held.st_uid != ::geteuid() || (held.st_mode & 07777) != 0700) return true;
+        auto named = absolute_directory(root.path);
+        const auto current = file_info(named.value);
+        return !same_object(held, current) || held.st_mode != current.st_mode || held.st_uid != current.st_uid;
+    } catch (...) {
+        return true; // Conservative and nonthrowing: busy publication cannot fail partway through a lease.
+    }
+}
+
 struct ConfigurationLease {
     Fd temp {-1};
     std::string path;
-    ConfigurationLease(uint64_t id, int64_t deadline)
+    int64_t deadline = 0;
+    explicit ConfigurationLease(uint64_t id)
     {
         std::lock_guard<std::mutex> lock(root_mutex);
         require(!configuration_attempted);
         configuration_attempted = true;
+        deadline = monotonic_ns() + INT64_C(60000000000); // Consumed before this fallible read; before any setup/validation.
         sequence_deadline = deadline;
         Root* retained = nullptr;
         for (auto& root : roots) if (root.id && root.id == id) retained = &root;
@@ -588,8 +612,7 @@ struct ConfigurationLease {
         temp.value = ::fcntl(retained->fd, F_DUPFD_CLOEXEC, 3);
         host(temp.value >= 0);
         launch_busy_paths = busy_targets(path);
-        for (auto& root : roots) if (root.id) for (const auto& target : launch_busy_paths)
-            if (overlaps(root.path, target)) root.busy = true;
+        for (auto& root : roots) if (root.id) root.busy = root_is_busy(root, launch_busy_paths);
     }
     ~ConfigurationLease()
     {
@@ -687,8 +710,8 @@ void fixed_module_layout()
 
 void configure(SrptLaunch& call)
 {
-    const auto deadline = monotonic_ns() + INT64_C(60000000000); // Before any environment/path validation.
-    ConfigurationLease lease(call.root, deadline);
+    ConfigurationLease lease(call.root);
+    const auto deadline = lease.deadline;
     const NativeInputs inputs; // One owned snapshot, validated and later copied without rereading getenv.
     const auto checkout = raw_path(srpt_launch_checkout);
     require(srpt_launch_schema == 1, SRPT_IDENTITY_MISMATCH);
@@ -907,8 +930,7 @@ struct RunContext {
         fixture.value = ::fcntl(retained->fd, F_DUPFD_CLOEXEC, 3);
         host(fixture.value >= 0);
         launch_busy_paths = busy_targets(configuration->temp_path);
-        for (auto& root : roots) if (root.id) for (const auto& target : launch_busy_paths)
-            if (overlaps(root.path, target)) root.busy = true;
+        for (auto& root : roots) if (root.id) root.busy = root_is_busy(root, launch_busy_paths);
     }
     RunContext(RunContext&& other) noexcept
         : fixture(std::move(other.fixture)), path(std::move(other.path)), id(other.id), selected(other.selected),
