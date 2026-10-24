@@ -40,7 +40,8 @@ TEST_HEADER = 'tests/record_publication_wine_support.h'
 TEST_PE_SOURCE = 'tests/record_publication_wine_support_pe.c'
 TEST_UNIX_SOURCE = 'tests/record_publication_wine_support_unix.cpp'
 TEST_INPUTS = (TEST_HEADER, TEST_PE_SOURCE, TEST_UNIX_SOURCE, BUILDER_SOURCE,
-               'scripts/wine/publication_toolchain.py', 'scripts/wine/prefix.py')
+               'scripts/wine/publication_toolchain.py', 'scripts/wine/prefix.py',
+               'src/record_publication_wine_binding.h', ABI_HEADER)
 TEST_PAIR = ('modules/x86_64-windows/space_record_publication_tests.dll',
              'modules/x86_64-unix/space_record_publication_tests.so')
 TEST_DISCOVERY = 'space_record_publication_tests.dll'
@@ -291,7 +292,7 @@ def build_publication(repo: Path, session: prefix.Session) -> dict:
 
 
 def _test_build_id(runtime, toolchain):
-    value = dict(kind=TEST_KIND, abi=1, runtime=runtime, toolchain=toolchain)
+    value = dict(kind=TEST_KIND, abi=2, runtime=runtime, toolchain=toolchain)
     return _sha(json.dumps(value, sort_keys=True, separators=(',', ':')).encode())
 
 
@@ -306,6 +307,12 @@ def _launch_path(path):
 def _launch_snapshot(info):
     return dict(device=info.st_dev, inode=info.st_ino, size=info.st_size,
                 uid=info.st_uid, mode=info.st_mode, mtime_ns=info.st_mtime_ns, ctime_ns=info.st_ctime_ns)
+
+
+def _launch_ancestor_snapshot(info):
+    # Ancestors pin directory identity and trust, not directory contents. Sibling
+    # activity may change size/timestamps without changing this declared tuple.
+    return dict(device=info.st_dev, inode=info.st_ino, uid=info.st_uid, mode=info.st_mode)
 
 
 def _launch_trusted(info, *, directory=False):
@@ -342,8 +349,7 @@ def _capture_runtime_pin(expected):
         ancestors = []
         for _, _, _, info, path in walk:
             _launch_trusted(info, directory=True)
-            ancestors.append(dict(path_hex=path.hex(), device=info.st_dev, inode=info.st_ino,
-                                  uid=info.st_uid, mode=info.st_mode))
+            ancestors.append(dict(path_hex=path.hex(), **_launch_ancestor_snapshot(info)))
         leaf = raw.rsplit(b'/', 1)[1]
         fd = acquire(leaf, os.O_RDONLY | os.O_NONBLOCK, parent)
         before = os.fstat(fd)
@@ -371,9 +377,9 @@ def _capture_runtime_pin(expected):
                 or elf[1] not in (2, 3) or elf[2:4] != (62, 1) or elf[8] != 64):
             raise BuildError('Launch runtime must be Linux x86_64 executable ELF')
         for descriptor, ancestor_parent, name, info, _ in walk:
-            if (_launch_snapshot(os.fstat(descriptor)) != _launch_snapshot(info)
-                    or _launch_snapshot(os.stat(name, dir_fd=ancestor_parent, follow_symlinks=False))
-                    != _launch_snapshot(info)):
+            if (_launch_ancestor_snapshot(os.fstat(descriptor)) != _launch_ancestor_snapshot(info)
+                    or _launch_ancestor_snapshot(os.stat(name, dir_fd=ancestor_parent, follow_symlinks=False))
+                    != _launch_ancestor_snapshot(info)):
                 raise BuildError('Launch runtime ancestor changed')
         return dict(path_hex=raw.hex(), sha256=digest, **_launch_snapshot(before), ancestors=ancestors)
 
@@ -444,7 +450,7 @@ def _test_inventory(output, build_id):
     return files
 
 
-def _recognized_test_output(output):
+def _recognized_test_output(output: Path, *, for_replacement: bool = False) -> tuple | None:
     if not output.exists() and not output.is_symlink():
         return None
     identity = prefix.real_directory(output, True)
@@ -458,13 +464,21 @@ def _recognized_test_output(output):
     if (not isinstance(manifest, dict)
             or set(manifest) != {'version', 'abi', 'kind', 'build_id', 'runtime', 'toolchain', 'files'}
             or type(manifest['version']) is not int or manifest['version'] != 1
-            or type(manifest['abi']) is not int or manifest['abi'] != 1
+            or type(manifest['abi']) is not int or manifest['abi'] not in ((1, 2) if for_replacement else (2,))
             or manifest['kind'] != TEST_KIND
             or not isinstance(manifest['runtime'], dict) or not isinstance(manifest['toolchain'], dict)
             or not isinstance(manifest['build_id'], str) or not re.fullmatch('[0-9a-f]{64}', manifest['build_id'])
-            or _test_build_id(manifest['runtime'], manifest['toolchain']) != manifest['build_id']
             or not isinstance(manifest['files'], dict)
             or set(manifest['files']) != {*TEST_PAIR, TEST_DISCOVERY}):
+        raise BuildError('Unrecognized test support manifest')
+    if manifest['abi'] == 2:
+        expected_id = _test_build_id(manifest['runtime'], manifest['toolchain'])
+    else:
+        # Historical ABI1 calculation, only reachable for builder replacement or
+        # cleanup. Never reinterpret its ID as ABI2 or admit it for execution.
+        value = dict(kind=TEST_KIND, abi=1, runtime=manifest['runtime'], toolchain=manifest['toolchain'])
+        expected_id = _sha(json.dumps(value, sort_keys=True, separators=(',', ':')).encode())
+    if expected_id != manifest['build_id']:
         raise BuildError('Unrecognized test support manifest')
     if _test_inventory(output, manifest['build_id']) != manifest['files']:
         raise BuildError('Test support output inventory changed')
@@ -480,7 +494,7 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
     build = repo / 'build'
     prefix.real_directory(build)
     output = build / 'wine-publication-tests'
-    previous = _recognized_test_output(output)
+    previous = _recognized_test_output(output, for_replacement=True)
     runtime = dict(session.owner['tools']['wine'])
     identity = publication_toolchain.resolve_toolchain(repo, runtime)
     publication_toolchain.verify_toolchain(identity)
@@ -505,7 +519,7 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
         tools = identity['tools']
         _compile([tools['host_cxx']['executable'], '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                   '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
-                  '-I', str(stage), '-I', str(repo / 'tests'), definition, str(repo / TEST_UNIX_SOURCE),
+                  '-I', str(stage), '-I', str(repo / 'tests'), '-I', str(repo / 'src'), definition, str(repo / TEST_UNIX_SOURCE),
                   '-pthread', '-o', str(unix), '-ldl'], stage)
         _compile([tools['mingw_cc']['executable'], '-std=c11', '-O2', '-Wall', '-Werror', '-shared', '-static-libgcc',
                   '-I', str(stage), '-I', str(windows_headers), '-I', str(wine_headers), '-I', str(repo / 'tests'), definition,
@@ -519,7 +533,7 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
         fd = os.open(copy, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
         with os.fdopen(fd, 'wb') as stream:
             stream.write(_regular(pe))
-        manifest = dict(version=1, abi=1, kind=TEST_KIND, build_id=build_id, runtime=runtime,
+        manifest = dict(version=1, abi=2, kind=TEST_KIND, build_id=build_id, runtime=runtime,
                         toolchain=toolchain, files=_test_inventory(new, build_id))
         prefix.write_control(new / 'build.json', manifest, exclusive=True)
         _recognized_test_output(new)
@@ -529,7 +543,7 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
             raise BuildError('Test support source inputs changed during build')
         if _capture_launch_metadata(repo, session, identity) != launch or _regular(header) != launch_header:
             raise BuildError('Test support launch pins/header changed during build')
-        if _recognized_test_output(output) != previous:
+        if _recognized_test_output(output, for_replacement=True) != previous:
             raise BuildError('Test support output changed during build')
         backup = stage / 'old'
         if previous is not None:
@@ -541,7 +555,7 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
                 backup.rename(output)
             raise
         if previous is not None:
-            _recognized_test_output(backup)
+            _recognized_test_output(backup, for_replacement=True)
             for relative in (*TEST_PAIR, TEST_DISCOVERY, 'build.json'):
                 (backup / relative).unlink()
             for directory in reversed(DIRECTORIES):

@@ -34,6 +34,7 @@ __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationTestsCall(uint32_t en
     __typeof__(&NtQueryVirtualMemory) query;
     NTSTATUS status;
     SrptIdentity result = {0};
+    SrptLaunch launch = {0};
     SrptIdentity* input = args;
     if (entry == SRPT_ENTRY_IDENTITY) {
         if (!input || input->size != sizeof(*input) || input->abi != SRPT_ABI) return SRPT_INVALID_ARGUMENT;
@@ -41,6 +42,20 @@ __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationTestsCall(uint32_t en
         const SrptCall* call = args;
         if (!call || call->size != sizeof(*call) || call->abi != SRPT_ABI
             || call->opcode < SRPT_RETAIN || call->opcode > SRPT_RMDIR) return SRPT_INVALID_ARGUMENT;
+    } else if (entry == SRPT_ENTRY_LAUNCH) {
+        SrptLaunch* call = args;
+        if (!call || call->size != sizeof(*call) || call->abi != SRPT_ABI
+            || !((call->action == SRPT_CONFIGURE && call->case_id == 0)
+                 || (call->action == SRPT_RUN && call->case_id >= 1 && call->case_id <= 5))
+            || call->phase || call->os_error || call->exit_code || call->term_signal
+            || call->outcome || call->reserved || call->remaining_ms || call->reserved2)
+            return SRPT_INVALID_ARGUMENT;
+        /* Unix independently validates zero input outputs. Keep that request
+         * separate from the caller's initialized no-exit result while acquiring
+         * the opaque dispatch table; acquisition failures cannot look completed.
+         */
+        launch = *call;
+        call->exit_code = UINT32_MAX;
     } else return SRPT_INVALID_ARGUMENT;
     if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             (LPCWSTR)(uintptr_t)&SpaceRecordPublicationTestsCall, &self)) return SRPT_MODULE_UNAVAILABLE;
@@ -53,6 +68,11 @@ __declspec(dllexport) int32_t WINAPI SpaceRecordPublicationTestsCall(uint32_t en
     status = query(GetCurrentProcess(), self, MemoryWineUnixFuncs, &handle, sizeof(handle), NULL);
     if (status != 0) return status;
     if (!handle) return SRPT_MODULE_UNAVAILABLE;
+    if (entry == SRPT_ENTRY_LAUNCH) {
+        status = dispatch(handle, SRPT_ENTRY_LAUNCH, &launch);
+        *(SrptLaunch*)args = launch;
+        return status;
+    }
     if (entry == SRPT_ENTRY_FIXTURE) return dispatch(handle, SRPT_ENTRY_FIXTURE, args);
     result.size = sizeof(result);
     result.abi = SRPT_ABI;

@@ -141,6 +141,7 @@ if len(sys.argv) > 1 and (pathlib.Path(sys.argv[1]).name == 'test_record_publica
     assert state['authorized_for'] is None
     manifest = json.loads((root/'wine-publication/build.json').read_text())
     support = json.loads((root/'wine-publication-tests/build.json').read_text())
+    assert manifest['abi'] == 1 and support['abi'] == 2
     so = (root/'wine-publication/modules/x86_64-unix/space_record_publication.so').stat()
     test_so = (root/'wine-publication-tests/modules/x86_64-unix/space_record_publication_tests.so').stat()
     assert os.environ['SPACE_WINE_PUBLICATION_BINDING'] == f"{manifest['build_id']}:{so.st_dev}:{so.st_ino}"
@@ -211,6 +212,7 @@ class Fixture:
         for name in ('record_publication_wine_support.h', 'record_publication_wine_support_pe.c',
                      'record_publication_wine_support_unix.cpp'):
             shutil.copy2(ROOT / 'tests' / name, self.root / 'tests' / name)
+        shutil.copy2(ROOT / 'src/record_publication_wine_binding.h', self.root / 'src')
         for name in ('_windows_repro_evidence.py',):
             shutil.copy2(ROOT / 'scripts' / name, scripts / name)
         shutil.copy2(ROOT / 'src/wine_owned_environment.h', self.root / 'src')
@@ -275,6 +277,18 @@ def verify_toolchain(identity):
     if identity != resolve_toolchain(Path(identity['repo']), identity['runtime']):
         raise ValueError('Fixture pinned toolchain changed')
 ''')
+        # Compiler-protocol fixture only: script tools under /tmp are not trusted
+        # installed native runtimes. Supply the established inert metadata model
+        # in this temporary checkout before CLI main, never in production capture.
+        from test_wine_publication_build import support_compiler_launch_metadata
+        self.launch_metadata = support_compiler_launch_metadata(self.root)
+        builder = scripts / 'wine/build_publication.py'
+        source = builder.read_text()
+        main_guard = "\nif __name__ == '__main__':"
+        assert source.count(main_guard) == 1
+        capture = ("\ndef _capture_launch_metadata(repo, session, identity):\n"
+                   f"    return {self.launch_metadata!r}\n")
+        builder.write_text(source.replace(main_guard, capture + main_guard))
         self.write_executable("wineserver", '''#!/usr/bin/python3
 import json, os, sys
 if sys.argv[1:] == ['--version']:
@@ -338,6 +352,16 @@ def test_publication_stage_runs_four_fixed_components_before_application(runtime
     runtime.package()
     result = runtime.prepare([0])
     assert result.returncode == 0, result.stdout + result.stderr
+    from wine import build_publication as builder
+    support = builder._recognized_test_output(runtime.root / 'build/wine-publication-tests')[1]
+    assert support['abi'] == 2
+    assert support['toolchain']['launch'] == runtime.launch_metadata
+    assert support['toolchain']['launch_header_sha256'] == hashlib.sha256(
+        builder._render_launch_header(runtime.launch_metadata)).hexdigest()
+    for relative in ('scripts/wine/build_publication.py', 'src/record_publication_wine_binding.h',
+                     'src/record_publication_wine_abi.h'):
+        assert support['toolchain']['inputs'][relative] == hashlib.sha256(
+            (runtime.root / relative).read_bytes()).hexdigest()
     calls = [call for call in runtime.calls() if call.get('publication')]
     assert len(calls) == 4
     assert [call['umask'] for call in calls] == ['0022', '0002', '0002', '0002']

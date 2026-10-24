@@ -364,7 +364,7 @@ void private_contract_models()
         case 7: bad.module_inode = 0; break;
         case 8: ++bad.architecture; break;
         case 9: bad.features = 1; break;
-        case 10: bad.features = 7; break;
+        case 10: bad.features = 15; break;
         }
         rejects([&] { validate_support_identity(bad, expected, 42); });
     }

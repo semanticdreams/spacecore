@@ -754,7 +754,7 @@ def fixture_support_inventory(repo, session):
         assert result.returncode == 0, result.stderr
         target.chmod(0o600)
     shutil.copy2(output / builder.TEST_PAIR[0], output / builder.TEST_DISCOVERY)
-    manifest = dict(version=1, abi=1, kind=builder.TEST_KIND, runtime=runtime, toolchain=toolchain,
+    manifest = dict(version=1, abi=2, kind=builder.TEST_KIND, runtime=runtime, toolchain=toolchain,
                     build_id=build_id, files=builder._test_inventory(output, build_id))
     windows_ci_repro._prefix.write_control(output / 'build.json', manifest)
     shutil.copy2(output / builder.TEST_DISCOVERY, repo / 'build/wine/windows' / builder.TEST_DISCOVERY)

@@ -1804,10 +1804,34 @@ SUPPORT_HEADER = 'tests/record_publication_wine_support.h'
 SUPPORT_PE = 'tests/record_publication_wine_support_pe.c'
 SUPPORT_UNIX = 'tests/record_publication_wine_support_unix.cpp'
 SUPPORT_INPUTS = (SUPPORT_HEADER, SUPPORT_PE, SUPPORT_UNIX, BUILDER_SOURCE,
-                  'scripts/wine/publication_toolchain.py', 'scripts/wine/prefix.py')
+                  'scripts/wine/publication_toolchain.py', 'scripts/wine/prefix.py',
+                  'src/record_publication_wine_binding.h', 'src/record_publication_wine_abi.h')
 SUPPORT_PAIR = ('modules/x86_64-windows/space_record_publication_tests.dll',
                 'modules/x86_64-unix/space_record_publication_tests.so')
 SUPPORT_COPY = 'space_record_publication_tests.dll'
+
+
+def support_host_launch_header(directory, checkout, runtime_source='int main(void) { return 97; }\n'):
+    """Native model pins use actual host facts, never production capture exceptions."""
+    runtime = directory / 'inert-wine64'
+    result = subprocess.run(['cc', '-x', 'c', '-', '-o', str(runtime)],
+                            input=runtime_source, text=True,
+                            capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    server = directory / 'inert-wineserver'
+    shutil.copy2(runtime, server)
+    def pin(path):
+        info = path.stat()
+        return dict(path_hex=os.fsencode(path).hex(), sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                    device=info.st_dev, inode=info.st_ino, size=info.st_size, uid=info.st_uid, mode=info.st_mode,
+                    mtime_ns=info.st_mtime_ns, ctime_ns=info.st_ctime_ns,
+                    ancestors=[dict(path_hex=os.fsencode(parent).hex(), device=parent.stat().st_dev,
+                                    inode=parent.stat().st_ino, uid=parent.stat().st_uid, mode=parent.stat().st_mode)
+                               for parent in reversed(path.parents)])
+    metadata = dict(schema=1, checkout_path_hex=os.fsencode(checkout).hex(),
+                    implementation=pin(runtime), server=pin(server))
+    (directory / 'srpt_launch_config.h').write_bytes(builder_module()._render_launch_header(metadata))
+    return metadata
 
 
 class SupportCall(ctypes.Structure):
@@ -1828,12 +1852,13 @@ def support_elf(tmp_path_factory):
     source = ROOT / SUPPORT_UNIX
     assert source.is_file(), 'test-only Unix support is missing'
     directory = tmp_path_factory.mktemp('real-publication-support')
+    support_host_launch_header(directory, ROOT)
     output = directory / 'support.so'
     expected = bytes(range(32))
     definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(b) for b in expected) + '}'
     result = subprocess.run(['c++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                              '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
-                             '-I', str(ROOT / 'tests'),
+                             '-I', str(directory), '-I', str(ROOT / 'tests'), '-I', str(ROOT / 'src'),
                              definition, str(source), '-pthread', '-o', str(output), '-ldl'],
                             capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stderr
@@ -1844,7 +1869,7 @@ def support_elf(tmp_path_factory):
 
 
 def support_call(operate, opcode, root=0, path='', other='', data=b'', mode=0, gid=0, offset=0):
-    value = SupportCall(size=ctypes.sizeof(SupportCall), abi=1, opcode=opcode, root=root,
+    value = SupportCall(size=ctypes.sizeof(SupportCall), abi=2, opcode=opcode, root=root,
                         path=os.fsencode(path), other=os.fsencode(other), mode=mode, gid=gid,
                         offset=offset, data_size=len(data))
     value.data[:len(data)] = data
@@ -1860,12 +1885,12 @@ def support_ok(operate, opcode, **kwargs):
 
 def test_support_real_elf_identity_is_loaded_object_not_replacement(support_elf):
     output, library, identify, _, expected = support_elf
-    value = Identity(size=112, abi=1, challenge=0x12345678)
+    value = Identity(size=112, abi=2, challenge=0x12345678)
     value.pe_build_id[:] = bytes([0xa5]) * 32
     info = output.stat()
     assert identify(ctypes.byref(value)) == 0
     assert (value.module_device, value.module_inode) == (info.st_dev, info.st_ino)
-    assert value.echo == value.challenge and value.architecture == 0x8664 and value.features == 3
+    assert value.echo == value.challenge and value.architecture == 0x8664 and value.features == 7
     assert bytes(value.pe_build_id) == bytes([0xa5]) * 32
     assert bytes(value.unix_build_id) == expected
     assert bytes((ctypes.c_uint8 * 32).in_dll(library, 'SpaceRecordPublicationTestsUnixBuildId')) == expected
@@ -1880,7 +1905,7 @@ def test_support_real_elf_identity_is_loaded_object_not_replacement(support_elf)
         output.unlink()
         saved.rename(output)
     assert identify(None) != 0
-    for size, abi in [(111, 1), (113, 1), (112, 2)]:
+    for size, abi in [(111, 2), (113, 2), (112, 1), (112, 3)]:
         assert identify(ctypes.byref(Identity(size=size, abi=abi))) != 0
 
 
@@ -1974,13 +1999,13 @@ def test_support_real_elf_refuses_unsafe_roots_links_frames_and_oversize(support
         status, value = support_call(operate, 3, root=root, path='large')
         assert status != 0 and value.os_error != 0
         assert operate(None) != 0
-        for changes in [dict(size=1), dict(abi=2), dict(opcode=99), dict(reserved=1),
+        for changes in [dict(size=1), dict(abi=1), dict(abi=3), dict(opcode=99), dict(reserved=1),
                         dict(reserved2=1), dict(data_size=4097), dict(mode=0o10000), dict(root=0)]:
-            value = SupportCall(size=ctypes.sizeof(SupportCall), abi=1, opcode=3, root=root)
+            value = SupportCall(size=ctypes.sizeof(SupportCall), abi=2, opcode=3, root=root)
             for key, val in changes.items():
                 setattr(value, key, val)
             assert operate(ctypes.byref(value)) != 0, changes
-        value = SupportCall(size=ctypes.sizeof(SupportCall), abi=1, opcode=3, root=root)
+        value = SupportCall(size=ctypes.sizeof(SupportCall), abi=2, opcode=3, root=root)
         value.path = b'x' * 4096
         assert operate(ctypes.byref(value)) != 0
     finally:
@@ -1990,8 +2015,20 @@ def test_support_real_elf_refuses_unsafe_roots_links_frames_and_oversize(support
 @pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
 def test_support_closed_abi_layout(tmp_path, compiler, standard):
     assert (ROOT / SUPPORT_HEADER).is_file(), 'test-only ABI is missing'
-    source = '''#include "record_publication_wine_support.h"
-int main(void) { return sizeof(SrptCall) != 12376 || sizeof(SrptIdentity) != 112; }
+    offsets = dict(size=0, abi=4, action=8, case_id=12, root=16,
+                   production_build_id=24, support_build_id=56, production_device=88,
+                   production_inode=96, support_device=104, support_inode=112,
+                   phase=120, os_error=124, exit_code=128, term_signal=132,
+                   outcome=136, reserved=140, remaining_ms=144, reserved2=148)
+    assertion = 'static_assert' if compiler == 'c++' else '_Static_assert'
+    alignment = 'alignof' if compiler == 'c++' else '_Alignof'
+    source = '#include "record_publication_wine_support.h"\n'
+    for field, offset in offsets.items():
+        source += f'{assertion}(offsetof(SrptLaunch, {field}) == {offset}, "{field}");\n'
+    source += f'''{assertion}(sizeof(SrptLaunch) == 152 && {alignment}(SrptLaunch) == 8, "launch layout");
+{assertion}(SRPT_ABI == 2 && SRPT_FEATURES == 7 && SRPT_ENTRY_LAUNCH == 2, "support only ABI2");
+{assertion}(SRPT_CONFIGURE == 1 && SRPT_RUN == 2, "launch actions");
+int main(void) {{ return sizeof(SrptCall) != 12376 || sizeof(SrptIdentity) != 112; }}
 '''
     result = subprocess.run([compiler, f'-std={standard}', '-Wall', '-Wextra', '-Werror',
                              '-I', str(ROOT / 'tests'), '-x', 'c++' if compiler == 'c++' else 'c',
@@ -1999,6 +2036,1266 @@ int main(void) { return sizeof(SrptCall) != 12376 || sizeof(SrptIdentity) != 112
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
     assert subprocess.run([str(tmp_path / 'layout')], timeout=10).returncode == 0
+
+
+def test_support_launch_native_abi_validation(tmp_path):
+    support_host_launch_header(tmp_path, ROOT)
+    model = tmp_path / 'launch.cpp'
+    model.write_text(r'''
+#include "record_publication_wine_support.h"
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+using Entry = int32_t (*)(void*);
+extern "C" const Entry __wine_unix_call_funcs[];
+int main() {
+    const auto launch = __wine_unix_call_funcs[SRPT_ENTRY_LAUNCH];
+    assert(launch(nullptr) == SRPT_INVALID_ARGUMENT);
+    SrptLaunch input {};
+    input.size = sizeof(input); input.abi = 2; input.action = SRPT_CONFIGURE;
+    input.root = 123;
+    for (unsigned field = 0; field < 16; ++field) {
+        auto bad = input;
+        switch (field) {
+        case 0: --bad.size; break; case 1: ++bad.size; break;
+        case 2: bad.abi = 1; break; case 3: bad.abi = 3; break;
+        case 4: bad.action = 0; break; case 5: bad.action = 3; break;
+        case 6: bad.case_id = 1; break;
+        case 7: bad.action = SRPT_RUN; bad.case_id = 0; break;
+        case 8: bad.action = SRPT_RUN; bad.case_id = 6; break;
+        case 9: bad.phase = 1; break; case 10: bad.os_error = 1; break;
+        case 11: bad.exit_code = 1; break; case 12: bad.term_signal = 1; break;
+        case 13: bad.outcome = 1; break; case 14: bad.remaining_ms = 1; break;
+        case 15: bad.reserved = 1; break;
+        }
+        assert(launch(&bad) == SRPT_INVALID_ARGUMENT);
+    }
+    auto bad = input; bad.reserved2 = 1;
+    assert(launch(&bad) == SRPT_INVALID_ARGUMENT);
+}
+''')
+    definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(['1'] * 32) + '}'
+    result = subprocess.run(['c++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
+                             '-I', str(tmp_path), '-I', str(ROOT / 'tests'), '-I', str(ROOT / 'src'),
+                             definition, str(ROOT / SUPPORT_UNIX),
+                             str(model), '-pthread', '-o', str(tmp_path / 'launch'), '-ldl'],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(tmp_path / 'launch')], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert not result.stdout and not result.stderr
+
+
+SUPPORT_FIXED_NATIVE_RUNTIME = r'''
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <unistd.h>
+extern char **environ;
+#define CHECK(value) do { if (!(value)) return 81; } while (0)
+int main(int argc, char **argv) {
+    char cwd[8192], expected[16384];
+    CHECK(argc == 3 && getcwd(cwd, sizeof(cwd)));
+    CHECK(!strncmp(argv[1], cwd, strlen(cwd)) && !strcmp(argv[1] + strlen(cwd), "/test_record_publication.exe"));
+    CHECK(!strncmp(argv[2], "--wine-publication-child=", 25));
+    struct stat info;
+    CHECK(!stat(argv[1], &info) && S_ISREG(info.st_mode)); /* Never interpret/execute PE bytes. */
+    CHECK(getpgrp() == getpid());
+    CHECK(fcntl(0, F_GETFL) >= 0 && fcntl(1, F_GETFL) >= 0 && fcntl(2, F_GETFL) >= 0);
+    CHECK(!fstat(0, &info) && S_ISCHR(info.st_mode) && major(info.st_rdev) == 1 && minor(info.st_rdev) == 3);
+    char input;
+    CHECK(read(0, &input, 1) == 0);
+    for (int fd = 3; fd < 512; ++fd) CHECK(fcntl(fd, F_GETFD) == -1);
+    sigset_t mask;
+    CHECK(!sigprocmask(SIG_SETMASK, NULL, &mask));
+    for (int sig = 1; sig < NSIG; ++sig) CHECK(sigismember(&mask, sig) != 1);
+    for (int sig = 1; sig < NSIG; ++sig) {
+        if (sig == SIGKILL || sig == SIGSTOP || sig == 32 || sig == 33) continue;
+        struct sigaction action;
+        if (!sigaction(sig, NULL, &action)) CHECK(action.sa_handler == SIG_DFL);
+    }
+    CHECK(getenv("PATH") && !*getenv("PATH"));
+    const char *crypto = getenv("SPACE_WINE_PUBLICATION_TEST_CRYPTO");
+    CHECK(crypto && (!strcmp(crypto, "b") || !strcmp(crypto, "n")));
+    snprintf(expected, sizeof(expected), "space_record_publication=b;space_record_publication_tests=b;bcryptprimitives=%s;advapi32,cryptbase=b", crypto);
+    CHECK(getenv("WINEDLLOVERRIDES") && !strcmp(getenv("WINEDLLOVERRIDES"), expected));
+    snprintf(expected, sizeof(expected), "%s/modules:%s/build/wine-publication-tests/modules", cwd, (const char*)checkout);
+    CHECK(getenv("WINEDLLPATH") && !strcmp(getenv("WINEDLLPATH"), expected));
+    const char *allowed[] = {"WINEPREFIX", "WINEARCH", "WINESERVER", "XDG_DATA_HOME", "XDG_CACHE_HOME", "TMPDIR", "TEMP", "TMP",
+        "SPACE_WINE_WINDOWS_TMP", "SPACE_WINE_PUBLICATION_TEST_CRYPTO", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "DISPLAY",
+        "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR", "PATH", "WINEDLLOVERRIDES", "WINEDLLPATH", "SPACE_WINE_PUBLICATION_BINDING",
+        "SPACE_WINE_PUBLICATION_TEST_BINDING"};
+    for (char **item = environ; *item; ++item) {
+        int found = 0;
+        for (unsigned index = 0; index < sizeof(allowed) / sizeof(allowed[0]); ++index)
+            if (!strncmp(*item, allowed[index], strlen(allowed[index])) && (*item)[strlen(allowed[index])] == '=') found = 1;
+        CHECK(found);
+    }
+    printf("SRPT_NATIVE_CHILD %s\n", argv[2] + 25);
+    fflush(stdout);
+    RUNTIME_RESULT
+}
+'''
+
+
+SUPPORT_CHILD_SYSCALL_WRAPPERS = r'''
+#define CHILD_FAIL(tag, function, signature, arguments) \
+    static std::atomic<bool> child_fault_##tag {false}; \
+    extern "C" int __real_##function signature; \
+    extern "C" int __wrap_##function signature { if (child_fault_##tag.exchange(false)) return EIO; return __real_##function arguments; } \
+    extern "C" __attribute__((visibility("default"))) void srpt_host_fault_##tag() { child_fault_##tag = true; }
+#define CHILD_DESTROY(tag, function, signature, arguments) \
+    static std::atomic<bool> child_fault_##tag {false}; \
+    extern "C" int __real_##function signature; \
+    extern "C" int __wrap_##function signature { const int result = __real_##function arguments; return child_fault_##tag.exchange(false) ? EIO : result; } \
+    extern "C" __attribute__((visibility("default"))) void srpt_host_fault_##tag() { child_fault_##tag = true; }
+CHILD_FAIL(action_init, posix_spawn_file_actions_init, (posix_spawn_file_actions_t* value), (value))
+CHILD_FAIL(attr_init, posix_spawnattr_init, (posix_spawnattr_t* value), (value))
+CHILD_FAIL(action_open, posix_spawn_file_actions_addopen, (posix_spawn_file_actions_t* value, int fd, const char* path, int flags, mode_t mode), (value, fd, path, flags, mode))
+CHILD_FAIL(action_cwd, posix_spawn_file_actions_addfchdir_np, (posix_spawn_file_actions_t* value, int fd), (value, fd))
+CHILD_FAIL(action_closefrom, posix_spawn_file_actions_addclosefrom_np, (posix_spawn_file_actions_t* value, int fd), (value, fd))
+CHILD_FAIL(attr_mask, posix_spawnattr_setsigmask, (posix_spawnattr_t* value, const sigset_t* mask), (value, mask))
+CHILD_FAIL(attr_default, posix_spawnattr_setsigdefault, (posix_spawnattr_t* value, const sigset_t* mask), (value, mask))
+CHILD_FAIL(attr_group, posix_spawnattr_setpgroup, (posix_spawnattr_t* value, pid_t group), (value, group))
+CHILD_DESTROY(action_destroy, posix_spawn_file_actions_destroy, (posix_spawn_file_actions_t* value), (value))
+CHILD_DESTROY(attr_destroy, posix_spawnattr_destroy, (posix_spawnattr_t* value), (value))
+static std::atomic<bool> child_fault_flags {false}, child_fault_reserve {false}, child_fault_spawn {false},
+    child_fault_post_pin {false}, child_fault_partial_spawn {false}, child_fault_post_alloc {false}, child_fault_waitid_late {false},
+    child_fault_waitid_wrong {false}, child_fault_waitid_badcode {false}, child_fault_waitid_badstatus {false},
+    child_fault_waitid_echild {false}, child_fault_waitpid_echild {false}, child_fault_waitpid_late {false},
+    child_fault_kill {false}, child_fault_reaper {false}, child_fault_close_spawn {false}, child_fault_close_reap {false}, child_fault_clock {false};
+static std::atomic<int> child_fault_waitid_eintr {0}, child_fault_waitpid_eintr {0};
+static std::atomic<pid_t> host_child {-1};
+static int host_spawns = 0, host_kills = 0, host_waitids = 0, host_created = 0, host_native_reaps = 0,
+    host_backstop_kills = 0, host_backstop_reaps = 0;
+static bool host_force_reap_poll = false;
+static std::atomic<bool> host_reaped {false};
+static bool host_zeroed = true, host_anchor = true, host_waitid_preserved = false;
+extern "C" int __real_posix_spawnattr_setflags(posix_spawnattr_t*, short);
+extern "C" int __wrap_posix_spawnattr_setflags(posix_spawnattr_t* value, short flags) {
+    if (child_fault_flags.exchange(false)) return EIO;
+    const int result = __real_posix_spawnattr_setflags(value, flags);
+    if (!result && child_fault_reserve.exchange(false)) host_advance = true;
+    return result;
+}
+extern "C" int __real_posix_spawn(pid_t*, const char*, const posix_spawn_file_actions_t*, const posix_spawnattr_t*, char* const[], char* const[]);
+extern "C" int __wrap_posix_spawn(pid_t* pid, const char* path, const posix_spawn_file_actions_t* actions,
+                                  const posix_spawnattr_t* attrs, char* const argv[], char* const env[]) {
+    ++host_spawns;
+    if (child_fault_spawn.exchange(false)) return ENOENT;
+    const int result = __real_posix_spawn(pid, path, actions, attrs, argv, env);
+    if (!result) {
+        ++host_created;
+        host_child = *pid; host_reaped = false;
+        host_clock_count = 0; host_clock_overflow = false; host_clock_trace = true;
+        host_clock_event(0, host_last_native_clock, configuration->deadline);
+        if (child_fault_post_pin.exchange(false)) {
+            if (::rename(reinterpret_cast<const char*>(host_pin_replacement),
+                         reinterpret_cast<const char*>(srpt_launch_implementation.path))) std::abort();
+        }
+        if (child_fault_post_alloc.exchange(false)) host_fail_allocation = true;
+        if (child_fault_clock.exchange(false)) host_child_clock_failure = true;
+        if (child_fault_partial_spawn.exchange(false)) return EIO;
+    }
+    return result;
+}
+extern "C" int __real_waitid(idtype_t, id_t, siginfo_t*, int);
+extern "C" pid_t __real_waitpid(pid_t, int*, int);
+extern "C" int __wrap_waitid(idtype_t kind, id_t pid, siginfo_t* info, int flags) {
+    ++host_waitids;
+    const auto* bytes = reinterpret_cast<const unsigned char*>(info);
+    for (std::size_t index = 0; index < sizeof(*info); ++index) if (bytes[index]) host_zeroed = false;
+    if (kind != P_PID || pid != static_cast<id_t>(host_child) || flags != (WEXITED | WNOHANG | WNOWAIT)) std::abort();
+    if (child_fault_waitid_eintr.load() > 0) { --child_fault_waitid_eintr; errno = EINTR; return -1; }
+    if (child_fault_waitid_late.exchange(false)) {
+        host_clock_event(2, host_last_native_clock, INT64_C(48000000000));
+        host_advance = true; host_force_reap_poll = true; errno = EINTR; return -1;
+    }
+    if (child_fault_waitid_echild.exchange(false)) { errno = ECHILD; return -1; }
+    if (child_fault_reaper.exchange(false)) {
+        int status = 0;
+        if (__real_waitpid(host_child, &status, 0) != host_child) std::abort();
+        errno = ECHILD; return -1; // Another reaper really consumed the exact leader, not merely a fake errno.
+    }
+    const int result = __real_waitid(kind, pid, info, flags);
+    if (!result && info->si_pid == host_child) {
+        siginfo_t again {};
+        host_waitid_preserved = __real_waitid(kind, pid, &again, flags) == 0 && again.si_pid == host_child && ::getpgid(host_child) == host_child;
+    }
+    if (!result && child_fault_waitid_wrong.exchange(false)) { info->si_pid = host_child + 1; info->si_code = CLD_EXITED; info->si_status = 0; }
+    if (!result && child_fault_waitid_badcode.exchange(false)) { info->si_pid = host_child; info->si_code = CLD_STOPPED; info->si_status = SIGSTOP; }
+    if (!result && child_fault_waitid_badstatus.exchange(false)) { info->si_pid = host_child; info->si_code = CLD_EXITED; info->si_status = 256; }
+    return result;
+}
+extern "C" pid_t __real_waitpid(pid_t, int*, int);
+extern "C" pid_t __wrap_waitpid(pid_t pid, int* status, int flags) {
+    if (pid != host_child || flags != WNOHANG) std::abort();
+    if (child_fault_waitpid_eintr.load() > 0) { --child_fault_waitpid_eintr; errno = EINTR; return -1; }
+    if (child_fault_waitpid_late.exchange(false)) {
+        host_clock_event(7, host_last_native_clock, INT64_C(48000000000));
+        host_advance = true; errno = EINTR; return -1;
+    }
+    if (child_fault_waitpid_echild.exchange(false)) { errno = ECHILD; return -1; }
+    if (std::exchange(host_force_reap_poll, false)) return 0; // Exercise one absolute poll sleep after the clock offset.
+    const auto result = __real_waitpid(pid, status, flags);
+    if (result == pid) { host_reaped = true; ++host_native_reaps; host_clock_event(5, host_last_native_clock, pid); }
+    return result;
+}
+extern "C" int __real_kill(pid_t, int);
+extern "C" int __wrap_kill(pid_t group, int sig) {
+    ++host_kills;
+    host_clock_event(4, host_last_native_clock, group);
+    siginfo_t proof {};
+    host_anchor = host_anchor && group == -host_child && sig == SIGKILL && !host_reaped
+        && __real_waitid(P_PID, host_child, &proof, WEXITED | WNOHANG | WNOWAIT) == 0 && ::getpgid(host_child) == host_child;
+    if (child_fault_kill.exchange(false)) { errno = EPERM; return -1; }
+    return __real_kill(group, sig);
+}
+extern "C" int __real_close(int);
+extern "C" int __wrap_close(int fd) {
+    const int result = __real_close(fd);
+    if ((!host_reaped && host_child > 0 && child_fault_close_spawn.exchange(false))
+        || (host_reaped && child_fault_close_reap.exchange(false))) { errno = EIO; return -1; }
+    return result;
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_flags() { child_fault_flags = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_reserve() { child_fault_reserve = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_spawn() { child_fault_spawn = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_post_pin() { child_fault_post_pin = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_pre_pin() {
+    if (::rename(reinterpret_cast<const char*>(host_pin_replacement),
+                 reinterpret_cast<const char*>(srpt_launch_implementation.path))) std::abort();
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_partial_spawn() { child_fault_partial_spawn = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_reaper() { child_fault_reaper = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_post_alloc() { child_fault_post_alloc = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitid_eintr() { child_fault_waitid_eintr = 3; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitid_late() { child_fault_waitid_late = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitid_wrong() { child_fault_waitid_wrong = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitid_badcode() { child_fault_waitid_badcode = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitid_badstatus() { child_fault_waitid_badstatus = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitid_echild() { child_fault_waitid_echild = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitpid_echild() { child_fault_waitpid_echild = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitpid_eintr() { child_fault_waitpid_eintr = 3; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_waitpid_late() { child_fault_waitpid_late = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_kill() { child_fault_kill = true; child_fault_post_pin = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_close_spawn() { child_fault_close_spawn = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_close_reap() { child_fault_close_reap = true; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_fault_clock() { child_fault_clock = true; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_spawn_count() { return host_spawns; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_kill_count() { return host_kills; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_zeroed() { return host_zeroed; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_anchor() { return host_anchor; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_observation_preserved() { return host_waitid_preserved; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_created() { return host_created; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_child_pid() { return host_child; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_native_reaps() { return host_native_reaps; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_reaped() { return host_reaped; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_kernel_echild() {
+    siginfo_t info {}; errno = 0;
+    return host_child > 0 && __real_waitid(P_PID, host_child, &info, WEXITED | WNOHANG | WNOWAIT) == -1 && errno == ECHILD;
+}
+extern "C" __attribute__((visibility("default"))) int srpt_host_evidence_held() { return uncertain_preparation && !launch_busy_paths.empty(); }
+extern "C" __attribute__((visibility("default"))) int srpt_host_backstop_kills() { return host_backstop_kills; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_backstop_reaps() { return host_backstop_reaps; }
+extern "C" __attribute__((visibility("default"))) int64_t srpt_host_clock_field(unsigned row, unsigned field) {
+    if (row >= host_clock_count) return -1;
+    const auto& value = host_clock_rows[row];
+    return field == 0 ? value.kind : field == 1 ? value.first : value.second;
+}
+extern "C" __attribute__((visibility("default"))) int srpt_host_clock_rows() { return host_clock_count; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_clock_overflowed() { return host_clock_overflow; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_no_cldwait() {
+    struct sigaction value {}; value.sa_handler = SIG_DFL; value.sa_flags = SA_NOCLDWAIT; ::sigemptyset(&value.sa_mask);
+    if (::sigaction(SIGCHLD, &value, nullptr)) std::abort();
+}
+extern "C" __attribute__((visibility("default"))) int srpt_host_sigchld_flags() {
+    struct sigaction value {}; if (::sigaction(SIGCHLD, nullptr, &value)) std::abort(); return value.sa_flags;
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_cleanup_child() {
+    if (host_child <= 0 || host_reaped) return;
+    siginfo_t proof {};
+    if (__real_waitid(P_PID, host_child, &proof, WEXITED | WNOHANG | WNOWAIT)) return;
+    ++host_backstop_kills;
+    if (__real_kill(-host_child, SIGKILL) && errno != ESRCH) std::abort();
+    int status = 0; while (__real_waitpid(host_child, &status, 0) < 0) { if (errno != EINTR) std::abort(); }
+    host_reaped = true; ++host_backstop_reaps;
+}
+'''
+
+
+@pytest.fixture
+def support_native_configuration(tmp_path, request):
+    import struct
+    repo = tmp_path / 'checkout-\udcff'
+    repo.mkdir(mode=0o700)
+    directories = ('build', 'build/wine', 'build/wine/windows', 'build/wine/sessions',
+                   'build/wine-publication', 'build/wine-publication/modules',
+                   'build/wine-publication/modules/x86_64-windows', 'build/wine-publication/modules/x86_64-unix',
+                   'build/wine-publication-tests', 'build/wine-publication-tests/modules',
+                   'build/wine-publication-tests/modules/x86_64-windows',
+                   'build/wine-publication-tests/modules/x86_64-unix')
+    for name in directories:
+        (repo / name).mkdir(mode=0o700)
+    session = repo / 'build/wine/sessions' / ('a' * 32)
+    session.mkdir(mode=0o700)
+    for name in ('prefix', 'tmp', 'data', 'cache'):
+        (session / name).mkdir(mode=0o700)
+    behavior = getattr(request, 'param', 'success')
+    ending = {'success': 'return 0;', 'nonzero': 'return 23;', 'signal': 'raise(SIGUSR1); return 82;',
+              'timeout': 'for (;;) pause();',
+              'paused': 'if (!strcmp(argv[2] + 25, "control")) raise(SIGSTOP); return 0;'}[behavior]
+    declaration = 'static const unsigned char checkout[] = {' + ','.join(str(value) for value in os.fsencode(repo) + b'\0') + '};\n'
+    metadata = support_host_launch_header(tmp_path, repo, declaration + SUPPORT_FIXED_NATIVE_RUNTIME.replace('RUNTIME_RESULT', ending))
+    pin_replacement = tmp_path / 'inert-wine64-replacement'
+    shutil.copy2(tmp_path / 'inert-wine64', pin_replacement)
+    assert pin_replacement.stat().st_ino != (tmp_path / 'inert-wine64').stat().st_ino
+    production_id, support_id = bytes([0xa5]) * 32, bytes(range(32))
+    def pe(identity):
+        raw = bytearray(1024)
+        raw[:2] = b'MZ'
+        struct.pack_into('<I', raw, 60, 128)
+        raw[64:80] = b'Wine builtin DLL'
+        raw[128:132] = b'PE\0\0'
+        struct.pack_into('<HHIIIHH', raw, 132, 0x8664, 0, 0, 0, 0, 240, 0x2022)
+        struct.pack_into('<H', raw, 152, 0x20b)
+        raw[-32:] = identity
+        return raw
+    def artifact(relative, data):
+        path = repo / relative
+        path.write_bytes(data)
+        path.chmod(0o600)
+        return path
+    production = artifact('build/wine-publication/modules/x86_64-unix/space_record_publication.so',
+                          (tmp_path / 'inert-wine64').read_bytes() + production_id)
+    artifact('build/wine-publication/modules/x86_64-windows/space_record_publication.dll', pe(production_id))
+    artifact('build/wine-publication-tests/modules/x86_64-windows/space_record_publication_tests.dll', pe(support_id))
+    artifact('build/wine/windows/space_record_publication.dll', pe(production_id))
+    artifact('build/wine/windows/space_record_publication_tests.dll', pe(support_id))
+    artifact('build/wine/windows/test_record_publication.exe', pe(bytes([0x77]) * 32))
+    artifact('build/wine/windows/libfixture.dll', pe(bytes([0x44]) * 32))
+    artifact('build/wine/windows/bcryptprimitives.dll', pe(bytes([0x55]) * 32))
+    output = repo / 'build/wine-publication-tests/modules/x86_64-unix/space_record_publication_tests.so'
+    wrapper = tmp_path / 'support-host.cpp'
+    # Test-only inspection/barrier exports wrap the ACTUAL source, never the
+    # production ABI or capture policy. No launcher algorithm is copied here.
+    replacement_declaration = 'static const unsigned char host_pin_replacement[] = {' + ','.join(
+        str(value) for value in os.fsencode(pin_replacement) + b'\0') + '};\n'
+    wrapper.write_text('#include <atomic>\n#include ' + json.dumps(str(ROOT / SUPPORT_UNIX)) + '\n' + replacement_declaration + r'''
+static std::atomic<bool> host_pause {false}, host_held {false};
+static std::atomic<bool> host_advance {false};
+struct HostClockRow { int kind; int64_t first, second; };
+static std::array<HostClockRow, 32> host_clock_rows;
+static unsigned host_clock_count = 0;
+static bool host_clock_trace = false, host_clock_overflow = false;
+static int64_t host_last_native_clock = 0;
+static void host_clock_event(int kind, int64_t first, int64_t second) {
+    if (!host_clock_trace) return;
+    if (host_clock_count == host_clock_rows.size()) { host_clock_overflow = true; return; }
+    host_clock_rows[host_clock_count++] = {kind, first, second};
+}
+static std::atomic<bool> host_child_clock_failure {false};
+static std::atomic<bool> host_fail_allocation {false};
+static std::atomic<bool> host_fail_identity {false};
+extern "C" FILE* __real_fopen(const char*, const char*);
+extern "C" FILE* __wrap_fopen(const char* path, const char* mode) {
+    if (!std::strcmp(path, "/proc/self/maps") && host_fail_identity.exchange(false)) { errno = EACCES; return nullptr; }
+    return __real_fopen(path, mode);
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_fail_identity() { host_fail_identity = true; }
+extern "C" void* __real__Znwm(size_t);
+extern "C" void* __wrap__Znwm(size_t size) {
+    if (host_fail_allocation.exchange(false)) throw std::bad_alloc();
+    return __real__Znwm(size);
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_fail_allocation() { host_fail_allocation = true; }
+extern "C" int __real_clock_gettime(clockid_t, struct timespec*);
+extern "C" int __wrap_clock_gettime(clockid_t clock, struct timespec* value) {
+    if (clock == CLOCK_MONOTONIC && host_child_clock_failure.exchange(false)) { errno = EIO; return -1; }
+    const int result = __real_clock_gettime(clock, value);
+    if (!result && clock == CLOCK_MONOTONIC) {
+        if (host_advance.load()) value->tv_sec += 48;
+        host_last_native_clock = static_cast<int64_t>(value->tv_sec) * INT64_C(1000000000) + value->tv_nsec;
+        host_clock_event(1, host_last_native_clock, 0);
+    }
+    return result;
+}
+extern "C" int __real_clock_nanosleep(clockid_t, int, const struct timespec*, struct timespec*);
+extern "C" int __wrap_clock_nanosleep(clockid_t clock, int flags, const struct timespec* request, struct timespec* remainder) {
+    auto translated = *request;
+    if (clock == CLOCK_MONOTONIC && flags == TIMER_ABSTIME) {
+        if (host_advance.load()) translated.tv_sec -= 48;
+        host_clock_event(3, static_cast<int64_t>(request->tv_sec) * INT64_C(1000000000) + request->tv_nsec,
+                         static_cast<int64_t>(translated.tv_sec) * INT64_C(1000000000) + translated.tv_nsec);
+    }
+    return __real_clock_nanosleep(clock, flags, &translated, remainder);
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_no_reserve() { host_advance = true; }
+extern "C" ssize_t __real_pread(int, void*, size_t, off_t);
+extern "C" ssize_t __wrap_pread(int fd, void* data, size_t size, off_t offset) {
+    if (host_pause.exchange(false)) {
+        host_held = true;
+        while (host_held.load()) ::usleep(1000);
+    }
+    return __real_pread(fd, data, size, offset);
+}
+extern "C" __attribute__((visibility("default"))) void srpt_host_arm() { host_pause = true; }
+extern "C" __attribute__((visibility("default"))) int srpt_host_held() { return host_held; }
+extern "C" __attribute__((visibility("default"))) void srpt_host_resume() { host_held = false; }
+extern "C" __attribute__((visibility("default"))) const char* srpt_host_environment(unsigned index) {
+    return configuration && index < configuration->environment.size() ? configuration->environment[index].c_str() : nullptr;
+}
+static std::unique_ptr<PreparedRun> host_prepared;
+extern "C" __attribute__((visibility("default"))) int32_t srpt_host_prepare(void* args) noexcept {
+    auto* call = static_cast<SrptLaunch*>(args);
+    if (!initialize_launch(call) || call->action != SRPT_RUN) return SRPT_INVALID_ARGUMENT;
+    try { host_prepared = prepare_run(*call); return SRPT_SUCCESS; }
+    catch (const LaunchError& error) {
+        end_failed_preparation(); call->outcome = SRPT_OUTCOME_HOST_FAILURE; call->os_error = error.error;
+        return error.status;
+    } catch (...) { end_failed_preparation(); call->outcome = SRPT_OUTCOME_HOST_FAILURE; call->os_error = EIO; return SRPT_UNSUCCESSFUL; }
+}
+extern "C" __attribute__((visibility("default"))) int32_t srpt_host_complete() noexcept {
+    try { require(host_prepared != nullptr); complete_preparation(*host_prepared); host_prepared.reset(); return SRPT_SUCCESS; }
+    catch (...) { return SRPT_UNSUCCESSFUL; }
+}
+extern "C" __attribute__((visibility("default"))) const char* srpt_host_argument(unsigned index) {
+    return host_prepared && index < host_prepared->arguments.size() ? host_prepared->arguments[index].c_str() : nullptr;
+}
+extern "C" __attribute__((visibility("default"))) const char* srpt_host_prepared_environment(unsigned index) {
+    return host_prepared && index < host_prepared->environment.size() ? host_prepared->environment[index].c_str() : nullptr;
+}
+extern "C" __attribute__((visibility("default"))) int srpt_host_cwd() { return host_prepared ? host_prepared->cwd.value : -1; }
+''' + SUPPORT_CHILD_SYSCALL_WRAPPERS)
+    definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(value) for value in support_id) + '}'
+    child_wrappers = ['posix_spawn', 'waitid', 'waitpid', 'kill', 'close', 'posix_spawn_file_actions_init',
+                      'posix_spawnattr_init', 'posix_spawn_file_actions_addopen', 'posix_spawn_file_actions_addfchdir_np',
+                      'posix_spawn_file_actions_addclosefrom_np', 'posix_spawnattr_setsigmask',
+                      'posix_spawnattr_setsigdefault', 'posix_spawnattr_setpgroup', 'posix_spawnattr_setflags',
+                      'posix_spawn_file_actions_destroy', 'posix_spawnattr_destroy']
+    result = subprocess.run(['c++', '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fPIC', '-shared',
+                             '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
+                             '-I', str(tmp_path), '-I', str(ROOT / 'tests'),
+                             '-I', str(ROOT / 'src'), definition, str(wrapper), '-pthread',
+                             '-Wl,--wrap=pread', '-Wl,--wrap=clock_gettime', '-Wl,--wrap=clock_nanosleep',
+                             '-Wl,--wrap=_Znwm', '-Wl,--wrap=fopen',
+                             *['-Wl,--wrap=' + name for name in child_wrappers],
+                             '-o', str(output), '-ldl'], capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    output.chmod(0o600)
+    def binding(path, identity):
+        info = path.stat()
+        return f'{identity.hex()}:{info.st_dev}:{info.st_ino}'
+    production_binding, support_binding = binding(production, production_id), binding(output, support_id)
+    env = dict(os.environ, WINEPREFIX=str(session / 'prefix'), WINEARCH='win64',
+               WINESERVER=str(tmp_path / 'inert-wineserver'), XDG_DATA_HOME=str(session / 'data'),
+               XDG_CACHE_HOME=str(session / 'cache'), TMPDIR=str(session / 'tmp'),
+               TEMP='Q:\\owned\\tmp', TMP='Q:\\owned\\tmp', SPACE_WINE_WINDOWS_TMP='Q:\\owned\\tmp',
+               SPACE_WINE_PUBLICATION_BINDING=production_binding,
+               SPACE_WINE_PUBLICATION_TEST_BINDING=support_binding, SPACE_WINE_PUBLICATION_TEST_CRYPTO='b')
+    # Optional parent paths are admitted separately; avoid accidental host-specific inputs.
+    env.pop('XDG_RUNTIME_DIR', None)
+    return SimpleNamespace(repo=repo, session=session, library=output, env=env, metadata=metadata,
+                           production=production, production_binding=production_binding, support_binding=support_binding,
+                           behavior=behavior)
+
+
+SUPPORT_CONFIG_DRIVER = r'''
+import ctypes, fcntl, json, os, shutil, signal, socket, sys, threading, time
+class SupportCall(ctypes.Structure):
+    _fields_ = [(name, ctypes.c_uint32) for name in ('size', 'abi', 'opcode', 'reserved')] + [
+        ('root', ctypes.c_uint64)] + [(name, ctypes.c_uint32) for name in ('mode', 'gid', 'data_size', 'os_error')] + [
+        (name, ctypes.c_uint64) for name in ('device', 'inode', 'links', 'file_size')] + [
+        ('uid', ctypes.c_uint32), ('reserved2', ctypes.c_uint32), ('offset', ctypes.c_uint64),
+        ('path', ctypes.c_char * 4096), ('other', ctypes.c_char * 4096), ('data', ctypes.c_ubyte * 4096)]
+class Launch(ctypes.Structure):
+    _fields_ = [(name, ctypes.c_uint32) for name in ('size', 'abi', 'action', 'case_id')] + [
+        ('root', ctypes.c_uint64), ('production_build_id', ctypes.c_ubyte * 32), ('support_build_id', ctypes.c_ubyte * 32)] + [
+        (name, ctypes.c_uint64) for name in ('production_device', 'production_inode', 'support_device', 'support_inode')] + [
+        (name, ctypes.c_uint32) for name in ('phase', 'os_error', 'exit_code', 'term_signal', 'outcome', 'reserved', 'remaining_ms', 'reserved2')]
+assert ctypes.sizeof(SupportCall) == 12376 and SupportCall.path.offset == 88
+assert ctypes.sizeof(Launch) == 152 and ctypes.alignment(Launch) == 8 and Launch.phase.offset == 120
+library = ctypes.CDLL(sys.argv[2])
+entries = (ctypes.c_void_p * 3).in_dll(library, '__wine_unix_call_funcs')
+entry = ctypes.CFUNCTYPE(ctypes.c_int32, ctypes.c_void_p)
+fixture, launch = entry(entries[1]), entry(entries[2])
+sentinels = []
+if sys.argv[6].startswith('prepare-execute'):
+    sentinels.extend(os.pipe())
+    sockets = socket.socketpair()
+    sentinels.extend(item.fileno() for item in sockets)
+    for fd in sentinels: os.set_inheritable(fd, True)
+    signal.signal(signal.SIGUSR1, signal.SIG_IGN)
+    signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGUSR2})
+    if sys.argv[6] == 'prepare-execute-ignore': signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    if sys.argv[6] == 'prepare-execute-no_cldwait': library.srpt_host_no_cldwait()
+def parent_state():
+    status = open('/proc/thread-self/status').read()
+    return (dict(os.environ), os.getcwdb(), os.getpgrp(), library.srpt_host_sigchld_flags(),
+            tuple(line for line in status.splitlines() if line.startswith(('Umask:', 'SigBlk:', 'SigIgn:', 'SigCgt:'))))
+def native_run(call):
+    created_before = library.srpt_host_created()
+    reaped_before = library.srpt_host_native_reaps()
+    started = time.monotonic()
+    caller_state = parent_state()
+    try:
+        status = launch(ctypes.byref(call))
+        assert parent_state() == caller_state
+        snapshot = dict(created=library.srpt_host_created() - created_before,
+            native_reaps=library.srpt_host_native_reaps() - reaped_before,
+            native_reaped=library.srpt_host_reaped(), kernel_echild=library.srpt_host_kernel_echild(),
+            evidence_held=library.srpt_host_evidence_held(), seconds=time.monotonic() - started)
+        if call.outcome == 5:
+            snapshot['fd_delta'] = len(os.listdir('/proc/self/fd')) - base_fds
+            snapshot['fixture_exists'] = os.path.isdir(owned)
+            assert snapshot['evidence_held'] and snapshot['fd_delta'] > 0 and snapshot['fixture_exists']
+            for token in (root.root, retained.root):
+                request = SupportCall(size=12376, abi=2, opcode=2, root=token)
+                assert fixture(ctypes.byref(request)) != 0 and request.os_error == 16
+            request = SupportCall(size=12376, abi=2, opcode=5, root=retained.root, path=b'blocked', mode=0o600)
+            assert fixture(ctypes.byref(request)) != 0 and request.os_error == 16
+        return status, snapshot
+    finally:
+        # Safety cleanup always runs, but proof assertions use the PRE-cleanup snapshot.
+        library.srpt_host_cleanup_child()
+root = SupportCall(size=ctypes.sizeof(SupportCall), abi=2, opcode=1, path=os.fsencode(sys.argv[5]))
+assert fixture(ctypes.byref(root)) == 0
+if sys.argv[6] == 'path-replace':
+    os.rename(sys.argv[5], sys.argv[5] + '-moved'); os.mkdir(sys.argv[5], 0o700)
+value = Launch(size=152, abi=2, action=1, root=root.root)
+for prefix, text in [('production', sys.argv[3]), ('support', sys.argv[4])]:
+    identity, device, inode = text.split(':')
+    getattr(value, prefix + '_build_id')[:] = bytes.fromhex(identity)
+    setattr(value, prefix + '_device', int(device)); setattr(value, prefix + '_inode', int(inode))
+before = parent_state()
+fd_count = len(os.listdir('/proc/self/fd'))
+if sys.argv[6] == 'identity-host-failure': library.srpt_host_fail_identity()
+busy_results = {}
+if sys.argv[6].startswith('busy'):
+    library.srpt_host_arm()
+    statuses = []
+    caller_states = []
+    ready, proceed = threading.Event(), threading.Event()
+    def invoke_configuration():
+        ready.set(); proceed.wait()
+        caller_before = parent_state()
+        returned = launch(ctypes.byref(value))
+        caller_states.append((caller_before, parent_state()))
+        statuses.append(returned)
+    worker = threading.Thread(target=invoke_configuration)
+    worker.start(); assert ready.wait(5)
+    before = parent_state()  # Fixed thread topology before entering native code.
+    proceed.set()
+    changed_environment = None
+    try:
+        end = time.monotonic() + 5
+        while not library.srpt_host_held():
+            assert time.monotonic() < end
+            time.sleep(0.001)
+        for name, opcode, path in [('release', 2, b''), ('mutation', 5, b'blocked'), ('observe', 3, b'')]:
+            call = SupportCall(size=12376, abi=2, opcode=opcode, root=root.root, path=path, mode=0o600)
+            busy_results[name] = (fixture(ctypes.byref(call)), call.os_error)
+        alias = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(sys.argv[5]))
+        busy_results['alias'] = (fixture(ctypes.byref(alias)), alias.os_error)
+        unrelated = os.path.dirname(sys.argv[5]) + '/unrelated'
+        os.mkdir(unrelated, 0o700)
+        call = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(unrelated))
+        assert fixture(ctypes.byref(call)) == 0
+        call.opcode = 2
+        busy_results['unrelated'] = (fixture(ctypes.byref(call)), call.os_error)
+        if sys.argv[6] == 'busy-path-replace':
+            os.rename(sys.argv[5], sys.argv[5] + '-moved'); os.mkdir(sys.argv[5], 0o700)
+        if sys.argv[6] == 'busy-pin-change':
+            with open(os.path.dirname(os.environ['WINESERVER']) + '/inert-wine64', 'ab') as output:
+                output.write(b'changed during acquisition')
+        if sys.argv[6] == 'busy-environment-change':
+            changed_environment = {name: os.environ[name] for name in ('WINEPREFIX', 'SPACE_WINE_PUBLICATION_TEST_CRYPTO')}
+            os.environ['WINEPREFIX'] = '/unvalidated/other-prefix'
+            os.environ['SPACE_WINE_PUBLICATION_TEST_CRYPTO'] = 'n'
+        time.sleep(0.13)
+    finally:
+        library.srpt_host_resume()
+        worker.join(5)
+        if changed_environment is not None: os.environ.update(changed_environment)
+    assert not worker.is_alive() and len(statuses) == len(caller_states) == 1
+    caller_before, caller_after = caller_states[0]
+    assert caller_before[1:] == caller_after[1:]  # Actual caller mask/dispositions/SIGCHLD/cwd/group/umask.
+    if changed_environment is None:
+        assert caller_before[0] == caller_after[0]
+    else:
+        expected_during_call = dict(caller_before[0], WINEPREFIX='/unvalidated/other-prefix',
+                                   SPACE_WINE_PUBLICATION_TEST_CRYPTO='n')
+        assert caller_after[0] == expected_during_call  # The counterexample stays active through native resume.
+    status = statuses[0]
+else:
+    status = launch(ctypes.byref(value))
+after = parent_state()
+assert before == after
+result = dict(status=status, phase=value.phase, error=value.os_error, exit=value.exit_code,
+              outcome=value.outcome, remaining=value.remaining_ms)
+result['busy'] = busy_results
+library.srpt_host_environment.restype = ctypes.c_char_p
+values = []
+for index in range(32):
+    item = library.srpt_host_environment(index)
+    if item is None: break
+    values.append(os.fsdecode(item))
+else: raise AssertionError('unbounded native environment')
+result['environment'] = dict(item.split('=', 1) for item in values)
+result['retained_fd_delta'] = len(os.listdir('/proc/self/fd')) - fd_count
+if sys.argv[6] in ('replay', 'failed-replay'):
+    if sys.argv[6] == 'failed-replay': os.environ['WINEARCH'] = 'win64'
+    value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+    result['replay'] = launch(ctypes.byref(value))
+    assert len(os.listdir('/proc/self/fd')) - fd_count == result['retained_fd_delta']
+if sys.argv[6].startswith('run-context-'):
+    assert status == 0
+    name = 'record-publication-123' if sys.argv[6] != 'run-context-wrong-name' else 'record-publication-x'
+    path = sys.argv[5] + '/' + name
+    if sys.argv[6] == 'run-context-foreign': path = os.path.dirname(sys.argv[5]) + '/' + name
+    os.mkdir(path, 0o700)
+    if sys.argv[6] == 'run-context-nested':
+        path += '/nested'; os.mkdir(path, 0o700)
+    retained = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(path))
+    assert fixture(ctypes.byref(retained)) == 0
+    value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+    value.action = 2; value.case_id = 2 if sys.argv[6] == 'run-context-skipped' else 1; value.root = retained.root
+    # Even malformed-context tests supply an actual copy identity, never a fabricated inode.
+    for suffix in ('/control', '/control/modules', '/control/modules/x86_64-unix'):
+        os.mkdir(path + suffix, 0o700)
+    original = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[2]))))
+    copy = path + '/control/modules/x86_64-unix/space_record_publication.so'
+    shutil.copyfile(original + '/wine-publication/modules/x86_64-unix/space_record_publication.so', copy)
+    copied_info = os.stat(copy)
+    value.production_device = copied_info.st_dev; value.production_inode = copied_info.st_ino
+    if sys.argv[6] == 'run-context-binding': value.support_inode += 1
+    if sys.argv[6] == 'run-context-path-replace':
+        os.rename(path, path + '-moved'); os.mkdir(path, 0o700)
+    if sys.argv[6] == 'run-context-source-change':
+        with open(os.path.dirname(sys.argv[2]) + '/space_record_publication_tests.so', 'ab') as output:
+            output.write(b'changed after configure')
+    before_run = len(os.listdir('/proc/self/fd'))
+    run_status = launch(ctypes.byref(value))
+    result['run'] = dict(status=run_status, phase=value.phase, error=value.os_error,
+                         outcome=value.outcome, exit=value.exit_code)
+    assert len(os.listdir('/proc/self/fd')) == before_run
+    value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+    result['run_replay'] = launch(ctypes.byref(value))
+    retained.opcode = 2
+    assert fixture(ctypes.byref(retained)) == 0
+if sys.argv[6].startswith('prepare-'):
+    assert status == 0
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[2]))))
+    owned = sys.argv[5] + '/record-publication-123'
+    os.mkdir(owned, 0o700)
+    retained = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(owned))
+    assert fixture(ctypes.byref(retained)) == 0
+    scenario = sys.argv[6].removeprefix('prepare-')
+    def make_case(selected):
+        case = owned + '/' + selected
+        for directory in ('', '/modules', '/modules/x86_64-windows', '/modules/x86_64-unix'):
+            os.mkdir(case + directory, 0o700)
+        overlay = repo + '/wine/windows'
+        production = repo + '/wine-publication/modules'
+        pairs = [('test_record_publication.exe', overlay + '/test_record_publication.exe'),
+                 ('space_record_publication_tests.dll', overlay + '/space_record_publication_tests.dll'),
+                 ('libfixture.dll', overlay + '/libfixture.dll'),
+                 ('bcryptprimitives.dll', overlay + '/bcryptprimitives.dll'),
+                 ('space_record_publication.dll', production + '/x86_64-windows/space_record_publication.dll'),
+                 ('modules/x86_64-windows/space_record_publication.dll', production + '/x86_64-windows/space_record_publication.dll'),
+                 ('modules/x86_64-unix/space_record_publication.so', production + '/x86_64-unix/space_record_publication.so')]
+        for name, source in pairs:
+            shutil.copyfile(source, case + '/' + name); os.chmod(case + '/' + name, 0o600)
+        copied = os.stat(case + '/modules/x86_64-unix/space_record_publication.so')
+        for name in ('space_record_publication.dll', 'modules/x86_64-windows/space_record_publication.dll',
+                     'modules/x86_64-unix/space_record_publication.so'):
+            if name.endswith('.so') and selected == 'bad-unix' and scenario in ('missing-receipt', 'receipt-after-damage'):
+                continue
+            relative = os.path.relpath(case + '/' + name, sys.argv[5])
+            observer = None
+            if scenario == 'receipt-roots':
+                base = os.path.dirname(case + '/' + name)
+                observer = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(base))
+                assert fixture(ctypes.byref(observer)) == 0
+                relative = os.path.basename(name)
+            call = SupportCall(size=12376, abi=2, opcode=3, root=observer.root if observer else root.root,
+                               path=os.fsencode(relative))
+            assert fixture(ctypes.byref(call)) == 0
+            if observer:
+                observer.opcode = 2
+                assert fixture(ctypes.byref(observer)) == 0
+        return case, copied
+    def damage(case, selected):
+        names = ['modules/x86_64-unix/space_record_publication.so'] if selected.endswith('unix') else [
+            'space_record_publication.dll', 'modules/x86_64-windows/space_record_publication.dll']
+        if selected == 'control': return
+        for name in names:
+            data = b'not-an-ELF' if selected.endswith('unix') else b'not-a-PE'
+            relative = os.path.relpath(case + '/' + name, sys.argv[5])
+            call = SupportCall(size=12376, abi=2, opcode=11 if selected.startswith('missing') else 6,
+                               root=root.root, path=os.fsencode(relative), data_size=0 if selected.startswith('missing') else len(data))
+            call.data[:len(data)] = data
+            if scenario == 'missing-renamed' and selected == 'missing-unix':
+                os.rename(case + '/' + name, case + '/renamed-away')
+                os.rename(case + '/renamed-away', owned + '/renamed-away')
+            else: assert fixture(ctypes.byref(call)) == 0
+    target = 5 if scenario in ('missing-receipt', 'receipt-after-damage', 'receipt-replaced', 'wrong-mutation') else (
+        4 if scenario == 'missing-renamed' else 2 if scenario in ('changed-fixture', 'alias-fixture', 'wrong-order') else 1)
+    stages = []
+    base_fds = len(os.listdir('/proc/self/fd'))
+    for index, selected in enumerate(('control', 'missing-pe', 'bad-pe', 'missing-unix', 'bad-unix'), 1):
+        if index == target and scenario in ('changed-fixture', 'alias-fixture'):
+            if scenario == 'changed-fixture':
+                owned = sys.argv[5] + '/record-publication-456'; os.mkdir(owned, 0o700)
+            retained = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(owned))
+            assert fixture(ctypes.byref(retained)) == 0
+            base_fds += 1  # One deliberately retained extra context, not a preparation descriptor.
+        case, copied = make_case(selected)
+        damage(case, selected)
+        value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+        value.action = 2; value.case_id = index; value.root = retained.root
+        value.production_device = copied.st_dev; value.production_inode = copied.st_ino
+        if index == target:
+            if scenario == 'copy-bytes':
+                with open(case + '/test_record_publication.exe', 'ab') as output: output.write(b'changed')
+            elif scenario in ('copy-symlink', 'copy-hardlink'):
+                path = case + '/test_record_publication.exe'; os.unlink(path)
+                if scenario == 'copy-symlink': os.symlink(repo + '/wine/windows/test_record_publication.exe', path)
+                else: os.link(repo + '/wine/windows/test_record_publication.exe', path)
+            elif scenario == 'copy-multiple-links':
+                os.link(case + '/test_record_publication.exe', owned + '/another-link')
+            elif scenario == 'extra-file': open(case + '/untrusted.txt', 'wb').close()
+            elif scenario == 'extra-root': os.mkdir(case + '/modules/extra', 0o700)
+            elif scenario == 'support-copy': os.unlink(case + '/space_record_publication_tests.dll')
+            elif scenario == 'dependency-bytes':
+                with open(case + '/libfixture.dll', 'ab') as output: output.write(b'changed')
+            elif scenario == 'copy-binding': value.production_inode += 1
+            elif scenario == 'production-id': value.production_build_id[0] ^= 1
+            elif scenario == 'receipt-after-damage':
+                call = SupportCall(size=12376, abi=2, opcode=3, root=root.root,
+                    path=os.fsencode('record-publication-123/bad-unix/modules/x86_64-unix/space_record_publication.so'))
+                assert fixture(ctypes.byref(call)) == 0
+            elif scenario == 'receipt-replaced':
+                path = case + '/modules/x86_64-unix/space_record_publication.so'; os.unlink(path)
+                with open(path, 'wb') as output: output.write(b'not-an-ELF')
+                os.chmod(path, 0o600)
+                value.production_inode = os.stat(path).st_ino  # Caller cannot rebind the captured intact-copy proof.
+            elif scenario == 'wrong-mutation':
+                with open(case + '/modules/x86_64-unix/space_record_publication.so', 'ab') as output: output.write(b'!')
+            elif scenario == 'session-replaced':
+                cache = os.environ['XDG_CACHE_HOME']; os.rename(cache, cache + '-moved'); os.mkdir(cache, 0o700)
+            elif scenario == 'mode': os.chmod(case + '/modules/x86_64-unix', 0o755)
+            elif scenario == 'missing-exe': os.unlink(case + '/test_record_publication.exe')
+            elif scenario == 'support-root': open(repo + '/wine-publication-tests/modules/x86_64-unix/extra.so', 'wb').close()
+            elif scenario == 'wrong-order': value.case_id += 1
+            elif scenario == 'no-reserve': library.srpt_host_no_reserve()
+            elif scenario == 'allocation-failure': library.srpt_host_fail_allocation()
+            elif scenario == 'retained-parent':
+                os.rename(sys.argv[5], sys.argv[5] + '-moved'); os.mkdir(sys.argv[5], 0o700)
+                call = SupportCall(size=12376, abi=2, opcode=3, root=root.root,
+                    path=b'record-publication-123/control/modules/x86_64-unix/space_record_publication.so')
+                result['retained_observation'] = dict(status=fixture(ctypes.byref(call)), device=call.device,
+                    inode=call.inode, size=call.file_size, bytes=call.data_size)
+                result['observed_copy'] = [copied.st_dev, copied.st_ino]
+        if scenario == 'control':
+            returned, retirement = native_run(value)
+            result['prepared'] = dict(status=returned, phase=value.phase, error=value.os_error,
+                                      exit=value.exit_code, outcome=value.outcome, remaining=value.remaining_ms,
+                                      retirement=retirement)
+            assert len(os.listdir('/proc/self/fd')) == base_fds
+            value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+            assert launch(ctypes.byref(value)) == ctypes.c_int32(0xc000000d).value
+            break
+        if scenario.startswith('execute-fault-') and index == 1:
+            getattr(library, 'srpt_host_fault_' + scenario.removeprefix('execute-fault-'))()
+        library.srpt_host_prepare.argtypes = [ctypes.c_void_p]
+        state_before = parent_state()
+        if scenario == 'busy' and index == 1:
+            library.srpt_host_arm()
+            returned = []
+            caller_states = []
+            ready, proceed = threading.Event(), threading.Event()
+            def invoke_preparation():
+                ready.set(); proceed.wait()
+                caller_before = parent_state()
+                prepared = library.srpt_host_prepare(ctypes.byref(value))
+                caller_states.append((caller_before, parent_state()))
+                returned.append(prepared)
+            worker = threading.Thread(target=invoke_preparation)
+            worker.start(); assert ready.wait(5)
+            state_before = parent_state()
+            proceed.set()
+            try:
+                until = time.monotonic() + 5
+                while not library.srpt_host_held():
+                    assert time.monotonic() < until; time.sleep(0.001)
+                concurrent = Launch.from_buffer_copy(value)
+                concurrent.phase = concurrent.os_error = concurrent.exit_code = concurrent.term_signal = concurrent.outcome = concurrent.remaining_ms = 0
+                assert launch(ctypes.byref(concurrent)) == ctypes.c_int32(0xc000000d).value
+                for token in (root.root, retained.root):
+                    call = SupportCall(size=12376, abi=2, opcode=2, root=token)
+                    assert fixture(ctypes.byref(call)) != 0 and call.os_error == 16
+                call = SupportCall(size=12376, abi=2, opcode=5, root=retained.root, path=b'blocked', mode=0o600)
+                assert fixture(ctypes.byref(call)) != 0 and call.os_error == 16
+                call.opcode = 3; call.path = b''
+                assert fixture(ctypes.byref(call)) == 0
+            finally:
+                library.srpt_host_resume(); worker.join(5)
+            assert not worker.is_alive() and len(returned) == len(caller_states) == 1
+            assert caller_states[0][0] == caller_states[0][1]
+            prepared_status = returned[0]
+        elif scenario == 'execute-busy' and index == 1:
+            concurrent = Launch.from_buffer_copy(value)
+            ready, proceed = threading.Event(), threading.Event()
+            returned = []
+            def invoke():
+                ready.set(); proceed.wait(); returned.append(native_run(value))
+            worker = threading.Thread(target=invoke)
+            worker.start(); assert ready.wait(5)
+            state_before = parent_state()  # Exclude thread creation's libc setup, measure native calls.
+            proceed.set()
+            child = -1
+            try:
+                until = time.monotonic() + 5
+                while True:
+                    child = library.srpt_host_child_pid()
+                    stopped = os.waitid(os.P_PID, child, os.WSTOPPED | os.WNOHANG | os.WNOWAIT) if child > 0 else None
+                    if stopped and stopped.si_pid == child: break
+                    assert time.monotonic() < until; time.sleep(0.001)
+                assert stopped.si_code == os.CLD_STOPPED and stopped.si_status == signal.SIGSTOP
+                assert launch(ctypes.byref(concurrent)) == ctypes.c_int32(0xc000000d).value
+                for token in (root.root, retained.root):
+                    request = SupportCall(size=12376, abi=2, opcode=2, root=token)
+                    assert fixture(ctypes.byref(request)) != 0 and request.os_error == 16
+                request = SupportCall(size=12376, abi=2, opcode=5, root=retained.root, path=b'blocked', mode=0o600)
+                assert fixture(ctypes.byref(request)) != 0 and request.os_error == 16
+                request.opcode = 3; request.path = b''
+                assert fixture(ctypes.byref(request)) == 0
+                alias = SupportCall(size=12376, abi=2, opcode=1, path=os.fsencode(owned))
+                assert fixture(ctypes.byref(alias)) != 0 and alias.os_error == 16
+            finally:
+                if child > 0: os.kill(child, signal.SIGCONT)
+                worker.join(5)
+            assert not worker.is_alive() and len(returned) == 1
+            prepared_status, retirement = returned[0]
+        elif scenario.startswith('execute'): prepared_status, retirement = native_run(value)
+        else: prepared_status = library.srpt_host_prepare(ctypes.byref(value))
+        assert state_before == parent_state()
+        stage = dict(status=prepared_status, phase=value.phase, error=value.os_error, exit=value.exit_code,
+                     outcome=value.outcome, signal=value.term_signal)
+        if scenario.startswith('execute'): stage['retirement'] = retirement
+        stages.append(stage)
+        if prepared_status != 0:
+            stage['fd_delta'] = len(os.listdir('/proc/self/fd')) - base_fds
+            if scenario == 'allocation-failure':
+                value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+                result['after_failure'] = library.srpt_host_prepare(ctypes.byref(value))
+                if result['after_failure'] == 0: assert library.srpt_host_complete() == 0
+            elif value.outcome == 5:
+                assert stage['fd_delta'] > 0 and os.path.isdir(owned)
+                for token in (root.root, retained.root):
+                    call = SupportCall(size=12376, abi=2, opcode=2, root=token)
+                    assert fixture(ctypes.byref(call)) != 0 and call.os_error == 16
+                call = SupportCall(size=12376, abi=2, opcode=5, root=retained.root, path=b'blocked', mode=0o600)
+                assert fixture(ctypes.byref(call)) != 0 and call.os_error == 16
+            else: assert stage['fd_delta'] == 0
+            if scenario.startswith('execute'):
+                value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+                result['after_failure'] = launch(ctypes.byref(value))
+            break
+        if scenario.startswith('execute'):
+            assert len(os.listdir('/proc/self/fd')) == base_fds
+            continue
+        def texts(name):
+            function = getattr(library, name); function.restype = ctypes.c_char_p
+            output = []
+            for item in range(32):
+                text = function(item)
+                if text is None: return output
+                output.append(os.fsdecode(text))
+            raise AssertionError('bounded prepared text')
+        stage['arguments'] = texts('srpt_host_argument')
+        stage['environment'] = dict(item.split('=', 1) for item in texts('srpt_host_prepared_environment'))
+        cwd = library.srpt_host_cwd()
+        assert fcntl.fcntl(cwd, fcntl.F_GETFD) & fcntl.FD_CLOEXEC
+        assert (os.fstat(cwd).st_dev, os.fstat(cwd).st_ino) == (os.stat(case).st_dev, os.stat(case).st_ino)
+        assert library.srpt_host_complete() == 0  # Internal PREPARATION protocol only; no child was executed.
+        assert len(os.listdir('/proc/self/fd')) == base_fds
+    if len(stages) == 5 and stages[-1]['status'] == 0:
+        value.phase = value.os_error = value.exit_code = value.term_signal = value.outcome = value.remaining_ms = 0
+        result['after_end'] = launch(ctypes.byref(value)) if scenario.startswith('execute') else library.srpt_host_prepare(ctypes.byref(value))
+        assert len(os.listdir('/proc/self/fd')) == base_fds
+    result['stages'] = stages
+    result['spawn_count'] = library.srpt_host_spawn_count()
+    result['kill_count'] = library.srpt_host_kill_count()
+    result['zeroed_info'] = library.srpt_host_zeroed()
+    result['anchored_kills'] = library.srpt_host_anchor()
+    result['observation_preserved'] = library.srpt_host_observation_preserved()
+    result['native_reaps'] = library.srpt_host_native_reaps()
+    result['created'] = library.srpt_host_created()
+    result['backstop_kills'] = library.srpt_host_backstop_kills()
+    result['backstop_reaps'] = library.srpt_host_backstop_reaps()
+    library.srpt_host_clock_field.restype = ctypes.c_int64
+    result['clock_history'] = [[library.srpt_host_clock_field(row, field) for field in range(3)]
+                               for row in range(library.srpt_host_clock_rows())]
+    result['clock_overflow'] = library.srpt_host_clock_overflowed()
+print(json.dumps(result))
+'''
+
+
+def run_support_configuration(fixture, *, env=None, mode='normal'):
+    result = subprocess.run([sys.executable, '-c', SUPPORT_CONFIG_DRIVER, str(ROOT / 'scripts/tests'),
+                             str(fixture.library), fixture.production_binding, fixture.support_binding,
+                             str(fixture.session / 'tmp'), mode], env=env or fixture.env,
+                            capture_output=True, text=True, timeout=20)
+    assert result.returncode == 0, result.stderr
+    assert not result.stderr
+    lines = result.stdout.splitlines()
+    decoded = json.loads(lines[-1])
+    assert all(line.startswith('SRPT_NATIVE_CHILD ') for line in lines[:-1]), lines[:-1]
+    decoded['child_lines'] = lines[:-1]
+    observed = decoded.get('stages', []) + ([decoded['prepared']] if 'prepared' in decoded else [])
+    for stage in observed:
+        snapshot = stage.get('retirement')
+        if not snapshot: continue
+        if stage['outcome'] == 5:
+            assert snapshot['evidence_held'] and snapshot['fd_delta'] > 0 and snapshot['fixture_exists']
+        elif snapshot['created']:
+            assert snapshot['native_reaps'] == snapshot['created'] == 1
+            assert snapshot['native_reaped'] and snapshot['kernel_echild'], snapshot
+        else:
+            assert snapshot['native_reaps'] == 0
+    if observed and all(stage.get('outcome') != 5 for stage in observed):
+        assert decoded['backstop_reaps'] == decoded['backstop_kills'] == 0
+    return decoded
+
+
+@pytest.mark.parametrize('crypto', ['b', 'n'])
+def test_support_native_configure_accepts_closed_native_inputs(support_native_configuration, crypto):
+    fixture = support_native_configuration
+    env = dict(fixture.env, SPACE_WINE_PUBLICATION_TEST_CRYPTO=crypto, LD_UNRELATED='not-admitted',
+               WINE_UNRELATED='not-admitted', SPACE_WINE_APPLICATION_OBSERVER_FD='999')
+    result = run_support_configuration(fixture, env=env, mode='replay')
+    assert result['status'] == 0, result
+    assert result['phase'] == 9 and result['outcome'] == 1 and result['exit'] == 0xffffffff
+    assert 0 < result['remaining'] <= 60000 and result['error'] == 0
+    assert result['replay'] == ctypes.c_int32(0xc000000d).value
+    optional = {'HOME', 'LANG', 'LC_ALL', 'LC_CTYPE', 'DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR'}
+    required = {'WINEPREFIX', 'WINEARCH', 'WINESERVER', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'TMPDIR',
+                'TEMP', 'TMP', 'SPACE_WINE_WINDOWS_TMP', 'SPACE_WINE_PUBLICATION_TEST_CRYPTO'}
+    expected = {key: env[key] for key in required | (optional & env.keys())}
+    expected.update(PATH='', WINEDLLOVERRIDES='space_record_publication=b;space_record_publication_tests=b;'
+                    f'bcryptprimitives={crypto};advapi32,cryptbase=b')
+    assert result['environment'] == expected  # RUN adds only its fixed roots/bindings later.
+    assert result['retained_fd_delta'] == 10  # TEMP+Wine/server and seven retained originals, not leaked parents.
+
+
+@pytest.mark.parametrize('key,value', [('WINEARCH', 'win32'), ('WINESERVER', '/wrong/server'),
+    ('TMPDIR', '/wrong/tmp'), ('XDG_DATA_HOME', '/wrong/data'), ('XDG_CACHE_HOME', '/wrong/cache'),
+    ('WINEPREFIX', '/wrong/prefix'), ('TEMP', 'Q:\\wrong'), ('TMP', 'Q:\\wrong'),
+    ('SPACE_WINE_WINDOWS_TMP', 'relative'), ('SPACE_WINE_PUBLICATION_TEST_CRYPTO', 'builtin'),
+    ('SPACE_WINE_PUBLICATION_TEST_CRYPTO', ''), ('HOME', 'relative'), ('XDG_RUNTIME_DIR', '/missing/runtime'),
+    ('LANG', 'x' * 4096), ('SPACE_WINE_PUBLICATION_BINDING', 'invalid'),
+    ('SPACE_WINE_PUBLICATION_TEST_BINDING', 'invalid')])
+def test_support_native_configure_rejects_wrong_native_inputs(support_native_configuration, key, value):
+    fixture = support_native_configuration
+    result = run_support_configuration(fixture, env=dict(fixture.env, **{key: value}))
+    assert result['status'] != 0 and result['outcome'] == 4 and result['exit'] == 0xffffffff, result
+    assert result['retained_fd_delta'] == 0
+
+
+@pytest.mark.parametrize('name', ['WINEPREFIX', 'WINEARCH', 'WINESERVER', 'XDG_DATA_HOME', 'XDG_CACHE_HOME',
+    'TMPDIR', 'TEMP', 'TMP', 'SPACE_WINE_WINDOWS_TMP', 'SPACE_WINE_PUBLICATION_BINDING',
+    'SPACE_WINE_PUBLICATION_TEST_BINDING', 'SPACE_WINE_PUBLICATION_TEST_CRYPTO'])
+def test_support_native_configure_requires_every_closed_input(support_native_configuration, name):
+    fixture = support_native_configuration
+    env = dict(fixture.env); del env[name]
+    result = run_support_configuration(fixture, env=env)
+    assert result['status'] == ctypes.c_int32(0xc000000d).value and result['outcome'] == 4
+    assert result['exit'] == 0xffffffff and result['retained_fd_delta'] == 0
+
+
+def test_support_native_configure_failed_attempt_cannot_reset(support_native_configuration):
+    fixture = support_native_configuration
+    result = run_support_configuration(fixture, env=dict(fixture.env, WINEARCH='win32'), mode='failed-replay')
+    assert result['status'] == result['replay'] == ctypes.c_int32(0xc000000d).value
+    assert result['retained_fd_delta'] == 0
+
+
+def test_support_native_configure_identity_io_failure_is_host_failure(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='identity-host-failure')
+    assert result['status'] == ctypes.c_int32(0xc0000001).value and result['outcome'] == 4
+    assert result['exit'] == 0xffffffff and result['retained_fd_delta'] == 0
+
+
+def test_support_native_configure_busy_contexts_and_deadline(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='busy')
+    assert result['status'] == 0 and 0 < result['remaining'] <= 59870, result
+    for name in ('release', 'mutation', 'alias'):
+        assert result['busy'][name] == [ctypes.c_int32(0xc0000001).value, 16]
+    assert result['busy']['observe'] == result['busy']['unrelated'] == [0, 0]
+    assert result['retained_fd_delta'] == 10
+
+
+def test_support_native_configure_captures_one_validated_environment_snapshot(support_native_configuration):
+    fixture = support_native_configuration
+    result = run_support_configuration(fixture, mode='busy-environment-change')
+    assert result['status'] == 0, result
+    assert result['environment']['WINEPREFIX'] == fixture.env['WINEPREFIX']
+    assert result['environment']['SPACE_WINE_PUBLICATION_TEST_CRYPTO'] == 'b'
+    assert 'bcryptprimitives=b;' in result['environment']['WINEDLLOVERRIDES']
+
+
+def test_support_native_configure_revalidates_retained_temp_path(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='path-replace')
+    assert result['status'] == ctypes.c_int32(0xc000007b).value and result['outcome'] == 4
+    assert result['retained_fd_delta'] == 0
+
+
+@pytest.mark.parametrize('mode', ['busy-path-replace', 'busy-pin-change'])
+def test_support_native_configure_rechecks_after_acquisition(support_native_configuration, mode):
+    result = run_support_configuration(support_native_configuration, mode=mode)
+    assert result['status'] == ctypes.c_int32(0xc000007b).value and result['outcome'] == 4, result
+    assert result['exit'] == 0xffffffff and result['retained_fd_delta'] == 0
+
+
+@pytest.mark.parametrize('damage', ['wine-bytes', 'server-bytes', 'wine-mode', 'runtime-ancestor-mode',
+    'support-binding-actual-so', 'production-binding-source', 'source-symlink', 'source-hardlink',
+    'discovery-bytes', 'support-extra', 'production-extra', 'windows-dotdot', 'windows-control'])
+def test_support_native_configure_rejects_pins_bindings_and_original_layout(support_native_configuration, damage):
+    fixture = support_native_configuration
+    directory = Path(os.fsdecode(bytes.fromhex(fixture.metadata['implementation']['path_hex']))).parent
+    env = dict(fixture.env)
+    if damage in ('wine-bytes', 'server-bytes'):
+        path = directory / ('inert-wine64' if damage == 'wine-bytes' else 'inert-wineserver')
+        path.write_bytes(path.read_bytes() + b'changed')
+    elif damage == 'wine-mode': (directory / 'inert-wine64').chmod(0o700)
+    elif damage == 'runtime-ancestor-mode': directory.chmod(0o755)
+    elif damage == 'support-binding-actual-so':
+        fixture.support_binding = fixture.support_binding.split(':')[0] + ':' + fixture.production_binding.split(':', 1)[1]
+        env['SPACE_WINE_PUBLICATION_TEST_BINDING'] = fixture.support_binding
+    elif damage == 'production-binding-source':
+        fixture.production_binding = fixture.production_binding.split(':')[0] + ':' + fixture.support_binding.split(':', 1)[1]
+        env['SPACE_WINE_PUBLICATION_BINDING'] = fixture.production_binding
+    elif damage in ('source-symlink', 'source-hardlink'):
+        source = fixture.repo / 'build/wine-publication/modules/x86_64-windows/space_record_publication.dll'
+        saved = source.with_suffix('.saved')
+        source.rename(saved)
+        if damage == 'source-symlink': source.symlink_to(saved)
+        else: os.link(saved, source)
+    elif damage == 'discovery-bytes':
+        path = fixture.repo / 'build/wine/windows/space_record_publication.dll'
+        path.write_bytes(path.read_bytes() + b'changed')
+    elif damage in ('support-extra', 'production-extra'):
+        root = 'wine-publication-tests' if damage == 'support-extra' else 'wine-publication'
+        (fixture.repo / f'build/{root}/modules/x86_64-unix/extra.so').write_bytes(b'unadmitted')
+    else:
+        value = 'Q:\\owned\\..\\tmp' if damage == 'windows-dotdot' else 'Q:\\owned\\\x01tmp'
+        env.update(TEMP=value, TMP=value, SPACE_WINE_WINDOWS_TMP=value)
+    result = run_support_configuration(fixture, env=env)
+    assert result['status'] != 0 and result['outcome'] == 4 and result['exit'] == 0xffffffff, result
+    assert result['retained_fd_delta'] == 0
+
+
+@pytest.mark.parametrize('mode', ['wrong-name', 'foreign', 'nested', 'skipped', 'binding', 'path-replace', 'source-change'])
+def test_support_native_run_context_refuses_bad_roots_bindings_and_replay(support_native_configuration, mode):
+    result = run_support_configuration(support_native_configuration, mode='run-context-' + mode)
+    run = result['run']
+    assert run['status'] != 0 and run['error'] != 38, run  # Refuse the bad context before the WIP layout boundary.
+    assert run['outcome'] == 4 and run['exit'] == 0xffffffff
+    assert result['run_replay'] == ctypes.c_int32(0xc000000d).value
+
+
+def test_support_native_launch_control_runs_checked_inert_child(support_native_configuration):
+    prepared = run_support_configuration(support_native_configuration, mode='prepare-control')['prepared']
+    assert prepared['status'] == 0 and prepared['error'] == 0
+    assert prepared['phase'] == 9 and prepared['outcome'] == 1 and prepared['exit'] == 0
+    assert prepared['remaining'] >= 13000
+
+
+@pytest.mark.parametrize('crypto', ['b', 'n'])
+def test_support_native_launch_actual_five_case_children_and_parent_isolation(support_native_configuration, crypto):
+    fixture = support_native_configuration
+    result = run_support_configuration(fixture, env=dict(fixture.env, SPACE_WINE_PUBLICATION_TEST_CRYPTO=crypto,
+        LD_TEST_INPUT='not-inherited', WINE_TEST_INPUT='not-inherited', SPACE_WINE_APPLICATION_OBSERVER_FD='999'),
+        mode='prepare-execute')
+    assert len(result['stages']) == 5
+    assert all(stage['status'] == 0 and stage['exit'] == 0 and stage['signal'] == 0
+               and stage['outcome'] == 1 and stage['phase'] == 9 for stage in result['stages'])
+    assert result['child_lines'] == ['SRPT_NATIVE_CHILD ' + name for name in ('control', 'missing-pe', 'bad-pe', 'missing-unix', 'bad-unix')]
+    assert result['after_end'] == ctypes.c_int32(0xc000000d).value
+    assert result['spawn_count'] == 5 and result['kill_count'] == 0
+    assert result['zeroed_info'] and result['observation_preserved']
+
+
+@pytest.mark.parametrize('support_native_configuration', ['nonzero', 'signal', 'timeout'], indirect=True)
+def test_support_native_launch_actual_child_failures_are_retired_and_terminal(support_native_configuration):
+    fixture = support_native_configuration
+    started = __import__('time').monotonic()
+    result = run_support_configuration(fixture, mode='prepare-execute')
+    elapsed = __import__('time').monotonic() - started
+    assert len(result['stages']) == 1
+    stage = result['stages'][0]
+    assert stage['status'] == ctypes.c_int32(0xc0000001).value
+    assert stage['outcome'] == (3 if fixture.behavior == 'timeout' else 2)
+    assert stage['exit'] == (23 if fixture.behavior == 'nonzero' else 0xffffffff)
+    assert stage['signal'] == (signal.SIGUSR1 if fixture.behavior == 'signal' else signal.SIGKILL if fixture.behavior == 'timeout' else 0)
+    assert result['after_failure'] == ctypes.c_int32(0xc000000d).value
+    assert result['child_lines'] == ['SRPT_NATIVE_CHILD control']
+    if fixture.behavior == 'timeout': assert 9 <= elapsed < 14
+
+
+def test_support_native_launch_refuses_ignored_sigchld_without_parent_mutation(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-ignore')
+    assert result['stages'][0]['status'] == ctypes.c_int32(0xc0000001).value
+    assert result['stages'][0]['outcome'] == 4 and result['stages'][0]['error'] == 10
+    assert not result['child_lines']
+
+
+def test_support_native_launch_refuses_no_cldwait_without_parent_mutation(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-no_cldwait')
+    assert result['stages'][0]['status'] == ctypes.c_int32(0xc0000001).value
+    assert result['stages'][0]['outcome'] == 4 and result['spawn_count'] == 0 and not result['child_lines']
+
+
+@pytest.mark.parametrize('fault', ['action_init', 'attr_init', 'action_open', 'action_cwd', 'action_closefrom',
+    'attr_mask', 'attr_default', 'attr_group', 'flags', 'reserve', 'spawn'])
+def test_support_native_launch_checks_pre_spawn_failures_without_retry(support_native_configuration, fault):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-fault-' + fault)
+    stage = result['stages'][0]
+    assert len(result['stages']) == 1 and stage['status'] == ctypes.c_int32(0xc0000001).value
+    assert stage['outcome'] == 4 and stage['exit'] == 0xffffffff and stage['signal'] == 0
+    assert result['spawn_count'] == (1 if fault == 'spawn' else 0) and result['kill_count'] == 0
+    assert not result['child_lines'] and result['after_failure'] == ctypes.c_int32(0xc000000d).value
+
+
+@pytest.mark.parametrize('fault', ['action_destroy', 'attr_destroy', 'post_pin', 'post_alloc', 'clock', 'close_spawn', 'close_reap'])
+def test_support_native_launch_post_spawn_errors_retire_exact_leader(support_native_configuration, fault):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-fault-' + fault)
+    stage = result['stages'][0]
+    assert len(result['stages']) == 1 and stage['status'] != 0 and stage['outcome'] == 4
+    assert result['spawn_count'] == 1 and result['kill_count'] == (0 if fault == 'close_reap' else 1)
+    assert result['anchored_kills'] and result['zeroed_info']
+    assert result['after_failure'] == ctypes.c_int32(0xc000000d).value
+
+
+@pytest.mark.parametrize('fault', ['waitid_wrong', 'waitid_badcode', 'waitid_badstatus', 'waitid_echild',
+                                  'waitpid_echild', 'waitpid_late', 'kill', 'partial_spawn', 'reaper'])
+def test_support_native_launch_uncertain_ownership_preserves_busy_evidence(support_native_configuration, fault):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-fault-' + fault)
+    stage = result['stages'][0]
+    assert len(result['stages']) == 1 and stage['status'] == ctypes.c_int32(0xc0000001).value
+    assert stage['outcome'] == 5 and stage['fd_delta'] > 0
+    assert result['spawn_count'] == 1 and result['kill_count'] == (1 if fault == 'kill' else 0)
+    assert result['anchored_kills'] and result['after_failure'] == ctypes.c_int32(0xc000000d).value
+
+
+def test_support_native_launch_refuses_pre_spawn_pin_replacement(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-fault-pre_pin')
+    assert result['stages'][0]['status'] == ctypes.c_int32(0xc000007b).value
+    assert result['stages'][0]['outcome'] == 4 and result['spawn_count'] == result['created'] == 0
+    assert not result['child_lines']
+
+
+@pytest.mark.parametrize('support_native_configuration', ['paused'], indirect=True)
+def test_support_native_launch_wait_keeps_context_busy_without_registry_lock(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-busy')
+    assert len(result['stages']) == 5 and all(stage['status'] == 0 for stage in result['stages'])
+    assert result['native_reaps'] == result['created'] == 5
+    assert result['backstop_reaps'] == result['backstop_kills'] == result['kill_count'] == 0
+
+
+@pytest.mark.parametrize('fault', ['waitid_eintr', 'waitpid_eintr'])
+def test_support_native_launch_eintr_preserves_absolute_wait_and_reap(support_native_configuration, fault):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-fault-' + fault)
+    assert len(result['stages']) == 5 and all(stage['status'] == 0 for stage in result['stages'])
+    assert result['spawn_count'] == 5 and result['kill_count'] == 0 and result['observation_preserved']
+
+
+def test_support_native_launch_interrupted_wait_does_not_restart_budget(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-execute-fault-waitid_late')
+    assert len(result['stages']) == 1 and result['stages'][0]['outcome'] == 3
+    assert result['spawn_count'] == 1 and result['kill_count'] == 1 and result['anchored_kills']
+    assert not result['clock_overflow']
+    history = result['clock_history']
+    origin = next(row for row in history if row[0] == 0)
+    interrupt = next(index for index, row in enumerate(history) if row[0] == 2)
+    late = next(row[1] for row in history[interrupt + 1:] if row[0] == 1)
+    assert late > origin[1] + 10_000_000_000
+    sleeps = [row for row in history if row[0] == 3]
+    assert sleeps and all(row[1] - row[2] == 48_000_000_000 for row in sleeps)
+    retired = [row[1] for row in history if row[0] == 5]
+    assert len(retired) == 1 and late <= retired[0] <= late + 2_000_000_000
+    assert retired[0] <= origin[2] - 1_000_000_000
+    assert result['stages'][0]['retirement']['seconds'] < 3
+
+
+@pytest.mark.parametrize('crypto', ['b', 'n'])
+def test_support_native_preparation_sequence_closed_argv_env_and_receipts(support_native_configuration, crypto):
+    fixture = support_native_configuration
+    env = dict(fixture.env, SPACE_WINE_PUBLICATION_TEST_CRYPTO=crypto, PATH='/not-inherited',
+               WINEDLLPATH='/not-inherited', WINEDLLOVERRIDES='not-inherited', LD_TEST_INPUT='not-inherited',
+               WINE_TEST_INPUT='not-inherited', SPACE_WINE_APPLICATION_OBSERVER_FD='999')
+    result = run_support_configuration(fixture, env=env, mode='prepare-sequence')
+    assert len(result['stages']) == 5
+    assert result['after_end'] == ctypes.c_int32(0xc000000d).value
+    for selected, stage in zip(('control', 'missing-pe', 'bad-pe', 'missing-unix', 'bad-unix'), result['stages']):
+        assert stage['status'] == 0 and stage['phase'] == 4 and stage['exit'] == 0xffffffff
+        case = str(fixture.session / 'tmp/record-publication-123' / selected)
+        assert stage['arguments'] == [str(fixture.session.parents[4] / 'inert-wine64'),
+                                       case + '/test_record_publication.exe', '--wine-publication-child=' + selected]
+        expected = dict(result['environment'], WINEDLLPATH=case + '/modules:' + str(fixture.repo / 'build/wine-publication-tests/modules'),
+                        SPACE_WINE_PUBLICATION_TEST_BINDING=fixture.support_binding)
+        copied = os.stat(Path(case) / 'modules/x86_64-unix/space_record_publication.so') if selected != 'missing-unix' else None
+        binding = stage['environment']['SPACE_WINE_PUBLICATION_BINDING']
+        identity, device, inode = binding.split(':')
+        assert identity == fixture.production_binding.split(':')[0] and binding != fixture.production_binding
+        if copied: assert (int(device), int(inode)) == (copied.st_dev, copied.st_ino)
+        expected['SPACE_WINE_PUBLICATION_BINDING'] = binding
+        assert stage['environment'] == expected
+
+
+@pytest.mark.parametrize('damage', ['copy-bytes', 'copy-symlink', 'copy-hardlink', 'copy-multiple-links', 'extra-file', 'extra-root',
+    'support-copy', 'dependency-bytes', 'copy-binding', 'production-id', 'missing-receipt', 'receipt-after-damage',
+    'receipt-replaced', 'wrong-mutation', 'missing-renamed', 'session-replaced', 'mode', 'missing-exe', 'support-root',
+    'changed-fixture', 'alias-fixture', 'wrong-order', 'no-reserve'])
+def test_support_native_preparation_refuses_layout_mutation_and_unproved_binding(support_native_configuration, damage):
+    result = run_support_configuration(support_native_configuration, mode='prepare-' + damage)
+    expected = 5 if damage in ('missing-receipt', 'receipt-after-damage', 'receipt-replaced', 'wrong-mutation') else (
+        4 if damage == 'missing-renamed' else 2 if damage in ('changed-fixture', 'alias-fixture', 'wrong-order') else 1)
+    assert len(result['stages']) == expected and all(stage['status'] == 0 for stage in result['stages'][:-1])
+    assert result['stages'][-1]['status'] != 0 and result['stages'][-1]['error'] != 38, result['stages']
+    assert result['stages'][-1]['exit'] == 0xffffffff
+
+
+def test_support_native_preparation_busy_context_survives_rejected_concurrent_run(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-busy')
+    assert len(result['stages']) == 5 and all(stage['status'] == 0 for stage in result['stages'])
+
+
+def test_support_native_preparation_allocation_failure_is_terminal_and_releases_proofs(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-allocation-failure')
+    assert result['stages'][0]['status'] == ctypes.c_int32(0xc0000001).value
+    assert result['stages'][0]['fd_delta'] == 0
+    assert result['after_failure'] == ctypes.c_int32(0xc000000d).value
+
+
+def test_support_native_preparation_receipts_preserve_retained_parent_observe(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-retained-parent')
+    observed = result['retained_observation']
+    assert observed['status'] == 0 and [observed['device'], observed['inode']] == result['observed_copy']
+    assert observed['size'] > 0 and observed['bytes'] > 0
+    assert result['stages'][-1]['status'] != 0  # Launch still refuses the replaced acquisition path.
+
+
+def test_support_native_preparation_receipts_accept_retained_case_and_architecture_roots(support_native_configuration):
+    result = run_support_configuration(support_native_configuration, mode='prepare-receipt-roots')
+    assert len(result['stages']) == 5 and all(stage['status'] == 0 for stage in result['stages'])
+    assert result['after_end'] == ctypes.c_int32(0xc000000d).value
 
 
 def test_support_real_elf_bounded_reads_cover_multichunk_content(support_elf, tmp_path):
@@ -2058,7 +3355,8 @@ def test_support_builder_is_independent_dormant_and_seals_discovery(support_buil
     assert set(manifest['toolchain']['inputs']) == set(SUPPORT_INPUTS)
     assert manifest['kind'] == 'record-publication-test-support'
     assert manifest['build_id'] != production['build_id']
-    assert manifest['runtime'] == production['runtime'] and manifest['abi'] == 1
+    assert manifest['runtime'] == production['runtime'] and manifest['abi'] == 2
+    assert production['abi'] == 1
     assert set(manifest['files']) == {*SUPPORT_PAIR, SUPPORT_COPY}
     output = fixture.root / 'build/wine-publication-tests'
     assert json.loads((output / 'build.json').read_text()) == manifest
@@ -2082,6 +3380,102 @@ def test_support_builder_pins_every_input(support_builder_fixture, relative):
     path = fixture.root / relative
     path.write_bytes(path.read_bytes() + b'\n/* identity change */\n')
     assert module.build_test_support(fixture.root, session)['build_id'] != first['build_id']
+
+
+def test_support_active_build_id_uses_abi2():
+    module = builder_module()
+    runtime, toolchain = {'runtime': 'inert'}, {'inputs': {}}
+    expected = dict(kind='record-publication-test-support', abi=2, runtime=runtime, toolchain=toolchain)
+    assert module._test_build_id(runtime, toolchain) == hashlib.sha256(
+        json.dumps(expected, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+@pytest.fixture
+def retired_support_output(support_builder_fixture):
+    """Exactly inventoried synthetic ABI1, using the historical ID calculation.
+
+    No retired source is compiled/executed. These compiler-protocol artifacts
+    embed the ID in the final 32 bytes, as in the existing synthetic fixtures.
+    """
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    manifest = module.build_test_support(fixture.root, session)
+    output = fixture.root / 'build/wine-publication-tests'
+    manifest['abi'] = 1
+    for relative in ('src/record_publication_wine_binding.h', 'src/record_publication_wine_abi.h'):
+        manifest['toolchain']['inputs'].pop(relative, None)
+    original = dict(kind=module.TEST_KIND, abi=1, runtime=manifest['runtime'], toolchain=manifest['toolchain'])
+    manifest['build_id'] = hashlib.sha256(json.dumps(original, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    for relative in (*SUPPORT_PAIR, SUPPORT_COPY):
+        path = output / relative
+        path.write_bytes(path.read_bytes()[:-32] + bytes.fromhex(manifest['build_id']))
+    manifest['files'] = module._test_inventory(output, manifest['build_id'])
+    module.prefix.write_control(output / 'build.json', manifest)
+    return fixture, session, output, manifest
+
+
+def test_support_retired_abi1_replacement_only_never_active(retired_support_output):
+    fixture, session, output, retired = retired_support_output
+    module = builder_module()
+    with pytest.raises(ValueError, match='manifest'):
+        module._recognized_test_output(output)
+    assert module._recognized_test_output(output, for_replacement=True)[1] == retired
+    from wine import artifacts
+    with pytest.raises(ValueError, match='manifest'):
+        artifacts.support_manifest(session)
+    replacement = module.build_test_support(fixture.root, session)
+    assert replacement['abi'] == 2 and replacement['build_id'] != retired['build_id']
+    assert module._recognized_test_output(output)[1] == replacement
+    assert module._recognized_test_output(output, for_replacement=True)[1] == replacement
+    assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
+
+
+@pytest.mark.parametrize('damage', ['abi-bool', 'abi3', 'new-id', 'build-id', 'runtime', 'toolchain',
+                                  'inventory', 'copy', 'so', 'extra', 'missing', 'symlink', 'hardlink',
+                                  'file-mode', 'directory-mode'])
+def test_support_retired_abi1_tamper_refuses_before_compile(retired_support_output, damage):
+    fixture, session, output, retired = retired_support_output
+    module = builder_module()
+    if damage == 'abi-bool': retired['abi'] = True
+    elif damage == 'abi3': retired['abi'] = 3
+    elif damage == 'new-id': retired['build_id'] = module._test_build_id(retired['runtime'], retired['toolchain'])
+    elif damage == 'build-id': retired['build_id'] = '0' * 64
+    elif damage == 'runtime': retired['runtime']['sha256'] = '0' * 64
+    elif damage == 'toolchain': retired['toolchain']['inputs'][SUPPORT_HEADER] = '0' * 64
+    elif damage == 'inventory': retired['files'][SUPPORT_PAIR[1]]['sha256'] = '0' * 64
+    elif damage in ('copy', 'so'):
+        (output / (SUPPORT_COPY if damage == 'copy' else SUPPORT_PAIR[1])).write_bytes(b'bad')
+    elif damage == 'extra': (output / 'keep').write_bytes(b'keep')
+    elif damage == 'missing': (output / SUPPORT_COPY).unlink()
+    elif damage in ('symlink', 'hardlink'):
+        path = output / SUPPORT_COPY
+        path.unlink()
+        if damage == 'symlink': path.symlink_to(output / SUPPORT_PAIR[0])
+        else: os.link(output / SUPPORT_PAIR[0], path)
+    elif damage == 'file-mode': (output / SUPPORT_PAIR[1]).chmod(0o644)
+    elif damage == 'directory-mode': (output / 'modules').chmod(0o755)
+    module.prefix.write_control(output / 'build.json', retired)
+    before = len([call for call in fixture.calls() if '-o' in call])
+    with pytest.raises((ValueError, OSError)):
+        module.build_test_support(fixture.root, session)
+    assert len([call for call in fixture.calls() if '-o' in call]) == before
+    assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
+
+
+def test_support_retired_abi1_build_failure_preserves_exact_previous(retired_support_output, monkeypatch):
+    fixture, session, output, retired = retired_support_output
+    module = builder_module()
+    def refuse(*args):
+        raise module.BuildError('inert compiler refusal')
+    monkeypatch.setattr(module, '_compile', refuse)
+    before = {str(path.relative_to(output)): path.read_bytes() for path in output.rglob('*') if path.is_file()}
+    with pytest.raises(ValueError, match='inert compiler refusal'):
+        module.build_test_support(fixture.root, session)
+    assert before == {str(path.relative_to(output)): path.read_bytes() for path in output.rglob('*') if path.is_file()}
+    assert module._recognized_test_output(output, for_replacement=True)[1] == retired
+    with pytest.raises(ValueError, match='manifest'):
+        module._recognized_test_output(output)
+    assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
 
 
 @pytest.mark.parametrize('damage', ['copy', 'so', 'extra', 'symlink', 'manifest'])
@@ -2148,9 +3542,20 @@ static NTSTATUS WINAPI dispatch(uint64_t handle, unsigned int entry, void* args)
         ((SrptCall*)args)->os_error = 73;
         return -123;
     }
+    if (entry == SRPT_ENTRY_LAUNCH) {
+        SrptLaunch* value = args;
+        const SrptLaunch* input = original;
+        assert(value->size == 152 && value->abi == 2);
+        assert(!memcmp(value, input, offsetof(SrptLaunch, phase)));
+        assert(!value->phase && !value->os_error && !value->exit_code && !value->term_signal);
+        assert(!value->outcome && !value->remaining_ms && !value->reserved && !value->reserved2);
+        value->phase = SRPT_PHASE_COMPLETE; value->outcome = SRPT_OUTCOME_COMPLETED;
+        value->exit_code = 0; value->remaining_ms = 1234;
+        return selected == 30 ? -123 : SRPT_SUCCESS;
+    }
     assert(entry == SRPT_ENTRY_IDENTITY);
     SrptIdentity* value = args;
-    assert(value->size == 112 && value->abi == 1 && value->challenge == 42);
+    assert(value->size == 112 && value->abi == 2 && value->challenge == 42);
     for (unsigned i = 0; i < 32; ++i) {
         assert(value->pe_build_id[i] == 1);
         value->unix_build_id[i] = 1;
@@ -2168,7 +3573,7 @@ static NTSTATUS WINAPI dispatch(uint64_t handle, unsigned int entry, void* args)
     case 15: ++value->unix_build_id[31]; break;
     case 16: ++value->architecture; break;
     case 17: value->features = 1; break;
-    case 18: value->features = 7; break;
+    case 18: value->features = 15; break;
     case 19: value->module_inode = 0; break;
     case 20: return -126;
     }
@@ -2182,7 +3587,42 @@ FARPROC GetProcAddress(HMODULE ntdll, const char* name) {
 }
 int main(int argc, char** argv) {
     assert(argc == 2); selected = atoi(argv[1]);
-    SrptIdentity value = {0}; value.size = 112; value.abi = 1; value.challenge = 42;
+    if (selected >= 30) {
+        for (unsigned case_id = 0; case_id <= 5; ++case_id) {
+            SrptLaunch value = {0}; value.size = sizeof(value); value.abi = 2;
+            value.action = case_id ? SRPT_RUN : SRPT_CONFIGURE; value.case_id = case_id;
+            value.root = 42; value.production_device = 1; value.production_inode = 2;
+            value.support_device = 3; value.support_inode = 4;
+            memset(value.production_build_id, 1, 32); memset(value.support_build_id, 2, 32);
+            SrptLaunch before = value; original = &before;
+            int prior = dispatches;
+            assert(SpaceRecordPublicationTestsCall(2, &value) == (selected == 30 ? -123 : SRPT_SUCCESS));
+            assert(dispatches == prior + 1 && value.phase == SRPT_PHASE_COMPLETE);
+            assert(value.outcome == SRPT_OUTCOME_COMPLETED && value.remaining_ms == 1234);
+            assert(!memcmp(&value, &before, offsetof(SrptLaunch, phase)));
+        }
+        int prior = dispatches;
+        for (unsigned field = 0; field < 17; ++field) {
+            SrptLaunch value = {0}; value.size = sizeof(value); value.abi = 2; value.action = SRPT_CONFIGURE;
+            switch (field) {
+            case 0: --value.size; break; case 1: ++value.size; break;
+            case 2: value.abi = 1; break; case 3: value.abi = 3; break;
+            case 4: value.action = 0; break; case 5: value.action = 3; break;
+            case 6: value.case_id = 1; break;
+            case 7: value.action = SRPT_RUN; value.case_id = 0; break;
+            case 8: value.action = SRPT_RUN; value.case_id = 6; break;
+            case 9: value.phase = 1; break; case 10: value.os_error = 1; break;
+            case 11: value.exit_code = 1; break; case 12: value.term_signal = 1; break;
+            case 13: value.outcome = 1; break; case 14: value.remaining_ms = 1; break;
+            case 15: value.reserved = 1; break; case 16: value.reserved2 = 1; break;
+            }
+            assert(SpaceRecordPublicationTestsCall(2, &value) == SRPT_INVALID_ARGUMENT);
+        }
+        assert(SpaceRecordPublicationTestsCall(2, NULL) == SRPT_INVALID_ARGUMENT);
+        assert(dispatches == prior);
+        return 0;
+    }
+    SrptIdentity value = {0}; value.size = 112; value.abi = 2; value.challenge = 42;
     int32_t status = SpaceRecordPublicationTestsCall(SRPT_ENTRY_IDENTITY, &value);
     if (selected >= 1 && selected <= 6) {
         assert(status == (selected == 5 ? -127 : SRPT_MODULE_UNAVAILABLE) && !dispatches);
@@ -2191,13 +3631,13 @@ int main(int argc, char** argv) {
         assert(value.echo == 0); /* Never return a half-validated identity. */
     } else {
         assert(status == 0 && value.echo == 42 && value.module_device == 7 && value.module_inode == 9);
-        SrptCall call = {0}; call.size = sizeof(call); call.abi = 1; call.opcode = SRPT_OBSERVE;
+        SrptCall call = {0}; call.size = sizeof(call); call.abi = 2; call.opcode = SRPT_OBSERVE;
         original = &call;
         assert(SpaceRecordPublicationTestsCall(SRPT_ENTRY_FIXTURE, &call) == -123 && call.os_error == 73);
         unsigned before = dispatches;
         call.opcode = 99;
         assert(SpaceRecordPublicationTestsCall(1, &call) == SRPT_INVALID_ARGUMENT);
-        call.opcode = SRPT_OBSERVE; call.abi = 2;
+        call.opcode = SRPT_OBSERVE; call.abi = 1;
         assert(SpaceRecordPublicationTestsCall(1, &call) == SRPT_INVALID_ARGUMENT);
         assert(SpaceRecordPublicationTestsCall(0, NULL) == SRPT_INVALID_ARGUMENT);
         assert(SpaceRecordPublicationTestsCall(1, NULL) == SRPT_INVALID_ARGUMENT);
@@ -2216,7 +3656,7 @@ int main(int argc, char** argv) {
     return output
 
 
-@pytest.mark.parametrize('case', [0, 1, 2, 3, 4, 5, 6, *range(10, 21)])
+@pytest.mark.parametrize('case', [0, 1, 2, 3, 4, 5, 6, *range(10, 21), 30, 31])
 def test_support_exact_pe_forwarder_host_model(support_bridge_model, case):
     result = subprocess.run([str(support_bridge_model), str(case)], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stderr
@@ -2401,9 +3841,126 @@ def test_support_runtime_capture_selects_native_implementation_and_owner_server(
     assert module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity) == value
 
 
+def test_support_runtime_capture_accepts_real_benign_ancestor_sibling_churn(support_native_runtime, monkeypatch):
+    fixture = support_native_runtime
+    module = support_runtime_api()
+    pin = fixture.identity['installation']['implementation']['file']
+    control = module._capture_runtime_pin(pin)
+    original_read = fixture.os.read
+    sibling = b'benign-sibling-' + os.urandom(16).hex().encode('ascii')
+    parent = os.open(fixture.directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    directory_before = os.fstat(parent)
+    file_before = module._launch_snapshot(fixture.os.stat(fixture.binary, follow_symlinks=False))
+    actions = []
+    try:
+        def churn_once(fd, size):
+            data = original_read(fd, size)
+            info = os.fstat(fd)
+            assert (info.st_dev, info.st_ino) == (control['device'], control['inode'])
+            if data and not actions:
+                created = os.open(sibling, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                  0o600, dir_fd=parent)
+                try:
+                    os.close(created)
+                finally:
+                    os.unlink(sibling, dir_fd=parent)
+                actions.append('created-and-unlinked')
+            return data
+        with monkeypatch.context() as patch:
+            patch.setattr(fixture.os, 'read', churn_once)
+            captured = module._capture_runtime_pin(pin)
+        directory_after = os.fstat(parent)
+    finally:
+        os.close(parent)
+    assert actions == ['created-and-unlinked']
+    assert any(getattr(directory_before, field) != getattr(directory_after, field)
+               for field in ('st_size', 'st_mtime_ns', 'st_ctime_ns')), 'real sibling action must change directory metadata'
+    assert all(getattr(directory_before, field) == getattr(directory_after, field)
+               for field in ('st_dev', 'st_ino', 'st_uid', 'st_mode'))
+    assert module._launch_snapshot(fixture.os.stat(fixture.binary, follow_symlinks=False)) == file_before
+    assert hashlib.sha256(fixture.binary.read_bytes()).hexdigest() == captured['sha256'] == control['sha256']
+    assert captured == control  # Includes the full file tuple and exact ancestor schema/pins.
+
+
+@pytest.mark.parametrize('target,field', [
+    *(('ancestor', field) for field in ('device', 'inode', 'uid', 'mode', 'type')),
+    *(('file', field) for field in ('device', 'inode', 'uid', 'mode', 'size', 'mtime_ns', 'ctime_ns')),
+])
+@pytest.mark.parametrize('witness', ['descriptor', 'path'])
+def test_support_runtime_capture_revalidates_required_fields_on_both_witnesses(
+        support_native_runtime, monkeypatch, target, field, witness):
+    # Drift after the real file read, not an unsafe initial acquisition. Restrict
+    # the existing fixture's stat-protocol model to exactly one witness/field.
+    import stat
+    fixture = support_native_runtime
+    module = support_runtime_api()
+    path = fixture.directory if target == 'ancestor' else fixture.binary
+    original_info = path.stat()
+    original_read, original_fstat, original_stat = fixture.os.read, fixture.os.fstat, fixture.os.stat
+    armed = False
+    observations = []
+    attributes = dict(device='st_dev', inode='st_ino', uid='st_uid', mode='st_mode',
+                      size='st_size', mtime_ns='st_mtime_ns', ctime_ns='st_ctime_ns', type='st_mode')
+    def drift(info, kind):
+        if not armed or kind != witness or (info.st_dev, info.st_ino) != (original_info.st_dev, original_info.st_ino):
+            return info
+        attribute = attributes[field]
+        changed = (stat.S_IFREG | stat.S_IMODE(info.st_mode) if field == 'type' else
+                   info.st_mode ^ 0o100 if field == 'mode' else getattr(info, attribute) + 1)
+        values = {name: getattr(info, name) for name in dir(info) if name.startswith('st_')}
+        values[attribute] = changed
+        observations.append((kind, attribute))
+        return SimpleNamespace(**values)
+    def after_read(fd, size):
+        nonlocal armed
+        data = original_read(fd, size)
+        armed = True
+        return data
+    monkeypatch.setattr(fixture.os, 'read', after_read)
+    monkeypatch.setattr(fixture.os, 'fstat', lambda fd: drift(original_fstat(fd), 'descriptor'))
+    monkeypatch.setattr(fixture.os, 'stat', lambda *args, **kwargs: drift(original_stat(*args, **kwargs), 'path'))
+    with pytest.raises(module.BuildError, match='ancestor changed' if target == 'ancestor' else 'hash/identity changed'):
+        module._capture_runtime_pin(fixture.identity['installation']['implementation']['file'])
+    assert observations == [(witness, attributes[field])]
+
+
+@pytest.mark.parametrize('replacement', ['directory', 'symlink', 'file'])
+def test_support_runtime_capture_refuses_real_ancestor_replacement_after_read(
+        support_native_runtime, monkeypatch, replacement):
+    fixture = support_native_runtime
+    module = support_runtime_api()
+    original_read, original_stat = fixture.os.read, fixture.os.stat
+    changed = False
+    path_checks = []
+    def replace_once(fd, size):
+        nonlocal changed
+        data = original_read(fd, size)
+        if data and not changed:
+            changed = True
+            moved = fixture.directory.with_name('moved-during-read')
+            fixture.directory.rename(moved)
+            if replacement == 'directory':
+                fixture.directory.mkdir()
+            elif replacement == 'symlink':
+                fixture.directory.symlink_to(moved, target_is_directory=True)
+            else:
+                fixture.directory.write_bytes(b'not a directory')
+        return data
+    def observe_path(name, *args, **kwargs):
+        info = original_stat(name, *args, **kwargs)
+        if changed and name == os.fsencode(fixture.directory.name):
+            path_checks.append(kwargs.get('follow_symlinks'))
+        return info
+    monkeypatch.setattr(fixture.os, 'read', replace_once)
+    monkeypatch.setattr(fixture.os, 'stat', observe_path)
+    with pytest.raises(module.BuildError, match='ancestor changed'):
+        module._capture_runtime_pin(fixture.identity['installation']['implementation']['file'])
+    assert changed and path_checks == [False]  # The retained directory alone cannot prove the path.
+
+
 @pytest.mark.parametrize('damage', ['script', 'machine', 'class', 'endian', 'type', 'osabi',
     'leaf-link', 'ancestor-link', 'file-uid', 'ancestor-uid', 'file-mode', 'ancestor-mode',
-    'setuid', 'setgid', 'not-executable', 'access', 'hash', 'tuple', 'ancestor-tuple',
+    'setuid', 'setgid', 'not-executable', 'access', 'hash', 'tuple', 'ancestor-policy',
     'oversize', 'growing-read', 'relative', 'dotdot', 'long-path', 'server-hash'])
 def test_support_runtime_capture_refuses_unsafe_or_changed_native_pin(support_native_runtime, monkeypatch, damage):
     module = support_runtime_api()
@@ -2440,15 +3997,16 @@ def test_support_runtime_capture_refuses_unsafe_or_changed_native_pin(support_na
     elif damage in ('hash', 'server-hash'):
         target = pin if damage == 'hash' else fixture.session.owner['tools']['server']
         target['sha256'] = '0' * 64
-    elif damage in ('tuple', 'ancestor-tuple', 'growing-read'):
+    elif damage in ('tuple', 'ancestor-policy', 'growing-read'):
         original = fixture.os.read
         def changed(fd, size):
             raw = original(fd, size)
             if damage == 'growing-read':
                 return b'x' * size
-            target = fixture.directory if damage == 'ancestor-tuple' else path
+            target = fixture.directory if damage == 'ancestor-policy' else path
             info = target.stat()
-            fixture.overrides[info.st_ino] = dict(st_ctime_ns=info.st_ctime_ns + 1)
+            fixture.overrides[info.st_ino] = (dict(st_mode=info.st_mode | 0o020) if damage == 'ancestor-policy'
+                                            else dict(st_ctime_ns=info.st_ctime_ns + 1))
             return raw
         monkeypatch.setattr(fixture.os, 'read', changed)
     elif damage == 'oversize':
@@ -2541,7 +4099,7 @@ def test_support_runtime_builder_seals_private_header_and_all_launch_values(supp
     assert manifest['toolchain']['launch'] == fixture.launch_metadata
     assert manifest['toolchain']['launch_header_sha256'] == hashlib.sha256(headers[0]).hexdigest()
     assert set(manifest['toolchain']) == {'identity', 'inputs', 'launch', 'launch_header_sha256'}
-    assert manifest['abi'] == 1  # Task 1 does not advance the support ABI yet.
+    assert manifest['abi'] == 2  # Support-only migration; production remains ABI1.
     output = fixture.root / 'build/wine-publication-tests'
     assert {str(path.relative_to(output)) for path in output.rglob('*') if path.is_file()} == {
         *SUPPORT_PAIR, SUPPORT_COPY, 'build.json'}

@@ -8,11 +8,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SRPT_ABI UINT32_C(1)
+#define SRPT_ABI UINT32_C(2)
 #define SRPT_ARCH_X86_64 UINT32_C(0x8664)
-#define SRPT_FEATURES UINT32_C(3) /* identity and bounded fixture operations */
+#define SRPT_FEATURES UINT32_C(7) /* identity, bounded fixtures, closed launch */
 #define SRPT_ENTRY_IDENTITY UINT32_C(0)
 #define SRPT_ENTRY_FIXTURE UINT32_C(1)
+#define SRPT_ENTRY_LAUNCH UINT32_C(2)
 #define SRPT_BOUND 4096
 #define SRPT_SUCCESS INT32_C(0)
 #define SRPT_INVALID_ARGUMENT ((int32_t)UINT32_C(0xc000000d))
@@ -75,10 +76,45 @@ typedef struct {
     uint8_t data[SRPT_BOUND];
 } SrptCall;
 
+#define SRPT_CONFIGURE UINT32_C(1)
+#define SRPT_RUN UINT32_C(2)
+#define SRPT_PHASE_INPUT UINT32_C(0)
+#define SRPT_PHASE_CONTEXT UINT32_C(1)
+#define SRPT_PHASE_LAYOUT UINT32_C(2)
+#define SRPT_PHASE_RUNTIME UINT32_C(3)
+#define SRPT_PHASE_ENVIRONMENT UINT32_C(4)
+#define SRPT_PHASE_SPAWN UINT32_C(5)
+#define SRPT_PHASE_WAIT UINT32_C(6)
+#define SRPT_PHASE_TERMINATE UINT32_C(7)
+#define SRPT_PHASE_REAP UINT32_C(8)
+#define SRPT_PHASE_COMPLETE UINT32_C(9)
+#define SRPT_OUTCOME_UNSET UINT32_C(0)
+#define SRPT_OUTCOME_COMPLETED UINT32_C(1)
+#define SRPT_OUTCOME_EXITED_OR_SIGNALLED UINT32_C(2)
+#define SRPT_OUTCOME_TIMED_OUT_AND_REAPED UINT32_C(3)
+#define SRPT_OUTCOME_HOST_FAILURE UINT32_C(4)
+#define SRPT_OUTCOME_OWNERSHIP_UNCERTAIN UINT32_C(5)
+
+/* CONFIGURE: case0/retained TEMP; RUN: ordered case1..5/one retained fixture.
+ * Bindings are independently checked in Unix; no path, argv, env or timeout is
+ * selected by this frame. All outputs/reserved must be zero on input. An output
+ * exit_code of UINT32_MAX means no normal child exit was observed.
+ */
+typedef struct {
+    uint32_t size, abi, action, case_id;
+    uint64_t root;
+    uint8_t production_build_id[32], support_build_id[32];
+    uint64_t production_device, production_inode, support_device, support_inode;
+    uint32_t phase, os_error, exit_code, term_signal, outcome, reserved;
+    uint32_t remaining_ms, reserved2;
+} SrptLaunch;
+
 #ifdef __cplusplus
 #define SRPT_ASSERT static_assert
+#define SRPT_ALIGNOF alignof
 #else
 #define SRPT_ASSERT _Static_assert
+#define SRPT_ALIGNOF _Alignof
 #endif
 SRPT_ASSERT(sizeof(SrptIdentity) == 112, "test identity size");
 SRPT_ASSERT(offsetof(SrptIdentity, challenge) == 8, "challenge offset");
@@ -105,5 +141,27 @@ SRPT_ASSERT(offsetof(SrptCall, offset) == 80, "read offset");
 SRPT_ASSERT(offsetof(SrptCall, path) == 88, "path offset");
 SRPT_ASSERT(offsetof(SrptCall, other) == 4184, "other offset");
 SRPT_ASSERT(offsetof(SrptCall, data) == 8280, "data offset");
+SRPT_ASSERT(sizeof(SrptLaunch) == 152, "launch frame size");
+SRPT_ASSERT(SRPT_ALIGNOF(SrptLaunch) == 8, "launch alignment");
+SRPT_ASSERT(offsetof(SrptLaunch, size) == 0, "launch size offset");
+SRPT_ASSERT(offsetof(SrptLaunch, abi) == 4, "launch ABI offset");
+SRPT_ASSERT(offsetof(SrptLaunch, action) == 8, "launch action offset");
+SRPT_ASSERT(offsetof(SrptLaunch, case_id) == 12, "launch case offset");
+SRPT_ASSERT(offsetof(SrptLaunch, root) == 16, "launch root offset");
+SRPT_ASSERT(offsetof(SrptLaunch, production_build_id) == 24, "launch production ID offset");
+SRPT_ASSERT(offsetof(SrptLaunch, support_build_id) == 56, "launch support ID offset");
+SRPT_ASSERT(offsetof(SrptLaunch, production_device) == 88, "launch production device offset");
+SRPT_ASSERT(offsetof(SrptLaunch, production_inode) == 96, "launch production inode offset");
+SRPT_ASSERT(offsetof(SrptLaunch, support_device) == 104, "launch support device offset");
+SRPT_ASSERT(offsetof(SrptLaunch, support_inode) == 112, "launch support inode offset");
+SRPT_ASSERT(offsetof(SrptLaunch, phase) == 120, "launch phase offset");
+SRPT_ASSERT(offsetof(SrptLaunch, os_error) == 124, "launch errno offset");
+SRPT_ASSERT(offsetof(SrptLaunch, exit_code) == 128, "launch exit offset");
+SRPT_ASSERT(offsetof(SrptLaunch, term_signal) == 132, "launch signal offset");
+SRPT_ASSERT(offsetof(SrptLaunch, outcome) == 136, "launch outcome offset");
+SRPT_ASSERT(offsetof(SrptLaunch, reserved) == 140, "launch reserved offset");
+SRPT_ASSERT(offsetof(SrptLaunch, remaining_ms) == 144, "launch remaining offset");
+SRPT_ASSERT(offsetof(SrptLaunch, reserved2) == 148, "launch reserved2 offset");
+#undef SRPT_ALIGNOF
 #undef SRPT_ASSERT
 #endif
