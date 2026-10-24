@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-23
+The [daily devlog workflow](/dev/notes/daily-devlog-automation) now requires examining the full landing window from the latest journal date, recovering meaningful missed days rather than treating a quiet run date as a no-op. Coverage still depends on narrative judgment, not index presence; published sources stay untouched, filler and duplicate entries are skipped, and review plus protected publication remain required. Regression checks guard this catch-up contract, making unattended project-history capture more reliable.
+
 ## 2026-10-22
 Strict agent work now separates [local checkpoints from independent approval](/dev/features/opencode-agent-workflow#strict-flow-checkpoint-and-review-ownership): implementers can checkpoint validated tasks and fixes, while complete change ranges still require review before completion or publication. Daily and weekly automation retain their stage-only, review-first handoffs, keeping unattended publication safeguards intact as ordinary iteration becomes more direct.
 
