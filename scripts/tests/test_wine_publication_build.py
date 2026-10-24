@@ -9,6 +9,7 @@ import shutil
 import signal
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -1762,8 +1763,14 @@ def test_publication_builder_checks_images_before_installing(publication_fixture
 
 def test_publication_builder_cli_loads_existing_immutable_session_without_wine(support_builder_fixture):
     fixture, session = support_builder_fixture
-    result = subprocess.run([sys.executable, str(fixture.root / BUILDER_SOURCE)],
-                            env=dict(fixture.env, SPACE_WINE_SESSION_ID=session.id),
+    # Exercise the real CLI main with an explicit compiler-protocol metadata
+    # model. Inert script tools under /tmp are deliberately NOT trusted runtimes.
+    driver = ("import sys; from wine import build_publication as b; "
+              f"b._capture_launch_metadata = lambda *args: {fixture.launch_metadata!r}; "
+              "sys.argv = [b.__file__]; b.main()")
+    result = subprocess.run([sys.executable, '-c', driver],
+                             env=dict(fixture.env, SPACE_WINE_SESSION_ID=session.id,
+                                      PYTHONPATH=str(fixture.root / 'scripts') + os.pathsep + fixture.env['PYTHONPATH']),
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stderr
     summary = json.loads(result.stdout)
@@ -2013,8 +2020,18 @@ def test_support_real_elf_bounded_reads_cover_multichunk_content(support_elf, tm
         support_ok(operate, 2, root=root)
 
 
+def support_compiler_launch_metadata(repo):
+    """Baked inert records for synthetic compiler output, never runtime admission."""
+    def pin(name):
+        return dict(path_hex=os.fsencode('/inert-compiler-model/' + name).hex(), sha256='12' * 32,
+                    device=1, inode=2, size=64, uid=0, mode=0o100755, mtime_ns=3, ctime_ns=4,
+                    ancestors=[dict(path_hex='2f', device=1, inode=1, uid=0, mode=0o40755)])
+    return dict(schema=1, checkout_path_hex=os.fsencode(repo).hex(),
+                implementation=pin('wine64'), server=pin('wineserver'))
+
+
 @pytest.fixture
-def support_builder_fixture(publication_fixture):
+def support_builder_fixture(publication_fixture, monkeypatch):
     fixture, session = publication_fixture
     # Support-aware API/main tests supply extra inputs; production-only API
     # checkouts remain independently valid without these files.
@@ -2025,7 +2042,10 @@ def support_builder_fixture(publication_fixture):
     for command in ['g++', 'x86_64-w64-mingw32-gcc-posix']:
         path = fixture.bin / command
         path.write_text(path.read_text().replace("a.startswith('-DSRP_BUILD_ID_BYTES=')",
-                                                "a.startswith(('-DSRP_BUILD_ID_BYTES=', '-DSRPT_BUILD_ID_BYTES='))"))
+                                                 "a.startswith(('-DSRP_BUILD_ID_BYTES=', '-DSRPT_BUILD_ID_BYTES='))"))
+    fixture.launch_metadata = support_compiler_launch_metadata(fixture.root)
+    monkeypatch.setattr(builder_module(), '_capture_launch_metadata',
+                        lambda *args: json.loads(json.dumps(fixture.launch_metadata)), raising=False)
     return fixture, session
 
 
@@ -2308,3 +2328,420 @@ def test_support_builder_failure_preserves_previous_pair(support_builder_fixture
     assert json.loads((output / 'build.json').read_text()) == previous
     assert module._recognized_test_output(output)[1] == previous
     assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
+
+
+# Closed launcher builder tests. These never execute Wine or produce a real PE.
+def support_runtime_api():
+    module = builder_module()
+    assert hasattr(module, '_capture_launch_metadata'), 'support runtime capture is missing'
+    assert hasattr(module, '_render_launch_header'), 'support runtime header is missing'
+    return module
+
+
+@pytest.fixture
+def support_native_runtime(tmp_path, monkeypatch):
+    """Real inert ELF files, with only their installed-path trust facts modelled.
+
+    The unprivileged host cannot create root-owned installed fixtures. Restrict the
+    stat protocol model to these files and their ancestors; all opens, nofollow
+    traversal, access checks, reads, hashes and races still use the real filesystem.
+    Separate unmodelled tests below exercise the host's actual unsafe /tmp ancestry.
+    This is not evidence about installed Wine or a relaxation in production capture.
+    """
+    directory = tmp_path / 'native-\udcff'
+    directory.mkdir()
+    binary = directory / 'wine64'
+    result = subprocess.run(['cc', '-x', 'c', '-', '-o', str(binary)],
+                            input='int main(void) { return 97; }\n', text=True,
+                            capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    server = directory / 'wineserver'
+    shutil.copy2(binary, server)
+    wrapper = directory / 'wine'
+    wrapper.write_text('#!/bin/sh\nexit 98\n')
+    wrapper.chmod(0o755)
+    expected = lambda path: dict(executable=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    identity = dict(installation=dict(file=expected(wrapper), implementation=dict(file=expected(binary))))
+    session = SimpleNamespace(owner=dict(tools=dict(wine=expected(wrapper), server=expected(server))))
+    real_os = os
+    trusted = {path.stat().st_ino for path in [binary, server, directory, *directory.parents]}
+    overrides = {}
+    def info(value):
+        if value.st_ino not in trusted:
+            return value
+        fields = {name: getattr(value, name) for name in dir(value) if name.startswith('st_')}
+        fields.update(st_uid=0, st_mode=value.st_mode & ~0o022)
+        fields.update(overrides.get(value.st_ino, {}))
+        return SimpleNamespace(**fields)
+    # A module-local os proxy avoids changing pytest/pathlib's stat semantics.
+    proxy = SimpleNamespace(**{name: getattr(real_os, name) for name in dir(real_os)})
+    proxy.fstat = lambda fd: info(real_os.fstat(fd))
+    proxy.stat = lambda *args, **kwargs: info(real_os.stat(*args, **kwargs))
+    monkeypatch.setattr(builder_module(), 'os', proxy)
+    return SimpleNamespace(repo=tmp_path / 'checkout-\udcff', session=session, identity=identity,
+                           binary=binary, server=server, directory=directory, overrides=overrides, os=proxy)
+
+
+def test_support_runtime_capture_selects_native_implementation_and_owner_server(support_native_runtime):
+    module = support_runtime_api()
+    fixture = support_native_runtime
+    value = module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+    assert value['schema'] == 1
+    assert bytes.fromhex(value['checkout_path_hex']) == os.fsencode(fixture.repo)
+    for key, path in [('implementation', fixture.binary), ('server', fixture.server)]:
+        pin = value[key]
+        assert set(pin) == {'path_hex', 'sha256', 'device', 'inode', 'size', 'uid', 'mode',
+                            'mtime_ns', 'ctime_ns', 'ancestors'}
+        assert bytes.fromhex(pin['path_hex']) == os.fsencode(path)
+        assert pin['sha256'] == hashlib.sha256(path.read_bytes()).hexdigest()
+        assert pin['inode'] == path.stat().st_ino and pin['uid'] == 0
+        assert [bytes.fromhex(row['path_hex']) for row in pin['ancestors']] == [
+            os.fsencode(parent) for parent in reversed(path.parents)]
+        assert all(set(row) == {'path_hex', 'device', 'inode', 'uid', 'mode'} for row in pin['ancestors'])
+    assert module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity) == value
+
+
+@pytest.mark.parametrize('damage', ['script', 'machine', 'class', 'endian', 'type', 'osabi',
+    'leaf-link', 'ancestor-link', 'file-uid', 'ancestor-uid', 'file-mode', 'ancestor-mode',
+    'setuid', 'setgid', 'not-executable', 'access', 'hash', 'tuple', 'ancestor-tuple',
+    'oversize', 'growing-read', 'relative', 'dotdot', 'long-path', 'server-hash'])
+def test_support_runtime_capture_refuses_unsafe_or_changed_native_pin(support_native_runtime, monkeypatch, damage):
+    module = support_runtime_api()
+    fixture = support_native_runtime
+    path = fixture.binary
+    pin = fixture.identity['installation']['implementation']['file']
+    if damage in ('script', 'machine', 'class', 'endian', 'type', 'osabi'):
+        raw = bytearray(path.read_bytes())
+        if damage == 'script':
+            raw = bytearray(b'#!/bin/sh\nexit 0\n')
+        else:
+            offset, value = {'machine': (18, 3), 'class': (4, 1), 'endian': (5, 2),
+                             'type': (16, 1), 'osabi': (7, 9)}[damage]
+            raw[offset] = value
+        path.write_bytes(raw)
+        pin['sha256'] = hashlib.sha256(raw).hexdigest()
+    elif damage == 'leaf-link':
+        path.unlink()
+        path.symlink_to(fixture.server)
+    elif damage == 'ancestor-link':
+        moved = fixture.directory.with_name('moved')
+        fixture.directory.rename(moved)
+        fixture.directory.symlink_to(moved, target_is_directory=True)
+    elif damage in ('file-uid', 'ancestor-uid', 'file-mode', 'ancestor-mode', 'setuid', 'setgid'):
+        target = fixture.directory if damage.startswith('ancestor') else path
+        info = target.stat()
+        fields = dict(st_uid=12345) if damage.endswith('uid') else dict(
+            st_mode=info.st_mode | {'setuid': 0o4000, 'setgid': 0o2000}.get(damage, 0o022))
+        fixture.overrides[info.st_ino] = fields
+    elif damage == 'not-executable':
+        path.chmod(0o644)
+    elif damage == 'access':
+        monkeypatch.setattr(fixture.os, 'access', lambda *args, **kwargs: False)
+    elif damage in ('hash', 'server-hash'):
+        target = pin if damage == 'hash' else fixture.session.owner['tools']['server']
+        target['sha256'] = '0' * 64
+    elif damage in ('tuple', 'ancestor-tuple', 'growing-read'):
+        original = fixture.os.read
+        def changed(fd, size):
+            raw = original(fd, size)
+            if damage == 'growing-read':
+                return b'x' * size
+            target = fixture.directory if damage == 'ancestor-tuple' else path
+            info = target.stat()
+            fixture.overrides[info.st_ino] = dict(st_ctime_ns=info.st_ctime_ns + 1)
+            return raw
+        monkeypatch.setattr(fixture.os, 'read', changed)
+    elif damage == 'oversize':
+        fixture.overrides[path.stat().st_ino] = dict(st_size=64 * 1024 * 1024 + 1)
+    else:
+        pin['executable'] = {'relative': 'relative/wine64', 'dotdot': str(path.parent / '..' / path.name),
+                             'long-path': '/' + 'x' * 4095}[damage]
+    with pytest.raises((module.BuildError, OSError)):
+        module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+
+
+def test_support_runtime_real_untrusted_ancestry_is_not_admitted(tmp_path):
+    module = support_runtime_api()
+    path = tmp_path / 'runtime'
+    path.write_bytes(b'#!/bin/sh\nexit 99\n')
+    path.chmod(0o755)
+    pin = dict(executable=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    session = SimpleNamespace(owner=dict(tools=dict(server=pin)))
+    identity = dict(installation=dict(implementation=dict(file=pin)))
+    with pytest.raises(module.BuildError, match='[Tt]rust|[Uu]nsafe'):
+        module._capture_launch_metadata(tmp_path, session, identity)
+
+
+def test_support_runtime_capture_never_reads_more_than_64_mib(support_native_runtime, monkeypatch):
+    module = support_runtime_api()
+    fixture = support_native_runtime
+    bytes_read = 0
+    def endless_read(fd, size):
+        nonlocal bytes_read
+        bytes_read += size
+        return b'x' * size
+    monkeypatch.setattr(fixture.os, 'read', endless_read)
+    with pytest.raises(module.BuildError):
+        module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+    assert bytes_read <= 64 * 1024 * 1024
+
+
+@pytest.mark.parametrize('compiler,standard', [('cc', 'c11'), ('c++', 'c++17')])
+def test_support_runtime_header_is_deterministic_raw_bytes_without_build_id(support_native_runtime, tmp_path, compiler, standard):
+    module = support_runtime_api()
+    fixture = support_native_runtime
+    metadata = module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+    header = module._render_launch_header(metadata)
+    assert header == module._render_launch_header(json.loads(json.dumps(metadata, sort_keys=True)))
+    assert b'SRPT_BUILD_ID' not in header and b'\xff' not in header
+    (tmp_path / 'srpt_launch_config.h').write_bytes(header)
+    def expected_array(name, path):
+        return 'static const unsigned char ' + name + '[] = {' + ','.join(
+            str(byte) for byte in os.fsencode(path) + b'\0') + '};\n'
+    source = '''#include "srpt_launch_config.h"
+#include <string.h>
+''' + expected_array('checkout', fixture.repo) + expected_array('implementation', fixture.binary) + expected_array(
+        'server', fixture.server) + '''
+int main(void) {
+    return srpt_launch_schema != 1 || srpt_launch_implementation.uid != 0 ||
+        srpt_launch_server.size == 0 || srpt_launch_implementation.ancestor_count == 0 ||
+        sizeof(srpt_launch_checkout) != sizeof(checkout) ||
+        sizeof(srpt_launch_implementation_path) != sizeof(implementation) ||
+        sizeof(srpt_launch_server_path) != sizeof(server) ||
+        memcmp(srpt_launch_checkout, checkout, sizeof(checkout)) ||
+        memcmp(srpt_launch_implementation.path, implementation, sizeof(implementation)) ||
+        memcmp(srpt_launch_server.path, server, sizeof(server)) ||
+        memcmp(srpt_launch_implementation.sha256, srpt_launch_server.sha256, 32);
+}
+'''
+    executable = tmp_path / 'header-model'
+    result = subprocess.run([compiler, f'-std={standard}', '-Wall', '-Wextra', '-Werror', '-I', str(tmp_path),
+                             '-x', 'c' if compiler == 'cc' else 'c++', '-', '-o', str(executable)],
+                            input=source, text=True, capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(executable)], capture_output=True, timeout=10)
+    assert result.returncode == 0 and not result.stdout and not result.stderr
+
+
+def test_support_runtime_builder_seals_private_header_and_all_launch_values(support_builder_fixture, monkeypatch):
+    module = support_runtime_api()
+    fixture, session = support_builder_fixture
+    compile_fixed = module._compile
+    headers = []
+    def inspect(args, stage):
+        if '-DSRPT_BUILD_ID_BYTES=' in ' '.join(args):
+            header = stage / 'srpt_launch_config.h'
+            assert header.is_file() and header.stat().st_mode & 0o777 == 0o600
+            assert str(stage) in args and args[args.index(str(stage)) - 1] == '-I'
+            headers.append(header.read_bytes())
+        compile_fixed(args, stage)
+    monkeypatch.setattr(module, '_compile', inspect)
+    manifest = module.build_test_support(fixture.root, session)
+    assert len(headers) == 2 and headers[0] == headers[1]
+    assert manifest['toolchain']['launch'] == fixture.launch_metadata
+    assert manifest['toolchain']['launch_header_sha256'] == hashlib.sha256(headers[0]).hexdigest()
+    assert set(manifest['toolchain']) == {'identity', 'inputs', 'launch', 'launch_header_sha256'}
+    assert manifest['abi'] == 1  # Task 1 does not advance the support ABI yet.
+    output = fixture.root / 'build/wine-publication-tests'
+    assert {str(path.relative_to(output)) for path in output.rglob('*') if path.is_file()} == {
+        *SUPPORT_PAIR, SUPPORT_COPY, 'build.json'}
+    assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
+
+
+@pytest.mark.parametrize('field', ['checkout_path_hex', 'path_hex', 'sha256', 'device', 'inode', 'size',
+    'uid', 'mode', 'mtime_ns', 'ctime_ns', 'ancestor-path_hex', 'ancestor-device', 'ancestor-inode',
+    'ancestor-uid', 'ancestor-mode', 'server-inode'])
+def test_support_runtime_every_generated_value_changes_build_id(support_builder_fixture, field):
+    module = support_runtime_api()
+    fixture, session = support_builder_fixture
+    old = module.build_test_support(fixture.root, session)
+    value = fixture.launch_metadata
+    key = field
+    if field.startswith('ancestor-'):
+        value = value['implementation']['ancestors'][0]
+        key = field.removeprefix('ancestor-')
+    elif field == 'server-inode':
+        value, key = value['server'], 'inode'
+    elif field != 'checkout_path_hex':
+        value = value['implementation']
+    value[key] = value[key] + ('61' if key.endswith('_hex') else 1) if key != 'sha256' else '34' * 32
+    new = module.build_test_support(fixture.root, session)
+    assert new['build_id'] != old['build_id']
+    assert new['toolchain']['launch_header_sha256'] != old['toolchain']['launch_header_sha256']
+
+
+@pytest.mark.parametrize('damage', ['pin-drift', 'header-drift', 'capture-refusal'])
+def test_support_runtime_changed_during_build_preserves_prior_pair(support_builder_fixture, monkeypatch, damage):
+    module = support_runtime_api()
+    fixture, session = support_builder_fixture
+    previous = module.build_test_support(fixture.root, session)
+    original = module._compile
+    def mutate(args, stage):
+        original(args, stage)
+        if '--builtin' in args:
+            if damage == 'pin-drift':
+                fixture.launch_metadata['implementation']['ctime_ns'] += 1
+            elif damage == 'header-drift':
+                (stage / 'srpt_launch_config.h').write_bytes(b'changed header')
+            else:
+                def refuse(*args):
+                    raise module.BuildError('launch runtime changed')
+                monkeypatch.setattr(module, '_capture_launch_metadata', refuse)
+    monkeypatch.setattr(module, '_compile', mutate)
+    with pytest.raises(module.BuildError, match='[Ll]aunch'):
+        module.build_test_support(fixture.root, session)
+    output = fixture.root / 'build/wine-publication-tests'
+    assert module._recognized_test_output(output)[1] == previous
+    assert not list((fixture.root / 'build').glob('.wine-publication-tests-*'))
+
+
+def test_support_runtime_actual_gnu_spawn_prerequisites_and_unchanged_parent(tmp_path):
+    # A prerequisite measurement, NOT a copy of the future support launch entry
+    # and NOT installed Wine feasibility. Both programs are ordinary native ELFs.
+    child_source = r'''
+#define _GNU_SOURCE
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+extern char **environ;
+int main(int argc, char **argv) {
+    assert(argc == 2);
+    char cwd[4096], byte;
+    assert(getcwd(cwd, sizeof(cwd)) && !strcmp(cwd, argv[1]));
+    struct stat actual, expected;
+    assert(fstat(0, &actual) == 0 && stat("/dev/null", &expected) == 0);
+    assert(S_ISCHR(actual.st_mode) && actual.st_rdev == expected.st_rdev);
+    assert(read(0, &byte, 1) == 0);
+    for (int fd = 3; fd < 512; ++fd) {
+        errno = 0; assert(fcntl(fd, F_GETFD) == -1 && errno == EBADF);
+    }
+    sigset_t mask;
+    assert(sigprocmask(SIG_SETMASK, NULL, &mask) == 0);
+    for (int sig = 1; sig < NSIG; ++sig) assert(sigismember(&mask, sig) == 0);
+    const int signals[] = {SIGUSR1, SIGUSR2, SIGPIPE};
+    for (unsigned i = 0; i < sizeof(signals)/sizeof(signals[0]); ++i) {
+        struct sigaction action;
+        assert(sigaction(signals[i], NULL, &action) == 0 && action.sa_handler == SIG_DFL);
+    }
+    assert(getpgrp() == getpid());
+    assert(environ[0] && !strcmp(environ[0], "SRPT_NATIVE_PREREQUISITE=only") && !environ[1]);
+    assert(puts("native child stdout retained") >= 0 && fflush(stdout) == 0);
+    assert(fputs("native child stderr retained\n", stderr) >= 0 && fflush(stderr) == 0);
+    assert(raise(SIGSTOP) == 0); /* Driver observes closure while leader is alive. */
+    return 0;
+}
+'''
+    driver_source = r'''
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
+#include <spawn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <unistd.h>
+static pid_t child;
+static void failed(int line) {
+    fprintf(stderr, "native prerequisite failed at line %d, errno %d\n", line, errno);
+    if (child > 0) {
+        kill(-child, SIGKILL);
+        while (waitpid(child, NULL, 0) < 0 && errno == EINTR) {}
+    }
+    exit(1);
+}
+#define CHECK(value) do { if (!(value)) failed(__LINE__); } while (0)
+static unsigned read_umask(void) {
+    FILE *stream = fopen("/proc/self/status", "r");
+    CHECK(stream != NULL);
+    char line[4096]; unsigned value = 0; int found = 0;
+    while (fgets(line, sizeof(line), stream))
+        if (sscanf(line, "Umask:\t%o", &value) == 1) { found = 1; break; }
+    CHECK(fclose(stream) == 0 && found);
+    return value;
+}
+int main(int argc, char **argv) {
+    CHECK(argc == 3);
+    char before_cwd[4096], after_cwd[4096];
+    CHECK(getcwd(before_cwd, sizeof(before_cwd)) != NULL);
+    unsigned before_umask = read_umask();
+    const char *marker = getenv("SRPT_PARENT_MARKER");
+    CHECK(marker && !strcmp(marker, "unchanged"));
+    CHECK(signal(SIGUSR1, SIG_IGN) != SIG_ERR && signal(SIGPIPE, SIG_IGN) != SIG_ERR);
+    sigset_t blocked, empty, defaults, after_mask;
+    CHECK(sigemptyset(&blocked) == 0 && sigaddset(&blocked, SIGUSR2) == 0);
+    CHECK(sigprocmask(SIG_BLOCK, &blocked, NULL) == 0);
+    CHECK(sigemptyset(&empty) == 0 && sigfillset(&defaults) == 0);
+    int cwd = open(argv[2], O_RDONLY | O_DIRECTORY); CHECK(cwd >= 3 && cwd < 512);
+    int sentinel[2], server[2];
+    CHECK(pipe(sentinel) == 0 && socketpair(AF_UNIX, SOCK_STREAM, 0, server) == 0);
+    for (unsigned i = 0; i < 2; ++i) {
+        CHECK(sentinel[i] >= 3 && sentinel[i] < 512 && server[i] >= 3 && server[i] < 512);
+        CHECK(fcntl(sentinel[i], F_GETFD) == 0 && fcntl(server[i], F_GETFD) == 0);
+    }
+    posix_spawn_file_actions_t actions;
+    posix_spawnattr_t attributes;
+    CHECK(posix_spawn_file_actions_init(&actions) == 0);
+    CHECK(posix_spawn_file_actions_addopen(&actions, 0, "/dev/null", O_RDONLY, 0) == 0);
+    CHECK(posix_spawn_file_actions_addfchdir_np(&actions, cwd) == 0);
+    CHECK(posix_spawn_file_actions_addclosefrom_np(&actions, 3) == 0);
+    CHECK(posix_spawnattr_init(&attributes) == 0);
+    CHECK(posix_spawnattr_setsigmask(&attributes, &empty) == 0);
+    CHECK(posix_spawnattr_setsigdefault(&attributes, &defaults) == 0);
+    CHECK(posix_spawnattr_setpgroup(&attributes, 0) == 0);
+    CHECK(posix_spawnattr_setflags(&attributes,
+        POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETPGROUP) == 0);
+    char *child_argv[] = {argv[1], argv[2], NULL};
+    char *child_env[] = {"SRPT_NATIVE_PREREQUISITE=only", NULL};
+    CHECK(posix_spawn(&child, argv[1], &actions, &attributes, child_argv, child_env) == 0);
+    CHECK(posix_spawnattr_destroy(&attributes) == 0);
+    CHECK(posix_spawn_file_actions_destroy(&actions) == 0);
+    CHECK(close(server[1]) == 0);
+    int status;
+    CHECK(waitpid(child, &status, WUNTRACED) == child && WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP);
+    struct pollfd connection = {server[0], POLLIN | POLLHUP, 0};
+    CHECK(poll(&connection, 1, 1000) == 1);
+    char byte; CHECK(read(server[0], &byte, 1) == 0); /* No leaked server connection. */
+    CHECK(getpgid(child) == child && getpgrp() != child);
+    CHECK(kill(-child, SIGCONT) == 0);
+    CHECK(waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    child = 0;
+    CHECK(close(cwd) == 0 && close(server[0]) == 0);
+    CHECK(close(sentinel[0]) == 0 && close(sentinel[1]) == 0);
+    CHECK(getcwd(after_cwd, sizeof(after_cwd)) && !strcmp(before_cwd, after_cwd));
+    CHECK(read_umask() == before_umask && !strcmp(getenv("SRPT_PARENT_MARKER"), "unchanged"));
+    CHECK(sigprocmask(SIG_SETMASK, NULL, &after_mask) == 0 && sigismember(&after_mask, SIGUSR2) == 1);
+    struct sigaction action;
+    CHECK(sigaction(SIGUSR1, NULL, &action) == 0 && action.sa_handler == SIG_IGN);
+    CHECK(sigaction(SIGPIPE, NULL, &action) == 0 && action.sa_handler == SIG_IGN);
+    return 0;
+}
+'''
+    parent_before = (dict(os.environ), os.getcwdb(), next(
+        line for line in Path('/proc/self/status').read_text().splitlines() if line.startswith('Umask:')))
+    for name, source in [('child', child_source), ('driver', driver_source)]:
+        result = subprocess.run(['cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror',
+                                 '-x', 'c', '-', '-o', str(tmp_path / name)], input=source,
+                                text=True, capture_output=True, timeout=60)
+        assert result.returncode == 0, result.stderr
+        assert (tmp_path / name).read_bytes()[:7] == b'\x7fELF\x02\x01\x01'
+    cwd = tmp_path / 'exact-cwd-\udcff'
+    cwd.mkdir()
+    result = subprocess.run([str(tmp_path / 'driver'), str(tmp_path / 'child'), str(cwd)],
+                            env=dict(os.environ, SRPT_PARENT_MARKER='unchanged'),
+                            input=b'stdin must not reach the child', capture_output=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == b'native child stdout retained\n'
+    assert result.stderr == b'native child stderr retained\n'
+    parent_after = (dict(os.environ), os.getcwdb(), next(
+        line for line in Path('/proc/self/status').read_text().splitlines() if line.startswith('Umask:')))
+    assert parent_after == parent_before

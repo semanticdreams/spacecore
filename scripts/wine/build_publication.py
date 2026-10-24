@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+from contextlib import ExitStack
 import json
 import os
 from pathlib import Path
@@ -44,6 +45,8 @@ TEST_PAIR = ('modules/x86_64-windows/space_record_publication_tests.dll',
              'modules/x86_64-unix/space_record_publication_tests.so')
 TEST_DISCOVERY = 'space_record_publication_tests.dll'
 TEST_KIND = 'record-publication-test-support'
+LAUNCH_HEADER = 'srpt_launch_config.h'
+MAX_LAUNCH_PATH = 4095
 
 
 class BuildError(ValueError):
@@ -292,6 +295,142 @@ def _test_build_id(runtime, toolchain):
     return _sha(json.dumps(value, sort_keys=True, separators=(',', ':')).encode())
 
 
+def _launch_path(path):
+    raw = os.fsencode(path)
+    if (not raw.startswith(b'/') or len(raw) > MAX_LAUNCH_PATH or b'\0' in raw
+            or (raw != b'/' and any(part in (b'', b'.', b'..') for part in raw[1:].split(b'/')))):
+        raise BuildError('Unsafe/oversized absolute launch path')
+    return raw
+
+
+def _launch_snapshot(info):
+    return dict(device=info.st_dev, inode=info.st_ino, size=info.st_size,
+                uid=info.st_uid, mode=info.st_mode, mtime_ns=info.st_mtime_ns, ctime_ns=info.st_ctime_ns)
+
+
+def _launch_trusted(info, *, directory=False):
+    kind = stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode)
+    if (not kind or info.st_uid != 0 or info.st_mode & 0o022
+            or (not directory and (info.st_mode & 0o6000 or not info.st_mode & 0o111))):
+        raise BuildError('Unsafe launch runtime ownership/type/mode')
+
+
+def _capture_runtime_pin(expected):
+    """Hash only nofollow-acquired trusted installed files, retaining the full walk."""
+    raw = _launch_path(expected['executable'])
+    digest = expected['sha256']
+    if not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest) or raw == b'/':
+        raise BuildError('Invalid launch runtime pin')
+    with ExitStack() as stack:
+        def acquire(name, flags, parent=None):
+            fd = os.open(name, flags | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
+            stack.callback(os.close, fd)
+            return fd
+
+        flags = os.O_RDONLY | os.O_DIRECTORY
+        root = acquire(b'/', flags)
+        # Keep both descriptor and parent/name witnesses. Retained descriptors alone
+        # would not notice replacement of an ancestor's directory entry during hashing.
+        walk = [(root, None, b'/', os.fstat(root), b'/')]
+        parent = root
+        current = b''
+        for component in raw[1:].split(b'/')[:-1]:
+            current += b'/' + component
+            fd = acquire(component, flags, parent)
+            walk.append((fd, parent, component, os.fstat(fd), current))
+            parent = fd
+        ancestors = []
+        for _, _, _, info, path in walk:
+            _launch_trusted(info, directory=True)
+            ancestors.append(dict(path_hex=path.hex(), device=info.st_dev, inode=info.st_ino,
+                                  uid=info.st_uid, mode=info.st_mode))
+        leaf = raw.rsplit(b'/', 1)[1]
+        fd = acquire(leaf, os.O_RDONLY | os.O_NONBLOCK, parent)
+        before = os.fstat(fd)
+        _launch_trusted(before)
+        if before.st_size > MAX_ARTIFACT:
+            raise BuildError('Oversized launch runtime')
+        if not os.access(leaf, os.X_OK, dir_fd=parent, effective_ids=True, follow_symlinks=False):
+            raise BuildError('Launch runtime is not executable')
+        hasher = hashlib.sha256()
+        size = 0
+        header = bytearray()
+        while size < MAX_ARTIFACT:
+            chunk = os.read(fd, min(1024 * 1024, MAX_ARTIFACT - size))
+            if not chunk:
+                break
+            header.extend(chunk[:max(0, 64 - len(header))])
+            hasher.update(chunk)
+            size += len(chunk)
+        if (size != before.st_size or hasher.hexdigest() != digest
+                or _launch_snapshot(os.fstat(fd)) != _launch_snapshot(before)
+                or _launch_snapshot(os.stat(leaf, dir_fd=parent, follow_symlinks=False)) != _launch_snapshot(before)):
+            raise BuildError('Launch runtime hash/identity changed')
+        elf = _unpack('<16sHHIQQQIHHHHHH', header, 0)
+        if (elf[0][:7] != b'\x7fELF\x02\x01\x01' or elf[0][7] not in (0, 3)
+                or elf[1] not in (2, 3) or elf[2:4] != (62, 1) or elf[8] != 64):
+            raise BuildError('Launch runtime must be Linux x86_64 executable ELF')
+        for descriptor, ancestor_parent, name, info, _ in walk:
+            if (_launch_snapshot(os.fstat(descriptor)) != _launch_snapshot(info)
+                    or _launch_snapshot(os.stat(name, dir_fd=ancestor_parent, follow_symlinks=False))
+                    != _launch_snapshot(info)):
+                raise BuildError('Launch runtime ancestor changed')
+        return dict(path_hex=raw.hex(), sha256=digest, **_launch_snapshot(before), ancestors=ancestors)
+
+
+def _capture_launch_metadata(repo: Path, session: prefix.Session, identity: dict) -> dict:
+    # The logical Session Wine may be a distro script. Only the independently
+    # verified installation implementation is suitable for direct native spawn.
+    return dict(schema=1, checkout_path_hex=_launch_path(repo).hex(),
+                implementation=_capture_runtime_pin(identity['installation']['implementation']['file']),
+                server=_capture_runtime_pin(session.owner['tools']['server']))
+
+
+def _render_launch_header(metadata: dict) -> bytes:
+    """Private, deterministic C/C++ metadata; never interpolate pathname literals."""
+    lines = ['/* Generated private launch pins. Not a public ABI. */',
+             '#ifndef SRPT_LAUNCH_CONFIG_H', '#define SRPT_LAUNCH_CONFIG_H',
+             '#include <stdint.h>', '#include <stddef.h>',
+             'typedef struct { const unsigned char *path; uint64_t device, inode; uint32_t uid, mode; } SrptLaunchAncestor;',
+             'typedef struct { const unsigned char *path, *sha256; uint64_t device, inode, size;',
+             '    uint32_t uid, mode; int64_t mtime_ns, ctime_ns;',
+             '    const SrptLaunchAncestor *ancestors; size_t ancestor_count; } SrptLaunchRuntimePin;']
+
+    def array(name, raw):
+        lines.append('static const unsigned char ' + name + '[] = {' + ','.join(str(byte) for byte in raw) + '};')
+
+    def number(value, bits=64, signed=False):
+        if type(value) is not int or not (-(1 << (bits - 1)) if signed else 0) <= value < (1 << (bits - int(signed))):
+            raise BuildError('Launch pin integer is out of range')
+        macro = 'INT' if signed else 'UINT'
+        return ('-' if value < 0 else '') + f'{macro}{bits}_C({abs(value)})'
+
+    if metadata['schema'] != 1:
+        raise BuildError('Unknown launch metadata schema')
+    lines.append('static const uint32_t srpt_launch_schema = UINT32_C(1);')
+    array('srpt_launch_checkout', bytes.fromhex(metadata['checkout_path_hex']) + b'\0')
+    for key in ('implementation', 'server'):
+        pin = metadata[key]
+        name = 'srpt_launch_' + key
+        array(name + '_path', bytes.fromhex(pin['path_hex']) + b'\0')
+        array(name + '_sha256', bytes.fromhex(pin['sha256']))
+        for index, row in enumerate(pin['ancestors']):
+            array(f'{name}_ancestor_{index}', bytes.fromhex(row['path_hex']) + b'\0')
+        lines.append(f'static const SrptLaunchAncestor {name}_ancestors[] = {{')
+        for index, row in enumerate(pin['ancestors']):
+            values = [number(row[field], 32 if field in ('uid', 'mode') else 64)
+                      for field in ('device', 'inode', 'uid', 'mode')]
+            lines.append('    {' + f'{name}_ancestor_{index}, ' + ', '.join(values) + '},')
+        lines.append('};')
+        values = [number(pin[field], 32 if field in ('uid', 'mode') else 64,
+                         signed=field in ('mtime_ns', 'ctime_ns'))
+                  for field in ('device', 'inode', 'size', 'uid', 'mode', 'mtime_ns', 'ctime_ns')]
+        lines.append(f'static const SrptLaunchRuntimePin {name} = {{' +
+                     f'{name}_path, {name}_sha256, ' + ', '.join(values) +
+                     f', {name}_ancestors, sizeof({name}_ancestors)/sizeof({name}_ancestors[0])' + '};')
+    return ('\n'.join([*lines, '#endif', ''])).encode('ascii')
+
+
 def _test_sources(repo):
     return {relative: _sha(_regular(repo / relative, private=False)) for relative in TEST_INPUTS}
 
@@ -346,12 +485,18 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
     identity = publication_toolchain.resolve_toolchain(repo, runtime)
     publication_toolchain.verify_toolchain(identity)
     sources = _test_sources(repo)
-    toolchain = dict(identity=identity, inputs=sources)
+    launch = _capture_launch_metadata(repo, session, identity)
+    launch_header = _render_launch_header(launch)
+    toolchain = dict(identity=identity, inputs=sources, launch=launch, launch_header_sha256=_sha(launch_header))
     build_id = _test_build_id(runtime, toolchain)
     definition = '-DSRPT_BUILD_ID_BYTES={' + ','.join(hex(byte) for byte in bytes.fromhex(build_id)) + '}'
     windows_headers, wine_headers = _headers(identity)
     with tempfile.TemporaryDirectory(prefix='.wine-publication-tests-', dir=build) as name:
         stage = Path(name)
+        header = stage / LAUNCH_HEADER
+        fd = os.open(header, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(launch_header)
         new = stage / 'new'
         new.mkdir(mode=0o700)
         for directory in DIRECTORIES:
@@ -360,10 +505,10 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
         tools = identity['tools']
         _compile([tools['host_cxx']['executable'], '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror',
                   '-fPIC', '-shared', '-fvisibility=hidden', '-static-libgcc', '-static-libstdc++',
-                  '-I', str(repo / 'tests'), definition, str(repo / TEST_UNIX_SOURCE),
+                  '-I', str(stage), '-I', str(repo / 'tests'), definition, str(repo / TEST_UNIX_SOURCE),
                   '-pthread', '-o', str(unix), '-ldl'], stage)
         _compile([tools['mingw_cc']['executable'], '-std=c11', '-O2', '-Wall', '-Werror', '-shared', '-static-libgcc',
-                  '-I', str(windows_headers), '-I', str(wine_headers), '-I', str(repo / 'tests'), definition,
+                  '-I', str(stage), '-I', str(windows_headers), '-I', str(wine_headers), '-I', str(repo / 'tests'), definition,
                   str(repo / TEST_PE_SOURCE), '-o', str(pe)], stage)
         _compile([tools['winebuild']['executable'], '--builtin', str(pe)], stage)
         for path in (unix, pe):
@@ -382,6 +527,8 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
         publication_toolchain.verify_toolchain(identity)
         if _test_sources(repo) != sources:
             raise BuildError('Test support source inputs changed during build')
+        if _capture_launch_metadata(repo, session, identity) != launch or _regular(header) != launch_header:
+            raise BuildError('Test support launch pins/header changed during build')
         if _recognized_test_output(output) != previous:
             raise BuildError('Test support output changed during build')
         backup = stage / 'old'
