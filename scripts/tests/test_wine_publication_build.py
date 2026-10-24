@@ -3851,10 +3851,12 @@ def test_publication_pe_closed_launch_sequence_activation_and_intact_receipts():
 def test_publication_pe_uncertain_ownership_diagnostic_cannot_unwind():
     source = (ROOT / 'tests/test_record_publication.cpp').read_text()
     body = source.split('void invoke_launch(', 1)[1].split('using Clock =', 1)[0]
-    fatal = body[:body.index('check(status ==')]
+    fatal = body[:body.index('check(')]
     assert 'std::fprintf(stderr,' in fatal and 'std::fflush(nullptr)' in fatal
     assert 'std::cerr' not in fatal and 'std::cout' not in fatal and 'std::abort' not in fatal
-    assert fatal.index('fixture->preserve_wine_fixture = true') < fatal.index('std::fprintf(stderr,')
+    assert 'const bool acknowledged =' in fatal
+    assert fatal.index('const bool acknowledged =') < fatal.index('fixture->preserve_wine_fixture = true') < fatal.index('std::fprintf(stderr,')
+    assert 'untrusted-launch-result' in fatal
     assert fatal.index('std::fflush(nullptr)') < fatal.index('::TerminateProcess(::GetCurrentProcess(), 125)') < fatal.index('std::_Exit(125)')
 
 
@@ -3889,7 +3891,10 @@ int TerminateProcess(void* process, unsigned code) {
     std::cerr << "TERMINATE\n" << std::flush;
     return 0; // Exercise the mandatory _Exit fallback, not debugger abort.
 }
-static int mode;
+struct Result {
+    int32_t status;
+    uint32_t outcome, phase, error, exit, signal, remaining, mutation;
+} result;
 int32_t entry(uint32_t selected, void* raw) {
     assert(selected == SRPT_ENTRY_LAUNCH);
     auto& frame = *static_cast<SrptLaunch*>(raw);
@@ -3904,26 +3909,33 @@ int32_t entry(uint32_t selected, void* raw) {
     frame.exit_code = frame.action == SRPT_CONFIGURE ? UINT32_MAX : 0;
     frame.remaining_ms = 59000;
     if ((frame.action == SRPT_RUN) != fail_run) return SRPT_SUCCESS;
-    switch (mode) {
-    case 1: frame.outcome = SRPT_OUTCOME_HOST_FAILURE; frame.os_error = 5; return SRPT_UNSUCCESSFUL;
-    case 2: frame.outcome = SRPT_OUTCOME_EXITED_OR_SIGNALLED; frame.exit_code = 7; return SRPT_UNSUCCESSFUL;
-    case 3: frame.outcome = SRPT_OUTCOME_TIMED_OUT_AND_REAPED; frame.term_signal = 9; return SRPT_UNSUCCESSFUL;
-    case 4: frame.outcome = SRPT_OUTCOME_OWNERSHIP_UNCERTAIN; return SRPT_UNSUCCESSFUL;
-    case 5: frame.outcome = SRPT_OUTCOME_OWNERSHIP_UNCERTAIN; return SRPT_SUCCESS;
-    case 6: return SRPT_IDENTITY_MISMATCH;
-    case 7: frame.phase = SRPT_PHASE_WAIT; break;
-    case 8: frame.exit_code = 9; break;
-    case 9: frame.os_error = 1; break;
-    case 10: frame.term_signal = 9; break;
-    case 11: frame.outcome = SRPT_OUTCOME_UNSET; break;
-    case 12: frame.remaining_ms = 60001; break;
+    frame.outcome = result.outcome; frame.phase = result.phase; frame.os_error = result.error;
+    frame.exit_code = result.exit; frame.term_signal = result.signal; frame.remaining_ms = result.remaining;
+    switch (result.mutation) {
+    case 1: ++frame.size; break;
+    case 2: ++frame.abi; break;
+    case 3: ++frame.action; break;
+    case 4: ++frame.case_id; break;
+    case 5: ++frame.root; break;
+    case 6: ++frame.production_build_id[0]; break;
+    case 7: ++frame.support_build_id[31]; break;
+    case 8: ++frame.production_device; break;
+    case 9: ++frame.production_inode; break;
+    case 10: ++frame.support_device; break;
+    case 11: ++frame.support_inode; break;
+    case 12: ++frame.reserved; break;
+    case 13: ++frame.reserved2; break;
     }
-    return SRPT_SUCCESS;
+    return result.status;
 }
 auto support_entry = entry;
 ''' + functions + r'''
 int main(int argc, char** argv) {
-    assert(argc == 3); mode = std::atoi(argv[1]); fail_run = std::string(argv[2]) == "run";
+    assert(argc == 10); fail_run = std::string(argv[1]) == "run";
+    result.status = static_cast<int32_t>(std::stoll(argv[2]));
+    result.outcome = std::stoul(argv[3]); result.phase = std::stoul(argv[4]); result.error = std::stoul(argv[5]);
+    result.exit = std::stoul(argv[6]); result.signal = std::stoul(argv[7]);
+    result.remaining = std::stoul(argv[8]); result.mutation = std::stoul(argv[9]);
     Binding production {}, support {};
     production.build_id.fill(0xaa); production.module_device = 1; production.module_inode = 2;
     support.build_id.fill(0xbb); support.module_device = 3; support.module_inode = 4;
@@ -3936,9 +3948,8 @@ int main(int argc, char** argv) {
             frame = launch_request(SRPT_RUN, id, 42, production, support);
             invoke_launch(frame, &fixture);
         }
-        assert(mode == 0); return 0;
+        return 0;
     } catch (const std::exception& error) {
-        assert(mode != 0 && mode != 4 && mode != 5);
         assert(!fixture.preserve_wine_fixture);
         std::cout << "REJECTED\n";
         return 0;
@@ -3953,25 +3964,102 @@ int main(int argc, char** argv) {
     return output
 
 
-@pytest.mark.parametrize('mode', range(13))
-@pytest.mark.parametrize('action', ['configure', 'run'])
-def test_publication_pe_launch_consumer_status_and_failstop(publication_pe_launch_consumer, mode, action):
-    result = subprocess.run([str(publication_pe_launch_consumer), str(mode), action],
+def publication_pe_result_cases():
+    """Explicit native contract tuples, not an alternate ownership classifier."""
+    failed, invalid, mismatch, unavailable = (-1073741823, -1073741811, -1073741701, -1073741515)
+    no_exit = 0xffffffff
+    cases = []
+    def add(action, name, values, disposition):
+        # status/outcome/phase/errno/exit/signal/remaining/prefix-or-reserved mutation
+        cases.append(pytest.param(action, values, disposition, id=action + '-' + name))
+    for action in ('configure', 'run'):
+        success = (0, 1, 9, 0, no_exit if action == 'configure' else 0, 0, 59000, 0)
+        add(action, 'completed', success, 'completed')
+        for status in (failed, invalid, mismatch):
+            for phase in range(1, 5 if action == 'configure' else 6):
+                for error in (0, 5):
+                    add(action, f'no-child-{status}-{phase}-{error}',
+                        (status, 4, phase, error, no_exit, 0, 0, 0), 'retired')
+        malformed = {
+            'unset-success-old-mode11': (0, 0, 9, 0, success[4], 0, 59000, 0),
+            'unset-failure': (failed, 0, 0, 0, no_exit, 0, 0, 0),
+            'unset-acquisition-shaped': (unavailable, 0, 0, 0, no_exit, 0, 0, 0),
+            'unknown-outcome': (failed, 6, 8, 5, no_exit, 9, 59000, 0),
+            'max-outcome': (failed, no_exit, 8, 5, no_exit, 9, 59000, 0),
+            'explicit-uncertain': (failed, 5, 8, 5, no_exit, 9, 59000, 0),
+            'uncertain-success': (0, 5, 8, 5, no_exit, 9, 59000, 0),
+            'completed-failure-status': (failed, *success[1:]),
+            'completed-unknown-status': (1, *success[1:]),
+            'completed-phase-wait': (0, 1, 6, 0, success[4], 0, 59000, 0),
+            'completed-errno': (0, 1, 9, 5, success[4], 0, 59000, 0),
+            'completed-wrong-exit': (0, 1, 9, 0, 7, 0, 59000, 0),
+            'completed-signal': (0, 1, 9, 0, success[4], 9, 59000, 0),
+            'oversized-budget': (*success[:6], 60001, 0),
+            'host-failure-success-status': (0, 4, 1, 0, no_exit, 0, 0, 0),
+            'host-failure-unknown-status': (unavailable, 4, 1, 0, no_exit, 0, 0, 0),
+            'host-failure-phase-complete': (failed, 4, 9, 5, 0, 0, 0, 0),
+            'host-failure-phase-wait': (failed, 4, 6, 5, no_exit, 0, 0, 0),
+            'host-failure-phase-terminate': (failed, 4, 7, 5, no_exit, 0, 0, 0),
+            'host-failure-phase-input': (invalid, 4, 0, 0, no_exit, 0, 0, 0),
+            'host-failure-pre-spawn-exit': (failed, 4, 3, 5, 0, 0, 0, 0),
+            'host-failure-pre-spawn-signal': (failed, 4, 3, 5, no_exit, 9, 0, 0),
+        }
+        for name, values in malformed.items():
+            add(action, name, values, 'fatal')
+        for mutation in range(1, 14):
+            add(action, f'changed-frame-{mutation}', (*success[:7], mutation), 'fatal')
+    for status in (failed, invalid, mismatch):
+        for error in (0, 5):
+            for exit_code, term_signal in ((0, 0), (23, 0), (no_exit, 1), (no_exit, 64)):
+                add('run', f'retired-host-{status}-{error}-{exit_code}-{term_signal}',
+                    (status, 4, 8, error, exit_code, term_signal, 0, 0), 'retired')
+    for outcome, error in ((2, 0), (3, 110)):
+        for exit_code, term_signal in ((23, 0), (255, 0), (no_exit, 1), (no_exit, 64)):
+            add('run', f'retired-{outcome}-{exit_code}-{term_signal}',
+                (failed, outcome, 8, error, exit_code, term_signal, 0, 0), 'retired')
+        if outcome == 3:
+            add('run', 'timeout-exit-zero-race', (failed, 3, 8, 110, 0, 0, 0, 0), 'retired')
+        for status in (0, invalid, mismatch, 1):
+            add('run', f'bad-status-{outcome}-{status}', (status, outcome, 8, error, 23, 0, 0, 0), 'fatal')
+        add('run', f'bad-errno-{outcome}', (failed, outcome, 8, 5, 23, 0, 0, 0), 'fatal')
+    for outcome, error in ((2, 0), (3, 110), (4, 5)):
+        for exit_code, term_signal in ((no_exit, 0), (256, 0), (23, 9), (no_exit, 65), (no_exit, no_exit)):
+            add('run', f'bad-disposition-{outcome}-{exit_code}-{term_signal}',
+                (failed, outcome, 8, error, exit_code, term_signal, 0, 0), 'fatal')
+        add('configure', f'run-only-retired-{outcome}', (failed, outcome, 8, error, 23, 0, 0, 0), 'fatal')
+    add('run', 'child-failure-exit-zero', (failed, 2, 8, 0, 0, 0, 0, 0), 'fatal')
+    add('run', 'timeout-no-errno', (failed, 3, 8, 0, 23, 0, 0, 0), 'fatal')
+    add('configure', 'host-failure-spawn-phase', (failed, 4, 5, 5, no_exit, 0, 0, 0), 'fatal')
+    return cases
+
+
+@pytest.mark.parametrize('action,values,disposition', publication_pe_result_cases())
+def test_publication_pe_launch_consumer_status_and_failstop(publication_pe_launch_consumer, action, values, disposition):
+    result = subprocess.run([str(publication_pe_launch_consumer), action, *map(str, values)],
                             capture_output=True, text=True, timeout=10)
-    if mode in (4, 5):
-        assert result.returncode > 0 and result.returncode != -signal.SIGABRT
+    case_id = 1 if action == 'run' else 0
+    lines = result.stderr.splitlines()
+    normal = [line for line in lines if line.startswith('record publication diagnostic: case=')]
+    fatal = [line for line in lines if 'untrusted-launch-result' in line]
+    if disposition == 'fatal':
+        assert result.returncode == 125, result.stdout + result.stderr
         assert 'TERMINATE' in result.stderr and 'DESTRUCTOR' not in result.stderr and 'REJECTED' not in result.stdout
-        assert 'outcome=5' in result.stderr
+        assert len(fatal) == 1 and f'case={case_id} ' in fatal[0]
+        assert lines.index(fatal[0]) < lines.index('TERMINATE')
+        assert not any(f'case={case_id} ' in line for line in normal)
     else:
         assert result.returncode == 0, result.stderr
         assert 'DESTRUCTOR' in result.stderr and 'TERMINATE' not in result.stderr
-        assert ('REJECTED' in result.stdout) == (mode != 0)
-    assert 'native-result=' in result.stderr and 'case=0' in result.stderr
-    if action == 'run':
-        assert 'case=1' in result.stderr
-    if mode:
-        assert 'case=2' not in result.stderr  # Failure never advances/retries the fixed sequence.
-    assert str(ROOT) not in result.stderr
+        assert ('REJECTED' in result.stdout) == (disposition == 'retired')
+        assert not fatal and any(f'case={case_id} ' in line for line in normal)
+        if disposition == 'completed':
+            assert len(normal) == 6 and 'case=5 ' in normal[-1]
+    if disposition != 'completed':
+        assert 'case=2 ' not in result.stderr  # Failure never advances/retries the fixed sequence.
+    diagnostics = [line for line in lines if line.startswith('record publication diagnostic:')]
+    for line in diagnostics:
+        assert len(line) < 256 and 'native-result=' in line
+        assert str(ROOT) not in line and 'BINDING' not in line and 'PATH' not in line
 
 
 @pytest.mark.parametrize('crypto', ['b', 'n', 'bn', 'native', ''])

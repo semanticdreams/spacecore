@@ -1946,24 +1946,48 @@ void invoke_launch(SrptLaunch& frame, Fixture* fixture)
 {
     const auto input = frame;
     const auto status = support_entry(SRPT_ENTRY_LAUNCH, &frame);
-    // Inspect ownership before any check can throw/unwind into recursive cleanup.
-    const bool uncertain = frame.outcome == SRPT_OUTCOME_OWNERSHIP_UNCERTAIN;
-    if (uncertain && fixture) fixture->preserve_wine_fixture = true;
+    // Only a complete, matching native acknowledgement authorizes unwinding.
+    // These are Linux x86_64 producer values, not Windows CRT errno/signals.
+    constexpr uint32_t linux_etimedout = 110, linux_signal_max = 64;
+    const bool configure = input.action == SRPT_CONFIGURE && input.case_id == 0;
+    const bool run = input.action == SRPT_RUN && input.case_id >= 1 && input.case_id <= 5;
+    const bool matching = input.size == sizeof(input) && input.abi == SRPT_ABI && input.root
+        && (configure || run) && !frame.reserved && !frame.reserved2 && frame.remaining_ms <= 60000
+        && std::memcmp(&frame, &input, offsetof(SrptLaunch, phase)) == 0;
+    const bool no_child = frame.exit_code == UINT32_MAX && !frame.term_signal;
+    const bool exited = frame.exit_code <= 255 && !frame.term_signal;
+    const bool signalled = frame.exit_code == UINT32_MAX && frame.term_signal >= 1
+        && frame.term_signal <= linux_signal_max;
+    const bool reaped = run && frame.phase == SRPT_PHASE_REAP && (exited || signalled);
+    const bool failure_status = status == SRPT_UNSUCCESSFUL || status == SRPT_INVALID_ARGUMENT
+        || status == SRPT_IDENTITY_MISMATCH;
+    const bool completed = matching && status == SRPT_SUCCESS && frame.outcome == SRPT_OUTCOME_COMPLETED
+        && frame.phase == SRPT_PHASE_COMPLETE && !frame.os_error && !frame.term_signal
+        && frame.exit_code == (configure ? UINT32_MAX : 0);
+    const bool host_failure = matching && failure_status && frame.outcome == SRPT_OUTCOME_HOST_FAILURE
+        && ((frame.phase >= SRPT_PHASE_CONTEXT && frame.phase <= (configure ? SRPT_PHASE_ENVIRONMENT : SRPT_PHASE_SPAWN)
+             && no_child) || reaped);
+    const bool child_failure = matching && status == SRPT_UNSUCCESSFUL
+        && frame.outcome == SRPT_OUTCOME_EXITED_OR_SIGNALLED && !frame.os_error
+        && reaped && (signalled || frame.exit_code != 0);
+    const bool timeout = matching && status == SRPT_UNSUCCESSFUL
+        && frame.outcome == SRPT_OUTCOME_TIMED_OUT_AND_REAPED && frame.os_error == linux_etimedout && reaped;
+    const bool acknowledged = completed || host_failure || child_failure || timeout;
+    // UNSET/nonzero status cannot independently prove pre-dispatch/no child.
+    // Malformed replies (not just literal outcome5) must not release any roots.
+    if (!acknowledged && fixture) fixture->preserve_wine_fixture = true;
     // C stdio keeps this fatal boundary free of C++ stream exceptions/allocations.
-    std::fprintf(stderr, "record publication diagnostic: case=%u phase=%u outcome=%u errno=%u exit=%u signal=%u native-result=%u\n",
+    std::fprintf(stderr, "record publication diagnostic: %scase=%u phase=%u outcome=%u errno=%u exit=%u signal=%u native-result=%u\n",
+        acknowledged ? "" : "untrusted-launch-result ",
         static_cast<unsigned>(input.case_id), static_cast<unsigned>(frame.phase), static_cast<unsigned>(frame.outcome),
         static_cast<unsigned>(frame.os_error), static_cast<unsigned>(frame.exit_code), static_cast<unsigned>(frame.term_signal),
         static_cast<unsigned>(static_cast<uint32_t>(status)));
     std::fflush(nullptr);
-    if (uncertain) {
+    if (!acknowledged) {
         ::TerminateProcess(::GetCurrentProcess(), 125);
         std::_Exit(125); // No unwinding, atexit handlers, debugger abort or second attempt.
     }
-    check(status == SRPT_SUCCESS && frame.outcome == SRPT_OUTCOME_COMPLETED
-        && frame.phase == SRPT_PHASE_COMPLETE && !frame.os_error && !frame.term_signal
-        && frame.exit_code == (input.action == SRPT_CONFIGURE ? UINT32_MAX : 0)
-        && frame.remaining_ms <= 60000 && !frame.reserved && !frame.reserved2
-        && std::memcmp(&frame, &input, offsetof(SrptLaunch, phase)) == 0,
+    check(completed,
         "closed publication launch failed (see fixed numeric native result)");
 }
 
