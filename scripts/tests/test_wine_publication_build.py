@@ -4211,7 +4211,11 @@ def support_native_runtime(tmp_path, monkeypatch):
                             input='int main(void) { return 97; }\n', text=True,
                             capture_output=True, timeout=60)
     assert result.returncode == 0, result.stderr
-    server = directory / 'wineserver'
+    # Isolate server-only ancestry failures without invalidating Wine64 first.
+    # The common directory remains available for both-role ancestor race tests.
+    server_directory = directory / 'server-runtime'
+    server_directory.mkdir()
+    server = server_directory / 'wineserver'
     shutil.copy2(binary, server)
     wrapper = directory / 'wine'
     wrapper.write_text('#!/bin/sh\nexit 98\n')
@@ -4220,7 +4224,7 @@ def support_native_runtime(tmp_path, monkeypatch):
     identity = dict(installation=dict(file=expected(wrapper), implementation=dict(file=expected(binary))))
     session = SimpleNamespace(owner=dict(tools=dict(wine=expected(wrapper), server=expected(server))))
     real_os = os
-    trusted = {path.stat().st_ino for path in [binary, server, directory, *directory.parents]}
+    trusted = {path.stat().st_ino for path in [binary, server, server_directory, directory, *directory.parents]}
     overrides = {}
     def info(value):
         if value.st_ino not in trusted:
@@ -4257,16 +4261,141 @@ def test_support_runtime_capture_selects_native_implementation_and_owner_server(
     assert module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity) == value
 
 
-def test_support_runtime_capture_accepts_real_benign_ancestor_sibling_churn(support_native_runtime, monkeypatch):
+@pytest.fixture
+def support_runtime_server_wrapper(support_native_runtime):
+    fixture = support_native_runtime
+    # Exact Ubuntu Wine9 wrapper bytes from the recorded server pin. Capture only:
+    # never execute this script or the runtime paths named in its contents.
+    raw = b'''#!/bin/sh -e
+
+wineserver32=/usr/lib/wine/wineserver32
+wineserver64=/usr/lib/wine/wineserver64
+
+if test -x "$wineserver64"; then
+    wineserver=$wineserver64
+elif test -x "$wineserver32"; then
+    wineserver=$wineserver32
+else
+    echo "error: unable to find wineserver executable." >&2
+    echo "wine32 and/or wine64 must be installed." >&2
+    exit 1
+fi
+
+exec $wineserver -p0 "$@"
+'''
+    fixture.server.write_bytes(raw)
+    digest = hashlib.sha256(raw).hexdigest()
+    assert digest == 'a0d0ce13ed039949a30dc261cf93f4d6c4606cab5783980cd42f476dfb3b881a'
+    fixture.session.owner['tools']['server']['sha256'] = digest
+    return fixture
+
+
+def test_support_runtime_capture_accepts_pinned_server_wrapper_without_execution(
+        support_runtime_server_wrapper, monkeypatch):
+    fixture = support_runtime_server_wrapper
+    module = support_runtime_api()
+    def refuse_execution(*args, **kwargs):
+        pytest.fail('Runtime pin capture must not execute the server wrapper')
+    monkeypatch.setattr(subprocess, 'run', refuse_execution)
+    value = module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+    for role, path in [('implementation', fixture.binary), ('server', fixture.server)]:
+        pin = value[role]
+        assert bytes.fromhex(pin['path_hex']) == os.fsencode(path)
+        assert pin['sha256'] == hashlib.sha256(path.read_bytes()).hexdigest()
+        snapshot = module._launch_snapshot(fixture.os.stat(path))
+        assert {field: pin[field] for field in snapshot} == snapshot
+    assert value['server']['sha256'] == fixture.session.owner['tools']['server']['sha256']
+    assert module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity) == value
+
+
+@pytest.mark.parametrize('role', ['implementation', 'server'])
+@pytest.mark.parametrize('failure', ['hash', 'open'])
+def test_support_runtime_capture_failure_diagnostics_are_fixed_role_only(
+        support_native_runtime, monkeypatch, role, failure):
     fixture = support_native_runtime
     module = support_runtime_api()
-    pin = fixture.identity['installation']['implementation']['file']
-    control = module._capture_runtime_pin(pin)
+    path = fixture.binary if role == 'implementation' else fixture.server
+    pin = (fixture.identity['installation']['implementation']['file'] if role == 'implementation'
+           else fixture.session.owner['tools']['server'])
+    if failure == 'hash':
+        pin['sha256'] = '0' * 64
+    else:
+        original_open = fixture.os.open
+        def refuse_leaf(name, *args, **kwargs):
+            if name == os.fsencode(path.name):
+                raise OSError(13, 'private-contents-environment-must-not-leak', str(path))
+            return original_open(name, *args, **kwargs)
+        monkeypatch.setattr(fixture.os, 'open', refuse_leaf)
+    with pytest.raises(module.BuildError) as caught:
+        module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+    assert str(caught.value) == f'Unsafe launch {role} runtime pin'
+    assert caught.value.__suppress_context__  # Do not expose path-bearing OSError context.
+
+
+@pytest.mark.parametrize('damage', ['leaf-link', 'ancestor-link', 'file-uid', 'ancestor-uid',
+    'file-mode', 'ancestor-mode', 'setuid', 'setgid', 'not-executable', 'access', 'hash',
+    'mtime', 'ctime', 'ancestor-policy', 'oversize', 'relative', 'dotdot', 'long-path'])
+def test_support_runtime_capture_refuses_unsafe_or_changed_server_wrapper(
+        support_runtime_server_wrapper, monkeypatch, damage):
+    fixture = support_runtime_server_wrapper
+    module = support_runtime_api()
+    path = fixture.server
+    pin = fixture.session.owner['tools']['server']
+    if damage == 'leaf-link':
+        path.unlink()
+        path.symlink_to(fixture.binary)
+    elif damage == 'ancestor-link':
+        moved = path.parent.with_name('moved')
+        path.parent.rename(moved)
+        path.parent.symlink_to(moved, target_is_directory=True)
+    elif damage in ('file-uid', 'ancestor-uid', 'file-mode', 'ancestor-mode', 'setuid', 'setgid'):
+        target = path.parent if damage.startswith('ancestor') else path
+        info = target.stat()
+        fixture.overrides[info.st_ino] = (dict(st_uid=12345) if damage.endswith('uid') else
+            dict(st_mode=info.st_mode | {'setuid': 0o4000, 'setgid': 0o2000}.get(damage, 0o022)))
+    elif damage == 'not-executable':
+        path.chmod(0o644)
+    elif damage == 'access':
+        original_access = fixture.os.access
+        monkeypatch.setattr(fixture.os, 'access', lambda name, *args, **kwargs:
+            False if name == os.fsencode(path.name) else original_access(name, *args, **kwargs))
+    elif damage == 'hash':
+        pin['sha256'] = '0' * 64
+    elif damage in ('mtime', 'ctime', 'ancestor-policy'):
+        original_read = fixture.os.read
+        def changed(fd, size):
+            raw = original_read(fd, size)
+            if fixture.os.fstat(fd).st_ino == path.stat().st_ino:
+                target = fixture.directory if damage == 'ancestor-policy' else path
+                info = target.stat()
+                fixture.overrides[info.st_ino] = (dict(st_mode=info.st_mode | 0o020)
+                    if damage == 'ancestor-policy' else {f'st_{damage}_ns': getattr(info, f'st_{damage}_ns') + 1})
+            return raw
+        monkeypatch.setattr(fixture.os, 'read', changed)
+    elif damage == 'oversize':
+        fixture.overrides[path.stat().st_ino] = dict(st_size=64 * 1024 * 1024 + 1)
+    else:
+        pin['executable'] = {'relative': 'relative/wineserver', 'dotdot': str(path.parent / '..' / path.name),
+                             'long-path': '/' + 'x' * 4095}[damage]
+    with pytest.raises(module.BuildError) as caught:
+        module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+    assert str(caught.value) == 'Unsafe launch server runtime pin'
+
+
+@pytest.mark.parametrize('role', ['implementation', 'server'])
+def test_support_runtime_capture_accepts_real_benign_ancestor_sibling_churn(
+        support_runtime_server_wrapper, monkeypatch, role):
+    fixture = support_runtime_server_wrapper
+    module = support_runtime_api()
+    path = fixture.binary if role == 'implementation' else fixture.server
+    pin = (fixture.identity['installation']['implementation']['file'] if role == 'implementation'
+           else fixture.session.owner['tools']['server'])
+    control = module._capture_runtime_pin(pin, implementation=role == 'implementation')
     original_read = fixture.os.read
     sibling = b'benign-sibling-' + os.urandom(16).hex().encode('ascii')
     parent = os.open(fixture.directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     directory_before = os.fstat(parent)
-    file_before = module._launch_snapshot(fixture.os.stat(fixture.binary, follow_symlinks=False))
+    file_before = module._launch_snapshot(fixture.os.stat(path, follow_symlinks=False))
     actions = []
     try:
         def churn_once(fd, size):
@@ -4284,7 +4413,7 @@ def test_support_runtime_capture_accepts_real_benign_ancestor_sibling_churn(supp
             return data
         with monkeypatch.context() as patch:
             patch.setattr(fixture.os, 'read', churn_once)
-            captured = module._capture_runtime_pin(pin)
+            captured = module._capture_runtime_pin(pin, implementation=role == 'implementation')
         directory_after = os.fstat(parent)
     finally:
         os.close(parent)
@@ -4293,8 +4422,8 @@ def test_support_runtime_capture_accepts_real_benign_ancestor_sibling_churn(supp
                for field in ('st_size', 'st_mtime_ns', 'st_ctime_ns')), 'real sibling action must change directory metadata'
     assert all(getattr(directory_before, field) == getattr(directory_after, field)
                for field in ('st_dev', 'st_ino', 'st_uid', 'st_mode'))
-    assert module._launch_snapshot(fixture.os.stat(fixture.binary, follow_symlinks=False)) == file_before
-    assert hashlib.sha256(fixture.binary.read_bytes()).hexdigest() == captured['sha256'] == control['sha256']
+    assert module._launch_snapshot(fixture.os.stat(path, follow_symlinks=False)) == file_before
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == captured['sha256'] == control['sha256']
     assert captured == control  # Includes the full file tuple and exact ancestor schema/pins.
 
 
@@ -4303,14 +4432,18 @@ def test_support_runtime_capture_accepts_real_benign_ancestor_sibling_churn(supp
     *(('file', field) for field in ('device', 'inode', 'uid', 'mode', 'size', 'mtime_ns', 'ctime_ns')),
 ])
 @pytest.mark.parametrize('witness', ['descriptor', 'path'])
+@pytest.mark.parametrize('role', ['implementation', 'server'])
 def test_support_runtime_capture_revalidates_required_fields_on_both_witnesses(
-        support_native_runtime, monkeypatch, target, field, witness):
+        support_runtime_server_wrapper, monkeypatch, target, field, witness, role):
     # Drift after the real file read, not an unsafe initial acquisition. Restrict
     # the existing fixture's stat-protocol model to exactly one witness/field.
     import stat
-    fixture = support_native_runtime
+    fixture = support_runtime_server_wrapper
     module = support_runtime_api()
-    path = fixture.directory if target == 'ancestor' else fixture.binary
+    runtime = fixture.binary if role == 'implementation' else fixture.server
+    pin = (fixture.identity['installation']['implementation']['file'] if role == 'implementation'
+           else fixture.session.owner['tools']['server'])
+    path = fixture.directory if target == 'ancestor' else runtime
     original_info = path.stat()
     original_read, original_fstat, original_stat = fixture.os.read, fixture.os.fstat, fixture.os.stat
     armed = False
@@ -4336,15 +4469,18 @@ def test_support_runtime_capture_revalidates_required_fields_on_both_witnesses(
     monkeypatch.setattr(fixture.os, 'fstat', lambda fd: drift(original_fstat(fd), 'descriptor'))
     monkeypatch.setattr(fixture.os, 'stat', lambda *args, **kwargs: drift(original_stat(*args, **kwargs), 'path'))
     with pytest.raises(module.BuildError, match='ancestor changed' if target == 'ancestor' else 'hash/identity changed'):
-        module._capture_runtime_pin(fixture.identity['installation']['implementation']['file'])
+        module._capture_runtime_pin(pin, implementation=role == 'implementation')
     assert observations == [(witness, attributes[field])]
 
 
 @pytest.mark.parametrize('replacement', ['directory', 'symlink', 'file'])
+@pytest.mark.parametrize('role', ['implementation', 'server'])
 def test_support_runtime_capture_refuses_real_ancestor_replacement_after_read(
-        support_native_runtime, monkeypatch, replacement):
-    fixture = support_native_runtime
+        support_runtime_server_wrapper, monkeypatch, replacement, role):
+    fixture = support_runtime_server_wrapper
     module = support_runtime_api()
+    pin = (fixture.identity['installation']['implementation']['file'] if role == 'implementation'
+           else fixture.session.owner['tools']['server'])
     original_read, original_stat = fixture.os.read, fixture.os.stat
     changed = False
     path_checks = []
@@ -4370,7 +4506,7 @@ def test_support_runtime_capture_refuses_real_ancestor_replacement_after_read(
     monkeypatch.setattr(fixture.os, 'read', replace_once)
     monkeypatch.setattr(fixture.os, 'stat', observe_path)
     with pytest.raises(module.BuildError, match='ancestor changed'):
-        module._capture_runtime_pin(fixture.identity['installation']['implementation']['file'])
+        module._capture_runtime_pin(pin, implementation=role == 'implementation')
     assert changed and path_checks == [False]  # The retained directory alone cannot prove the path.
 
 
@@ -4446,7 +4582,8 @@ def test_support_runtime_real_untrusted_ancestry_is_not_admitted(tmp_path):
         module._capture_launch_metadata(tmp_path, session, identity)
 
 
-def test_support_runtime_capture_never_reads_more_than_64_mib(support_native_runtime, monkeypatch):
+@pytest.mark.parametrize('role', ['implementation', 'server'])
+def test_support_runtime_capture_never_reads_more_than_64_mib(support_native_runtime, monkeypatch, role):
     module = support_runtime_api()
     fixture = support_native_runtime
     bytes_read = 0
@@ -4455,8 +4592,10 @@ def test_support_runtime_capture_never_reads_more_than_64_mib(support_native_run
         bytes_read += size
         return b'x' * size
     monkeypatch.setattr(fixture.os, 'read', endless_read)
+    pin = (fixture.identity['installation']['implementation']['file'] if role == 'implementation'
+           else fixture.session.owner['tools']['server'])
     with pytest.raises(module.BuildError):
-        module._capture_launch_metadata(fixture.repo, fixture.session, fixture.identity)
+        module._capture_runtime_pin(pin, implementation=role == 'implementation')
     assert bytes_read <= 64 * 1024 * 1024
 
 

@@ -322,7 +322,7 @@ def _launch_trusted(info, *, directory=False):
         raise BuildError('Unsafe launch runtime ownership/type/mode')
 
 
-def _capture_runtime_pin(expected):
+def _capture_runtime_pin(expected, *, implementation):
     """Hash only nofollow-acquired trusted installed files, retaining the full walk."""
     raw = _launch_path(expected['executable'])
     digest = expected['sha256']
@@ -372,10 +372,11 @@ def _capture_runtime_pin(expected):
                 or _launch_snapshot(os.fstat(fd)) != _launch_snapshot(before)
                 or _launch_snapshot(os.stat(leaf, dir_fd=parent, follow_symlinks=False)) != _launch_snapshot(before)):
             raise BuildError('Launch runtime hash/identity changed')
-        elf = _unpack('<16sHHIQQQIHHHHHH', header, 0)
-        if (elf[0][:7] != b'\x7fELF\x02\x01\x01' or elf[0][7] not in (0, 3)
-                or elf[1] not in (2, 3) or elf[2:4] != (62, 1) or elf[8] != 64):
-            raise BuildError('Launch runtime must be Linux x86_64 executable ELF')
+        if implementation:
+            elf = _unpack('<16sHHIQQQIHHHHHH', header, 0)
+            if (elf[0][:7] != b'\x7fELF\x02\x01\x01' or elf[0][7] not in (0, 3)
+                    or elf[1] not in (2, 3) or elf[2:4] != (62, 1) or elf[8] != 64):
+                raise BuildError('Launch runtime must be Linux x86_64 executable ELF')
         for descriptor, ancestor_parent, name, info, _ in walk:
             if (_launch_ancestor_snapshot(os.fstat(descriptor)) != _launch_ancestor_snapshot(info)
                     or _launch_ancestor_snapshot(os.stat(name, dir_fd=ancestor_parent, follow_symlinks=False))
@@ -387,9 +388,19 @@ def _capture_runtime_pin(expected):
 def _capture_launch_metadata(repo: Path, session: prefix.Session, identity: dict) -> dict:
     # The logical Session Wine may be a distro script. Only the independently
     # verified installation implementation is suitable for direct native spawn.
+    # The immutable Session server may itself be a trusted distro wrapper. Keep
+    # all acquisition/hash/identity checks, but require ELF only for native spawn.
+    # Never expose path-bearing OS exceptions through the builder's diagnostics.
+    try:
+        implementation = _capture_runtime_pin(identity['installation']['implementation']['file'], implementation=True)
+    except (BuildError, OSError):
+        raise BuildError('Unsafe launch implementation runtime pin') from None
+    try:
+        server = _capture_runtime_pin(session.owner['tools']['server'], implementation=False)
+    except (BuildError, OSError):
+        raise BuildError('Unsafe launch server runtime pin') from None
     return dict(schema=1, checkout_path_hex=_launch_path(repo).hex(),
-                implementation=_capture_runtime_pin(identity['installation']['implementation']['file']),
-                server=_capture_runtime_pin(session.owner['tools']['server']))
+                implementation=implementation, server=server)
 
 
 def _render_launch_header(metadata: dict) -> bytes:
