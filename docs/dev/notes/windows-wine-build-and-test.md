@@ -388,6 +388,32 @@ actual copied production SO distinct from original, nine exact embedded-NUL byte
 four hooks/policy/clean anchor. Negatives require intended loader/association
 refusal, zero hooks, unchanged bytes/metadata and no anchor/cache/fallback.
 
+Unix `PATH=` is distinct from the post-bootstrap Windows PATH. Stock Wine9 fresh
+Unix-launch startup skips the unprefixed Unix special variable and imports Windows
+registry environment; it does not preserve the Windows environment block used by
+CreateProcess startup. The five validated private Wine publication children therefore
+set Windows PATH to the empty string after required TEMP/TMP initialization and
+argument validation, before `load_support`. The test-private initializer checks the
+set, resets LastError before immediate readback, and requires length0, ERROR_SUCCESS
+and a written NUL in a previously nonzero buffer. Missing, nonempty, malformed or
+failed readbacks refuse with fixed-phase/numeric diagnostics. The later location06
+guard remains unchanged. No-argument Wine parent, native Windows and POSIX entry
+behavior is unchanged; no parent environment/cwd/umask or registry mutation is added.
+
+Clearing Windows PATH is not historical loader-isolation attestation. The existing
+case-basename `GetModuleHandleW` checks must still reject a known copied runtime DLL
+loaded from outside its owned case. Static inspection of the admitted pre-fix PE
+artifacts at `97bc9dfa` closes ordinary non-system imports over
+`libgcc_s_seh-1.dll`, `libstdc++-6.dll` and `libwinpthread-1.dll`, mapped to the copy
+and child location checks. That inventory must be refreshed after the next admitted
+PE build; it is not fresh artifact evidence for this source change. Static imports
+do not exclude TLS/CRT/DLL-initializer dynamic loads. A resident non-system module
+whose basename is absent from the case listing is not detected by that loop; this
+test does not claim universal pre-main module provenance or all-loaded-module
+enumeration. Independent actual support and copied production SO identities remain
+mandatory; neither Windows PATH readback nor a logical System32 filename proves
+Unix loader selection.
+
 Copying and RUN require13 seconds remaining (10 wait +2 termination/reap +1 cleanup),
 without enlarging the shared60s. Native results distinguish checked retirement
 from ownership-uncertain outcome5: preserve the fixture, flush bounded numeric
@@ -396,8 +422,13 @@ with `_Exit` fallback rather than debugger abort. Explicit final cleanup remains
 inside60s. Numeric native-result and post-assertion control-completion observations
 are diagnostic only, never report/grant authority, and disclose no paths/env/bindings.
 
-Installed-runtime feasibility remains UNPROVED. The old first intact control's
-location-07 failure does not automatically validate any new override format.
+Installed-runtime feasibility remains UNPROVED. The latest measured revision
+`97bc9dfa` passed build/admission but its first cpp-022 intact control stopped at
+location06 (lexical mask7), before publication or copied-SO identity proof; later
+components/full Wine did not run. The printed child error0 was not a captured PATH
+API return/error, which remain unknown. This child-only initializer is source/host-
+model work, not a newly measured Wine PASS. The older location07 failure likewise
+does not automatically validate any new override format.
 Native compile/models are not real Wine proof of synchronous PE completion,
 installed loader selection, actual roots, encoding, retirement or timing. After
 independent source pass, only a fresh full `windows-ci-reproducer` run can measure

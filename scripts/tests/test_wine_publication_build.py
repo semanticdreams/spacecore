@@ -3848,6 +3848,244 @@ def test_publication_pe_closed_launch_sequence_activation_and_intact_receipts():
         assert guard in child
 
 
+@pytest.fixture(scope='module')
+def publication_private_child_startup(tmp_path_factory):
+    """Run verbatim CPP startup/helper/known-dependency guard against host APIs."""
+    source = (ROOT / 'tests/test_record_publication.cpp').read_text()
+    helper_start = source.find('void initialize_wine_child_path()')
+    # Before the repair, run the actual old startup to expose its nonempty PATH.
+    helper = '' if helper_start < 0 else source[helper_start:source.index('std::wstring child_overrides()')]
+    prefix = source[source.index('int main(int argc, char** argv)'):source.index('        private_contract_models();')]
+    prefix = prefix.replace('int main(', 'int application_entry(', 1)
+    catch = source[source.index('    } catch (const std::exception& error) {', source.index('int main(')):]
+    check = source[source.index('void check(bool condition,'):source.index('using Binding =')]
+    win_check = source[source.index('void win_check(BOOL ok,'):source.index('struct CheckedHandle')]
+    cases = source[source.index('const std::array<std::string, 5> child_cases'):source.index('std::wstring child_overrides()')]
+    if helper_start >= 0:
+        cases = cases[:cases.index('void initialize_wine_child_path()')]
+    guard_start = source.index('    for (const auto& item : fs::directory_iterator(root)) {', source.index('int wine_child('))
+    guard = source[guard_start:source.index('    child_phase = "location-09";', guard_start)]
+    adapter = r'''
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <filesystem>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include "wine_owned_environment.h"
+namespace fs = std::filesystem;
+bool under_wine = false, model_wine;
+const char* child_phase = "entry";
+DWORD child_error = ERROR_SUCCESS, last_error = 77;
+std::string mode;
+std::vector<std::string> events;
+std::map<std::wstring, std::wstring> variables;
+fs::path case_root;
+bool private_request;
+namespace rp::wine { bool detected() { events.emplace_back("detect"); return model_wine; } }
+extern "C" void SetLastError(DWORD value) { last_error = value; }
+extern "C" DWORD GetLastError() { return last_error; }
+extern "C" BOOL SetEnvironmentVariableW(const WCHAR* key, const WCHAR* value) {
+    assert(last_error == ERROR_SUCCESS);
+    assert(value);
+    const std::wstring name(key);
+    events.emplace_back(name == L"PATH" ? "path-set" : name == L"TEMP" ? "temp-set" : "tmp-set");
+    if ((name == L"TEMP" && mode == "temp-set-fail") ||
+        (name == L"PATH" && (mode == "set-fail" || mode == "set-fail-no-error"))) {
+        last_error = mode == "set-fail-no-error" ? ERROR_SUCCESS : ERROR_ACCESS_DENIED;
+        return FALSE;
+    }
+    variables[name] = value;
+    last_error = 77; // Successful sets need not clear LastError; read must reset it.
+    return TRUE;
+}
+extern "C" DWORD GetEnvironmentVariableW(const WCHAR* key, WCHAR* out, DWORD capacity) {
+    assert(last_error == ERROR_SUCCESS);
+    const std::wstring name(key);
+    if (name == L"PATH") {
+        events.emplace_back("path-read");
+        assert(capacity == 2 && out[0] != 0); // Seeded terminator witness, not zero-initialization.
+        if (mode == "read-missing" || mode == "read-missing-terminated") {
+            if (mode == "read-missing-terminated") out[0] = 0;
+            last_error = ERROR_ENVVAR_NOT_FOUND;
+            return 0;
+        }
+        if (mode == "read-error" || mode == "read-error-terminated") {
+            if (mode == "read-error-terminated") out[0] = 0;
+            last_error = ERROR_ACCESS_DENIED;
+            return 0;
+        }
+        if (mode == "read-nonempty") { out[0] = L'x'; out[1] = 0; return 1; }
+        if (mode == "read-size") return 3;
+        if (mode == "read-no-terminator") return 0;
+    } else if (name == L"TEMP" || name == L"TMP") {
+        events.emplace_back(name == L"TEMP" ? "temp-read" : "tmp-read");
+        if (name == L"TEMP" && mode == "temp-read-fail") { last_error = ERROR_ACCESS_DENIED; return 0; }
+    }
+    const auto found = variables.find(name);
+    if (found == variables.end()) { last_error = ERROR_ENVVAR_NOT_FOUND; return 0; }
+    const auto& value = found->second;
+    if (value.size() >= capacity) return static_cast<DWORD>(value.size() + 1);
+    std::copy(value.begin(), value.end(), out);
+    out[value.size()] = 0;
+    return static_cast<DWORD>(value.size());
+}
+extern "C" HMODULE GetModuleHandleW(const WCHAR* name) {
+    if (!wcscmp(name, L"space_record_publication.dll")) return nullptr;
+    if (!wcscmp(name, L"libgcc_s_seh-1.dll")) return reinterpret_cast<HMODULE>(1);
+    if (!wcscmp(name, L"libstdc++-6.dll")) return reinterpret_cast<HMODULE>(2);
+    if (!wcscmp(name, L"libwinpthread-1.dll")) return reinterpret_cast<HMODULE>(3);
+    return nullptr;
+}
+// Host fs::path stores bytes; the verbatim Win32 guard uses its native c_str().
+HMODULE GetModuleHandleW(const char* name) {
+    const std::string bytes(name);
+    const std::wstring wide(bytes.begin(), bytes.end());
+    return GetModuleHandleW(wide.c_str());
+}
+fs::path executable_path(HMODULE module) {
+    const auto id = reinterpret_cast<uintptr_t>(module);
+    const std::array<std::string, 3> names {"libgcc_s_seh-1.dll", "libstdc++-6.dll", "libwinpthread-1.dll"};
+    assert(id >= 1 && id <= names.size());
+    const auto& name = names[id - 1];
+    return (mode == "fallback-" + name ? case_root.parent_path() / "outside-case" : case_root) / name;
+}
+std::string host_path(const fs::path& path) { return path.string(); }
+struct HostRoot { explicit HostRoot(const fs::path&) {} };
+std::unique_ptr<HostRoot> owned_tmp;
+void load_support();
+int wine_child(const std::string&);
+'''
+    services = r'''
+void load_support() {
+    events.emplace_back("support");
+    if (private_request) {
+        check(variables[L"PATH"].empty(), "private PATH still contains registry seed");
+        check(variables[L"TEMP"] == variables[L"SPACE_WINE_WINDOWS_TMP"] &&
+              variables[L"TMP"] == variables[L"SPACE_WINE_WINDOWS_TMP"], "owned temp must precede support");
+    }
+}
+int wine_child(const std::string&) {
+    events.emplace_back("child");
+    child_phase = "location-08";
+    const auto root = case_root;
+'''
+    driver = r'''
+int main(int argc, char** argv) {
+    assert(argc >= 4);
+    mode = argv[1]; model_wine = std::string(argv[2]) == "wine"; case_root = argv[3];
+    private_request = argc != 4;
+    variables = {{L"PATH", mode == "already-empty" ? L"" : L"registry-path-must-not-leak"},
+                 {L"TEMP", L"registry-temp-must-not-leak"}, {L"TMP", L"registry-tmp-must-not-leak"},
+                 {L"SPACE_WINE_WINDOWS_TMP", LR"(R:\owned\tmp)"}};
+    const auto result = application_entry(argc - 3, argv + 3);
+    for (const auto& event : events) std::cout << event << '\n';
+    std::cout << "result=" << result << '\n';
+    if (!private_request) {
+        assert(variables[L"PATH"] == (mode == "already-empty" ? L"" : L"registry-path-must-not-leak"));
+    }
+}
+'''
+    directory = tmp_path_factory.mktemp('publication-private-child-startup')
+    outputs = {}
+    for platform in ('windows', 'posix'):
+        # Define _WIN32 after the native standard-library headers, not as a host ABI claim.
+        code = adapter + ('\n#define _WIN32\n' if platform == 'windows' else '\n')
+        code += check + win_check + cases
+        if platform == 'windows':
+            code += helper
+        code += services + guard + '\n    return 0;\n}\n'
+        code += prefix + '        return 0;\n' + catch + driver
+        model = directory / f'{platform}.cpp'
+        model.write_text(code)
+        output = directory / platform
+        result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror',
+                                 '-I', str(ROOT / 'scripts/tests/wine_adapters'), '-I', str(ROOT / 'src'),
+                                 str(model), '-o', str(output)], capture_output=True, text=True, timeout=60)
+        assert result.returncode == 0, result.stderr
+        assert not result.stdout and not result.stderr
+        outputs[platform] = output
+    return outputs
+
+
+def run_private_child_startup(model, tmp_path, *, mode='normal', runtime='wine', args=(), platform='windows'):
+    case = tmp_path / 'case'
+    case.mkdir()
+    for name in ('libgcc_s_seh-1.dll', 'libstdc++-6.dll', 'libwinpthread-1.dll'):
+        (case / name).write_bytes(b'host fixture, not PE')
+    result = subprocess.run([str(model[platform]), mode, runtime, str(case), *args],
+                            capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert all(value not in result.stdout + result.stderr for value in
+               ('registry-path-must-not-leak', 'registry-temp-must-not-leak', 'registry-tmp-must-not-leak', str(case)))
+    assert all(len(line) < 160 for line in result.stdout.splitlines() + result.stderr.splitlines())
+    lines = result.stdout.splitlines()
+    return int(lines[-1].removeprefix('result=')), lines[:-1], result.stderr
+
+
+@pytest.mark.parametrize('case', ['control', 'missing-pe', 'bad-pe', 'missing-unix', 'bad-unix'])
+@pytest.mark.parametrize('mode', ['normal', 'already-empty'])
+def test_publication_private_child_path_initializer_host_model(publication_private_child_startup, tmp_path, case, mode):
+    code, events, stderr = run_private_child_startup(publication_private_child_startup, tmp_path, mode=mode,
+                                                   args=['--wine-publication-child=' + case])
+    assert code == 0, stderr
+    assert events == ['detect', 'temp-set', 'tmp-set', 'temp-read', 'tmp-read',
+                      'path-set', 'path-read', 'support', 'child']
+    assert stderr == 'record publication diagnostic: main-entry\n'
+
+
+@pytest.mark.parametrize('mode,error', [('set-fail', 5), ('set-fail-no-error', 0),
+    ('read-missing', 203), ('read-missing-terminated', 203), ('read-error', 5),
+    ('read-error-terminated', 5), ('read-nonempty', 0), ('read-size', 0), ('read-no-terminator', 0)])
+def test_publication_private_child_path_failures_refuse_before_support(publication_private_child_startup, tmp_path, mode, error):
+    code, events, stderr = run_private_child_startup(publication_private_child_startup, tmp_path, mode=mode,
+                                                   args=['--wine-publication-child=control'])
+    assert code == 1
+    assert events == ['detect', 'temp-set', 'tmp-set', 'temp-read', 'tmp-read', 'path-set'] + (
+        [] if mode.startswith('set-') else ['path-read'])
+    phase = 'child-path-set' if mode.startswith('set-') else 'child-path-readback'
+    assert stderr == ('record publication diagnostic: main-entry\n'
+                      f'record publication child failed phase={phase} error={error}\n')
+
+
+@pytest.mark.parametrize('platform,runtime,args,code', [
+    ('windows', 'wine', [], 0), ('windows', 'native', [], 0), ('posix', 'native', [], 0),
+    ('windows', 'native', ['--wine-publication-child=control'], 1),
+    ('windows', 'wine', ['--wine-publication-child=unknown'], 1),
+    ('windows', 'wine', ['--wine-publication-child='], 1),
+    ('windows', 'wine', ['--other=control'], 1),
+    ('windows', 'wine', ['--wine-publication-child=control', 'extra'], 1),
+    ('posix', 'native', ['--wine-publication-child=control'], 1)])
+def test_publication_private_child_startup_gates_preserve_other_entry_modes(publication_private_child_startup, tmp_path,
+                                                                          platform, runtime, args, code):
+    actual, events, _ = run_private_child_startup(publication_private_child_startup, tmp_path, platform=platform,
+                                                 runtime=runtime, args=args, mode='set-fail')
+    assert actual == code
+    assert 'path-set' not in events and 'path-read' not in events and 'child' not in events
+    assert ('support' in events) == (platform == 'windows' and runtime == 'wine' and not args)
+
+
+@pytest.mark.parametrize('mode', ['temp-set-fail', 'temp-read-fail'])
+def test_publication_private_child_startup_temp_failure_precedes_path(publication_private_child_startup, tmp_path, mode):
+    code, events, _ = run_private_child_startup(publication_private_child_startup, tmp_path, mode=mode,
+                                              args=['--wine-publication-child=control'])
+    assert code == 1
+    assert 'path-set' not in events and 'path-read' not in events and 'support' not in events
+
+
+@pytest.mark.parametrize('name', ['libgcc_s_seh-1.dll', 'libstdc++-6.dll', 'libwinpthread-1.dll'])
+def test_publication_private_child_known_dependency_fallback_still_refuses(publication_private_child_startup, tmp_path, name):
+    code, events, stderr = run_private_child_startup(publication_private_child_startup, tmp_path, mode='fallback-' + name,
+                                                   args=['--wine-publication-child=control'])
+    assert code == 1
+    assert events[-4:] == ['path-set', 'path-read', 'support', 'child']
+    assert stderr.endswith('record publication child failed phase=location-08 error=0\n')
+
+
 def test_publication_pe_uncertain_ownership_diagnostic_cannot_unwind():
     source = (ROOT / 'tests/test_record_publication.cpp').read_text()
     body = source.split('void invoke_launch(', 1)[1].split('using Clock =', 1)[0]

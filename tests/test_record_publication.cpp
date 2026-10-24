@@ -1817,6 +1817,20 @@ std::wstring unix_environment_text(const std::string& bytes)
 
 const std::array<std::string, 5> child_cases {"control", "missing-pe", "bad-pe", "missing-unix", "bad-unix"};
 
+void initialize_wine_child_path()
+{
+    child_phase = "child-path-set";
+    ::SetLastError(ERROR_SUCCESS);
+    win_check(::SetEnvironmentVariableW(L"PATH", L""), "private child PATH set");
+    child_phase = "child-path-readback";
+    wchar_t observed[2] {L'!', L'!'};
+    ::SetLastError(ERROR_SUCCESS);
+    const auto length = ::GetEnvironmentVariableW(L"PATH", observed, 2);
+    const auto error = ::GetLastError();
+    win_check(length == 0 && error == ERROR_SUCCESS && observed[0] == L'\0',
+        "private child PATH readback");
+}
+
 std::wstring child_overrides()
 {
     const auto crypto = environment(L"SPACE_WINE_PUBLICATION_TEST_CRYPTO");
@@ -2156,6 +2170,7 @@ int main(int argc, char** argv)
         }
 #ifdef _WIN32
         if (under_wine) {
+            if (!child.empty()) initialize_wine_child_path();
             child_phase = "support-identity";
             check(::GetModuleHandleW(L"space_record_publication.dll") == nullptr, "production DLL not loaded before controlled test entry");
             load_support();
