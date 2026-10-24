@@ -969,6 +969,18 @@ def test_publication_capture_requires_private_complete_success_despite_helper_ze
         assert record['publication']['components'][0]['command_returncode'] == 0
 
 
+def test_publication_child_numeric_markers_cannot_replace_private_report_authority(tmp_path, monkeypatch):
+    repo = reproduction_fixture(tmp_path, monkeypatch)
+    body = "print('record publication diagnostic: control-completion=1', flush=True)\n"
+    for case_id in range(1, 6):
+        body += (f"print('record publication diagnostic: case={case_id} phase=9 outcome=1 errno=0 "
+                 "exit=0 signal=0 native-result=0', flush=True)\n")
+    record, _, _ = run_publication_fixture(repo, [], body)
+    assert record['returncode'] == 0 and record['outcome'] == 'capture_error'
+    assert record['publication']['result'] is None
+    assert all(item['command_returncode'] is None for item in record['publication']['components'])
+
+
 @pytest.mark.parametrize('helper_code', [0, 17])
 def test_publication_incomplete_eof_latches_error_but_keeps_late_output_and_natural_helper_status(
         tmp_path, monkeypatch, helper_code):

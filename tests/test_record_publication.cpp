@@ -5,6 +5,7 @@
 #include <array>
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -145,12 +146,6 @@ Binding binding(const wchar_t* name)
         ascii.push_back(static_cast<char>(unit));
     }
     return rp::wine::detail::parse_binding(ascii);
-}
-
-std::wstring binding_text(const Binding& value)
-{
-    const auto text = build_id(value) + ":" + std::to_string(value.module_device) + ":" + std::to_string(value.module_inode);
-    return {text.begin(), text.end()};
 }
 
 uint64_t challenge()
@@ -1801,7 +1796,7 @@ void verify_support_only_root(const fs::path& path)
 
 // Wine's Unix environment encoding is not assumed to be UTF-8. This code page
 // is Wine's CP_UNIXCP (wine-9.0 include/winnls.h), used only for a checked roundtrip
-// of raw mapped bytes into the explicit Unicode child environment block.
+// of raw mapped bytes against the Windows-visible child environment.
 std::wstring unix_environment_text(const std::string& bytes)
 {
     constexpr UINT unix_codepage = 65010;
@@ -1821,6 +1816,14 @@ std::wstring unix_environment_text(const std::string& bytes)
 }
 
 const std::array<std::string, 5> child_cases {"control", "missing-pe", "bad-pe", "missing-unix", "bad-unix"};
+
+std::wstring child_overrides()
+{
+    const auto crypto = environment(L"SPACE_WINE_PUBLICATION_TEST_CRYPTO");
+    check(crypto == L"b" || crypto == L"n", "exact owning test crypto handoff");
+    return L"space_record_publication=b;space_record_publication_tests=b;bcryptprimitives="
+        + crypto + L";advapi32,cryptbase=b";
+}
 
 int wine_child(const std::string& selected)
 {
@@ -1850,8 +1853,7 @@ int wine_child(const std::string& selected)
         "child has no effective ambient PATH fallback after bootstrap");
     child_phase = "location-07";
     const auto overrides = environment(L"WINEDLLOVERRIDES");
-    check(overrides == L"space_record_publication,space_record_publication_tests=b;bcryptprimitives=b;advapi32,cryptbase=b"
-        || overrides == L"space_record_publication,space_record_publication_tests=b;bcryptprimitives=n;advapi32,cryptbase=b",
+    check(overrides == child_overrides(),
         "both fixed names remain forced builtin after child bootstrap");
     child_phase = "location-08";
     for (const auto& item : fs::directory_iterator(root)) {
@@ -1907,6 +1909,7 @@ int wine_child(const std::string& selected)
             && before.uid == after.uid && before.gid == after.gid && before.mode == after.mode && after.links == 1,
             "intact copied control must publish exact bytes with supported host policy");
         clean_anchor(data);
+        std::cerr << "record publication diagnostic: control-completion=1\n" << std::flush;
     } else {
         const auto diagnostic = rejects([&] { rp::publish(destination, "secret", callbacks); });
         child_phase = "refusal";
@@ -1921,6 +1924,49 @@ int wine_child(const std::string& selected)
     return 0;
 }
 
+SrptLaunch launch_request(uint32_t action, uint32_t case_id, uint64_t root,
+                          const Binding& production, const Binding& support)
+{
+    SrptLaunch frame {};
+    frame.size = sizeof(frame);
+    frame.abi = SRPT_ABI;
+    frame.action = action;
+    frame.case_id = case_id;
+    frame.root = root;
+    std::copy(production.build_id.begin(), production.build_id.end(), frame.production_build_id);
+    std::copy(support.build_id.begin(), support.build_id.end(), frame.support_build_id);
+    frame.production_device = production.module_device;
+    frame.production_inode = production.module_inode;
+    frame.support_device = support.module_device;
+    frame.support_inode = support.module_inode;
+    return frame;
+}
+
+void invoke_launch(SrptLaunch& frame, Fixture* fixture)
+{
+    const auto input = frame;
+    const auto status = support_entry(SRPT_ENTRY_LAUNCH, &frame);
+    // Inspect ownership before any check can throw/unwind into recursive cleanup.
+    const bool uncertain = frame.outcome == SRPT_OUTCOME_OWNERSHIP_UNCERTAIN;
+    if (uncertain && fixture) fixture->preserve_wine_fixture = true;
+    // C stdio keeps this fatal boundary free of C++ stream exceptions/allocations.
+    std::fprintf(stderr, "record publication diagnostic: case=%u phase=%u outcome=%u errno=%u exit=%u signal=%u native-result=%u\n",
+        static_cast<unsigned>(input.case_id), static_cast<unsigned>(frame.phase), static_cast<unsigned>(frame.outcome),
+        static_cast<unsigned>(frame.os_error), static_cast<unsigned>(frame.exit_code), static_cast<unsigned>(frame.term_signal),
+        static_cast<unsigned>(static_cast<uint32_t>(status)));
+    std::fflush(nullptr);
+    if (uncertain) {
+        ::TerminateProcess(::GetCurrentProcess(), 125);
+        std::_Exit(125); // No unwinding, atexit handlers, debugger abort or second attempt.
+    }
+    check(status == SRPT_SUCCESS && frame.outcome == SRPT_OUTCOME_COMPLETED
+        && frame.phase == SRPT_PHASE_COMPLETE && !frame.os_error && !frame.term_signal
+        && frame.exit_code == (input.action == SRPT_CONFIGURE ? UINT32_MAX : 0)
+        && frame.remaining_ms <= 60000 && !frame.reserved && !frame.reserved2
+        && std::memcmp(&frame, &input, offsetof(SrptLaunch, phase)) == 0,
+        "closed publication launch failed (see fixed numeric native result)");
+}
+
 using Clock = std::chrono::steady_clock;
 void child_budget(const Clock::time_point& deadline, int reserve_ms = 0)
 {
@@ -1930,7 +1976,7 @@ void child_budget(const Clock::time_point& deadline, int reserve_ms = 0)
 void exclusive_copy(const fs::path& source, const HostRoot& source_root, const fs::path& destination,
                     const Clock::time_point& deadline)
 {
-    child_budget(deadline);
+    child_budget(deadline, 13000);
     const auto before = source_root.observe(source);
     check((before.mode & 0170000) == 0100000 && before.links == 1 && before.file_size <= 64 * 1024 * 1024,
         "copy only bounded regular verified-layout artifacts");
@@ -1940,91 +1986,16 @@ void exclusive_copy(const fs::path& source, const HostRoot& source_root, const f
         && !(after.device == before.device && after.inode == before.inode)
         && source_root.bytes(source) == owned_tmp->bytes(destination)
         && same_host_object(before, source_root.observe(source)), "independent exact owned copy, never a link or source mutation");
-    child_budget(deadline);
-}
-
-std::vector<wchar_t> child_environment(const fs::path& root, const fs::path& support_root, const Binding& copied_binding)
-{
-    // Explicit allowlist: preserve session/temp ownership and required Windows
-    // runtime inputs, never parent PATH/loader injection or arbitrary ambient env.
-    std::map<std::wstring, std::wstring> values;
-    for (const auto* name : {L"SystemRoot", L"WINDIR", L"WINEPREFIX", L"WINEARCH", L"WINESERVER", L"HOME",
-                            L"XDG_DATA_HOME", L"XDG_CACHE_HOME", L"XDG_STATE_HOME", L"TMPDIR", L"TEMP", L"TMP",
-                            L"SPACE_WINE_WINDOWS_TMP"}) {
-        wchar_t buffer[32768] {};
-        const auto length = ::GetEnvironmentVariableW(name, buffer, 32768);
-        check(length < 32768, "bounded optional child environment");
-        if (length) values.emplace(name, std::wstring(buffer, length));
-        else check(::GetLastError() == ERROR_ENVVAR_NOT_FOUND, "optional child environment query");
-    }
-    for (const auto* required : {L"SystemRoot", L"TEMP", L"TMP", L"SPACE_WINE_WINDOWS_TMP"})
-        check(values.count(required), "required child owned/runtime environment");
-    auto production_root = host_path(root / "modules");
-    const auto support = host_path(support_root);
-    check(production_root.find(':') == std::string::npos && support.find(':') == std::string::npos,
-        "unambiguous two-root child module search");
-    values[L"WINEDLLPATH"] = unix_environment_text(production_root + ":" + support);
-    const auto original = environment(L"WINEDLLOVERRIDES");
-    const auto crypto = original.find(L"bcryptprimitives=n;") != std::wstring::npos ? L"n" : L"b";
-    check(original.find(L"bcryptprimitives=" + std::wstring(crypto) + L";advapi32,cryptbase=b") != std::wstring::npos,
-        "fixed admitted crypto backend for copied dependencies");
-    values[L"WINEDLLOVERRIDES"] = L"space_record_publication,space_record_publication_tests=b;bcryptprimitives="
-        + std::wstring(crypto) + L";advapi32,cryptbase=b";
-    values[L"SPACE_WINE_PUBLICATION_BINDING"] = binding_text(copied_binding);
-    values[L"SPACE_WINE_PUBLICATION_TEST_BINDING"] = binding_text(support_binding);
-    values[L"PATH"] = L""; // Imports resolve beside the copied PE, never through ambient PATH.
-    std::vector<wchar_t> block;
-    for (const auto& [name, value] : values) {
-        block.insert(block.end(), name.begin(), name.end());
-        block.push_back(L'=');
-        block.insert(block.end(), value.begin(), value.end());
-        block.push_back(0);
-    }
-    block.push_back(0);
-    check(block.size() < 32768, "bounded explicit Unicode child environment");
-    return block;
-}
-
-void run_child(const fs::path& root, const std::string& selected, std::vector<wchar_t>& environment_block,
-               const Clock::time_point& deadline)
-{
-    child_budget(deadline, 12000);
-    const auto application = root / "test_record_publication.exe";
-    check(application.is_absolute() && application.native().find(L'"') == std::wstring::npos, "absolute quotable child application");
-    const std::wstring argument(selected.begin(), selected.end());
-    auto command = L"\"" + application.native() + L"\" \"--wine-publication-child=" + argument + L"\"";
-    STARTUPINFOW startup {};
-    startup.cb = sizeof(startup);
-    PROCESS_INFORMATION process {};
-    win_check(::CreateProcessW(application.c_str(), command.data(), nullptr, nullptr, FALSE, CREATE_UNICODE_ENVIRONMENT,
-        environment_block.data(), root.c_str(), &startup, &process), "fixed publication child create");
-    CheckedHandle thread, child;
-    thread.value = process.hThread;
-    child.value = process.hProcess;
-    // Every path after successful creation reaps before any fixture deletion.
-    const auto waited = ::WaitForSingleObject(child.value, 10000);
-    if (waited != WAIT_OBJECT_0) {
-        const auto wait_error = waited == WAIT_FAILED ? ::GetLastError() : ERROR_SUCCESS;
-        const auto terminated = ::TerminateProcess(child.value, 124);
-        const auto reaped = ::WaitForSingleObject(child.value, 2000);
-        if (!terminated || reaped != WAIT_OBJECT_0) std::abort(); // Do not unwind into fixture deletion with a possibly live child.
-        thread.close();
-        child.close();
-        throw std::runtime_error("publication child wait=" + std::to_string(waited)
-            + " error=" + std::to_string(wait_error) + " (no retry)");
-    }
-    DWORD exit_code = STILL_ACTIVE;
-    const auto got_exit = ::GetExitCodeProcess(child.value, &exit_code);
-    thread.close();
-    child.close();
-    win_check(got_exit, "publication child exit query");
-    check(exit_code == 0, "publication child exact checked exit case=" + selected + " code=" + std::to_string(exit_code));
-    child_budget(deadline);
+    child_budget(deadline, 13000);
 }
 
 void wine_loader_children()
 {
-    const auto deadline = Clock::now() + std::chrono::seconds(60);
+    const auto call_start = Clock::now();
+    auto configure = launch_request(SRPT_CONFIGURE, 0, owned_tmp->id, production_binding, support_binding);
+    invoke_launch(configure, nullptr); // FIRST: native deadline/source capture precedes all fixture work.
+    const auto deadline = call_start + std::chrono::milliseconds(configure.remaining_ms);
+    child_budget(deadline, 13000);
     const auto image = executable_path();
     const auto overlay = image.parent_path();
     check(image.filename() == L"test_record_publication.exe" && overlay.filename() == L"windows"
@@ -2044,8 +2015,10 @@ void wine_loader_children()
             == support_host.bytes(support_root / "x86_64-windows/space_record_publication_tests.dll"),
         "verified fixed-layout discovery copies match architecture images");
     Fixture fixture;
-    for (const auto& selected : child_cases) {
-        child_budget(deadline, 12000);
+    HostRoot fixture_host(fixture.root);
+    for (uint32_t case_id = 1; case_id <= child_cases.size(); ++case_id) {
+        const auto& selected = child_cases[case_id - 1];
+        child_budget(deadline, 13000);
         const auto root = fixture.root / selected;
         for (const auto& directory : {root, root / "modules", root / "modules/x86_64-windows", root / "modules/x86_64-unix"})
             owned_tmp->mutate(SRPT_MKDIR, directory, 0700);
@@ -2054,7 +2027,7 @@ void wine_loader_children()
         // process. Copy their admitted siblings plus any selected crypto helper;
         // unrelated application DLLs must not consume the fixed child budget.
         for (const auto& item : fs::directory_iterator(overlay)) {
-            child_budget(deadline);
+            child_budget(deadline, 13000);
             auto name = item.path().filename().wstring();
             std::transform(name.begin(), name.end(), name.begin(), [](wchar_t unit) {
                 return unit >= L'A' && unit <= L'Z' ? unit - L'A' + L'a' : unit;
@@ -2073,8 +2046,9 @@ void wine_loader_children()
         auto expected = production_binding;
         expected.module_device = copied.device;
         expected.module_inode = copied.inode;
-        // Bind the intact SO copy before intentionally omitting/corrupting it.
-        auto block = child_environment(root, support_root, expected);
+        // All three exclusive copies were OBSERVEd intact after CONFIGURE, so
+        // native full-source receipts precede intentional damage. Never rebind
+        // from a damaged/deleted artifact or bypass native expected-copy checks.
         if (selected == "missing-pe") {
             owned_tmp->mutate(SRPT_UNLINK, pe);
             owned_tmp->mutate(SRPT_UNLINK, discovery);
@@ -2085,10 +2059,14 @@ void wine_loader_children()
         }
         if (selected == "missing-unix") owned_tmp->mutate(SRPT_UNLINK, so);
         if (selected == "bad-unix") owned_tmp->mutate(SRPT_WRITE, so, 0, "not-an-ELF");
-        run_child(root, selected, block, deadline); // Intact control is first and blocking.
+        child_budget(deadline, 13000);
+        auto run = launch_request(SRPT_RUN, case_id, fixture_host.id, expected, support_binding);
+        invoke_launch(run, &fixture); // Intact control is first and blocking.
+        child_budget(deadline);
     }
     // Explicit checked cleanup is inside the same60s component bound.
     check(fs::remove_all(fixture.root) > 0, "owned child fixture cleanup");
+    fixture.preserve_wine_fixture = true; // Already removed explicitly; no destructor cleanup outside the budget.
     child_budget(deadline);
 }
 

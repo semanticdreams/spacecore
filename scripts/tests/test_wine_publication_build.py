@@ -3820,6 +3820,197 @@ _Static_assert(!__builtin_types_compatible_p(SrptUnixCall,
     assert result.returncode == 0, result.stderr
 
 
+def test_publication_pe_closed_launch_sequence_activation_and_intact_receipts():
+    source = (ROOT / 'tests/test_record_publication.cpp').read_text()
+    body = source.split('void wine_loader_children()', 1)[1].split('void wine_report()', 1)[0]
+    assert 'CreateProcessW' not in source and 'child_environment(' not in source and 'void run_child(' not in source
+    configure = body.index('launch_request(SRPT_CONFIGURE, 0, owned_tmp->id, production_binding, support_binding)')
+    assert body.index('const auto call_start = Clock::now()') < configure < body.index('invoke_launch(configure, nullptr)')
+    assert body.index('call_start + std::chrono::milliseconds(configure.remaining_ms)') < body.index('executable_path()')
+    assert body.index('invoke_launch(configure, nullptr)') < body.index('Fixture fixture;') < body.index('HostRoot fixture_host(fixture.root)')
+    assert body.index('exclusive_copy(pe_source, production_host, pe, deadline)') < body.index('if (selected == "missing-pe")')
+    assert body.index('exclusive_copy(pe_source, production_host, discovery, deadline)') < body.index('if (selected == "missing-pe")')
+    assert body.index('exclusive_copy(so_source, production_host, so, deadline)') < body.index('const auto copied = owned_tmp->observe(so)')
+    assert body.index('const auto copied = owned_tmp->observe(so)') < body.index('if (selected == "missing-unix")')
+    assert 'launch_request(SRPT_RUN, case_id, fixture_host.id, expected, support_binding)' in body
+    assert 'invoke_launch(run, &fixture)' in body and 'child_budget(deadline, 13000)' in body
+    assert body.index('invoke_launch(run, &fixture)') < body.index('fs::remove_all(fixture.root)') < body.rindex('child_budget(deadline)')
+    copy = source.split('void exclusive_copy(', 1)[1].split('void wine_loader_children()', 1)[0]
+    assert 'owned_tmp->observe(destination)' in copy and 'source_root.bytes(source) == owned_tmp->bytes(destination)' in copy
+    assert 'same_host_object(before, source_root.observe(source))' in copy
+    assert '"control", "missing-pe", "bad-pe", "missing-unix", "bad-unix"' in source
+    child = source.split('int wine_child(', 1)[1].split('using Clock =', 1)[0]
+    assert 'overrides == child_overrides()' in child
+    assert child.index('production_entry();') < child.index('clean_anchor(data);') < child.index('control-completion=1')
+    for guard in ('std::string("new\\0bytes", 9)', 'hooks == 4', 'hooks == 0',
+                  'same_host_object(before, owned_tmp->observe(destination))', '!fs::exists(anchor(data))',
+                  'production DLL absent before first child publish', 'one independent support-only root'):
+        assert guard in child
+
+
+def test_publication_pe_uncertain_ownership_diagnostic_cannot_unwind():
+    source = (ROOT / 'tests/test_record_publication.cpp').read_text()
+    body = source.split('void invoke_launch(', 1)[1].split('using Clock =', 1)[0]
+    fatal = body[:body.index('check(status ==')]
+    assert 'std::fprintf(stderr,' in fatal and 'std::fflush(nullptr)' in fatal
+    assert 'std::cerr' not in fatal and 'std::cout' not in fatal and 'std::abort' not in fatal
+    assert fatal.index('fixture->preserve_wine_fixture = true') < fatal.index('std::fprintf(stderr,')
+    assert fatal.index('std::fflush(nullptr)') < fatal.index('::TerminateProcess(::GetCurrentProcess(), 125)') < fatal.index('std::_Exit(125)')
+
+
+@pytest.fixture(scope='module')
+def publication_pe_launch_consumer(tmp_path_factory):
+    """Compile actual consumer functions as native code, never execute PE/Wine."""
+    source = (ROOT / 'tests/test_record_publication.cpp').read_text()
+    assert 'SrptLaunch launch_request(' in source, 'PE closed launch consumer is missing'
+    functions = source[source.index('SrptLaunch launch_request('):source.index('using Clock =')]
+    directory = tmp_path_factory.mktemp('pe-launch-consumer')
+    model = directory / 'model.cpp'
+    model.write_text(r'''
+#include "record_publication_wine_support.h"
+#include "record_publication_wine_binding.h"
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <cassert>
+using Binding = record_publication::wine::detail::Binding;
+void check(bool ok, const std::string& message) { if (!ok) throw std::runtime_error(message); }
+struct Fixture { bool preserve_wine_fixture = false; ~Fixture() { std::cerr << "DESTRUCTOR\n"; } };
+Fixture* active_fixture;
+bool fail_run;
+void* GetCurrentProcess() { return reinterpret_cast<void*>(42); }
+int TerminateProcess(void* process, unsigned code) {
+    assert(process == reinterpret_cast<void*>(42) && code != 0);
+    assert(!fail_run || (active_fixture && active_fixture->preserve_wine_fixture));
+    std::cerr << "TERMINATE\n" << std::flush;
+    return 0; // Exercise the mandatory _Exit fallback, not debugger abort.
+}
+static int mode;
+int32_t entry(uint32_t selected, void* raw) {
+    assert(selected == SRPT_ENTRY_LAUNCH);
+    auto& frame = *static_cast<SrptLaunch*>(raw);
+    assert(frame.size == 152 && frame.abi == 2 && frame.root == 42);
+    assert(!frame.phase && !frame.os_error && !frame.exit_code && !frame.term_signal);
+    assert(!frame.outcome && !frame.remaining_ms && !frame.reserved && !frame.reserved2);
+    assert(frame.production_device == 1 && frame.production_inode == 2);
+    assert(frame.support_device == 3 && frame.support_inode == 4);
+    assert(std::all_of(frame.production_build_id, frame.production_build_id + 32, [](auto byte) { return byte == 0xaa; }));
+    assert(std::all_of(frame.support_build_id, frame.support_build_id + 32, [](auto byte) { return byte == 0xbb; }));
+    frame.phase = SRPT_PHASE_COMPLETE; frame.outcome = SRPT_OUTCOME_COMPLETED;
+    frame.exit_code = frame.action == SRPT_CONFIGURE ? UINT32_MAX : 0;
+    frame.remaining_ms = 59000;
+    if ((frame.action == SRPT_RUN) != fail_run) return SRPT_SUCCESS;
+    switch (mode) {
+    case 1: frame.outcome = SRPT_OUTCOME_HOST_FAILURE; frame.os_error = 5; return SRPT_UNSUCCESSFUL;
+    case 2: frame.outcome = SRPT_OUTCOME_EXITED_OR_SIGNALLED; frame.exit_code = 7; return SRPT_UNSUCCESSFUL;
+    case 3: frame.outcome = SRPT_OUTCOME_TIMED_OUT_AND_REAPED; frame.term_signal = 9; return SRPT_UNSUCCESSFUL;
+    case 4: frame.outcome = SRPT_OUTCOME_OWNERSHIP_UNCERTAIN; return SRPT_UNSUCCESSFUL;
+    case 5: frame.outcome = SRPT_OUTCOME_OWNERSHIP_UNCERTAIN; return SRPT_SUCCESS;
+    case 6: return SRPT_IDENTITY_MISMATCH;
+    case 7: frame.phase = SRPT_PHASE_WAIT; break;
+    case 8: frame.exit_code = 9; break;
+    case 9: frame.os_error = 1; break;
+    case 10: frame.term_signal = 9; break;
+    case 11: frame.outcome = SRPT_OUTCOME_UNSET; break;
+    case 12: frame.remaining_ms = 60001; break;
+    }
+    return SRPT_SUCCESS;
+}
+auto support_entry = entry;
+''' + functions + r'''
+int main(int argc, char** argv) {
+    assert(argc == 3); mode = std::atoi(argv[1]); fail_run = std::string(argv[2]) == "run";
+    Binding production {}, support {};
+    production.build_id.fill(0xaa); production.module_device = 1; production.module_inode = 2;
+    support.build_id.fill(0xbb); support.module_device = 3; support.module_inode = 4;
+    Fixture fixture;
+    active_fixture = &fixture;
+    try {
+        auto frame = launch_request(SRPT_CONFIGURE, 0, 42, production, support);
+        invoke_launch(frame, nullptr);
+        for (uint32_t id = 1; id <= 5; ++id) {
+            frame = launch_request(SRPT_RUN, id, 42, production, support);
+            invoke_launch(frame, &fixture);
+        }
+        assert(mode == 0); return 0;
+    } catch (const std::exception& error) {
+        assert(mode != 0 && mode != 4 && mode != 5);
+        assert(!fixture.preserve_wine_fixture);
+        std::cout << "REJECTED\n";
+        return 0;
+    }
+}
+''')
+    output = directory / 'model'
+    result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT / 'src'),
+                             '-I', str(ROOT / 'tests'), str(model), '-o', str(output)],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    return output
+
+
+@pytest.mark.parametrize('mode', range(13))
+@pytest.mark.parametrize('action', ['configure', 'run'])
+def test_publication_pe_launch_consumer_status_and_failstop(publication_pe_launch_consumer, mode, action):
+    result = subprocess.run([str(publication_pe_launch_consumer), str(mode), action],
+                            capture_output=True, text=True, timeout=10)
+    if mode in (4, 5):
+        assert result.returncode > 0 and result.returncode != -signal.SIGABRT
+        assert 'TERMINATE' in result.stderr and 'DESTRUCTOR' not in result.stderr and 'REJECTED' not in result.stdout
+        assert 'outcome=5' in result.stderr
+    else:
+        assert result.returncode == 0, result.stderr
+        assert 'DESTRUCTOR' in result.stderr and 'TERMINATE' not in result.stderr
+        assert ('REJECTED' in result.stdout) == (mode != 0)
+    assert 'native-result=' in result.stderr and 'case=0' in result.stderr
+    if action == 'run':
+        assert 'case=1' in result.stderr
+    if mode:
+        assert 'case=2' not in result.stderr  # Failure never advances/retries the fixed sequence.
+    assert str(ROOT) not in result.stderr
+
+
+@pytest.mark.parametrize('crypto', ['b', 'n', 'bn', 'native', ''])
+def test_publication_pe_child_overrides_require_exact_owning_crypto(tmp_path, crypto):
+    source = (ROOT / 'tests/test_record_publication.cpp').read_text()
+    assert 'std::wstring child_overrides()' in source
+    function = source[source.index('std::wstring child_overrides()'):source.index('int wine_child(')]
+    model = tmp_path / 'overrides.cpp'
+    model.write_text(r'''
+#include <string>
+#include <stdexcept>
+#include <cassert>
+std::wstring owner;
+std::wstring environment(const wchar_t* name) {
+    assert(std::wstring(name) == L"SPACE_WINE_PUBLICATION_TEST_CRYPTO"); return owner;
+}
+void check(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
+''' + function + r'''
+int main(int argc, char** argv) {
+    assert(argc == 2); const std::string input = argv[1]; owner.assign(input.begin(), input.end());
+    try {
+        const auto value = child_overrides();
+        assert(input == "b" || input == "n");
+        assert(value == L"space_record_publication=b;space_record_publication_tests=b;bcryptprimitives="
+            + owner + L";advapi32,cryptbase=b");
+        assert(value != L"space_record_publication=b;space_record_publication_tests=b;bcryptprimitives="
+            + std::wstring(owner == L"b" ? L"n" : L"b") + L";advapi32,cryptbase=b");
+        assert(value.find(L"space_record_publication,space_record_publication_tests") == std::wstring::npos);
+    } catch (const std::exception&) { assert(input != "b" && input != "n"); }
+}
+''')
+    output = tmp_path / 'overrides'
+    compiled = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', str(model), '-o', str(output)],
+                              capture_output=True, text=True, timeout=60)
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(output), crypto], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0 and not result.stdout and not result.stderr
+
+
 def test_support_real_elf_bounded_owned_roots_and_target_parent_refusals(support_elf, tmp_path):
     operate = support_elf[3]
     for mode in [0o750, 0o770]:

@@ -12,6 +12,7 @@ import errno
 import fcntl
 import importlib.util
 import stat
+from types import SimpleNamespace
 
 import pytest
 
@@ -373,6 +374,59 @@ def test_publication_stage_runs_four_fixed_components_before_application(runtime
     assert receipt['publication']['reports'][0] == receipt['publication']['reports'][1]
     assert receipt['publication']['stopped_generation'] == state['generation']
     assert runtime.run('test-windows-under-wine.sh').returncode == 0
+
+
+@pytest.mark.parametrize('probes,crypto', [([0], 'b'), ([10, 0], 'n')])
+def test_publication_crypto_handoff_replaces_ambient_from_exact_backend(runtime, probes, crypto):
+    runtime.env['SPACE_WINE_PUBLICATION_TEST_CRYPTO'] = 'hostile-ambient'
+    runtime.package()
+    result = runtime.prepare(probes)
+    assert result.returncode == 0, result.stdout + result.stderr
+    calls = [call for call in runtime.calls() if call.get('publication')]
+    assert len(calls) == 4
+    assert [call['umask'] for call in calls] == ['0022', '0002', '0002', '0002']
+    for call in calls[:2]:
+        assert call['env']['SPACE_WINE_PUBLICATION_TEST_CRYPTO'] == crypto
+        assert call['env']['WINEDLLOVERRIDES'] == (
+            'space_record_publication=b;space_record_publication_tests=b;'
+            f'bcryptprimitives={crypto};advapi32,cryptbase=b')
+    assert runtime.env['SPACE_WINE_PUBLICATION_TEST_CRYPTO'] == 'hostile-ambient'
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    proof = receipt['publication']
+    assert proof['stopped_generation'] == proof['start_generation'] + 4
+    assert len(proof['reports']) == len(proof['report_facts']) == 2
+    assert all(stat.S_IMODE(facts[2]) == 0o600 for facts in proof['report_facts'])
+
+
+@pytest.mark.parametrize('backend', ['unknown', 'bcryptprimitives=bn;advapi32,cryptbase=b',
+    'prefix-bcryptprimitives=n;advapi32,cryptbase=b', 'bcryptprimitives=b;advapi32,cryptbase=b;extra=b'])
+def test_publication_crypto_handoff_refuses_unknown_exact_backend(monkeypatch, backend):
+    from wine import publication_validation as validation
+    monkeypatch.setattr(validation.artifacts, 'configuration', lambda *args: {'backend': backend})
+    stopped = []
+    monkeypatch.setattr(validation.prefix, 'stop_session',
+                        lambda session, end: stopped.append(end) or SimpleNamespace(ok=True))
+    with pytest.raises(ValueError, match='crypto backend'):
+        validation.validate_publication(object())  # Must refuse before state/store/launch access.
+    assert stopped == [True]
+
+
+def test_publication_cpp_failure_blocks_later_components_and_grant_promotion(runtime):
+    runtime.package()
+    runtime.env['FIXTURE_PUBLICATION_EXIT'] = '17'
+    result = runtime.prepare([0])
+    assert result.returncode != 0
+    calls = [call for call in runtime.calls() if call.get('publication')]
+    assert len(calls) == 1 and Path(calls[0]['wine'][0]).name == 'test_record_publication.exe'
+    receipt = json.loads((runtime.overlay / 'admission.json').read_text())
+    assert receipt['publication'] is None and receipt['authorization']['purpose'] == 'publication'
+    directory = runtime.root / 'build/wine/sessions' / receipt['ownedSession']['id']
+    state = json.loads((directory / 'state.json').read_text())
+    assert state['ended'] and state['authorized_for'] is None and state['grant'] is None
+    assert not (directory / 'publication.json').exists()
+    assert runtime.run('test-windows-under-wine.sh').returncode != 0
+    assert len([call for call in runtime.calls() if call.get('publication')]) == 1
+    assert not [call for call in runtime.calls() if 'tests.fast:main' in call.get('wine', [])]
 
 
 def test_publication_store_root_is_parent_owned_external_and_shared(runtime):

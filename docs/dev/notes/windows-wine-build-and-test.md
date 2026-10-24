@@ -352,6 +352,60 @@ Windows binary under Wine:
 
 ## Reproducible Workflow (Current)
 
+### Closed private-child Unix launch (source only)
+
+The separate test pair now uses support ABI2/features7, not production ABI1/features3
+(unchanged). Entry2 `SrptLaunch` is 152 bytes: fixed CONFIGURE/RUN, retained TEMP /
+one retained fixture, independent bindings and exact ordered case IDs only. There
+are no executable/env/path/timeout selectors. CONFIGURE precedes overlay checks,
+fixture creation and copying, starting the original60s native monotonic deadline;
+the PE conservatively uses call-start plus floored returned remaining time. Intact
+copy-time OBSERVE receipts independently prove full source bytes for SO/architecture
+PE/discovery copies before negative mutations; copied SO dev/inode is captured
+before corruption/deletion, never rederived afterward.
+
+The support builder pins the verified native Wine64 implementation, not a wrapper,
+as Linux x86_64 ELF plus server/trusted-ancestor snapshots and build-time SHA256.
+Runtime nofollow descriptor/path/metadata checks refuse stale pins; cooperative
+installation changes require rebuilding support. GNU libc2.34 or later is required
+for `posix_spawn` fchdir/closefrom actions. Direct canonical-path spawn uses the
+verified case cwd, /dev/null stdin, closed descriptors3+, reset signals and owned
+group, with no parent env/cwd/umask mutation. Python supplies private
+`SPACE_WINE_PUBLICATION_TEST_CRYPTO` exactly `b`/`n` from the two exact admitted
+builtin/native backend values, replacing ambient input for each C++ launch and
+refusing unknown backends. The canonical overrides use separate builtin publication
+names and the owning crypto value:
+`space_record_publication=b;space_record_publication_tests=b;bcryptprimitives=<b-or-n>;advapi32,cryptbase=b`.
+No grouped alias or either-backend predicate is accepted.
+
+Native support supplies the Unix loader environment (Windows env equality alone is
+not loader proof): empty PATH, owned session/server/temp and exactly two raw
+application roots, case production plus independent support-only modules. Wine's
+stock installed loader paths remain separate runtime dependencies. CP_UNIXCP
+roundtrips, Windows-visible root/cwd/private TEMP/dependency guards, no production
+preload and actual support SO identity remain required. The control must prove
+actual copied production SO distinct from original, nine exact embedded-NUL bytes,
+four hooks/policy/clean anchor. Negatives require intended loader/association
+refusal, zero hooks, unchanged bytes/metadata and no anchor/cache/fallback.
+
+Copying and RUN require13 seconds remaining (10 wait +2 termination/reap +1 cleanup),
+without enlarging the shared60s. Native results distinguish checked retirement
+from ownership-uncertain outcome5: preserve the fixture, flush bounded numeric
+diagnostics and terminate the current PE without unwinding/recursive deletion,
+with `_Exit` fallback rather than debugger abort. Explicit final cleanup remains
+inside60s. Numeric native-result and post-assertion control-completion observations
+are diagnostic only, never report/grant authority, and disclose no paths/env/bindings.
+
+Installed-runtime feasibility remains UNPROVED. The old first intact control's
+location-07 failure does not automatically validate any new override format.
+Native compile/models are not real Wine proof of synchronous PE completion,
+installed loader selection, actual roots, encoding, retirement or timing. After
+independent source pass, only a fresh full `windows-ci-reproducer` run can measure
+the control, all five cases under both umasks, reports/stores/four-generation grants,
+full Wine and cleanup. Native Windows assertions and the fixed store base-dir
+exception remain unchanged; native NT remains unexercised under Wine and a real
+foreign-UID probe remains not-configured.
+
 ### Current publication contract (source, not final Wine acceptance)
 
 [Record publication](../features/record-publication.md) is the canonical phase,

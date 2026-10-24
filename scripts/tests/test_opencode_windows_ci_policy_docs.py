@@ -195,3 +195,16 @@ def test_wine_notes_supersede_native_substitution_and_six_stage_contract():
     assert 'The next requirements are native Windows persistent-ACL validation' not in text
     assert 'No seventh stage or extra log inventory is introduced' not in text
     assert '[Record publication](../features/record-publication.md)' in text
+
+
+@pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
+def test_publication_docs_closed_unix_child_launch_is_source_only_not_installed_proof(path):
+    text = normalized(read(path))
+    for phrase in ('support ABI2/features7', 'production ABI1/features3', 'SrptLaunch',
+                   '152 bytes', 'CONFIGURE', 'RUN', 'GNU libc2.34', 'posix_spawn',
+                   'native Wine64 implementation', 'not a wrapper', 'Unix loader environment',
+                   'call-start', '13 seconds', 'ownership-uncertain', 'without unwinding',
+                   'SPACE_WINE_PUBLICATION_TEST_CRYPTO', 'stock installed loader',
+                   'Installed-runtime feasibility remains UNPROVED'):
+        assert phrase in text
+    assert_publication_evidence_limits(read(path))

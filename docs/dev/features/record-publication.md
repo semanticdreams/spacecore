@@ -181,6 +181,67 @@ if needed, a further2-second termination/reap wait. Both waits remain within the
 shared60-second sequence inside each C++120-second limit; they add no host
 component/grant or production subprocess.
 
+### Closed Unix launch for private children (source contract)
+
+The separate test pair uses support ABI2/features7; production ABI1/features3
+is unchanged. Support entry0 identity112 and entry1 fixture12376 retain their
+layouts; entry2 uses `SrptLaunch`, 152 bytes, with only fixed CONFIGURE/RUN actions,
+case IDs, retained root tokens and independent production/support bindings. There
+are no executable, environment-map, path or timeout selectors. CONFIGURE is first,
+before overlay inspection or fixture creation/copying, with retained owned TEMP.
+It starts the original native monotonic60-second budget. The PE uses call-start
+plus floored returned remaining milliseconds, never adding configuration time back.
+RUN requires the same retained fixture and exact control, missing-pe, bad-pe,
+missing-unix, bad-unix order. Copy-time OBSERVE captures native full-byte/source
+receipts for each intact SO, architecture PE and discovery copy before intentional
+damage; the SO binding is never derived from a damaged or deleted artifact.
+
+Support builds pin the verified native Wine64 implementation (Linux x86_64 ELF,
+not a wrapper), server and trusted installed ancestors, with build-time SHA256 and
+stable identity/metadata snapshots. Raw pathname bytes are embedded privately;
+runtime nofollow descriptor/path rechecks detect cooperative installation changes,
+which require a rebuild. GNU libc2.34 or later is required for `posix_spawn` cwd
+and closefrom actions. Spawn uses the canonical pinned implementation, verified
+case cwd, /dev/null stdin, closed descriptors3+, reset signals and an owned process
+group; no parent environment/cwd/umask mutation or PATH lookup is allowed.
+
+Python overrides ambient `SPACE_WINE_PUBLICATION_TEST_CRYPTO` for each C++ launch:
+exact admitted `bcryptprimitives=b;advapi32,cryptbase=b` maps to `b`, exact native
+variant `bcryptprimitives=n;advapi32,cryptbase=b` to `n`; unknown values refuse.
+The native entry constructs the Unix loader environment, not merely a Windows
+environment block. It uses empty PATH, the owned session/server/temp handoffs and
+exactly two raw application roots: case production modules and independent
+support-only modules. Wine's stock installed loader paths remain separate runtime
+dependencies, not extra application roots. Producer and child require exactly
+`space_record_publication=b;space_record_publication_tests=b;bcryptprimitives=<b-or-n>;advapi32,cryptbase=b`
+with the owning crypto value, no grouped-name alias or acceptance of either backend.
+Windows-visible guards still require CP_UNIXCP lossless roundtrips, exact roots,
+cwd/private TEMP, copied dependencies and no production preload. The intact control
+must prove actual copied-SO identity distinct from the original, exact nine-byte
+embedded-NUL publication, four hooks, supported policy and a clean anchor. Negatives
+must prove intended loader/association refusal, zero hooks, unchanged old bytes and
+metadata, no anchor/cache/fallback—not malformed binding or setup failure.
+
+At least13 seconds (10 wait +2 termination/reap +1 cleanup reserve) must remain
+while copying and before RUN; no budget is enlarged. Checked native completion
+retires the exact leader; failures permanently end the sequence. An
+ownership-uncertain outcome preserves the fixture and terminates the current PE
+process without unwinding or recursive deletion, with `_Exit` fallback, not a
+debugger-dependent abort. Explicit checked final cleanup is inside the same60s.
+Bounded numeric case/phase/outcome/errno/exit/signal/native-result diagnostics and
+control-completion after all control assertions aid diagnosis; they are not report
+or grant authority. No path, environment, binding or payload is dumped.
+
+Installed-runtime feasibility remains UNPROVED: native host models do not establish
+direct Wine64 synchronous PE completion, installed loader selection, actual roots,
+encoding, retirement or timing. The prior first-control location-07 refusal is
+not evidence that a different override spelling works. Only a fresh full
+`windows-ci-reproducer` run after independent source review can establish the
+intact control and then all five cases under both umasks, reports, stores, unchanged
+four-generation grants, full Wine gate and terminal cleanup. Native Windows and
+POSIX branches, unexercised Wine category separation and the fixed store base-dir
+exception remain unchanged.
+
 Each C++ result is a **parent-pinned** report: exclusively allocated0600,
 regular/current-UID/single-link/zero-length, nofollow/CLOEXEC, retained noninherited
 FD. The child writes OPEN_EXISTING without create/truncate/adopt; the host verifies

@@ -155,6 +155,10 @@ def validate_publication(session):
     store_fd = None
     try:
         config = artifacts.configuration(session, 'publication')
+        crypto = {'bcryptprimitives=b;advapi32,cryptbase=b': 'b',
+                  'bcryptprimitives=n;advapi32,cryptbase=b': 'n'}.get(config['backend'])
+        if crypto is None:
+            raise ValueError('Unknown publication test crypto backend')
         state = session.state()
         grant, start = state['grant'], state['generation']
         state.update(authorized_for=None, grant=None, phase='publication-consumed')
@@ -192,7 +196,8 @@ def validate_publication(session):
                         [str(overlay / 'space-cli.exe'), '-m', 'tests.wine-record-publication:' + name.removeprefix('store-')])
                 def launched(at):
                     observe('launch', component=name, launched_monotonic=at, hard_deadline_monotonic=at + deadline)
-                code = session.launch([config['wine'], *args], name, env, child_umask=mask, on_launch=launched)
+                component_env = dict(env, SPACE_WINE_PUBLICATION_TEST_CRYPTO=crypto) if sink else env
+                code = session.launch([config['wine'], *args], name, component_env, child_umask=mask, on_launch=launched)
                 observe('result', component=name, command_returncode=code)
                 if code:
                     return code
