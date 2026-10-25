@@ -187,6 +187,21 @@ and stderr handles directly, retaining partial files on timeout/nonzero exit and
 killing/reaping the process group on timeout. It never repairs malformed JSON by
 guessing missing content or bypassing identity/completion verification.
 
+The reviewed recovery subsequently stopped **before export** because the CLI had
+inserted only top-level `"$schema": "https://opencode.ai/config.json"` into the
+generated control config. The narrow compatibility check accepts that annotation
+only for `control/opencode.json`, and only if removing exactly that known property
+and serializing with the original preparation's two-space indentation, key order
+and trailing newline reproduces the **original frozen SHA-256**. Unknown schema
+values, permission/prompt/other field changes, and every other changed artifact
+remain errors. This is not general semantic JSON equivalence or a hash-gate bypass.
+The explicit recovery record's `artifact_annotations` lists the config path,
+expected and actual SHA-256 hashes, and accepted annotation. No current config,
+manifest or deadline is rewritten. Future preparation includes the known schema
+from the start and hashes those exact bytes normally. This additional collection
+fix requires independent review before controller recovery; no new model attempt
+or fresh overall deadline is authorized.
+
 After independent fix review, only the authorized controller performs actual
 artifact recovery (the implementation agent's tests use disposable fixtures):
 

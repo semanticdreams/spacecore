@@ -280,6 +280,86 @@ class PreparationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             pilot.prepare(ROOT, ROOT / "never-create-pilot")
 
+    def legacy_config(self):
+        path = self.root / "control/opencode.json"
+        config = json.loads(path.read_text())
+        config.pop("$schema", None)
+        original = (json.dumps(config, indent=2) + "\n").encode()
+        path.write_bytes(original)
+        manifest = json.loads((self.root / "manifest.json").read_text())
+        manifest["artifacts"]["control/opencode.json"] = pilot.sha256(original)
+        pilot.save(self.root / "manifest.json", manifest)
+        return path, config, original
+
+    def test_schema_annotation_only_matches_frozen_legacy_hash(self):
+        path, config, original = self.legacy_config()
+        config["$schema"] = "https://opencode.ai/config.json"
+        # CLI formatting may differ; the original canonical bytes still must match.
+        actual = json.dumps(config).encode()
+        path.write_bytes(actual)
+        manifest_bytes = (self.root / "manifest.json").read_bytes()
+        try:
+            verified = pilot.checked_manifest(self.root)
+        except ValueError as exc:
+            self.fail(f"known schema-only annotation rejected: {exc}")
+        self.assertEqual(verified["artifact_annotations"], [{
+            "path": "control/opencode.json", "expected_sha256": pilot.sha256(original),
+            "actual_sha256": pilot.sha256(actual),
+            "accepted_annotation": {"$schema": "https://opencode.ai/config.json"}}])
+        self.assertEqual(path.read_bytes(), actual)
+        self.assertEqual((self.root / "manifest.json").read_bytes(), manifest_bytes)
+
+    def test_schema_annotation_rejects_unknown_and_behavior_changes(self):
+        path, config, _ = self.legacy_config()
+        for mutation in ["schema", "permission", "agent_permission", "prompt", "other"]:
+            changed = copy.deepcopy(config)
+            changed["$schema"] = "https://opencode.ai/config.json"
+            if mutation == "schema":
+                changed["$schema"] = "https://unknown.invalid/schema"
+            elif mutation == "permission":
+                changed["permission"] = "allow"
+            elif mutation == "agent_permission":
+                changed["agent"]["pilot"]["permission"] = "allow"
+            elif mutation == "prompt":
+                changed["agent"]["pilot"]["prompt"] += " changed"
+            else:
+                changed["extra"] = True
+            path.write_text(json.dumps(changed, indent=2) + "\n")
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                pilot.checked_manifest(self.root)
+
+    def test_schema_annotation_does_not_relax_other_artifacts(self):
+        path, config, _ = self.legacy_config()
+        config["$schema"] = "https://opencode.ai/config.json"
+        path.write_text(json.dumps(config, indent=2) + "\n")
+        packet = self.root / self.manifest["trials"][0]["packet"]
+        packet.write_bytes(packet.read_bytes() + b"\n")
+        with self.assertRaises(ValueError):
+            pilot.checked_manifest(self.root)
+
+    def test_future_preparation_includes_schema_in_strict_frozen_bytes(self):
+        path = self.root / "control/opencode.json"
+        self.assertEqual(json.loads(path.read_text()).get("$schema"), "https://opencode.ai/config.json")
+        self.assertEqual(pilot.sha256(path.read_bytes()), self.manifest["artifacts"]["control/opencode.json"])
+
+    def test_schema_annotation_is_explicit_recovery_metadata(self):
+        path, config, original = self.legacy_config()
+        config["$schema"] = "https://opencode.ai/config.json"
+        path.write_text(json.dumps(config, indent=2) + "\n")
+        trial, exported = self.failed_collection()
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))):
+            try:
+                record = pilot.recover_export(self.root, trial["id"])
+            except ValueError as exc:
+                self.fail(f"schema-only recovery preflight rejected: {exc}")
+        self.assertEqual(record["outcome"], "complete")
+        annotation = record["artifact_annotations"][0]
+        self.assertEqual(annotation["expected_sha256"], pilot.sha256(original))
+        self.assertEqual(annotation["actual_sha256"], pilot.sha256(path.read_bytes()))
+        self.assertEqual(annotation["accepted_annotation"], {"$schema": "https://opencode.ai/config.json"})
+        stored = json.loads((self.root / record["effective_result"]["collection_recovery"]).read_text())
+        self.assertEqual(stored["artifact_annotations"], record["artifact_annotations"])
+
     def process(self, stdout, returncode=0):
         proc = Mock(pid=987654, returncode=returncode)
         def communicate(**_kwargs):

@@ -18,6 +18,7 @@ import uuid
 
 GPT = "openai/gpt-6.1-sol"
 GLM = "opencode-go/glm-5.3-flash"
+CONFIG_SCHEMA = "https://opencode.ai/config.json"
 RUN_ROOT = Path("/tmp/space/opencode-model-pilot")
 CASES = Path(__file__).resolve().parent / "evals/opencode_pilot_cases.json"
 FILES = {"assets/lua/sized.fnl", "assets/lua/tests/test-sized.fnl"}
@@ -130,7 +131,7 @@ def prepare(repo_root: Path, run_root: Path) -> dict:
         trials.append({"id": label, "model": model, "variant": "high" if model == GPT else None,
                        "packet": "packets/sized-contract.txt" if contract else "packets/sized-plain.txt",
                        "seconds": 360, "implementation": True})
-    config = {"permission": "deny", "plugin": [], "mcp": {},
+    config = {"$schema": CONFIG_SCHEMA, "permission": "deny", "plugin": [], "mcp": {},
               "agent": {"pilot": {"mode": "primary", "permission": "deny",
                                   "description": "Static fixed-context pilot, no tools",
                                   "prompt": INSTRUCTION}}}
@@ -254,9 +255,24 @@ def capture_process(args, control, deadline, raw_prefix):
 
 def checked_manifest(run_root):
     manifest = load_json((run_root / "manifest.json").read_text())
+    annotations = []
     for name, digest in manifest["artifacts"].items():
-        if sha256((run_root / name).read_bytes()) != digest:
-            raise ValueError("frozen artifact changed: " + name)
+        data = (run_root / name).read_bytes()
+        actual = sha256(data)
+        if actual == digest:
+            continue
+        if name == "control/opencode.json":
+            config = load_json(data)
+            if isinstance(config, dict) and config.pop("$schema", None) == CONFIG_SCHEMA:
+                # Only the known CLI annotation may differ. Reproduce the old
+                # preparation bytes, including key order, indentation and newline.
+                original_format = (json.dumps(config, indent=2) + "\n").encode()
+                if sha256(original_format) == digest:
+                    annotations.append({"path": name, "expected_sha256": digest, "actual_sha256": actual,
+                                        "accepted_annotation": {"$schema": CONFIG_SCHEMA}})
+                    continue
+        raise ValueError("frozen artifact changed: " + name)
+    manifest["artifact_annotations"] = annotations  # observation only; never rewrite frozen files
     return manifest
 
 
@@ -385,6 +401,7 @@ def recover_export(run_root, trial_id):
         attempt.mkdir(parents=True)  # new append-only namespace, never the old raw prefix
         prefix = attempt / "export"
         record = {"trial_id": trial_id, "session_id": session_id, "kind": "export_collection_recovery",
+                  "artifact_annotations": manifest["artifact_annotations"],
                   "original_result_sha256": sha256(original_bytes), "run_sha256": sha256(ndjson.encode()),
                   "export_stdout": str(prefix.with_suffix(".stdout.txt").relative_to(run_root))}
         started = time.time()
