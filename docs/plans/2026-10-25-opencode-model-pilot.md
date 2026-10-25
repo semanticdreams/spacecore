@@ -113,6 +113,34 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test
 
 ## Finishing
 
+### Recorded execution limitation
+
+All eleven scheduled primary attempts were made once, but five timed out and one
+completed with malformed response JSON. There are five effective complete answers,
+including one recovered by re-exporting its original own session after a CLI
+transport truncation. Neither escalation response nor the GLM contract-driven
+implementation completed. No repeat met the original paired-architecture rule;
+no candidate prompts were rerun or launched after the original execution deadline.
+
+Consequently this is a **qualitative screening result**, not a completed numeric
+ranking or a demonstrated hybrid success. Four fresh author-blinded GPT reviewers
+assessed supplied verbatim substantive excerpts against actual source; the fifth
+escalation judgment is unavailable. They explicitly did not score complete
+artifacts. The frozen rubric remains recorded but no post-hoc aggregate score is
+invented. Report these departures from Steps 3–6 above plainly.
+
+The repository evidence records retain the complete outcome table, provenance and
+hashes, selected reviewable response excerpts, and independent findings. Full
+candidate final responses remain in the original allowed runtime artifact root;
+do not claim that the excerpts file is a complete transcript or that a hash alone
+proves substantive correctness. Full-artifact review and tests are not implied.
+
+Runtime transport/schema compatibility repairs were independently reviewed and
+did not change source packets, questions, expectations, or the implementation
+contract. Include these collection confounders and the directory-metadata mismatch
+as limitations. Reviewer requests for future native production validation are not
+defects in this user-authorized static-only model evaluation.
+
 After all changes pass independent review, use finishing-a-development-branch.
 Verify committed reviewed content and a clean tree, fetch/evaluate current
 `origin/main` through the capability agent, rerun focused orchestration tests,
