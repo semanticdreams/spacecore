@@ -29,5 +29,21 @@
 (fn full-payload [run] (payload run run.output))
 (fn preview-payload [run] (payload run (output-tail run)))
 
+;; Compact progress for the owning code entity's result label: status plus a
+;; live tail while running; the outcome head once terminal.
+(fn progress [run]
+  (local output (assert run.output "run progress requires captured output"))
+  (local detail
+    (if (= run.status "running")
+        (output-tail run)
+        run.error
+        (.. "Error: " run.error.message)
+        (not (= run.result-type "nil"))
+        (.. "Result: " run.result)
+        (> (length output) 0)
+        (output-tail run)
+        "(no output)"))
+  (.. (summary run) "\n" detail))
+
 {:summary summary :payload full-payload :preview-payload preview-payload
- :output-tail output-tail}
+ :output-tail output-tail :progress progress}

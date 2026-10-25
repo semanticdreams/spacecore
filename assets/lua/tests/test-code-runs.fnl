@@ -361,6 +361,32 @@
     (assert (not (has? compact (string.rep "x" 100))) "preview payload bounds the tail")
     (assert (has? compact "final"))))
 
+(add "progress streams the tail while running and the outcome when terminal"
+  (fn []
+    (local Presentation (require :code-runs/presentation))
+    (local base {:id "run-2" :code-entity-id "code-1" :elapsed-ms 5.0 :created-at 0
+                 :snapshot {:kernel 0 :language "fnl" :source "" :name "job"}
+                 :completion-mode "deferred" :initial-result "started"})
+    (local running (setmetatable {:status "running" :output "alpha\nbeta\n"
+                                  :result "" :result-type "nil" :error false}
+                                 {:__index base}))
+    (local running-text (Presentation.progress running))
+    (assert (has? running-text "running"))
+    (assert (has? running-text "beta"))
+    (local failed (setmetatable {:status "failed" :output ""
+                                 :result "" :result-type "nil"
+                                 :error {:message "boom" :traceback ""}}
+                                {:__index base}))
+    (assert (has? (Presentation.progress failed) "Error: boom"))
+    (local succeeded (setmetatable {:status "succeeded" :output "noise\n"
+                                    :result "7" :result-type "number" :error false}
+                                   {:__index base}))
+    (assert (has? (Presentation.progress succeeded) "Result: 7"))
+    (local quiet (setmetatable {:status "succeeded" :output ""
+                                :result "" :result-type "nil" :error false}
+                               {:__index base}))
+    (assert (has? (Presentation.progress quiet) "(no output)"))))
+
 (fn exercise-run-widget [node compact?]
   (local glm (require :glm))
   (local focus ((. (require :focus) :FocusManager) {:root-name "code-run-widget"}))

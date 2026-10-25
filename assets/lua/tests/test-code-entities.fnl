@@ -333,8 +333,9 @@
   (fn run-code [_self id]
     (local entity (assert (store:get-entity id)))
     (table.insert f.runs {:source entity.source :id id :language entity.language :kernel entity.kernel})
-    {:id (.. "run-" (# f.runs)) :status "succeeded" :elapsed-ms 0 :created-at 0
-     :snapshot {:name (.. "result-" (# f.runs))}})
+    {:id (.. "run-" (# f.runs)) :code-entity-id id :status "succeeded" :elapsed-ms 0 :created-at 0
+     :snapshot {:name (.. "result-" (# f.runs))} :output "" :initial-result ""
+     :result "" :result-type "nil" :error false :artifacts []})
   (local code-runner {:run run-code})
   (set f.node ((. (require :graph/nodes/code-entity) :CodeEntityNode)
                 {:entity-id f.entity.id :store store :runner code-runner}))

@@ -49,7 +49,7 @@
   (local runner (assert self.runner "code entity requires code runner"))
   (local run (runner:run self.entity-id))
   (set self.latest-run-id run.id)
-  (set self.last-run-result (Presentation.summary run))
+  (set self.last-run-result (Presentation.progress run))
   (self.run-result-changed:emit self.last-run-result)
   (when self.graph (self:show-run run.id))
   run)
@@ -104,7 +104,8 @@
   (fn on-run [run]
     (when (= run.code-entity-id id)
       (when (= run.id self.latest-run-id)
-        (set self.last-run-result (Presentation.summary run))
+        ;; Stream live progress (status + output tail) into the entity preview.
+        (set self.last-run-result (Presentation.progress run))
         (result-changed:emit self.last-run-result))
       (changed:emit self)))
   ;; Deletion only refreshes run history; the last-run display is untouched.

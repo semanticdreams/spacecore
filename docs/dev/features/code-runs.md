@@ -80,12 +80,14 @@ preview and full view show the same content — output, initial return, result,
 and error — with one difference: the preview bounds the output to a recent
 tail, while the full view shows all of it. The executed source is never inlined;
 **Show Code** loads the source entity instead. The node label also shows the
-current status. Each line costs one persisted update; the 1 MiB output cap
-bounds runaway loops, but very chatty loops still pay per-line persistence.
-There is no separate stderr channel: failures carry their message and traceback
-in the run's error record. External kernels receive no host completion context
-and deliver combined stdout/stderr only with their final reply; streaming for
-external kernels would need a protocol extension.
+current status, and the owning code entity's preview result label streams the
+same live progress (status plus output tail while running; the result or error
+head once terminal) after the initial return. Each line costs one persisted
+update; the 1 MiB output cap bounds runaway loops, but very chatty loops still
+pay per-line persistence. There is no separate stderr channel: failures carry
+their message and traceback in the run's error record. External kernels receive
+no host completion context and deliver combined stdout/stderr only with their
+final reply; streaming for external kernels would need a protocol extension.
 
 ## Deadlines and lifetime
 
