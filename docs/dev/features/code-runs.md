@@ -75,10 +75,12 @@ sandbox. Use explicit shared services for deliberate cross-run state.
 Internal Fennel runs stream progress through the run's `output` field: `print`
 inside the evaluated source and its callbacks is run-bound, and
 `execution:write(text)` appends explicitly. Every append persists immediately and
-emits, so an open code-run node live-updates while the run is running: the
-preview shows a bounded tail of recent output (plus the error head when failed),
-and the full view live-tails the complete output (the node label also shows the
-current status). Each line costs one persisted update; the 1 MiB output cap
+emits, so an open code-run node live-updates while the run is running. The
+preview and full view show the same content — output, initial return, result,
+and error — with one difference: the preview bounds the output to a recent
+tail, while the full view shows all of it. The executed source is never inlined;
+**Show Code** loads the source entity instead. The node label also shows the
+current status. Each line costs one persisted update; the 1 MiB output cap
 bounds runaway loops, but very chatty loops still pay per-line persistence.
 There is no separate stderr channel: failures carry their message and traceback
 in the run's error record. External kernels receive no host completion context

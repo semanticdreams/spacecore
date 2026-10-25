@@ -326,18 +326,40 @@
 
 (add "preview output tail is bounded aligned and carries the error head"
   (fn []
-    (local view-module (require :graph/view/views/code-run))
-    (assert (= (view-module.output-tail {:output ""}) "(no output yet)"))
-    (assert (= (view-module.output-tail {:output "one\ntwo\n"}) "two"))
+    (local Presentation (require :code-runs/presentation))
+    (assert (= (Presentation.output-tail {:output ""}) "(no output yet)"))
+    (assert (= (Presentation.output-tail {:output "one\ntwo\n"}) "two"))
     (local long (string.rep "x" 900))
-    (local tail (view-module.output-tail {:output (.. long "\nfinal\n")}))
+    (local tail (Presentation.output-tail {:output (.. long "\nfinal\n")}))
     (assert (<= (# tail) 800) "tail must stay bounded")
     (assert (has? tail "final"))
-    (local error-tail (view-module.output-tail {:output "" :error {:message "boom" :traceback ""}}))
+    (local error-tail (Presentation.output-tail {:output "" :error {:message "boom" :traceback ""}}))
     (assert (= error-tail "Error: boom"))
-    (local combined (view-module.output-tail {:output "progress\n" :error {:message "boom" :traceback ""}}))
+    (local combined (Presentation.output-tail {:output "progress\n" :error {:message "boom" :traceback ""}}))
     (assert (has? combined "progress"))
     (assert (has? combined "Error: boom"))))
+
+(add "payloads share content across preview and view without inline source"
+  (fn []
+    (local Presentation (require :code-runs/presentation))
+    (local run {:id "run-1" :code-entity-id "code-1" :status "succeeded" :elapsed-ms 12.0
+                :snapshot {:kernel 0 :language "fnl" :source "SECRET SOURCE" :name "x"}
+                :completion-mode "synchronous"
+                :output (.. (string.rep "x" 900) "\nfinal\n") :initial-result ""
+                :result "7" :result-type "number" :error false :artifacts []})
+    (local full (Presentation.payload run))
+    (local compact (Presentation.preview-payload run))
+    (local shared-suffix (.. "\n\nInitial return\n" run.initial-result
+                             "\n\nResult (" run.result-type ")\n" run.result
+                             "\n\nError\n(none)"))
+    (each [_ text (ipairs [full compact])]
+      (assert (has? text "Run: run-1"))
+      (assert (has? text "Output"))
+      (assert (has? text shared-suffix))
+      (assert (not (has? text "SECRET SOURCE")) "payload must not inline source"))
+    (assert (has? full (string.rep "x" 100)) "full payload keeps all output")
+    (assert (not (has? compact (string.rep "x" 100))) "preview payload bounds the tail")
+    (assert (has? compact "final"))))
 
 (fn exercise-run-widget [node compact?]
   (local glm (require :glm))
