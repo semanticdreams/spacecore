@@ -169,6 +169,26 @@ class ParseTests(unittest.TestCase):
 
 @unittest.skipIf(pilot is None, "runner not yet implemented")
 class ControlRootTests(unittest.TestCase):
+    def test_run_cli_rejects_outside_root_before_any_artifact_read(self):
+        for outside in ["/tmp/opencode/old-run", "/outside-pilot/run"]:
+            argv = ["pilot", "run", "--run-root", outside]
+            with self.subTest(root=outside), patch.object(sys, "argv", argv), patch.object(Path, "resolve", autospec=True, side_effect=lambda path: path), patch.object(Path, "read_text", side_effect=AssertionError("artifact read before root rejection")) as read, patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot.subprocess, "run") as subprocess_run, patch.object(pilot, "run_trial") as run_trial:
+                with self.assertRaises(ValueError):
+                    pilot.main()
+                read.assert_not_called()
+                popen.assert_not_called()
+                subprocess_run.assert_not_called()
+                run_trial.assert_not_called()
+
+    def test_run_cli_uses_validated_resolved_root_for_read_and_trials(self):
+        resolved = Path("/tmp/space/opencode-model-pilot/resolved-run")
+        argv = ["pilot", "run", "--run-root", "/tmp/space/opencode-model-pilot/alias-run"]
+        trial = {"id": "synthetic"}
+        with patch.object(sys, "argv", argv), patch.object(Path, "resolve", return_value=resolved), patch.object(Path, "read_text", autospec=True, return_value=json.dumps({"trials": [trial]})) as read, patch.object(pilot, "run_trial", return_value={"outcome": "complete"}) as run_trial, patch("builtins.print"):
+            pilot.main()
+        read.assert_called_once_with(resolved / "manifest.json")
+        self.assertEqual(run_trial.call_args.args[:2], (trial, resolved))
+
     def test_only_configured_space_pilot_descendants_are_allowed(self):
         # Pure path checks: never inspect either configured or denied artifacts.
         with patch.object(Path, "resolve", autospec=True, side_effect=lambda path: path):

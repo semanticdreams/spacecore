@@ -498,10 +498,11 @@ def main():
         if continue_unreserved(args.run_root)["outcome"] != "complete":
             raise SystemExit(1)
     else:
-        manifest = load_json((args.run_root / "manifest.json").read_text())
+        run_root = control_root(args.run_root)
+        manifest = load_json((run_root / "manifest.json").read_text())
         deadline = time.time() + 5400
         for trial in manifest["trials"]:
-            result = run_trial(trial, args.run_root, deadline)
+            result = run_trial(trial, run_root, deadline)
             print(json.dumps({"trial_id": trial["id"], "outcome": result["outcome"]}))
             if result["outcome"] != "complete":
                 raise SystemExit(1)
