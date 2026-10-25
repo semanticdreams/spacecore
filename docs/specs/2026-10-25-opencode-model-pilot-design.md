@@ -87,11 +87,12 @@ GLM. Match deployed GPT roles (`xhigh` reasoning, `high` implementation) where
 supported. Missing actual identity or authentication is an explicit preflight
 failure, not evidence about model quality. Never fall back to another model.
 
-Apply returned Fennel files only to new scratch asset overlays using an exact
-filename allowlist and reject unsafe paths. Execute generated code only inside an
-available credential-free OS sandbox with no network and bounded resources; do not install
-host packages or widen privileges. If unavailable, continue reasoning evaluation
-and label implementation assessment static-only, with no test-pass claim.
+The user clarified that executing candidate code is unnecessary for this pilot:
+comparative architectural analysis and stronger-model assessment are the target.
+Keep returned Fennel as inert response text and parse requested filenames against
+an exact allowlist; never apply, import, compile, or execute candidate code.
+Label implementation assessment static-only, with no test-pass claim. Do not
+build Space or add sandbox infrastructure for this evaluation.
 
 Record wall time and available input/output/reasoning/cache usage without double
 counting. Preserve unknown usage as unknown and reported zero cost as reported
@@ -121,22 +122,21 @@ Infrastructure failures, timeouts, and incomplete sessions are distinct outcomes
 
 ## Deliverables, validation, and limits
 
-Deliver a small reproducible runner with mocked tests, frozen cases and native
-acceptance tests, and a concise report with a proposed responsibility split.
+Deliver a small reproducible runner with mocked tests, frozen cases and static
+acceptance vectors, and a concise report with a proposed responsibility split.
 Keep large raw own-session artifacts outside version control; commit
 sanitized summaries and sufficient synthetic artifacts for independent review.
-Validate baseline tests when runtime-ready before calls. Validate runner handling
-of malformed output, identity mismatch, completion/errors, timeouts, unsafe paths,
-and missing usage.
+Validate runner handling of malformed output, identity mismatch, completion/errors,
+timeouts, unsafe paths, and missing usage. Candidate test code is a proposed
+validation strategy to inspect, not executed evidence.
 Review preparation independently before calls and results independently before
-reporting findings. Native Fennel validation is compile check first, explicit-file
-constraints second, focused tests third with absolute asset/macro paths, audio
-disabled, keyring skipped, and temporary XDG data. A missing/stale binary requires
-`make build` before execution; do not use system Lua/Fennel as substitute evidence.
-The workspace currently has no `build/` directory. Do not silently start a cold
-multi-hour build for this time-bounded pilot: report static-only results unless a
-trusted runtime and safe execution isolation become available. PR CI is the
-integration gate for any landed tooling; production agent config remains unchanged.
+reporting findings. All candidate compile, constraints, and focused runtime tests
+are explicitly not run by design. Assess whether each response understands the
+native compile-first, constraints-second, focused-test-third workflow, including
+asset/macro environment and runtime-freshness prerequisites. Do not use system
+Lua/Fennel as substitute evidence. The workspace has no `build/` directory; do not
+start a build. PR CI is the integration gate for any landed orchestration tooling;
+production agent configuration remains unchanged.
 
 This is a screening pilot, not statistical proof. Fixed context excludes live
 repository search, autonomous tools, recovery loops, long-context performance,
