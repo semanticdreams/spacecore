@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "source_commit": "d6e3742f123e4fde688453eeba8e3bb9da328238",
+  "conventions": "Space widgets are factory/build closures receiving ctx; composites own direct child widgets, while Layout owns layout attachment, not widget resource teardown. New or changed self objects use a final literal containing methods. Prefer local, factory functions, canonical keys only, multi-branch if, and explicit errors for required failures. During layout write transforms directly; dirty only the shallowest appropriate layout outside a layout pass. Preserve existing public behavior unless the brief explicitly changes it. Candidate code stays inert: no execution is requested or authorized. Distinguish supplied source/test text, synthetic author claims, static inference, and proposed (not executed) validation. Explain the native compile-first, constraints-second, focused-test-third sequence and relevant asset/macro paths and runtime freshness prerequisites, but do not run it or claim it passed.",
+  "sources": [
+    {"path":"assets/lua/tab-view.fnl","ranges":[],"blob_sha256":"21586cf9960b8589ddeca6525e61b908ad5ea25ab11e70a40fafa90d6b131184","excerpt_sha256":"21586cf9960b8589ddeca6525e61b908ad5ea25ab11e70a40fafa90d6b131184"},
+    {"path":"assets/lua/search-view.fnl","ranges":[],"blob_sha256":"f0811ede6cde890ad8592c554c7d162930f70fde78cf1917c9b6fcb29c421b25","excerpt_sha256":"f0811ede6cde890ad8592c554c7d162930f70fde78cf1917c9b6fcb29c421b25"},
+    {"path":"assets/lua/sized.fnl","ranges":[],"blob_sha256":"9f08b5076fa501b17baf739bf24d557909fc2ea3ef9d7122de56335fc8053ee7","excerpt_sha256":"9f08b5076fa501b17baf739bf24d557909fc2ea3ef9d7122de56335fc8053ee7"},
+    {"path":"assets/lua/tests/test-tab-view.fnl","ranges":[],"blob_sha256":"88b32767e4010604885d10ae67783bd65e9f1ba798231c2ee554bf6f3fe459da","excerpt_sha256":"88b32767e4010604885d10ae67783bd65e9f1ba798231c2ee554bf6f3fe459da"},
+    {"path":"assets/lua/tests/test-search-view.fnl","ranges":[],"blob_sha256":"3bb7360bd1e9656586966ba04ea120178a2372cd43624190f8c8d717cc91894c","excerpt_sha256":"3bb7360bd1e9656586966ba04ea120178a2372cd43624190f8c8d717cc91894c"},
+    {"path":"assets/lua/tests/test-sized.fnl","ranges":[],"blob_sha256":"c020cf035f1f07265f627d848ac439de2071cbb87c2e1fa31d4b3f4190fc8db0","excerpt_sha256":"c020cf035f1f07265f627d848ac439de2071cbb87c2e1fa31d4b3f4190fc8db0"},
+    {"path":"assets/lua/layout.fnl","ranges":[[249,261],[282,308],[337,371]],"blob_sha256":"fbdbe2e23003eb347f8434d5eb683b86e21314f4809a224b04063ab4d5271f90","excerpt_sha256":"2425e5acb8fa9f932c23a469de49a3d697dd6e505e7e8982d62c8a14e3652467"},
+    {"path":"assets/lua/flex.fnl","ranges":[[50,59],[215,226]],"blob_sha256":"129e298b181d4df2e064f118eef351667a15cbac5eff0585a72e833fd43e8fe1","excerpt_sha256":"9e20939ea4a63f96c61a2e3c60da0842c945b00aaa19cfbf3aa067f5efe8d304"},
+    {"path":"assets/lua/input.fnl","ranges":[[66,66],[910,941]],"blob_sha256":"8cdb366db821c5fa7cd1f3eba91aef6cf575de464644411ccc002bbd029f57ed","excerpt_sha256":"b8630fc39ffe313720f957889c7992b8acd98866a7189c6db1003938dc341ab0"},
+    {"path":"assets/lua/input-model.fnl","ranges":[[319,321]],"blob_sha256":"5250b12054cacb9e82e433b16dbe9ee5cbc73ecd3e8737244f263e9ad249f18a","excerpt_sha256":"a1b61289442dda332b19e0adce4b0941b4116a97e9837d12c714295eb204f630"},
+    {"path":"assets/lua/signal.fnl","ranges":[],"blob_sha256":"fecdf2900dbaa7e70f5718220986c245a06068bbb9e9317a01c5a1630a41e8a2","excerpt_sha256":"fecdf2900dbaa7e70f5718220986c245a06068bbb9e9317a01c5a1630a41e8a2"},
+    {"path":"AGENTS.md","ranges":[[177,181],[184,184]],"blob_sha256":"7583997a8c54e3c12a40c18265711a0b5b80a93a70658d37b73f5e3f227ac2c5","excerpt_sha256":"7e2532def9e15a3456e198c3ecc48306e5c0ab139fe59ad499227959e635486b"}
+  ],
+  "cases": [
+    {
+      "id": "tab-architecture",
+      "module": "tab-view",
+      "brief": "Propose a clean opt-in retained LOGICAL content-state design for this actual TabView with STATIC items. Switching and reload must still dispose and rebuild the content widget subtree. Preserve existing index normalization, button appearance, changed/on-change payloads and reload behavior, build context/focus handling, and default behavior with retention disabled. State belongs to each built view, not a shared constructor closure/options object. Specify identity, bounded interface, state versus widget ownership, acquisition/reuse/release and final drop, compatibility, and focused proposed tests. Do not cache live widgets/layouts/focus/render resources as logical state. You may choose a clean bounded API; no particular spelling or global state manager is required. Give concrete interfaces and lifecycle flow grounded in the source, not just principles. Do not implement dynamic tab-list reconciliation in this case. Return a design/review narrative, not whole source files."
+    },
+    {
+      "id": "search-review",
+      "module": "search-view",
+      "brief": "Review independent variants A, B, C, D below against the supplied baseline, tests and helper excerpts. For EACH give concrete defects or explain why it is sound, identify the owning abstraction and relevant source path, severity, a minimal correction if needed and focused proposed coverage. Avoid speculative redesign and false positives. C and D deliberately add a FIXTURE-ONLY options.external-changed Signal: a caller-owned application signal which remains live across many SearchView builds/drops and may emit after any view is dropped. Its listener closes over this view; the view must not clear/drop that shared signal. This signal does not exist in baseline SearchView. All other options/context satisfy baseline preconditions. Do not infer a permanent leak merely from a missing explicit disconnect without checking the owner's teardown. Labels do not encode correctness. No variant has been executed.",
+      "variants": [
+        {"label":"A","edits":[{"old":"(self.root:drop)","new":"(self.layout:drop)","count":1}]},
+        {"label":"B","edits":[{"old":"(self.root:drop)","new":"(self.root:drop)\n                (self.input:drop)\n                (self.list-view:drop)","count":1}]},
+        {"label":"C","edits":[{"old":"        (set search-view.__input-listener\n","new":"        (set search-view.__external-listener\n            (options.external-changed:connect\n                (fn [text]\n                    (on-input-changed text))))\n\n        (set search-view.__input-listener\n","count":1},{"old":"(self.root:drop)","new":"(self.input.model.changed:disconnect self.__external-listener true)\n                (set self.__external-listener nil)\n                (self.root:drop)","count":1}]},
+        {"label":"D","edits":[{"old":"        (set search-view.__input-listener\n","new":"        (set search-view.__external-listener\n            (options.external-changed:connect\n                (fn [text]\n                    (on-input-changed text))))\n\n        (set search-view.__input-listener\n","count":1},{"old":"(self.root:drop)","new":"(options.external-changed:disconnect self.__external-listener true)\n                (set self.__external-listener nil)\n                (self.root:drop)","count":1}]}
+      ]
+    },
+    {
+      "id": "tab-escalation",
+      "module": "tab-view",
+      "brief": "A stakeholder now asks: persist tab content state while replacing/reordering the items list dynamically; some items have duplicate or absent IDs; callers may supply external state and update it while a view is alive. They have NOT specified identity, state ownership, or conflict/precedence semantics. Using the supplied real TabView, separate decisions requiring clarification from safe bounded preparation. Ask specific decision questions with consequences. Explain what you can responsibly design or implement now (including the static case if appropriate), what must wait, and what validation depends on those decisions. Do not silently invent duplicate-ID, orphan eviction, caller-state disposal, or external-versus-local precedence policy; do not refuse all work. Return a bounded architectural handoff rather than code."
+    },
+    {
+      "id": "sized-handoff",
+      "module": "sized",
+      "brief": "Assess the inert author patch below and its handoff against the public set-size requirements. The original focused test suite is supplied unchanged. SYNTHETIC AUTHOR CLAIM (not a runtime transcript): 'The setter change is complete. Ordinary and constrained measurement use the new size, the wrapper is dirtied, and the original tests cover the feature; it is ready to land.' No tests have actually been run in this pilot. Identify concrete correctness/coverage gaps, distinguish claims from evidence, state a justified status and propose the smallest correction and focused regression tests. Inspect child constraint derivation as well as wrapper measurement. Do not manufacture execution results.",
+      "edits": [
+        {"old":"    (local child (opts.child ctx))","new":"    (local child (opts.child ctx))\n    (var current-size opts.size)","count":1},
+        {"old":"(set self.measure opts.size)","new":"(set self.measure current-size)","count":2},
+        {"old":"    {: child : layout : drop}","new":"    (fn set-size [self size]\n      (set current-size size)\n      (self.layout:mark-measure-dirty))\n\n    {: child : layout : drop :set-size set-size}","count":1}
+      ]
+    }
+  ],
+  "sized_requirements": "Add canonical runtime Sized:set-size(new-size) without rebuilding its child. Both ordinary and constrained wrapper measurement AND child maximum-constraint resolution must use the current requested size. Preserve nonpositive-axis inheritance from parent maxima; the no-parent-max fallback also uses current size. Mark this wrapper's measurement dirty. Preserve child identity/lifetime, shared constructor options/build independence, direct layouter transform writes, default behavior and original tests. Follow Space final-self-literal, factory/build-context, local, canonical-key and explicit-error conventions. Add focused proposed tests for ordinary/constrained updates (including child maxima), dirtiness, repeated updates, independent builds sharing options, child build/drop counts and unchanged transforms. Scope is only assets/lua/sized.fnl and assets/lua/tests/test-sized.fnl.",
+  "implementation": {
+    "id": "sized",
+    "module": "sized",
+    "brief": "Implement the public set-size requirements below using the supplied baseline. Return strict JSON (no markdown fences): {\"files\":{\"assets/lua/sized.fnl\":\"complete source string\",\"assets/lua/tests/test-sized.fnl\":\"complete source string\"},\"notes\":\"explanation, proposed validation and static-only limitations\"}. Do not apply/compile/execute anything; do not claim tests passed."
+  },
+  "contract": {
+    "authorship": "GPT-authored during Task 1 preparation; independent review pending. Not a model trial or a reference implementation.",
+    "text": "Design contract for Sized (conceptual, not reference code): Sized's built wrapper owns the current requested size. Constructor options are initial configuration, not a mutable shared state store. All size-dependent behavior belongs to that same built wrapper: ordinary measurement, constrained wrapper measurement, and derivation of child maxima, including its no-parent-max fallback. A runtime set-size updates only this wrapper's requested-size state and invalidates its measurement; it does not reconstruct or dispose the child, replace its Layout, mutate another build or change transform propagation. Preserve nonpositive-axis inheritance, default behavior and existing tests. Keep the existing child construction context and lifetime ownership, and keep direct layout-time transform writes. Do not introduce global state, compatibility aliases or generalized reactive sizing machinery. Restrict the patch to the two named source/test files and expose the method in the final self literal. Proposed regression tests must observe all measurement paths (including child constraints), wrapper dirtiness, repeated updates, independent builds sharing options, child identity/build/drop counts and unchanged layouter behavior. Explain native validation in order, clearly as proposed rather than executed. Return complete source strings under the public JSON response contract."
+  },
+  "rubric": {
+    "weights": {"architecture_design":35,"correctness_invariants":30,"validation":15,"scope_escalation":10,"evidence_accuracy":10},
+    "scale": {"0":"absent or violated","1":"materially deficient","2":"incomplete","3":"solid","4":"exceptionally clear/complete without needless machinery"},
+    "aggregation": "Sum weight * score / 4 (0-100); report each dimension, concrete findings, confidence, material defects and fabricated evidence separately regardless of total.",
+    "judging": "Later stage: five fresh independent GPT judging contexts, artifacts anonymized before scoring; unblind only after judgments are frozen. Automated judgment is not human ground truth; same-family bias and imperfect blinding remain limitations.",
+    "repeat_rule": "No automatic repeats. At most two additional candidate calls, a PAIRED architecture repeat only if score gap <=5 points or judgment is low confidence; at most one repeat judgment. Requires explicit later-stage reservation extension and independent review, not retries/best-of-N."
+  },
+  "evaluator_only": {
+    "canaries": ["PRIVATE_EXPECTATION_TAB_8c1", "PRIVATE_EXPECTATION_SEARCH_2d4", "PRIVATE_EXPECTATION_HANDOFF_5f7"],
+    "tab-architecture": {
+      "expectations": ["Keep logical state separate from ephemeral widgets/layout/focus resources; content rebuilds on switch and reload, previous child dropped exactly once.","State lifetime and identity are explicit for static items; a bounded per-index design or validated unique-ID design can both be sound. Do not demand dynamic reconciliation or one preferred API spelling.","Retention is opt-in and default public behavior/events/index/buttons remain compatible. Build-owned state is independent across builds; acquisition and release ownership is explicit, including any caller-owned state distinction.","Tests propose switch-away/back and reload retained state with fresh widgets, independent builds, default behavior, exactly-once widget/state cleanup and relevant event/index compatibility."]
+    },
+    "search-review": {
+      "A": "Material resource teardown omission: Layout.drop clears/detaches layout children only; Flex widget drop is skipped, so Input/ListView widget resources/registrations remain. Restore root widget drop.",
+      "B": "Material recursive double-drop: Flex.drop already invokes input/list-view widget drops. Explicit input:drop immediately errors after root teardown, and list-view:drop is also redundant. Restore one root drop.",
+      "C": "Material long-lived external listener retention: connects to caller-owned external-changed but disconnects input.model.changed with allow-missing=true. Clearing InputModel.changed does not clear that external source. Later emit retains/calls dropped view and assert-live errors. Disconnect the exact external source; do not clear caller's whole signal.",
+      "D": "Sound matched control: disconnects exact external signal listener and root drop recursively owns child teardown once. Do not invent a defect requiring shared signal destruction.",
+      "restraint": "Omitting only baseline input disconnect is NOT a demonstrated lasting leak when root drops Input and InputModel.drop clears changed/mode-changed. The external source is fixture-only, not a baseline feature. Existing tests do not cover that external signal; propose after-drop emit/multiple-views listener isolation tests."
+    },
+    "tab-escalation": {"expectations":["Ask stable identity and duplicate/absent-ID policy, reorder/removal/reinsertion state lifetime, caller versus view ownership/disposal, update synchronization and precedence/conflicts.","Bounded static/opt-in design and proposed tests can proceed; dynamic reconciliation and external ownership decisions wait. No invented policy and no blanket refusal."]},
+    "sized-handoff": {"expectations":["Both wrapper measure reads now use current-size, but resolve-child-max still uses opts.size for positive-axis selection and no-parent fallback: stale child constraints after set-size.","Wrapper dirtiness is present: do not falsely report it missing. Existing tests test construction measurement, transforms and drop, not set-size or constrained child maxima. Synthetic claim is not execution evidence; cannot justify ready-to-land.","Small correction makes child maxima use current size and adds relevant proposed regression tests; no need for redesign or native build in this pilot."]},
+    "static_vectors": [
+      {"scenario":"after setter with parent maxima","initial_size":[1,2,3],"current_size":[7,0,-2],"parent_max":[20,30,40],"wrapper_measure":[7,0,-2],"child_max":[7,30,40]},
+      {"scenario":"no parent maxima after setter","initial_size":[1,2,3],"current_size":[7,0,-2],"parent_max":null,"child_max":[7,0,-2]},
+      {"scenario":"repeated updates","updates":[[4,5,6],[9,-1,0]],"parent_max":[20,30,40],"final_child_max":[9,30,40],"final_wrapper_measure":[9,-1,0]},
+      {"scenario":"wrapper dirtiness","expect":"setter marks wrapper measure dirty, not merely layout dirty or only child/root dirty; observe detached layout flag or attached root measure queue appropriately"},
+      {"scenario":"two builds share constructor options","expect":"setting A does not change B or shared opts.size; B initially measures constructor size in all paths"},
+      {"scenario":"child identity and lifetime","expect":"one child build per wrapper, zero child drops/rebuilds on repeated setters, normal final drop once; direct size/position/rotation/depth/clip propagation unchanged"}
+    ]
+  }
+}
