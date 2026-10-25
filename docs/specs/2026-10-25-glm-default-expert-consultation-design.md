@@ -129,7 +129,9 @@ direct fast/live ownership, denied worker delegation, and human-owned decisions.
 Ask for routing decisions only; no actual dispatch, edits or privileged operations.
 Record baseline failures and updated outcomes honestly. Ten GLM validation calls
 maximum, no candidate implementation benchmark or retry-until-pass, 180-second
-per-call and 35-minute overall cap. No extra GPT evaluation trials are needed.
+per-call and 35-minute aggregate live-CLI cap. Persist and never reset consumed
+run/export time across phases; offline implementation/review and human pauses are
+not live-CLI time. No extra GPT evaluation trials are needed.
 If the control already complies on a scenario, do not claim guidance improved it.
 These are prompt-compliance checks, not proof of architecture/model competence.
 
