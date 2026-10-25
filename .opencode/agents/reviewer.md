@@ -1,8 +1,7 @@
 ---
 description: Performs independent full reviews and targeted fix verification without editing code
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: xhigh
+model: opencode-go/glm-5.3-flash
 steps: 55
 permission:
   read:
@@ -220,6 +219,39 @@ or CI evidence the finding relates to.
 ## Output
 
 Return only one valid JSON object, with no Markdown fence.
+
+### Pending consultation (all modes, before an ordinary verdict)
+
+Follow `AGENTS.md`: new/materially changed architecture, software-design or
+system-contract decisions require a GLM proposal and bounded GPT critique before
+dependent implementation, even for local/UI work. Reuse unchanged reconciled
+decisions. The same material failure after one focused repair, critical unresolved
+boundaries and material technical conflicts also trigger consultation. `task: deny`
+means return the request to the controller, not a blanket blocker, invented finding
+or approval. Preserve the supplied review mode (`full`, `verify`, `ci_review`).
+The controller dispatches `expert-advisor`, reconciles, and returns the evidence
+for you to finish your own review. Pending requests never count as pass/verified.
+Use the canonical request fields; `glm_proposal` is nonempty for design/contract
+decisions, otherwise nullable. Example:
+
+```json
+{
+  "mode": "full",
+  "status": "needs_consultation",
+  "summary": "Ownership decision needs bounded critique before a review verdict",
+  "consultation_request": {
+    "decision_scope": "widget save transition ownership",
+    "trigger": "software_design",
+    "question": "Does save-before-detach preserve content on failure?",
+    "sources": ["assets/lua/widget.fnl:40-90 and supplied proposed diff"],
+    "invariant": "Failed saves leave current content attached",
+    "evidence": ["The proposed transition changes detach ordering"],
+    "attempted_fix": null,
+    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "decision_needed": "Reconcile ownership and failure guarantees"
+  }
+}
+```
 
 ### Full Review Output
 

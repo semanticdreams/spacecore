@@ -1,8 +1,7 @@
 ---
 description: Converts an approved direction into a bounded, executable implementation plan with acceptance criteria and validation scope
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: xhigh
+model: opencode-go/glm-5.3-flash
 steps: 35
 permission:
   read:
@@ -77,7 +76,17 @@ Rules:
     justified by behavioral surface and risk; include enclosing form repair
     guidance when delimiter or parse errors are in scope.
 
-Return only raw Markdown suitable for PLAN.md — do NOT wrap the output in a
+Consultation exception: follow `AGENTS.md` for every architecture/software-design/
+system-contract decision, including local/UI design. First produce a GLM proposal;
+if no unchanged reconciled decision covers it, return **NEEDS_CONTEXT** and a
+`consultation_request` instead of finished-plan Markdown. Include `decision_scope`,
+`trigger`, `question`, original `sources`, `invariant`, `evidence`, nullable
+`attempted_fix`, nonempty `glm_proposal`, and `decision_needed`. The controller
+dispatches `expert-advisor` and returns evidenced reconciliation before dependent
+implementation; you have no delegation authority. Unresolved product/API/data
+policy stays human-owned. Advice is not final plan approval.
+
+Otherwise return only raw Markdown suitable for PLAN.md — do NOT wrap the output in a
 code fence. The plan must use these exact section headings so that automated
 tooling can extract tasks:
 

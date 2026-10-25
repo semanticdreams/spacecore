@@ -19,6 +19,12 @@ The selected caller must use its own corresponding branch prefix, not the other'
 Live-dev establishes manual mode before editing and explicitly refreshes after
 validated changes, with no filesystem watching or lifecycle confirmation prompts.
 The default `supervisor` is unchanged.
+
+This routine-advisor exemption **does not waive** mandatory **dual-model** input
+on architecture/software-design/system-contract decisions or triggered difficult
+questions below. Advice is narrow, not a worker pipeline or second full review.
+Live manual mode is required before edits; validated code changes require explicit
+refresh. Consultation alone does not require app lifecycle actions.
 Wrap-up uses one observational `fast-dev-reviewer` review of the whole branch;
 fixes are direct, followed by self-review and revalidation, not mandatory
 independent re-review per fix. Use raw Git/GitHub for this authorized lifecycle.
@@ -29,6 +35,104 @@ required validation failures; diagnose and fix them rather than bypass them.
 Environment isolation, not narrow tool permissions, bounds these primaries' authority.
 For all other agents, retain their existing process and permission contracts; this
 exception does not change an already-running agent's rules.
+
+## GLM-default consultation contract
+
+All sixteen existing project roles use `opencode-go/glm-5.3-flash`, with no
+variant: supervisor, planner, implementer, reviewer, debug-advisor, adjudicator,
+explorer, web-researcher, config-auditor, git-integrator, github-operator,
+pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev, fast-dev-reviewer.
+Only `expert-advisor` uses `openai/gpt-6.1-sol`, variant `high`, read-only subagent.
+This covers project roles only, not inherited built-in/hidden/global agents.
+Use project `explorer` and named workers, not built-in general/explore as an
+implicit model fallback. Restart OpenCode after the reviewed rollout; running
+sessions retain their loaded roles and must not claim they already use GLM.
+
+### When both models are mandatory
+
+- **Every architecture, software-design or system-contract decision**, before
+  dependent implementation: responsibilities, boundaries, abstractions, state or
+  resource ownership, interfaces, data flow, failure/lifetime guarantees and
+  persistence semantics. This includes meaningful local, internal and UI design,
+  even when confident and no failure has occurred; pilot failures are examples,
+  not the limit of this rule.
+- A critical unresolved permissions/security boundary or irreversible-data
+  question before acting, or a material technical conflict supported by sources.
+- The **same material failure after one focused repair**, shown by reproduction,
+  validation or a violated invariant: consult before another repair.
+
+Routine execution/review/diagnosis, expected TDD RED, an initial syntax/typo repair,
+cosmetic naming, and mechanical follow-through on an unchanged reconciled design
+stay GLM. Collect missing evidence directly when permitted. Unknown product/API/
+data policy is **HUMAN_DECISION_REQUIRED**; GPT does not set policy.
+
+### One bounded question, evidence, reconciliation and reuse
+
+GLM first states its proposal, responsibilities/contracts, invariant and rationale.
+The task-capable controller (supervisor or selected fast-dev/live-dev) dispatches
+`expert-advisor` for one question, not a whole task or implementation. Supply
+inspectable original source/diff paths or excerpts and validation evidence, not
+only the cheaper model's conclusions. The expert inspects original evidence.
+
+Every `consultation_request` has exactly these fields:
+
+```json
+{
+  "decision_scope": "widget save transition ownership",
+  "trigger": "software_design",
+  "question": "Does the proposed save-before-detach order preserve retained content on failure?",
+  "sources": ["path/to/widget.fnl:40-90 and proposed diff in the handoff"],
+  "invariant": "Failed saves leave the current child attached and usable",
+  "evidence": ["current detach precedes the fallible save"],
+  "attempted_fix": null,
+  "glm_proposal": "Validate and save before detaching; transfer ownership only on success, preserving the existing owner on failure.",
+  "decision_needed": "Confirm the ownership/failure contract before implementation"
+}
+```
+
+`attempted_fix` is nullable. `glm_proposal` is required and nonempty for design,
+architecture or contract decisions; it may be null for other triggers. Expert
+output has `decision_scope`, `status` (`answered`, `insufficient_evidence`,
+`requires_human`), `finding`, `evidence`, `action`.
+
+GLM records scope, proposal, original evidence, GPT critique and **evidenced
+reconciliation before dependent implementation** in existing handoff/progress
+artifacts. Resolve and validate material findings or escalate to the human;
+preference is not grounds to dismiss a material objection. One consultation per
+decision scope. Reuse unchanged reconciled decisions without repeat GPT tax;
+material design/contract/assumption changes reopen the decision. Reconsultation
+otherwise requires genuinely new material evidence, not another try for approval.
+Unavailable expert, insufficient evidence or an unanswered necessary decision
+blocks dependent work. Gather permitted evidence or ask the human; do not loop.
+
+### Worker requests and controller transitions
+
+Workers keep delegation denied. A delegation denial is not itself a code finding,
+blanket role blocker or permission to label a request pass/confirmed/complete:
+
+- reviewer (full, targeted and CI modes) and adjudicator return
+  `status: needs_consultation` with `consultation_request`;
+- debug-advisor returns `verdict: needs_consultation` with that request;
+- implementer returns existing `NEEDS_CONTEXT` with that request in its report;
+- planner returns `NEEDS_CONTEXT` with that request instead of finished-plan
+  Markdown until the necessary decision is reconciled;
+- fast-dev-reviewer returns a non-approving pending report with base/head SHAs
+  and the request, so its caller can obtain advice without losing review scope.
+
+Controllers handle these branches **before** pass/verified/confirmed, finding
+fix dispatch, cap/adjudication decisions or normal completion. Dispatch the
+expert, reconcile with evidence, then return the decision to the original GLM
+worker to finish its own assessment; advice never substitutes for that verdict.
+Requests alone do not consume a repair round or bypass a fix cap. Capability
+workers preserve verbatim wrapper JSON; controllers handle technical advice
+separately and never override wrapper refusals or human-owned choices.
+
+Strict work remains GLM implementer → independent GLM reviewer → pass. The
+ordinary GLM diagnostic-advisor gate remains mandatory in strict debugging;
+it is not GPT on every fix. Fast/live continue direct edits/fixes and one
+observational GLM whole-branch wrap-up review, not a second mandatory GPT review.
+Expert advice grants no edit, approval, checkpoint, publication or permission
+authority and does not replace testing or independent review.
 
 ## Branch Convention
 

@@ -1,8 +1,7 @@
 ---
 description: Observational whole-branch review for fast-dev and live-dev explicit wrap-up, including all accumulated commits and validation coverage.
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: xhigh
+model: opencode-go/glm-5.3-flash
 steps: 55
 permission:
   read: allow
@@ -39,3 +38,37 @@ Return reviewed base/head SHAs, a concise verdict, concrete file/line findings
 with severity and impact, and coverage gaps (including checks not evidenced).
 Separate material defects from optional suggestions. Missing process artifacts
 (designs, plans, worker handoffs, or per-change reviews) are not findings.
+
+The `AGENTS.md` dual-model consultation contract still applies to design/contract
+decisions (including local/UI), same material failure after one focused repair,
+critical unresolved boundaries and evidenced technical conflicts. Reuse unchanged
+reconciled decisions. You cannot delegate: return a non-approving pending report,
+retaining reviewed base/head SHAs and original evidence. The selected caller
+dispatches `expert-advisor`, reconciles and returns the decision to finish this
+same observational review, not a second full GPT review. A delegation denial is
+not itself a code finding or blanket blocker. Unknown product/data policy is human.
+For this pending branch return only raw JSON, without a Markdown fence:
+
+```json
+{
+  "status": "needs_consultation",
+  "base_sha": "supplied verified base SHA",
+  "head_sha": "supplied verified head SHA",
+  "summary": "Ownership decision pending; no approval",
+  "coverage_gaps": [],
+  "consultation_request": {
+    "decision_scope": "widget save transition ownership",
+    "trigger": "software_design",
+    "question": "Does save-before-detach preserve content on failure?",
+    "sources": ["assets/lua/widget.fnl:40-90 and supplied proposed diff"],
+    "invariant": "Failed saves leave current content attached",
+    "evidence": ["The proposed transition changes detach ordering"],
+    "attempted_fix": null,
+    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "decision_needed": "Reconcile ownership and failure guarantees"
+  }
+}
+```
+
+Use real recorded SHAs/paths, not the example labels. `glm_proposal` is required
+and nonempty for design/contract decisions, otherwise nullable.

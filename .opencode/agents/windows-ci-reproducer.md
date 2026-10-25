@@ -1,8 +1,7 @@
 ---
 description: Runs only guarded Space Windows CI local reproduction wrapper operations for preflight, setup, and Linux cross-build + Wine validation.
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: medium
+model: opencode-go/glm-5.3-flash
 steps: 20
 permission:
   read: deny

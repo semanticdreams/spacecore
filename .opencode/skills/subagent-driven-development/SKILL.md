@@ -11,7 +11,42 @@ Execute plan by dispatching the **implementer** subagent per task, a task review
 
 ## Model Selection
 
-The subagent config defines the model per role. On fix-loop escalation (rounds 4-5 when the implementer can't converge), dispatch the implementer with the same model — the issue at that point is usually structural, not model-capability.
+All ordinary project roles use `opencode-go/glm-5.3-flash`, without variants.
+Only read-only `expert-advisor` uses `openai/gpt-6.1-sol` high. Project roles, not
+inherited built-in/hidden/global agents, are covered; use project `explorer` for
+exploration. Fix-loop retries keep the GLM implementer, including rounds 4-5.
+
+## Pending consultation handler
+
+Apply the canonical `AGENTS.md` contract before normal report/review/fix/cap
+transitions. Every architecture/software-design/system-contract decision needs a
+GLM proposal, bounded GPT critique of original sources and evidenced reconciliation
+before dependent implementation, including confident local/UI/internal design.
+Reuse unchanged reconciled decisions; reopen material design/contract/assumption
+changes. The same material failure after one focused repair also requires advice
+before another repair; initial syntax/typo repair, expected TDD RED and routine
+follow-through alone do not. Critical unresolved boundaries/evidenced material
+technical conflicts trigger advice; unknown product/API/data policy is human-owned.
+
+The task-capable controller handles implementer/planner `NEEDS_CONTEXT` containing
+`consultation_request`, reviewer (full/targeted/CI) or adjudicator
+`status: needs_consultation`, and diagnostic `verdict: needs_consultation` first:
+
+1. Validate the canonical request fields, including nonempty `glm_proposal` for
+   design/contract decisions. Workers keep delegation denied; this is a pending
+   request, not a finding, blanket role blocker, approval or full GPT task.
+2. Dispatch `expert-advisor` for that one question with inspectable original
+   sources/diffs and evidence, not only the GLM summary.
+3. Record scope/proposal/evidence/critique and evidenced reconciliation in existing
+   handoff/progress artifacts. Resolve/validate material findings or escalate to
+   the human. Unavailable advice or unanswered necessary decisions block dependent
+   work. Reconsult only for genuinely new material evidence; do not loop for approval.
+4. Return the decision/evidence to the original GLM worker to finish its own
+   report/review/adjudication. Resume the interrupted transition only after its
+   normal verdict; expert advice is not pass/verified/confirmed. Requests alone do
+   not consume repair rounds, reset fix caps or replace independent GLM review.
+
+Capability wrappers retain verbatim JSON/refusals; advice cannot grant authority.
 
 ## Setup
 
@@ -90,7 +125,8 @@ Implementer subagents report one of four statuses:
 
 **Atomic handoff (review dispatch):** When DONE or DONE_WITH_CONCERNS proceeds to review, the review-package generation and reviewer dispatch form a single atomic handoff. Do not emit any user-facing status update (including "review queued," "in progress," "waiting," or ledger/todo changes) before the reviewer `task` tool call has actually been issued. If the reviewer dispatch cannot proceed, report BLOCKED explicitly rather than implying a handoff that hasn't happened.
 
-- **NEEDS_CONTEXT:** Provide the missing context and re-dispatch the implementer.
+- **NEEDS_CONTEXT:** If it contains `consultation_request`, run the pending
+  consultation handler first. Otherwise provide missing context and re-dispatch.
 
 - **BLOCKED:** Assess the blocker — provide more context, or if the task is too large, break it into smaller pieces. If the plan is wrong, escalate to the human.
 
@@ -109,7 +145,10 @@ Global constraints:
 [Copy verbatim from the plan's Global Constraints section]
 ```
 
-The reviewer returns JSON with verification results. The key fields: `status` (pass/candidates_found/requires_human), `candidate_findings`, `cannot_verify_from_diff`, and `non_blocking_notes`.
+The reviewer returns JSON with verification results. Handle `needs_consultation`
+using the pending handler before findings or completion; it is not approval.
+Ordinary fields remain `status` (pass/candidates_found/requires_human),
+`candidate_findings`, `cannot_verify_from_diff`, and `non_blocking_notes`.
 
 **Large review packages:** If the review package contains a `## Manifest` section with a file checklist, the reviewer MUST enumerate every file in the manifest and report in `non_blocking_notes` that all manifest entries were inspected. Any file the reviewer could not inspect must be reported as a `cannot_verify_from_diff` item with the file name and reason.
 
@@ -126,6 +165,9 @@ Triggered when review status is `candidates_found` with Critical or Important fi
 **Rounds 1-3:** Dispatch the implementer with the open findings. It is being *resumed* — it knows the code and the task. The dispatch should include: brief path, report-file path, and the findings verbatim.
 
 **Rounds 4-5:** The implementer should try fresh — this is a hard stall. Same model but frame it as a fresh dispatch: "A prior implementer attempted this task and could not converge. You own it now. Read the report file for what was tried."
+
+Before any further repair of the same material failure after one focused repair,
+use the pending consultation handler. This is scoped advice, not a model swap.
 
 **Every round:** Record `FIX_BASE=$(git rev-parse HEAD)` before dispatching the
 fix. The implementer fixes, re-runs covering tests, self-reviews, checkpoints only
@@ -148,7 +190,10 @@ Findings under verification: [list findings verbatim]
 Review package (fix diff): [FIX_DIFF_FILE]
 ```
 
-**The breaker (round 5 cap):** When round 5's re-review still leaves findings open, dispatch the **adjudicator** subagent with the open findings and the plan. The adjudicator returns accept/park/escalate decisions. Parked findings go to the ledger for the final review.
+For TARGETED VERIFICATION MODE, handle `needs_consultation` before verified/fix_failed
+routing and before the cap. Resume that reviewer with reconciled evidence.
+
+**The breaker (round 5 cap):** When round 5's re-review still leaves findings open, dispatch the **adjudicator** subagent with the open findings and the plan. Handle adjudicator `needs_consultation` through the pending handler before accept/park/escalate routing. Resume adjudication after reconciliation; no request bypasses the cap. Parked findings go to the ledger for the final review.
 
 ### 5. Complete the Task
 
@@ -200,6 +245,8 @@ If any condition fails, run the normal final whole-branch review.
 ## Final Whole-Branch Review
 
 After all tasks, dispatch the **reviewer** in FULL REVIEW MODE with the complete branch diff (`.opencode/skills/subagent-driven-development/scripts/review-package PLAN_FILE MERGE_BASE HEAD`) and the ledger's deferred-minor and parked findings for triage.
+
+Handle final-review `needs_consultation` before claiming a clean verdict or finishing.
 
 During final review preparation, triage repeated `constraint obstructed/noisy` notes as possible constraint-system follow-ups rather than one-off task failures.
 

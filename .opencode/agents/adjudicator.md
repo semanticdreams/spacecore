@@ -1,8 +1,7 @@
 ---
 description: Validates candidate review findings against the plan and codebase, rejecting premature improvements and escalating real design ambiguity
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: xhigh
+model: opencode-go/glm-5.3-flash
 steps: 40
 permission:
   read:
@@ -82,6 +81,38 @@ can record it for the final whole-branch review.
 ## Output
 
 Return only one valid JSON object, with no Markdown fence:
+
+Before ordinary adjudication, apply the `AGENTS.md` consultation contract. New or
+materially changed architecture/software-design/system-contract decisions need a
+GLM proposal and GPT critique, including local/UI decisions; reuse unchanged
+reconciled decisions. Persistent material failure after one focused repair,
+critical unresolved boundaries and evidenced technical conflicts also trigger it.
+Delegation remains denied: return `needs_consultation` with a request, not an
+accept/park ruling, blanket blocker or invented finding. The controller dispatches
+`expert-advisor`, reconciles, and returns evidence so you can finish adjudication.
+Pending is not approval and does not bypass the cap. Unknown product/data policy
+still requires the human. `glm_proposal` must be nonempty for design/contract
+decisions, otherwise it may be null. Pending example:
+
+```json
+{
+  "status": "needs_consultation",
+  "summary": "Ownership correction needs a reconciled design decision",
+  "consultation_request": {
+    "decision_scope": "widget save transition ownership",
+    "trigger": "software_design",
+    "question": "Does save-before-detach preserve content on failure?",
+    "sources": ["assets/lua/widget.fnl:40-90 and supplied proposed diff"],
+    "invariant": "Failed saves leave current content attached",
+    "evidence": ["The proposed correction changes detach ordering"],
+    "attempted_fix": null,
+    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "decision_needed": "Reconcile ownership and failure guarantees"
+  }
+}
+```
+
+Otherwise use the ordinary output:
 
 ```json
 {

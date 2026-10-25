@@ -61,6 +61,12 @@ REQUIRED_CAPABILITY_FILES = (
     "scripts/verify_opencode_home_config.py",
 )
 SECRET_EXTERNAL_PATTERNS = ("auth.json", "auth.jsonc", "secret", "token")
+ORDINARY_MODEL = "opencode-go/glm-5.3-flash"
+EXPERT_READ_RULES = [
+    ("*", "allow"), ("*.env", "deny"), ("*.env.*", "deny"),
+    ("*.env.example", "allow"), ("*auth*", "deny"), ("*secret*", "deny"),
+    ("*token*", "deny"), ("*credential*", "deny"), ("*keyring*", "deny"),
+]
 BLOCKED_ACTIONS = {"allow", "ask"}
 WRAPPER_REFERENCE_RE = re.compile(r"(?<![\w/.-])(scripts/[A-Za-z0-9_.-]+\.py)(?![\w/.-])")
 
@@ -415,6 +421,9 @@ def _check_capability_boundary(path: Path, repo_root: Path, name: str, raw: str)
 def _check_agents(repo_root: Path) -> list[PolicyViolation]:
     agents_dir = repo_root / ".opencode" / "agents"
     violations: list[PolicyViolation] = []
+    expert = agents_dir / "expert-advisor.md"
+    if not expert.is_file():
+        violations.append(_violation(expert, repo_root, "expert-profile", "missing required expert-advisor"))
     for path in sorted(agents_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8")
         keys, raw = _frontmatter(text)
@@ -425,12 +434,40 @@ def _check_agents(repo_root: Path) -> list[PolicyViolation]:
         missing = REQUIRED_AGENT_KEYS - set(keys)
         if missing:
             violations.append(_violation(path, repo_root, "agent-frontmatter", f"agent frontmatter missing: {', '.join(sorted(missing))}"))
+        if name == "expert-advisor":
+            violations.extend(_check_expert_profile(path, repo_root, keys, raw))
+        elif keys.get("model") != ORDINARY_MODEL or "variant" in keys:
+            violations.append(_violation(path, repo_root, "agent-model", f"ordinary project agents must use {ORDINARY_MODEL} with no variant"))
         violations.extend(_check_permission_profile(path, repo_root, keys))
         violations.extend(_check_no_ask_actions(path, repo_root, raw))
         violations.extend(_check_unsafe_text(path, repo_root, raw))
         violations.extend(_check_role_boundaries(path, repo_root, name, raw))
         violations.extend(_check_capability_boundary(path, repo_root, name, raw))
     return violations
+
+
+def _check_expert_profile(path: Path, repo_root: Path, keys: dict[str, str], raw: str) -> list[PolicyViolation]:
+    """Enforce the named expert's small supported read-only profile, fail closed."""
+    deny = ("edit", "bash", "task", "external_directory", "webfetch", "websearch", "question")
+    inspect = ("glob", "grep", "list", "lsp")
+    # Exact ordered read rules prevent later wildcard grants undoing exclusions.
+    expected = {"*", "read", *deny, *inspect}
+    permission_keys = re.findall(r'^  ["\']?([^\s:"\']+)["\']?:', raw, re.M)
+    safe = (
+        keys.get("model") == "openai/gpt-6.1-sol"
+        and keys.get("variant") == "high"
+        and keys.get("mode") == "subagent"
+        and keys.get("permission") == ""
+        and len(permission_keys) == len(expected)
+        and set(permission_keys) == expected
+        and re.search(r'^  ["\']\*["\']: deny$', raw, re.M) is not None
+        and _mapping_entries(raw, "read") == EXPERT_READ_RULES
+        and all(_has_scalar_permission(raw, key, "deny") for key in deny)
+        and all(_has_scalar_permission(raw, key, "allow") for key in inspect)
+    )
+    if safe:
+        return []
+    return [_violation(path, repo_root, "expert-profile", "expert-advisor requires exact GPT/high/subagent pins and bounded repository read-only permissions")]
 
 
 def _check_skills(repo_root: Path) -> list[PolicyViolation]:

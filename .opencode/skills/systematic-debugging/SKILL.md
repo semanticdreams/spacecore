@@ -11,6 +11,19 @@ description: Use when encountering any bug, test failure, or unexpected behavior
 
 **Violating the letter of this process is violating the spirit of debugging.**
 
+Selected fast-dev/live-dev retain direct diagnosis/edits/fixes under their exact
+`AGENTS.md` exception, not the strict worker/advisor pipeline below. That exemption
+does not waive narrow dual-model advice: every architecture/software-design/system-
+contract decision (including local/UI) needs GLM proposal, GPT critique of original
+sources and evidenced reconciliation before dependent implementation. Reuse
+unchanged reconciled decisions; material design/contract/assumption changes reopen
+them. Same material failure after one focused repair, critical unresolved boundaries
+and evidenced material technical conflicts also trigger scoped `expert-advisor`
+advice before further dependent work. Initial syntax repair/TDD RED/routine
+follow-through alone stay GLM. Unknown product/API/data policy is human-owned.
+Live-dev establishes manual mode before edits and explicitly refreshes validated
+code changes; consultation alone requires no lifecycle action.
+
 ## The Iron Law
 
 ```
@@ -194,7 +207,8 @@ You MUST complete each phase before proceeding to the next.
 
 ### Phase 3.5: Diagnostic Advisor Gate
 
-**Before implementing any fix, validate the diagnosis with a smarter model.**
+**In strict debugging, the independent GLM diagnostic-advisor gate remains mandatory
+before implementing any fix. It is not a GPT call for every fix.**
 
 0. **Ensure the artifact directory exists** (keeps debug files out of git):
    ```
@@ -210,12 +224,23 @@ You MUST complete each phase before proceeding to the next.
    - Proposed minimal fix (scope, files, approach)
    - Exact validation command that would confirm the fix
 
-2. **Dispatch the `debug-advisor`** (gpt-6.1-sol xhigh). Provide only the evidence
+2. **Dispatch the `debug-advisor`** (`opencode-go/glm-5.3-flash`, no variant). Provide only the evidence
    brief path and relevant source-file paths. The advisor is read-only — it
    judges the diagnosis, it does not re-investigate.
 
 3. The advisor returns a JSON verdict:
 
+   - **needs_consultation** → handle before `confirmed` or any normal transition.
+     The controller dispatches `expert-advisor` with the canonical
+     `consultation_request` from `AGENTS.md` (including nonempty `glm_proposal`
+     for design/contract decisions and inspectable original sources/diffs).
+     Record critique/evidenced reconciliation in the brief; resolve/validate
+     material findings or escalate to the human. Return that evidence to the
+     GLM advisor for its own diagnostic verdict. Denied worker delegation is a
+     pending request, not a finding, blanket blocker or confirmation. Unavailable
+     advice/unanswered necessary decisions block dependent work. One bounded
+     question per scope; reconsult only with new material evidence, never loop
+     for approval or move the whole fix to GPT.
    - **confirmed** → proceed to Phase 4.1 (Prepare). The evidence brief
      becomes the basis for the debug-fix brief.
    - **needs_more_evidence** → run the specific commands the advisor
@@ -228,9 +253,13 @@ You MUST complete each phase before proceeding to the next.
    - **requires_human** → present the advisor's rationale to the human.
 
 4. After failed fix attempts (Phase 4.6, <3 attempts): append new evidence
-   from the failed attempt to the brief and re-dispatch the advisor before
-   starting a new implementation round. The advisor re-evaluates with the
-   additional data.
+    from the failed attempt to the brief and re-dispatch the advisor before
+    starting a new implementation round. The advisor re-evaluates with the
+    additional data.
+
+   If the same material failure remains after one focused repair, obtain scoped
+   expert advice before another repair, even if the next GLM diagnosis is confident.
+   Advice never replaces the ordinary GLM gate or grants approval/permissions.
 
 ### Phase 4: Implementation
 
@@ -279,6 +308,9 @@ BLOCKED. Handle as in the SDD task loop (NEEDS_CONTEXT → provide missing
 info and re-dispatch; BLOCKED → assess blocker; DONE_WITH_CONCERNS →
 note concerns and proceed to review).
 
+For NEEDS_CONTEXT with `consultation_request`, use the Phase 3.5 pending handler
+before resuming the implementer; return reconciled evidence, not a blanket blocker.
+
 #### 4.3. Review
 
 When the implementer returns DONE, generate a review package:
@@ -302,6 +334,14 @@ Global constraints:
 ```
 
 #### 4.4. Fix Loop
+
+Handle reviewer `status: needs_consultation` in full or targeted verification
+before normal findings/verified/pass routing. Use the Phase 3.5 pending handler
+and resume that GLM reviewer with the reconciled evidence. Handle adjudicator
+`needs_consultation` the same way before accept/park/escalate or breaker routing.
+Requests alone do not consume a fix round, reset/bypass caps or replace the
+independent GLM implementer → reviewer → pass requirement. Same-material-failure
+advice precedes another repair; caps below still apply.
 
 If review status is `candidates_found` with Critical or Important findings:
 
@@ -402,7 +442,7 @@ If you catch yourself thinking:
 | **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
 | **2. Pattern** | Find working examples, compare | Identify differences |
 | **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **3.5 Advisor Gate** | Write evidence brief, dispatch debug-advisor | Diagnosis confirmed by smarter model |
+| **3.5 Advisor Gate** | Write evidence brief, dispatch GLM debug-advisor; handle triggered expert requests first | Diagnosis confirmed with necessary decisions reconciled |
 | **4. Implementation** | Dispatch implementer, review, fix loop, verify | Bug resolved, review clean, tests pass |
 
 ## When Process Reveals "No Root Cause"

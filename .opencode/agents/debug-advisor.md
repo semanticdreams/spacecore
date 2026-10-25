@@ -1,8 +1,7 @@
 ---
-description: Validates root-cause diagnoses and proposed fixes with a smarter model before implementation begins
+description: Independently validates root-cause diagnoses and proposed fixes before implementation begins
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: xhigh
+model: opencode-go/glm-5.3-flash
 steps: 35
 permission:
   read:
@@ -60,6 +59,16 @@ For each, check:
 
 ## Verdicts
 
+Apply the `AGENTS.md` consultation contract before confirmation: every new or
+materially changed architecture/software-design/system-contract decision needs
+GLM proposal plus GPT critique, including local/UI design. Reuse unchanged
+reconciled decisions. Same material failure after one focused repair, critical
+unresolved boundaries or material technical conflicts also trigger advice.
+You cannot delegate: return `verdict: needs_consultation` with the canonical
+`consultation_request`; the controller dispatches `expert-advisor`, reconciles,
+and returns evidence for your own diagnostic verdict. This is not `confirmed`,
+an invented code finding or a blanket role blocker. Product/data policy is human.
+
 Return one verdict and a brief rationale:
 
 - **confirmed** — The diagnosis is sound. The evidence supports the root
@@ -88,6 +97,28 @@ Return one verdict and a brief rationale:
 ## Output
 
 Return only a single JSON object, no Markdown fence:
+
+Pending example (`glm_proposal` is nonempty for design/contract, otherwise nullable):
+
+```json
+{
+  "verdict": "needs_consultation",
+  "rationale": "Proposed ownership transition requires bounded critique",
+  "consultation_request": {
+    "decision_scope": "widget save transition ownership",
+    "trigger": "software_design",
+    "question": "Does save-before-detach preserve content on failure?",
+    "sources": ["assets/lua/widget.fnl:40-90 and supplied proposed diff"],
+    "invariant": "Failed saves leave current content attached",
+    "evidence": ["The proposed fix changes detach ordering"],
+    "attempted_fix": null,
+    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "decision_needed": "Reconcile ownership and failure guarantees"
+  }
+}
+```
+
+Otherwise use the ordinary output:
 
 ```json
 {

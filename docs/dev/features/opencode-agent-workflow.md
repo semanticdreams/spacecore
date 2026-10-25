@@ -182,6 +182,118 @@ Once your agent environment is connected to a Space checkout, these repository c
 - **PR CI** is the full integration gate. Do not claim ready-to-merge until the applicable PR CI gate is green.
 - **Required validation failures**: see [Validation continuation and current base](#validation-continuation-and-current-base) for the full contract.
 
+### GLM-default roles and bounded expert consultation
+
+The sixteen ordinary project roles are pinned to `opencode-go/glm-5.3-flash`
+without variants: supervisor, planner, implementer, reviewer, debug-advisor,
+adjudicator, explorer, web-researcher, config-auditor, git-integrator,
+github-operator, pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev,
+and fast-dev-reviewer. Only new `expert-advisor` uses `openai/gpt-6.1-sol`, variant
+`high`, mode `subagent`. This covers project definitions, **not** inherited
+built-in/hidden/global agents or installation-wide routing. Use project `explorer`
+and named workers, not built-in general/explore as implicit model fallback.
+Root/project OpenCode JSON and home configuration are unchanged by this rollout.
+
+The canonical [AGENTS.md](../../../AGENTS.md#glm-default-consultation-contract)
+contract requires both models on **every architecture/software-design/system-
+contract decision before dependent implementation**, even when confident and no
+failure has occurred. Responsibilities, boundaries, abstractions, ownership,
+interfaces, data flow, failure/lifetime guarantees and persistence semantics are
+design/contract decisions, including meaningful local/internal/UI design. Pilot
+ownership/fallible-transition defects are examples, not the limit of the rule.
+Also consult for critical unresolved permissions/security or irreversible-data
+questions, material technical conflicts supported by evidence, or the same material
+failure after one focused repair, before another repair.
+
+Routine execution/review/diagnosis, expected TDD RED, initial syntax/typo repair,
+cosmetic naming and mechanical follow-through on an unchanged reconciled decision
+stay GLM. Missing evidence can be collected directly when permitted. Unknown
+product/API/data policy remains **HUMAN_DECISION_REQUIRED**, not GPT policy fiat.
+
+GLM first states proposal, responsibilities/contracts, invariant and rationale.
+Only task-capable controllers (supervisor or selected fast-dev/live-dev) dispatch
+the expert with one bounded technical question and inspectable original sources,
+diffs/excerpts and validation evidence, not just the GLM summary. Workers keep
+delegation denied. A `consultation_request` has exactly these fields:
+
+```json
+{
+  "decision_scope": "widget save transition ownership",
+  "trigger": "software_design",
+  "question": "Does save-before-detach preserve content on failure?",
+  "sources": ["assets/lua/widget.fnl:40-90 and proposed diff in the handoff"],
+  "invariant": "Failed saves leave current content attached",
+  "evidence": ["Current detach precedes the fallible save"],
+  "attempted_fix": null,
+  "glm_proposal": "Save and validate first; transfer ownership only on success.",
+  "decision_needed": "Reconcile ownership and failure guarantees"
+}
+```
+
+`attempted_fix` is nullable; `glm_proposal` is required and nonempty for design/
+architecture/contract decisions, otherwise nullable. Expert JSON contains
+`decision_scope`, `status` (`answered`, `insufficient_evidence`, `requires_human`),
+`finding`, `evidence`, `action`. Expert inspects original evidence with repository
+read/glob/grep/list/LSP and sensitive-read exclusions. Edit, shell, delegation,
+external directories, web access and direct questions to the user are denied.
+It cannot implement, approve, publish or override capabilities/permissions.
+
+Record scope, proposal, original evidence, GPT critique and **evidenced
+reconciliation before dependent implementation** in existing handoff/progress
+artifacts. Resolve and validate material findings or escalate to the human, not
+dismiss them by preference. One consultation per scope; reuse unchanged reconciled
+decisions without repeat GPT tax. Material design/contract/assumption changes
+reopen the decision. Otherwise reconsult only with genuinely new material evidence,
+not another try for approval. Unavailable expert or unanswered necessary decisions
+block dependent work; gather permitted evidence or ask the human, not a call loop.
+
+| Worker | Non-approving pending branch |
+| --- | --- |
+| reviewer (full, targeted, CI), adjudicator | `status: needs_consultation` plus `consultation_request` |
+| debug-advisor | `verdict: needs_consultation` plus request |
+| implementer | Existing `NEEDS_CONTEXT` plus request in its report |
+| planner | `NEEDS_CONTEXT` plus request instead of finished-plan Markdown |
+| fast-dev-reviewer | `status: needs_consultation`, base/head SHAs and request |
+
+Controllers handle pending branches before pass/verified/confirmed, findings/fixes,
+fix-cap/adjudication or completion. They dispatch the expert, reconcile with
+evidence, and return the result to the original GLM worker for its own verdict.
+Delegation denial is not itself a code finding or blanket role blocker. Requests
+alone do not consume repair rounds or bypass caps. Capability workers keep verbatim
+wrapper JSON/refusals; controllers handle advice separately. Strict GLM implementer
+→ independent GLM reviewer → pass remains, including the ordinary mandatory GLM
+diagnostic-advisor gate, not GPT on every fix. Fast/live retain direct work and
+one observational GLM whole-branch review, not a second mandatory full GPT review.
+
+#### Bounded routing-pressure evidence and limits
+
+Before skill/AGENTS/agent edits the controller ran five fresh verified GLM contexts,
+no tools or variants. Baseline slots 1–3 emitted fenced rather than required raw
+JSON: preserved `invalid_answer`, not scored or repaired. Slots 4 and 5 were valid
+complete answers with 9/18 and 8/18 exact route-plus-owner matches. The controller
+read all five final rationales: all already substantively requested dual input for
+fresh local design, confident cross-system contracts and fresh live widget design;
+reuse and first-repair restraint were generally already correct. Guidance must
+not claim improvement on these already-compliant controls.
+
+The main mismatches were controller route labels (`request_consultation` instead
+of `expert_advisor`) and denied-reviewer schemas: baseline 4 conflated delegation
+denial with a CHANGE_REQUESTED finding/task-permission failure; baseline 5 used
+NEEDS_FIXES/BLOCKED with route glm while describing caller consultation. The pending
+schema and parent handlers above address those missing contracts. Three protocol
+failures are not model-quality scores. These are prompt-compliance checks, not
+proof of model competence or hybrid success.
+
+Five guidance calls remain controller-owned **after independent Task 2 review**;
+none are claimed here. The frozen questions/schema/helper remain unchanged. Ten
+calls total, no retries, 180 seconds per call plus own-session export, 2100 seconds
+aggregate active CLI budget; baseline consumed 364.993 seconds, never reset.
+Workers use repository/mock tests and supplied facts, not external capture reads
+or model calls. Actual GLM proposal plus GPT critique/reconciliation for this design
+is recorded in the [spec](../../specs/2026-10-25-glm-default-expert-consultation-design.md#dual-model-input-on-this-workflow-design),
+separate from pressure counts. Restart OpenCode only after the complete reviewed
+rollout: running sessions retain old loaded models/rules until restart.
+
 ### Fast interactive development flow
 
 `supervisor` remains the default and retains its strict workflow. Users may select
@@ -197,14 +309,17 @@ environment; this is not a security sandbox.
   only when its commits belong to the current task. Preserve unrelated dirty
   state and clarify ownership rather than discard or automatically stash it.
 - Edit, debug, validate, and make short intent-focused local commits directly.
-  Exploration delegation is optional. No mandatory design/plan, worker or advisor
-  gate, routine review, or verbose commit template applies.
+  Exploration delegation is optional. No mandatory design/plan documents, worker
+  pipeline, routine advisor gate/review, or verbose commit template applies.
+  This exemption does not waive the narrow dual-model design/triggered consultation
+  contract above; advice alone adds no live-dev lifecycle actions.
 - A commit request and ordinary task completion are **local only**. Neither
   authorizes push, PR creation, or auto-merge.
 - Load relevant Space domain skills and retain their technical standards,
   validation commands, and evidence-based debugging. The identity-scoped
   `AGENTS.md` exception overrides imported planning/delegation/review process,
-  not technical guidance. Other agents and shared skills retain their contracts.
+  not technical guidance or mandatory dual-model consultation. Other agents and
+  shared skills retain their contracts.
 
 #### Live-dev explicit refresh
 
@@ -451,9 +566,9 @@ authoritative integration gate:
 - Removing or weakening the required Windows installer path remains
   `HUMAN_DECISION_REQUIRED`.
 
-Deterministic, search, and wrapper agents may move to faster models only when an
-exact approved provider/model-id value is supplied. Shorthand model names are not
-valid OpenCode config values.
+All ordinary roles, including deterministic/search/wrapper agents, use the exact
+GLM pin above; only the bounded expert uses GPT. Shorthand model names are not
+valid OpenCode config values. No stronger-implementer fallback is implied.
 
 ### Stale merged PR follow-up recovery
 
