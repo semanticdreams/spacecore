@@ -1,290 +1,197 @@
 # Static Space Fennel model pilot
 
-## Status and boundaries
+## Result and decision
 
-**Collection repair pending; no judgments, scores, or responsibility recommendation
-yet.** Initial preparation and the root fix passed independent review. The first
-GLM architecture candidate completed, but its export-to-pipe capture was truncated;
-no further candidate calls followed. The collection fix requires independent
-review before controller recovery/continuation. The frozen conceptual
-GPT-authored contract is not a generated candidate answer. Its authorship is the
-preparing GPT agent, not an extra generative trial;
-it contains no reference implementation.
+**Qualitative screening only: retain the current strong-model architecture and
+review gates. Do not change production model routing on this evidence.** Eleven
+primary candidate attempts ran exactly once: five effective complete answers, one
+generation-complete but invalid implementation answer, and five timeouts. There
+were no repeats. Four fresh configured GPT reviewer contexts independently judged
+author-blinded **selected verbatim excerpts**, not complete artifacts, against
+repository source. Neither escalation answer nor the GLM contract implementation
+completed. There is no numeric ranking or demonstrated hybrid success.
 
-This is a bounded comparison of architecture/design in **actual Space Fennel**:
-`opencode-go/glm-5.3-flash` versus `openai/gpt-6.1-sol`. Python is thin orchestration,
-not the evaluated language. No production Fennel, agent definitions or routing are
-changed. Source answers remain inert response text: never apply, compile, import,
-or execute them. No Space build, compile check, constraints or native tests are
-needed or authorized for this pilot. Proposed candidate tests are assessed
-statically, not reported as passing.
+This compares `opencode-go/glm-5.3-flash` and `openai/gpt-6.1-sol` on actual Space
+Fennel, not Python implementation ability. Candidate code was never applied,
+compiled, imported or executed. Native compile checks, constraints and tests are
+**NOT RUN by user design**, not a model-evaluation defect. Proposed tests are not
+passing tests. Production source, tests, agents and routing remain unchanged.
 
-The design authority is
-[`2026-10-25-opencode-model-pilot-design.md`](../../specs/2026-10-25-opencode-model-pilot-design.md).
+Authority: the [design](../../specs/2026-10-25-opencode-model-pilot-design.md) and
+the approved [plan's Recorded execution limitation amendment](../../plans/2026-10-25-opencode-model-pilot.md#recorded-execution-limitation).
+The amendment supersedes planned complete-response retention in Git, five
+complete-artifact judgments, and numeric scoring. The frozen rubric was not tuned
+after seeing outcomes.
 
-## Frozen material
+## Evidence and provenance
 
-`scripts/evals/opencode_pilot_cases.json` holds public briefs, neutral review
-mutations, private expectations/static vectors, rubric and contract. Preparation
-explicitly selects public fields; it never sends the whole cases JSON to a model.
-Evaluator-only material is *evaluation-private*, not a security secret; it is
-versioned for independent review and absent from candidate attachments.
+- [records.json](opencode-model-pilot/2026-10-25/records.json): all eleven attempts,
+  requested/verified identities, variants, timings, supplied usage and answer hashes.
+- [responses.md](opencode-model-pilot/2026-10-25/responses.md): **SELECTED VERBATIM
+  EXCERPTS**, with omissions and normalized presentation labeled; not full answers.
+- [judgments.md](opencode-model-pilot/2026-10-25/judgments.md): labeled summaries of
+  four independent findings, their limits, reviewer provenance and post-judgment map.
 
-Source is pinned to `d6e3742f123e4fde688453eeba8e3bb9da328238`, including complete
-TabView, SearchView, Sized and their actual focused tests. Short Layout, Flex,
-Input/InputModel and Signal excerpts establish ownership, dirtiness and signal
-semantics. A short pinned AGENTS excerpt establishes coding conventions. No
-historical worked lifecycle solution is candidate context. Full blobs and selected
-excerpts have SHA-256 hashes in the cases file. Ranges are inclusive, one-indexed;
-excerpt bytes concatenate those ranges in order, preserving line endings.
+Execution facts, original answer SHA-256 values and reviewer findings were supplied
+by the controller from its verified own-session results/recovery. This reporting
+agent read repository sources, not external exports, private reasoning, auth,
+home configuration, logs or databases. It did not personally reread full answers
+or reproduce external hash verification. Full final text remains **only in the
+original allowed pilot runtime root**, outside Git; retention is ephemeral. A hash
+identifies bytes, not correctness, and cannot replace access to a full artifact.
+Raw capture hashes were not supplied here and are explicitly unknown in records.
 
-Preparation verifies those hashes against `git show <pin>:<path>`, captures public
-blobs/excerpts as `.txt`, renders packets, and hashes **exact rendered bytes** in
-`manifest.json`. The cases snapshot/hash also freezes prompts, mutations,
-evaluator expectations, vectors, rubric and contract. Both contract arms point to
-the exact same packet bytes and contract hash. All three implementation arms share
-the exact same public requirements and baseline source; only the conceptual
-contract is appended for the two contract arms.
+## Frozen design and collection
 
-### Cases to review before calls
+Source pin: `d6e3742f123e4fde688453eeba8e3bb9da328238`.
+`scripts/evals/opencode_pilot_cases.json` freezes public briefs, source/excerpt
+hashes, seeded review variants, evaluator-only expectations, static vectors,
+rubric and conceptual GPT-authored contract. Cases SHA-256:
+`e53ee84ec1a796608091845687107c84a696e998f6545bc746f8cf796a55cd7a`.
+Records distinguish the conceptual contract hash from the shared rendered
+implementation packet hash. The contract was prepared and reviewed before trials,
+not generated as an extra candidate call; it contains no reference code.
 
-1. **Tab architecture:** opt-in logical-state retention for static items, keeping
-   widget rebuild/drop behavior and public index/button/events compatibility.
-   Multiple bounded APIs and explicit static identity strategies are acceptable;
-   a single preferred spelling is not the answer key.
-2. **Search review:** A uses layout-only teardown; B recursively drops through
-   Flex then drops its children again; C connects a fixture-only long-lived
-   caller-owned external signal but disconnects from the input signal; D is its
-   matched sound cleanup. C/D supply the external source's lifetime explicitly.
-   **Do not call omission of baseline input disconnect a proven lasting leak:**
-   Input.drop calls InputModel.drop, which clears its signals. No external signal
-   feature is claimed to exist in baseline SearchView.
-3. **Tab escalation:** dynamic items, duplicate/absent IDs and external updates
-   leave identity, ownership, lifetime and precedence decisions genuinely open.
-   Reward specific questions and safe bounded work, not invented policy or total
-   refusal.
-4. **Sized handoff:** synthetic author patch updates ordinary and constrained
-   wrapper measurements and dirties the wrapper, but leaves `resolve-child-max`
-   reading constructor `opts.size`. Original tests are unchanged. The author claim
-   is explicitly synthetic, not a test transcript. Expected defect is stale child
-   constraints plus absent relevant coverage, **not** missing wrapper dirtiness.
-5. **Sized implementation:** current size must drive all three size-dependent
-   paths (normal wrapper, constrained wrapper, child maxima including fallback).
-   Preserve original tests, direct transforms, child identity and per-build
-   independence without mutating shared options. Static vectors hold out inputs,
-   not requirements; e.g. current `[7,0,-2]`, parent max `[20,30,40]` implies child
-   max `[7,30,40]`. Require proposed focused tests and honest validation notes.
+Preparation selects public fields rather than sending the cases JSON wholesale.
+It checks pinned public Git blobs, hashes exact rendered packet bytes, and reserves
+fresh trials. Both contract arms receive identical packets; the plain arm omits
+only the conceptual contract. No prompt, rubric, source, expectation or contract
+changed during collection repairs.
 
-## Preparation and offline checks
+The four reasoning cases were opt-in static TabView logical-state retention;
+SearchView teardown review with three seeded defects and one sound control;
+TabView escalation under undefined dynamic identity/external ownership; and a
+Sized handoff whose setter leaves child constraints reading constructor size.
+Three inert Sized implementations covered GLM plain brief, GPT contract, and GLM
+contract. Required behavior includes both wrapper measurement paths, current-size
+child maxima/fallback, per-build independence, wrapper dirtiness, stable child
+lifetime and unchanged direct transform propagation.
 
-Offline checks from the repository root:
+OpenCode CLI 1.18.35 used fresh explicit all-deny trial agents, exact requested
+models, public run/export, no candidate tools/delegation/repair loop/fallback.
+GPT variants requested/sent were `xhigh` for reasoning and `high` for
+implementation; only completed GPT exports reported those variants. GLM's variant
+is unreported, not assumed equivalent. Normal internal subscription authentication
+was retained without inspecting credentials or merged home configuration.
+
+### Outcome table
+
+Wall times include original collection; recovery is separate. Missing usage or
+primary actual identity remains unknown, not zero or inferred from request flags.
+
+| # | Trial | Effective outcome | Original wall (s) | Answer label |
+| --- | --- | --- | ---: | --- |
+| 1 | tab-architecture-glm | complete, same-session export recovery | 141.884 | K |
+| 2 | tab-architecture-gpt | timeout | 180.088 | — |
+| 3 | search-review-gpt | timeout | 180.064 | — |
+| 4 | search-review-glm | complete | 100.026 | M |
+| 5 | tab-escalation-glm | timeout | 180.072 | — |
+| 6 | tab-escalation-gpt | timeout | 180.054 | — |
+| 7 | sized-handoff-gpt | complete | 172.029 | T |
+| 8 | sized-handoff-glm | complete | 21.208 | S |
+| 9 | sized-glm-plain | invalid_answer, malformed root JSON | 58.038 | U |
+| 10 | sized-gpt-contract | complete | 169.347 | V |
+| 11 | sized-glm-contract | timeout | 360.074 | — |
+
+Reasoning limits were 180 s and implementation limits 360 s. The persisted
+90-minute absolute deadline was `1792919197.2382023`; later human pauses exceeded
+it, and no further candidate calls occurred. No architecture pair completed, so
+the paired repeat rule could not be applied. There was no best-of-N selection.
+Framework repairs and process-agent overhead are not additional candidate trials.
+
+### Collection limitations, not model-quality findings
+
+1. The first GLM generation finished, but its own public export to PIPE returned
+   exit 0 with exactly 65,536 bytes, an invalid JSON prefix. Regular-file export of
+   the **same session** returned 73,449 bytes with final text exactly equal to the
+   original run text. The independently reviewed transport fix and 2.589 s recovery
+   preserved the original `infrastructure_error` / `JSONDecodeError`. There was no
+   regeneration; this remains one attempt and one usage total. This establishes
+   stdout-destination-dependent truncation, not the CLI's exact internal cause.
+2. The CLI later inserted only its known top-level `$schema` annotation. Reviewed
+   compatibility checks remove exactly that field and reconstruct the original
+   frozen config hash; prompt, permission, unknown-schema or other behavioral
+   changes are rejected. No relaxation of the candidate contract occurred.
+3. Exported directory metadata differed from the requested control-directory cwd.
+   All-deny agent metadata does **not** prove ambient global-instruction/config or
+   effective cwd isolation. Do not claim a hermetic benchmark.
+4. Controller followups exported only each timeout's own session: expected actual
+   model IDs were present, but finish/completed were null, no final text or tools
+   were present, and no late answers became usable. Primary timeout identity and
+   usage fields remain null; followup identity is recorded separately.
+5. U's generation completed but strict root JSON ended at position 14460 with
+   `Expecting ',' delimiter`. It contained code, not Markdown fences. It was not
+   repaired into a valid artifact. Static excerpt findings are separate from that
+   protocol failure.
+
+## What the independent excerpt reviews support
+
+| Area | Concrete evidence | Bounded conclusion |
+| --- | --- | --- |
+| Architecture K (GLM) | Correct per-build store, opt-in compatibility and no widget caching as a goal. But live committed-state aliases defeat the claimed mechanical plain-data guarantee; fallible save follows detach; initializer snippet double-calls a returned table. | Confident architectural narrative is not sufficient. State publication and error lifecycle need strong review, not just syntax repair. GPT comparator unavailable. |
+| Search review M (GLM) | Detects 3/3 seeded defects, accepts the one sound control (0/1 false positives), checks actual teardown ownership rather than inventing an input-signal leak. | Useful local advisory review in this tiny fixture; not evidence for replacing general reviewers. GPT comparator unavailable. |
+| Sized handoff S/T (GLM/GPT) | Both find stale child constraint derivation and missing setter coverage, while crediting correct wrapper dirtiness. T supplies more discriminating vectors and observations; S's proposed shell command has unquoted semicolons. | Both catch the central handoff defect here. Proposed-command error is not fabricated execution. |
+| Implementation U/V (GLM plain / GPT contract) | U has free `self`, invalid vararg-callee syntax, rejection of normal vec3 userdata and broken test construction/oracles. V's supplied complete production-source excerpt has no identified blocker; substantive test excerpts look sound. | Direct U needs substantial rescue. V is promising static evidence, not a runtime pass or full-test-source assessment. Different contract conditions confound a pure model comparison. |
+| Escalation / hybrid GLM | Both escalation answers and GLM contract implementation timed out. | No judgment of escalation quality and **hybrid benefit untested/inconclusive**. |
+
+Reviewers were four independent fresh contexts configured as GPT 6.1 sol `xhigh`;
+their actual provider identity was not externally verified. They saw blinded
+excerpts and source, not records/model/timing/usage. Same-family bias, recognizable
+style and excerpt-selection bias remain. No full-artifact dimension scores,
+aggregate scores or overall quality ranking are justified. The original 0–4 rubric
+and 35/30/15/10/10 weights remain frozen, not replaced with post-hoc metrics.
+
+## Responsibility recommendation
+
+Do **not** replace the architecture lead, planner, reviewer, debug advisor,
+adjudicator, or direct fast-dev/live-dev primaries with GLM on this sample.
+The strong model must choose and review critical ownership, transitions and
+interfaces, and inspect original code/requirements rather than trusting a cheap
+worker's confidence or summary.
+
+A next, separately authorized pilot could test this bounded split:
+
+- **Strong architect:** define the owning abstraction, invariants, interface,
+  error/cleanup lifecycle and observable test contract before delegation.
+- **Cheap worker:** bounded implementation or evidence extraction/local scouting;
+  no approval authority. Local search/scout wrappers are hypotheses for a future
+  trial, **not capabilities tested here**.
+- **Strong gate:** inspect the original artifacts and requirements, verify
+  independent evidence, and require escalation for scope changes, state ownership,
+  public API changes or lifecycle ambiguity. Native production validation would
+  gate future adoption, not retroactively invalidate this static pilot.
+
+A cheap scout is advisory, not a mandatory extra layer whose overhead is presumed
+to save cost when the final gate remains unchanged. Contract-driven GLM execution
+is an interesting hypothesis, not a validated hybrid result. Keep production
+configuration untouched; trial adoption separately rather than auto-changing it.
+
+Usage is per unique assistant message. Supplied totals already include reasoning;
+do not add it again or count recovered exports twice. Missing timeout usage is
+unknown. Reported cost zero is not free service; subscription charges, quota
+impact and effective prices are unknown. No dollar or quota-savings claim follows
+from these timings or provider-reported fields.
+
+## Offline verification and scope
+
+From the repository root, the evidence-only handoff runs:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_eval_opencode_pilot.py' -v
-python3 -m json.tool scripts/evals/opencode_pilot_cases.json >/dev/null
+python3 -m json.tool docs/dev/notes/opencode-model-pilot/2026-10-25/records.json >/dev/null
 git diff --check
 ```
 
-The offline suite uses disposable fixtures with a patched artifact-root constant;
-configured/denied path checks mock resolution and never inspect those external
-paths. It is not evidence that an agent has effective external-directory access.
+The complete 48-test runner suite uses mocks, disposable synthetic fixtures,
+public pinned Git source and deterministic subprocesses; it does not call models
+or run Fennel. Its own temporary test fixtures are not reads of pilot runtime
+artifacts or denied sources. It covers preparation/hash integrity, exact identity,
+own-session/completion checks, inert file parsing, usage deduplication, deadlines,
+no duplicate trials, large-output capture, recovery preservation and schema
+compatibility. It cannot verify externally retained answers or model correctness.
+JSON/count/hash reconciliation and scoped diff review check the report itself.
 
-After independent fix review, the authorized controller owns external read/list
-preflight and fresh preparation. Verify `/tmp/space` exists and is accessible,
-then verify/create only the narrow `opencode-model-pilot` parent if needed. Do not
-widen permissions or try another access mechanism after a denial. The original
-denied `/tmp/opencode` artifacts must remain entirely untouched: never read or
-copy them, even to compare hashes. Generate new artifacts from pinned public Git
-source and the unchanged cases instead:
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 python3 scripts/eval_opencode_pilot.py prepare --repo-root . --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25
-```
-
-Choose a **new** run root; preparation rejects reuse and paths outside
-`/tmp/space/opencode-model-pilot` or inside repository ancestry. This command only
-reads pinned public Git blobs and creates local text/JSON evidence. It does not invoke OpenCode
-or a model. `manifest.json` records source/excerpt/packet hashes, schedule and
-contract equality. Review the rendered packets as well as the JSON seeds; rendered
-variants are complete inert modules, not just mutation descriptions.
-
-The controller/reviewer must read the new root's `manifest.json`, confirm eleven
-trials and source/cases/packet hashes plus identical contract hashes, and verify
-empty `reservations/` and `results/` with no `deadline.json` before any candidate
-call. New external preparation is deferred to that authorized controller; offline
-tests or this repository fix checkpoint do not substitute for the access check.
-
-## Later execution (not part of preparation)
-
-**Only after independent preparation review passes**, an authorized later stage
-may use:
-
-```bash
-python3 scripts/eval_opencode_pilot.py run --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25
-```
-
-OpenCode 1.18.35 public `run`/`export` help and installed public SDK v2 types ground
-the invocation/export schema. Generated global and explicit `pilot` agent
-permissions are both the supported `"deny"` form. Invocation uses `--pure`, fresh
-`run --format json --agent pilot --model <exact-id> [--variant ...] --file <packet>`
-from the generated control directory, not repository ancestry. No continuation,
-delegation, repair conversation, fallback or runner retry exists. A single
-subprocess is started per trial, followed by its own public export. Never inspect
-session lists, other sessions, auth files, home config, private logs or databases.
-
-The runner preserves normal internal CLI subscription authentication and normal
-HOME/XDG roots. It only supplies its generated public config via config path and
-content overrides; it does not read/copy auth or home configuration and does not
-dump the environment or merged config. Absence of an injected
-`OPENCODE_AUTH_CONTENT` is **not** authentication failure. `--pure` suppresses
-external plugins; public run help/SDK does not establish full skill-discovery or
-global-instruction isolation. All tool/skill permissions remain denied, and any
-exported tool/delegation/retry part invalidates the trial. Ambient instructions,
-providers and CLI internals can still affect both models. Do not claim hermetic
-config isolation or that no provider-internal transport retry can occur.
-Controller evidence also found exported directory metadata reporting the repository
-path despite the requested subprocess control-directory cwd. Preserve that ambient
-isolation limitation; requested cwd and all-deny permissions do not prove actual
-cwd/global-instruction isolation.
-
-### Fixed primary schedule
-
-| Case | Order | GPT requested variant | Deadline |
-| --- | --- | --- | --- |
-| Tab architecture | GLM, GPT | `xhigh` | 180 s each |
-| Search review | GPT, GLM | `xhigh` | 180 s each |
-| Tab escalation | GLM, GPT | `xhigh` | 180 s each |
-| Sized handoff | GPT, GLM | `xhigh` | 180 s each |
-| Sized GLM plain | GLM | none | 360 s |
-| Sized GPT contract | GPT | `high` | 360 s |
-| Sized GLM contract | GLM | none | 360 s |
-
-Eleven candidate calls total. GLM receives no assumed GPT variant name. Evidence
-separates requested/sent/reported variants; absent export metadata means unknown
-effective variant even if a variant flag was sent. Never infer effective variant
-from requested settings. Actual assistant provider/model IDs and completion must
-be present and correct before scoring; missing/mismatched identity or an auth
-error is preflight failure, not evidence of poor model quality.
-
-Each trial is exclusively reserved before invocation. A persisted deadline starts
-on the first attempted trial and caps all model execution at 90 minutes, even
-across later direct `run_trial` invocations; caller deadlines can shorten but not
-extend it. Each trial's wall deadline includes export. A timeout kills/reaps its
-process group and remains consumed, never retried. A run lock serializes
-reservations/deadline creation; a crash-left lock/reservation is evidence requiring
-manual investigation, not permission to retry. The CLI stops on a non-complete
-outcome, and re-running the CLI refuses existing reservations rather than
-continuing or silently selecting fresh answers. There is no automatic resume.
-
-### Explicit collection recovery and continuation
-
-The observed CLI export produced an exit-0 65,536-byte JSON prefix when stdout was
-a pipe, while a controlled **non-generative** regular-file capture returned the
-complete 73,449-byte own export with the same final answer as the original run.
-This proves destination-dependent truncation, not the CLI's exact buffering
-internals or a model failure. Capture now supplies exclusive regular-file stdout
-and stderr handles directly, retaining partial files on timeout/nonzero exit and
-killing/reaping the process group on timeout. It never repairs malformed JSON by
-guessing missing content or bypassing identity/completion verification.
-
-The reviewed recovery subsequently stopped **before export** because the CLI had
-inserted only top-level `"$schema": "https://opencode.ai/config.json"` into the
-generated control config. The narrow compatibility check accepts that annotation
-only for `control/opencode.json`, and only if removing exactly that known property
-and serializing with the original preparation's two-space indentation, key order
-and trailing newline reproduces the **original frozen SHA-256**. Unknown schema
-values, permission/prompt/other field changes, and every other changed artifact
-remain errors. This is not general semantic JSON equivalence or a hash-gate bypass.
-The explicit recovery record's `artifact_annotations` lists the config path,
-expected and actual SHA-256 hashes, and accepted annotation. No current config,
-manifest or deadline is rewritten. Future preparation includes the known schema
-from the start and hashes those exact bytes normally. This additional collection
-fix requires independent review before controller recovery; no new model attempt
-or fresh overall deadline is authorized.
-
-After independent fix review, only the authorized controller performs actual
-artifact recovery (the implementation agent's tests use disposable fixtures):
-
-```bash
-python3 scripts/eval_opencode_pilot.py recover-export --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25 --trial-id tab-architecture-glm
-python3 scripts/eval_opencode_pilot.py continue-unreserved --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25
-```
-
-`recover-export` is **collection repair, not a candidate retry**. It requires an
-existing scheduled reservation and original `infrastructure_error` /
-`JSONDecodeError` result. The session ID comes only from that trial's saved run
-NDJSON; there is no caller-supplied session option. It invokes only `opencode
-export` for that same ID, never `run`. The recovered export must verify actual
-provider/model, session ownership and completion, and its final text must equal
-the saved run final text exactly. Returned implementation files remain inert.
-
-Every explicit recovery attempt gets a new
-`recoveries/<trial-id>/<unique-attempt>/` directory containing new export captures
-and an exclusively created `record.json`. Failures remain in that append-only
-history. A successful record embeds the `effective_result` and hashes the original
-failed result, saved run and recovered export; it does **not** overwrite
-`results/<trial-id>.json` or any original raw capture. The original failure and
-recovered evidence represent **one candidate attempt**, never two samples or two
-usage totals. Repeating recovery after success is refused; failed recovery is
-never automatically retried. A crash-left attempt directory is retained for
-investigation, not silently removed.
-
-`continue-unreserved` first checks the frozen artifact hashes and every scheduled
-reservation. Each must have a verified complete original capture/result or a
-unique successful recovery whose hashes, identity/completion and unchanged final
-text are revalidated. An unresolved, missing or changed record refuses continuation
-before any new candidate call. It prints all `skipped_reserved` entries, then calls
-only never-reserved scheduled trials in order, stopping on the first non-complete
-outcome. Existing exclusive reservations still prevent duplicate invocations.
-
-Neither command resets or extends the persisted 90-minute deadline or clears a
-reservation. Recovery export is bounded by remaining overall time and 180 seconds;
-continuation uses the exact saved deadline, not a fresh 90-minute window. With no
-remaining time, no export/new candidate is invoked. If already expired at the
-continuation check, no future candidate is reserved. Independent review and explicit controller execution
-gate both commands; this tooling checkpoint is not permission to run them.
-
-Outcomes distinguish complete, deadline exhausted, timeout, incomplete,
-preflight failure, protocol violation, invalid implementation answer and other
-infrastructure error. Inspect raw own-session evidence to diagnose failures;
-never count failed infrastructure as a model score. Strict implementation JSON
-requires exactly the two allowlisted filenames and nonempty notes; duplicate,
-extra/missing/unsafe paths and non-string sources are rejected without writing
-any `.fnl` file.
-
-## Evidence, scoring and eventual recommendation
-
-Raw stdout/stderr and exports (which may contain reasoning) remain under the
-private-mode run root, **outside version control**. Only exported assistant final
-text is extracted; reasoning parts are never copied into result summaries. Usage
-comes once per unique assistant message from message metadata, never summed again
-from step-finish parts or duplicate NDJSON events. Preserve absent usage as null,
-zero as reported zero, and reasoning/cache subfields without collapsing unknowns.
-Zero reported cost is not proof of zero subscription cost; no financial-savings
-claim is justified. All final text still needs manual sanitization review before
-publication; the runner is not a general secret redactor.
-
-Later stages retain complete sanitized responses, anonymize artifacts, obtain five
-fresh independent GPT judging contexts, freeze scores/findings, then unblind.
-Weights (0–4 per dimension): architecture/design 35%, correctness/invariants 30%,
-validation 15%, scope/escalation 10%, evidence accuracy 10%. Material defects and
-fabricated evidence remain explicit irrespective of aggregate scores. At most two
-additional candidate calls are permitted, only a paired architecture repeat for
-a gap at most five points or low confidence; at most one repeat judgment. The
-Task 1 runner deliberately provides **no automatic repeat/judging loop or budget
-extension**; any later extension must reserve the additional reviewed calls, not
-reuse a primary trial ID or retry to success.
-
-The eventual sanitized evidence belongs in
-`docs/dev/notes/opencode-model-pilot/2026-10-25/{records.json,responses.md,judgments.md}`;
-those results do not exist yet. Recommend responsibilities only after that
-evidence and independent results review, not from this tooling checkpoint.
-
-This is a small static screening sample, not statistical proof. It excludes live
-repository search, autonomous tools, recovery loops, long-context work, C++ and
-broad refactoring. Static assessment cannot establish compilation/runtime
-correctness. GPT judging brings same-family bias and imperfect blinding; shared
-contract effects cannot be separated from model randomness here. Successful
-contract execution would support considering narrower GLM duties, not downgrading
-architecture/review gates or changing production routing automatically. PR CI
-remains the integration gate for any landed orchestration tooling.
+Compile check: **NOT RUN**. Constraints: **NOT RUN**, impact **not applicable**.
+Native tests: **NOT RUN**. No production Fennel changed; candidate execution is
+explicitly outside scope. This documentation checkpoint is for independent Task 2
+review, not approval, publication, integration or a ready-to-merge claim.
