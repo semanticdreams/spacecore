@@ -74,21 +74,42 @@ contract is appended for the two contract arms.
 
 ## Preparation and offline checks
 
-From the repository root, with an existing `/tmp/opencode` parent:
+Offline checks from the repository root:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_eval_opencode_pilot.py' -v
 python3 -m json.tool scripts/evals/opencode_pilot_cases.json >/dev/null
-PYTHONDONTWRITEBYTECODE=1 python3 scripts/eval_opencode_pilot.py prepare --repo-root . --run-root /tmp/opencode/space-fennel-pilot-reviewed
 git diff --check
 ```
 
+The offline suite uses disposable fixtures with a patched artifact-root constant;
+configured/denied path checks mock resolution and never inspect those external
+paths. It is not evidence that an agent has effective external-directory access.
+
+After independent fix review, the authorized controller owns external read/list
+preflight and fresh preparation. Verify `/tmp/space` exists and is accessible,
+then verify/create only the narrow `opencode-model-pilot` parent if needed. Do not
+widen permissions or try another access mechanism after a denial. The original
+denied `/tmp/opencode` artifacts must remain entirely untouched: never read or
+copy them, even to compare hashes. Generate new artifacts from pinned public Git
+source and the unchanged cases instead:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/eval_opencode_pilot.py prepare --repo-root . --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25
+```
+
 Choose a **new** run root; preparation rejects reuse and paths outside
-`/tmp/opencode` or inside repository ancestry. This command only reads pinned
-public Git blobs and creates local text/JSON evidence. It does not invoke OpenCode
+`/tmp/space/opencode-model-pilot` or inside repository ancestry. This command only
+reads pinned public Git blobs and creates local text/JSON evidence. It does not invoke OpenCode
 or a model. `manifest.json` records source/excerpt/packet hashes, schedule and
 contract equality. Review the rendered packets as well as the JSON seeds; rendered
 variants are complete inert modules, not just mutation descriptions.
+
+The controller/reviewer must read the new root's `manifest.json`, confirm eleven
+trials and source/cases/packet hashes plus identical contract hashes, and verify
+empty `reservations/` and `results/` with no `deadline.json` before any candidate
+call. New external preparation is deferred to that authorized controller; offline
+tests or this repository fix checkpoint do not substitute for the access check.
 
 ## Later execution (not part of preparation)
 
@@ -96,7 +117,7 @@ variants are complete inert modules, not just mutation descriptions.
 may use:
 
 ```bash
-python3 scripts/eval_opencode_pilot.py run --run-root /tmp/opencode/space-fennel-pilot-reviewed
+python3 scripts/eval_opencode_pilot.py run --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25
 ```
 
 OpenCode 1.18.35 public `run`/`export` help and installed public SDK v2 types ground

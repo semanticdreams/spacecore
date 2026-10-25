@@ -167,12 +167,54 @@ class ParseTests(unittest.TestCase):
 
 
 @unittest.skipIf(pilot is None, "runner not yet implemented")
+class ControlRootTests(unittest.TestCase):
+    def test_only_configured_space_pilot_descendants_are_allowed(self):
+        # Pure path checks: never inspect either configured or denied artifacts.
+        with patch.object(Path, "resolve", autospec=True, side_effect=lambda path: path):
+            allowed = Path("/tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25")
+            try:
+                actual = pilot.control_root(allowed)
+            except ValueError as exc:
+                self.fail(f"configured Space pilot descendant rejected: {exc}")
+            self.assertEqual(actual, allowed)
+            for denied in ["/tmp/opencode/old-run", "/tmp/space/other-run",
+                           "/tmp/space/opencode-model-pilot-other/run",
+                           "/tmp/space/opencode-model-pilot", "/tmp/space"]:
+                with self.subTest(path=denied), self.assertRaises(ValueError):
+                    pilot.control_root(Path(denied))
+
+    def test_resolved_escape_is_rejected(self):
+        with patch.object(Path, "resolve", return_value=Path("/tmp/space/outside-pilot")):
+            with self.assertRaises(ValueError):
+                pilot.control_root(Path("/tmp/space/opencode-model-pilot/escape"))
+
+
+@unittest.skipIf(pilot is None, "runner not yet implemented")
 class PreparationTests(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(prefix="pilot-test-", dir="/tmp/opencode")
+        self.tmp = tempfile.TemporaryDirectory(prefix="pilot-test-", dir="/tmp")
         self.addCleanup(self.tmp.cleanup)
+        # Disposable fixtures only; actual external-root preflight belongs to the
+        # authorized controller, not this offline suite.
+        root_patch = patch.object(pilot, "RUN_ROOT", Path(self.tmp.name).resolve())
+        root_patch.start()
+        self.addCleanup(root_patch.stop)
         self.root = Path(self.tmp.name) / "run"
         self.manifest = pilot.prepare(ROOT, self.root)
+
+    def test_fresh_preparation_is_empty_and_reproducible(self):
+        with patch.object(pilot.subprocess, "Popen", wraps=subprocess.Popen) as popen:
+            second_root = self.root.parent / "second"
+            second = pilot.prepare(ROOT, second_root)
+        self.assertTrue(all(call.args[0][:2] == ["git", "show"] for call in popen.call_args_list))
+        self.assertEqual(self.manifest["artifacts"], second["artifacts"])
+        self.assertEqual(self.manifest["cases_sha256"], second["cases_sha256"])
+        for name in self.manifest["artifacts"]:
+            self.assertEqual((self.root / name).read_bytes(), (second_root / name).read_bytes())
+        for root in [self.root, second_root]:
+            self.assertEqual(list((root / "reservations").iterdir()), [])
+            self.assertEqual(list((root / "results").iterdir()), [])
+            self.assertFalse((root / "deadline.json").exists())
 
     def test_schedule_sources_hashes_and_contract_equality(self):
         trials = self.manifest["trials"]

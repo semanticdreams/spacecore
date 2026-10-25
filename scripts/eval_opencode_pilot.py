@@ -3,7 +3,7 @@
 
 Preparation uses public pinned git blobs only. `run` is a separate, review-gated
 operation: eleven fresh sessions, no continuation, repair, retry or fallback.
-Raw captures stay under /tmp/opencode; review final-text records before publishing.
+Raw captures stay under /tmp/space/opencode-model-pilot; review final text before publishing.
 """
 import argparse
 import hashlib
@@ -17,6 +17,7 @@ import time
 
 GPT = "openai/gpt-6.1-sol"
 GLM = "opencode-go/glm-5.3-flash"
+RUN_ROOT = Path("/tmp/space/opencode-model-pilot")
 CASES = Path(__file__).resolve().parent / "evals/opencode_pilot_cases.json"
 FILES = {"assets/lua/sized.fnl", "assets/lua/tests/test-sized.fnl"}
 INSTRUCTION = "Answer the attached frozen packet only. No tools or delegation. Return final answer text; never claim unexecuted validation passed."
@@ -51,8 +52,8 @@ def save(path, value):
 
 def control_root(path):
     path = path.resolve()
-    if not path.is_relative_to(Path("/tmp/opencode")) or path == Path("/tmp/opencode"):
-        raise ValueError("run root must be a new directory beneath /tmp/opencode")
+    if not path.is_relative_to(RUN_ROOT) or path == RUN_ROOT:
+        raise ValueError(f"run root must be a new directory beneath {RUN_ROOT}")
     return path
 
 
