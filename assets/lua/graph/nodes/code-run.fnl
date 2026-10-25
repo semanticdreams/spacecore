@@ -18,6 +18,16 @@
     (when (= item.key key) (set selected item)))
   (assert selected "artifact does not belong to this run")
   (reveal self selected.key selected.label))
+;; Deletion is store-owned; this node's deleted subscription removes the adapter
+;; from this and every other open map. Artifacts are independent and survive.
+(fn delete-run [self] (self.store:delete-run! self.run-id))
+(fn make-delete-action [node]
+  {:name "Delete Run" :icon "delete"
+   :fn (fn [_button _event] (delete-run node))})
+(fn run-actions [node]
+  (if (= (. (get-run node) :status) "running")
+      []
+      [(make-delete-action node)]))
 (fn Node [opts]
   (local store (assert opts.store "code-run node requires store"))
   (local id (assert opts.run-id))
@@ -27,16 +37,23 @@
                           :view View.View :preview View.Preview}))
   (local changed (Signal))
   (var handler nil)
+  (var deleted-handler nil)
   (fn drop [_self]
     (when handler (store.changed:disconnect handler true) (set handler nil))
+    (when deleted-handler (store.deleted:disconnect deleted-handler true) (set deleted-handler nil))
     (changed:clear))
   (local self (setmetatable {:run-id id :store store :changed changed :get-run get-run
-                             :show-code show-code :show-artifact show-artifact :drop drop}
+                             :show-code show-code :show-artifact show-artifact
+                             :actions run-actions :drop drop}
                             {:__index base}))
   (fn on-change [current]
     (when (= current.id id)
       (set self.label (Presentation.summary current))
       (changed:emit self)))
+  (fn on-deleted [deleted]
+    (when (= deleted.id id)
+      (when self.graph (self.graph:remove-nodes [self] {:cause "shared-delete"}))))
   (set handler (store.changed:connect on-change))
+  (set deleted-handler (store.deleted:connect on-deleted))
   self)
 {:Node Node}

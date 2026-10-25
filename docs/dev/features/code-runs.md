@@ -16,7 +16,16 @@ The record contains its execution-time source/name/language/kernel snapshot,
 resolved kernel configuration, start/finish times, monotonic elapsed duration,
 captured output, final result display/type, errors/tracebacks, and artifact keys.
 Results are inspection text, not executable serialized Lua objects. History
-survives source edits and deletion. There is deliberately no Delete Run action.
+survives source edits and deletion.
+
+## Deleting runs
+
+A code-run node's context menu offers **Delete Run** for terminal runs only
+(`succeeded`, `failed`, `timed-out`, `interrupted`). Deleting removes the stored
+record and removes the run adapter from every open graph map; run history on the
+owning code entity refreshes. Running runs refuse deletion explicitly — wait for
+completion, failure, or timeout. Deleting a run never deletes its artifacts: a
+report produced by a run is an independent record owned by its own store.
 
 The full code-entity view includes searchable run history. Selecting a row
 reveals only that run; Latest Run reveals the newest stored record. Historical

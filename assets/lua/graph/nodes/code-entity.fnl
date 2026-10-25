@@ -76,10 +76,12 @@
   (var updated-handler nil)
   (var deleted-handler nil)
   (var run-handler nil)
+  (var run-deleted-handler nil)
   (fn drop [self]
     (when updated-handler (store.code-entity-updated:disconnect updated-handler true))
     (when deleted-handler (store.code-entity-deleted:disconnect deleted-handler true))
     (when run-handler (self.run-store.changed:disconnect run-handler true))
+    (when run-deleted-handler (self.run-store.deleted:disconnect run-deleted-handler true))
     (changed:clear) (deleted:clear) (result-changed:clear))
   (fn actions [self]
     (fn delete-action [_button _event] (self:delete-entity))
@@ -105,9 +107,14 @@
         (set self.last-run-result (Presentation.summary run))
         (result-changed:emit self.last-run-result))
       (changed:emit self)))
+  ;; Deletion only refreshes run history; the last-run display is untouched.
+  (fn on-run-deleted [deleted-run]
+    (when (= deleted-run.code-entity-id id) (changed:emit self)))
   (set updated-handler (store.code-entity-updated:connect on-update))
   (set deleted-handler (store.code-entity-deleted:connect on-delete))
-  (when options.run-store (set run-handler (options.run-store.changed:connect on-run)))
+  (when options.run-store
+    (set run-handler (options.run-store.changed:connect on-run))
+    (set run-deleted-handler (options.run-store.deleted:connect on-run-deleted)))
   self)
 
 (local register-loader

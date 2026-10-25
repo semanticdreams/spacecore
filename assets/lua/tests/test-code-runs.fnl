@@ -178,6 +178,20 @@
       (set current.start "0")
       (assert (= (Owner.alive? current) false)))))
 
+(add "terminal runs delete from the store and running runs refuse"
+  (fn [] (with-fixture (fn [f]
+    (local done-run (run-source f "42"))
+    (f.store:delete-run! done-run.id)
+    (assert (not (f.store:get-run done-run.id)) "deleted run must be absent")
+    (assert (= (length (f.store:list-runs)) 0))
+    (local running (run-source f "(execution:defer)"))
+    (local (ok err) (pcall f.store.delete-run! f.store running.id))
+    (assert (not ok))
+    (assert (has? (tostring err) "cannot delete a running code run"))
+    (assert (f.store:get-run running.id))
+    (f.runner:drop)
+    (set f.runner-dropped? true)))))
+
 (add "external kernel replies complete independently of next-frame presentation"
   (fn [] (with-fixture (fn [f]
     (local external {:id "external" :name "Python"})
@@ -273,6 +287,41 @@
       (map-a:remove-nodes [source])
       (f.capture.cb)
       (assert (= (. (f.store:get-run run.id) :result) "7")))
+    (with-run-maps f exercise)))))
+
+(add "delete action removes terminal run nodes from every open map"
+  (fn [] (with-fixture (fn [f]
+    (fn exercise [map-a map-b _graph]
+      (local code (f.create "42"))
+      (local source (assert (map-a:load-by-key (.. "code-entity:" code.id))))
+      (local run (source:run-entity))
+      (local node-a (assert (map-a:lookup (.. "code-run:" run.id))))
+      (assert (map-b:load-by-key (.. "code-run:" run.id)))
+      (assert (= (map-a:node-count) 2))
+      (assert (= (map-b:node-count) 1))
+      (var delete-action nil)
+      (each [_ action (ipairs (node-a.actions node-a))]
+        (when (= action.name "Delete Run") (set delete-action action)))
+      (assert delete-action "terminal run must expose Delete Run")
+      (delete-action.fn {} {})
+      (assert (= (map-a:node-count) 1))
+      (assert (= (map-b:node-count) 0))
+      (assert (not (f.store:get-run run.id)) "deleted run must be absent"))
+    (with-run-maps f exercise)))))
+
+(add "running runs hide Delete Run until terminal"
+  (fn [] (with-fixture (fn [f]
+    (fn exercise [map-a _map-b _graph]
+      (local code (f.create "(execution:defer)"))
+      (local source (assert (map-a:load-by-key (.. "code-entity:" code.id))))
+      (local run (source:run-entity))
+      (local node (assert (map-a:lookup (.. "code-run:" run.id))))
+      (assert (= (length (node.actions node)) 0))
+      (f.runner:drop)
+      (set f.runner-dropped? true)
+      (assert (= (. (f.store:get-run run.id) :status) "interrupted"))
+      (assert (= (length (node.actions node)) 1))
+      (assert (= (. (node.actions node) 1 :name) "Delete Run")))
     (with-run-maps f exercise)))))
 
 (fn exercise-run-widget [node compact?]

@@ -47,6 +47,7 @@
   (local base-dir (fs.absolute (or options.base-dir (appdirs.user-data-dir "space"))))
   (local directory (fs.join-path base-dir "code-runs"))
   (local changed (Signal))
+  (local deleted (Signal))
   (fn path [id] (R.record-path base-dir directory id ".json"))
   (fn get-run [_self id]
     (fn decode [bytes] (validate (R.decode-json bytes)))
@@ -88,7 +89,18 @@
           (not (= a.started-monotonic-ms b.started-monotonic-ms)) (> a.started-monotonic-ms b.started-monotonic-ms)
           (> a.id b.id))))
     runs)
-  {:base-dir base-dir :directory directory :changed changed
-   :get-run get-run :create-run create-run :update-run update-run :list-runs list-runs})
+  (fn delete-run! [self id]
+    (local run (assert (self:get-run id) "missing code run"))
+    (assert (not (= run.status "running"))
+            "cannot delete a running code run; wait for completion, failure, or timeout")
+    ;; Deleting a run never deletes its artifacts; they are independent records.
+    (fs.remove (path id))
+    (local (ok err) (pcall deleted.emit deleted (R.clone run)))
+    (when (not ok)
+      (io.stderr:write (.. "code-run observer failed after deletion: " (tostring err) "\n")))
+    (R.clone run))
+  {:base-dir base-dir :directory directory :changed changed :deleted deleted
+   :get-run get-run :create-run create-run :update-run update-run :list-runs list-runs
+   :delete-run! delete-run!})
 
 {:Store Store :validate validate}
