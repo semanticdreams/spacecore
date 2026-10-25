@@ -7,6 +7,11 @@ agents delegate really difficult or critical questions to GPT experts. This
 applies equally to supervisor, fast-dev, and live-dev workflows. Lack of model
 evaluation is not a reason to retain GPT for a whole role.
 
+The user further requires **input from both models on every architecture or
+software-design decision and every contract between systems**. This is mandatory
+even if GLM is confident and no defect has occurred. GLM remains the ordinary
+owner; GPT supplies a bounded critique before dependent implementation.
+
 All sixteen existing project agent definitions use exactly
 `opencode-go/glm-5.3-flash`, with GPT-specific variants removed. Add one read-only
 `expert-advisor` using exactly `openai/gpt-6.1-sol`, variant `high`. No initial
@@ -40,9 +45,12 @@ as superseded by this user-directed policy.
 
 Require a bounded consultation when an observable predicate holds:
 
-- A new or changed design depends on retained mutable-state ownership or live
-  resource alias exclusion, or fallible save/cleanup ordering across detach,
-  destruction or publication, matching those demonstrated design blind spots.
+- Any architecture/software-design decision or new/changed contract between
+  systems: responsibilities, abstraction boundaries, state/resource ownership,
+  interfaces, data flow, failure/lifetime guarantees or persistence semantics.
+  This includes meaningful local design decisions, not just cross-module work;
+  the pilot's retained-state/aliasing/fallible-transition cases are examples, not
+  the limit of the mandatory dual-model requirement.
 - A specifically critical unresolved permissions/security boundary or
   irreversible-data question must be decided before acting.
 - The same material failure remains after one focused repair, evidenced by the
@@ -50,10 +58,12 @@ Require a bounded consultation when an observable predicate holds:
 - A material technical design conflict remains unresolved, with conflicting
   source evidence or contracts rather than stylistic disagreement.
 
-Routine planning, review, diagnosis and implementation stay GLM. Expected TDD RED,
-an initial typo/syntax error, speculative concerns, missing evidence that can be
-collected, and ordinary architecture changes without a predicate do not trigger
-GPT. Unknown product/API/data policy remains a human decision, not expert authority.
+Routine execution, review, diagnosis and implementation of an already reviewed
+design stay GLM. Expected TDD RED, an initial typo/syntax repair, cosmetic wording
+or naming, mechanical follow-through without a new design choice, and missing
+evidence that can be collected do not require GPT. Calling work "internal", "UI"
+or "small" does not exempt an actual design or contract decision. Unknown
+product/API/data policy remains a human decision, not expert authority.
 
 ## Consultation contract
 
@@ -61,11 +71,15 @@ Task-capable controllers (supervisor and selected fast/live primaries) dispatch
 `expert-advisor`. Workers retain `task: deny` and return a structured request:
 
 `decision_scope`, `trigger`, `question`, `sources`, `invariant`, `evidence`,
-`attempted_fix` (nullable), and `decision_needed`.
+`attempted_fix` (nullable), `glm_proposal` (nonempty for architecture/design/contract
+decisions, otherwise nullable), and `decision_needed`.
 
 Supply one concrete question and inspectable original source/diff excerpts or
 paths, not only a cheap-model conclusion. Keep the packet bounded to the relevant
 decision; do not delegate the entire task or ask the expert to repeat exploration.
+For design consultation GLM first states the proposal, responsibilities/contracts,
+invariants and rationale; GPT critiques them against original evidence. GLM records
+the reconciliation before implementing anything that relies on the decision.
 
 The expert returns `decision_scope`, `status` (`answered`,
 `insufficient_evidence`, `requires_human`), `finding`, `evidence`, and `action`.
@@ -73,8 +87,11 @@ It may read/search/list/LSP within the repository, with existing sensitive-read
 exclusions. It cannot edit, execute shell, delegate, browse external directories,
 web-fetch, ask the user directly, publish, or grant approval/integration authority.
 
-Allow one consultation per decision scope. Further consultation requires genuinely
-new material evidence. Record scope, evidence, outcome and disposition in existing
+Allow one consultation per decision scope. Reuse the reconciled design for routine
+follow-through: do not call GPT again merely because another task uses an unchanged
+contract. A material change to design, contract or assumptions reopens the decision
+and again requires both models. Further consultation otherwise requires genuinely
+new material evidence. Record scope, proposal, evidence, critique and disposition in existing
 handoff/progress artifacts; do not build a new tracking subsystem. Material expert
 findings must be resolved and validated or escalated to the human. Advice does not
 replace independent review, tests, capability refusals or permissions. An unavailable
@@ -125,7 +142,10 @@ control with five fresh GLM contexts; after changes run the same five-context
 variant. Use identical realistic relevant workflow context plus scenarios for all
 three skills/workflows: routine first repair, demonstrated ownership transition,
 same material failure after a repair, ordinary non-triggering architecture work,
-direct fast/live ownership, denied worker delegation, and human-owned decisions.
+direct fast/live ownership, denied worker delegation, human-owned decisions, and
+mandatory dual input for a confident fresh design/contract decision. Use a compact
+matrix of approximately 12–18 labelled decisions covering all three workflows,
+not every case crossed with every workflow; keep rationales concise.
 Ask for routing decisions only; no actual dispatch, edits or privileged operations.
 Record baseline failures and updated outcomes honestly. Ten GLM validation calls
 maximum, no candidate implementation benchmark or retry-until-pass, 180-second
@@ -145,3 +165,26 @@ update it rather than adding a second routing-policy page. Publish no secrets or
 private paths. Restart OpenCode after the complete reviewed configuration change;
 the running session retains its loaded agent definitions and must not pretend its
 workers have already changed model or that a new expert is dispatchable here.
+
+## Dual-model input on this workflow design
+
+GLM consultation session `ses_e8b8a74dbffeK736igCe4FQulf` was verified from its own
+public export as `opencode-go/glm-5.3-flash`. Its proposal supported GLM ownership,
+bounded GPT critique before dependent implementation, a decision record with
+reuse/material invalidation, and preservation of direct-primary authority. This
+was one real design consultation, separate from the ten pressure-validation slots;
+it did not run tools or change files. The current GPT supervisor independently
+critiqued that proposal and reconciled it here:
+
+- Accept the proposal/critique/reconciliation/reuse protocol and separation of
+  advice from approval. Retain expert repository inspection permission, not the
+  proposal's unnecessary ban on all read tools.
+- Reject exempting all internal algorithms, local structures or UI details:
+  meaningful design decisions in those areas still require both models.
+- Reject informal optional GPT calls for routine tactical work; use explicit
+  triggers and the recorded decision scope to avoid uncontrolled expense.
+- Reject refresh around consultation alone. Live-dev establishes manual mode
+  before editing and refreshes after validated code changes, not merely advice.
+- Reject letting the cheaper owner dismiss an unresolved material finding by
+  preference. Reconciliation needs evidence; unresolved material disagreement
+  remains a human decision. Reconsultation requires new material evidence.
