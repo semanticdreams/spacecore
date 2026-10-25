@@ -74,7 +74,10 @@ be isolated in this sample. TabView separately measures originating architecture
 ## Execution and evidence boundaries
 
 Use generated, all-deny trial agents and fresh sessions in a control directory
-under `/tmp/opencode` outside repository ancestry. Supply fixed context directly;
+under `/tmp/space/opencode-model-pilot` outside repository ancestry. This is an
+already configured Space runtime/debug artifact scope; do not access the denied
+earlier `/tmp/opencode` preparation artifacts or widen directory permissions.
+Supply fixed context directly;
 candidates return text or complete fixture files, not tool-driven edits. Disable
 external plugin/skill discovery where supported. Normal CLI authentication may
 operate internally. Do not claim perfect global-instruction/config isolation;

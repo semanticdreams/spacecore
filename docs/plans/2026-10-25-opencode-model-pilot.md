@@ -17,7 +17,8 @@
 - Python may orchestrate calls and evidence; it is not the evaluated language.
 - Load space-fennel, space-fennel-ui, and space-testing-runtime guidance.
 - Freeze prompts, source hashes, seeded answers, rubric, and contract before candidate calls.
-- Use fresh all-deny trial agents under `/tmp/opencode`, outside repository ancestry; no model tools, delegation, or continuation.
+- Use fresh all-deny trial agents under `/tmp/space/opencode-model-pilot`, outside repository ancestry; no model tools, delegation, or continuation.
+- Root amendment: effective directory permissions deny the original `/tmp/opencode` artifacts. Generate new artifacts in the already permitted Space runtime/debug scope; never read/copy the denied originals, broaden permissions, or prompt for an exception.
 - Export only sessions created by the pilot. Verify actual provider/model and completion; never fall back to another model.
 - Keep raw exports and captures outside version control. Commit sanitized final answers, not private reasoning parts.
 - Never apply, compile, import, or execute model-generated Fennel. Do not build Space.
