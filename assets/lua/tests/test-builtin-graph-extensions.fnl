@@ -14,7 +14,7 @@
    "activity-light" "activity-light-type" "activity-scene" "activity-scene-panel"
    "activity-scene-panels" "activity-skybox" "activity-surface" "activity-surfaces"
    "activity-terrain" "activity-terrain-editor" "activity-terrain-tool" "activity-terrains"
-   "agent-session" "class" "code-dir" "code-entity" "code-entity-list" "cpp-module" "entities"
+    "agent-session" "class" "code-dir" "code-entity" "code-entity-list" "code-run" "cpp-module" "entities"
    "fnl-module" "fs" "fs-file-viewer" "hackernews-root" "hackernews-story"
    "hackernews-story-list" "hackernews-user" "hud-panel" "hud-panels" "identity"
    "hosted-app-launcher"

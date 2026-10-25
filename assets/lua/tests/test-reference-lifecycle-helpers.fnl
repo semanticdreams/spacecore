@@ -61,7 +61,7 @@
   (local GraphMap (require :graph/map))
   (local Entities (require :graph/extensions/builtins/entities))
   (local Catalog (require :entities/type-catalog))
-  (local options (collect [key value (pairs s)] key value))
+  (local options ((require :tests/code-run-fixture-options) s))
   (each [key value (pairs (or opts {:morphs {} :entity-events? false}))]
     (tset options key value))
   (local graph (Graph options))
