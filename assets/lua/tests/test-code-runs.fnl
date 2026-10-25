@@ -324,6 +324,21 @@
       (assert (= (. (node.actions node) 1 :name) "Delete Run")))
     (with-run-maps f exercise)))))
 
+(add "preview output tail is bounded aligned and carries the error head"
+  (fn []
+    (local view-module (require :graph/view/views/code-run))
+    (assert (= (view-module.output-tail {:output ""}) "(no output yet)"))
+    (assert (= (view-module.output-tail {:output "one\ntwo\n"}) "two"))
+    (local long (string.rep "x" 900))
+    (local tail (view-module.output-tail {:output (.. long "\nfinal\n")}))
+    (assert (<= (# tail) 800) "tail must stay bounded")
+    (assert (has? tail "final"))
+    (local error-tail (view-module.output-tail {:output "" :error {:message "boom" :traceback ""}}))
+    (assert (= error-tail "Error: boom"))
+    (local combined (view-module.output-tail {:output "progress\n" :error {:message "boom" :traceback ""}}))
+    (assert (has? combined "progress"))
+    (assert (has? combined "Error: boom"))))
+
 (fn exercise-run-widget [node compact?]
   (local glm (require :glm))
   (local focus ((. (require :focus) :FocusManager) {:root-name "code-run-widget"}))
