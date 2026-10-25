@@ -3,6 +3,7 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+import sys
 import subprocess
 import tempfile
 import time
@@ -281,8 +282,198 @@ class PreparationTests(unittest.TestCase):
 
     def process(self, stdout, returncode=0):
         proc = Mock(pid=987654, returncode=returncode)
-        proc.communicate.return_value = (stdout, "")
+        def communicate(**_kwargs):
+            destination = pilot.subprocess.Popen.call_args.kwargs["stdout"]
+            if hasattr(destination, "write"):
+                destination.write(stdout.encode())
+                destination.flush()
+            return stdout, ""
+        proc.communicate.side_effect = communicate
         return proc
+
+    def test_destination_sensitive_capture_preserves_exact_large_json(self):
+        # A synthetic CLI chooses truncation based on the destination type, not
+        # ordinary pipe capacity (communicate already handles normal large output).
+        source = "import os,stat,json; data=json.dumps({'answer':'x'*73449}).encode(); regular=stat.S_ISREG(os.fstat(1).st_mode); os.write(1,data if regular else data[:65536]); os.write(2,b'diagnostic')"
+        expected = json.dumps({"answer": "x" * 73449})
+        actual = pilot.capture_process([sys.executable, "-c", source], self.root / "control",
+                                       time.time() + 10, self.root / "raw/destination")
+        self.assertEqual(len(actual), len(expected))
+        self.assertEqual(actual, expected)
+        self.assertEqual(json.loads(actual)["answer"], "x" * 73449)
+        self.assertEqual((self.root / "raw/destination.stderr.txt").read_text(), "diagnostic")
+
+    def test_capture_nonzero_preserves_files_and_never_overwrites(self):
+        args = [sys.executable, "-c", "import os; os.write(1,b'partial'); os.write(2,b'failed'); raise SystemExit(3)"]
+        prefix = self.root / "raw/nonzero"
+        with self.assertRaises(ValueError):
+            pilot.capture_process(args, self.root / "control", time.time() + 10, prefix)
+        self.assertEqual(prefix.with_suffix(".stdout.txt").read_text(), "partial")
+        self.assertEqual(prefix.with_suffix(".stderr.txt").read_text(), "failed")
+        with self.assertRaises(FileExistsError):
+            pilot.capture_process(args, self.root / "control", time.time() + 10, prefix)
+
+    def failed_collection(self):
+        trial = next(t for t in self.manifest["trials"] if t["model"] == MODEL)
+        ndjson, exported = capture()
+        (self.root / "reservations" / trial["id"]).write_text("original reservation")
+        pilot.save(self.root / "deadline.json", {"started_at": 1, "deadline": time.time() + 5000})
+        result = {"trial_id": trial["id"], "outcome": "infrastructure_error", "failure_type": "JSONDecodeError"}
+        pilot.save(self.root / "results" / (trial["id"] + ".json"), result)
+        for suffix, text in [("run.stdout", ndjson), ("run.stderr", ""), ("export.stdout", '{"truncated":'), ("export.stderr", "old diagnostic")]:
+            (self.root / "raw" / (trial["id"] + "-" + suffix + ".txt")).write_text(text)
+        return trial, exported
+
+    def test_recovery_is_explicit_same_session_and_preserves_originals(self):
+        self.assertTrue(callable(getattr(pilot, "recover_export", None)), "explicit export recovery missing")
+        trial, exported = self.failed_collection()
+        originals = {p: p.read_bytes() for folder in ["raw", "results", "reservations"] for p in (self.root / folder).iterdir()}
+        deadline = (self.root / "deadline.json").read_bytes()
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))) as popen:
+            record = pilot.recover_export(self.root, trial["id"])
+        self.assertEqual(record["outcome"], "complete")
+        self.assertEqual(record["effective_result"]["answer"], "final answer")
+        self.assertEqual(popen.call_args.args[0], ["opencode", "export", "--pure", SID])
+        self.assertEqual(popen.call_count, 1)
+        for path, data in originals.items():
+            self.assertEqual(path.read_bytes(), data)
+        self.assertEqual((self.root / "deadline.json").read_bytes(), deadline)
+        self.assertEqual(len(list((self.root / "recoveries" / trial["id"]).glob("*/record.json"))), 1)
+        with patch.object(pilot.subprocess, "Popen") as popen, self.assertRaises(ValueError):
+            pilot.recover_export(self.root, trial["id"])
+        popen.assert_not_called()
+
+    def test_recovery_rejects_changed_answer_or_model_and_keeps_failure_history(self):
+        self.assertTrue(callable(getattr(pilot, "recover_export", None)), "explicit export recovery missing")
+        trial, exported = self.failed_collection()
+        for mutation in ["answer", "model", "session", "incomplete"]:
+            changed = copy.deepcopy(exported)
+            if mutation == "answer":
+                changed["messages"][0]["parts"][1]["text"] = "different answer"
+            elif mutation == "model":
+                changed["messages"][0]["info"]["modelID"] = "different-model"
+            elif mutation == "session":
+                changed["info"]["id"] = "ses_other"
+            else:
+                changed["messages"][0]["info"]["finish"] = "length"
+            with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(changed))):
+                record = pilot.recover_export(self.root, trial["id"])
+            self.assertNotEqual(record["outcome"], "complete")
+        self.assertEqual(len(list((self.root / "recoveries" / trial["id"]).glob("*/record.json"))), 4)
+        with patch.object(pilot, "run_trial") as run, self.assertRaises(ValueError):
+            pilot.continue_unreserved(self.root)
+        run.assert_not_called()
+
+    def test_recovery_refuses_ineligible_trial_without_export(self):
+        self.assertTrue(callable(getattr(pilot, "recover_export", None)), "explicit export recovery missing")
+        trial, _ = self.failed_collection()
+        path = self.root / "results" / (trial["id"] + ".json")
+        for failure in ["ValueError", "TimeoutExpired"]:
+            result = json.loads(path.read_text())
+            result["failure_type"] = failure
+            pilot.save(path, result)
+            with patch.object(pilot.subprocess, "Popen") as popen, self.assertRaises(ValueError):
+                pilot.recover_export(self.root, trial["id"])
+            popen.assert_not_called()
+
+    def test_recovery_malformed_saved_run_or_expired_deadline_never_exports(self):
+        trial, _ = self.failed_collection()
+        run_path = self.root / "raw" / (trial["id"] + "-run.stdout.txt")
+        ndjson = run_path.read_text()
+        run_path.write_text("invalid saved run")
+        with patch.object(pilot.subprocess, "Popen") as popen, self.assertRaises(ValueError):
+            pilot.recover_export(self.root, trial["id"])
+        popen.assert_not_called()
+        run_path.write_text(ndjson)
+        pilot.save(self.root / "deadline.json", {"deadline": time.time() - 1})
+        with patch.object(pilot.subprocess, "Popen") as popen:
+            self.assertEqual(pilot.recover_export(self.root, trial["id"])["outcome"], "deadline")
+        popen.assert_not_called()
+
+    def test_recovery_timeout_preserves_failure_and_reaps_once(self):
+        trial, _ = self.failed_collection()
+        proc = self.process("")
+        proc.communicate.side_effect = [subprocess.TimeoutExpired("export", 180), (None, None)]
+        with patch.object(pilot.subprocess, "Popen", return_value=proc) as popen, patch.object(pilot.os, "killpg") as kill:
+            record = pilot.recover_export(self.root, trial["id"])
+        self.assertEqual(record["outcome"], "timeout")
+        self.assertEqual(popen.call_count, 1)
+        self.assertEqual(proc.communicate.call_count, 2)
+        kill.assert_called_once_with(proc.pid, pilot.signal.SIGKILL)
+        self.assertEqual(json.loads((self.root / "results" / (trial["id"] + ".json")).read_text())["outcome"], "infrastructure_error")
+
+    def test_continuation_revalidates_recovered_evidence(self):
+        trial, exported = self.failed_collection()
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))):
+            record = pilot.recover_export(self.root, trial["id"])
+        (self.root / record["export_stdout"]).write_text("changed")
+        with patch.object(pilot, "run_trial") as run, self.assertRaises(ValueError):
+            pilot.continue_unreserved(self.root)
+        run.assert_not_called()
+
+    def test_continuation_rejects_recovery_record_identity_tampering(self):
+        trial, exported = self.failed_collection()
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))):
+            record = pilot.recover_export(self.root, trial["id"])
+        path = self.root / record["effective_result"]["collection_recovery"]
+        record["session_id"] = "ses_other"
+        pilot.save(path, record)
+        with patch.object(pilot, "run_trial", return_value={"outcome": "timeout"}) as run, patch("builtins.print"), self.assertRaises(ValueError):
+            pilot.continue_unreserved(self.root)
+        run.assert_not_called()
+
+    def test_continuation_skips_verified_complete_and_runs_all_unreserved_once(self):
+        ndjson, exported = capture()
+        trial = next(t for t in self.manifest["trials"] if t["model"] == MODEL)
+        with patch.object(pilot.subprocess, "Popen", side_effect=[self.process(ndjson), self.process(json.dumps(exported))]):
+            pilot.run_trial(trial, self.root, time.time() + 5400)
+        with patch.object(pilot, "run_trial", return_value={"outcome": "complete"}) as run, patch("builtins.print"):
+            self.assertEqual(pilot.continue_unreserved(self.root)["outcome"], "complete")
+        ids = [call.args[0]["id"] for call in run.call_args_list]
+        self.assertEqual(ids, [t["id"] for t in self.manifest["trials"] if t["id"] != trial["id"]])
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_recovery_and_continuation_cli_dispatch(self):
+        for command in ["recover-export", "continue-unreserved"]:
+            argv = ["pilot", command, "--run-root", str(self.root)]
+            if command == "recover-export":
+                argv += ["--trial-id", "tab-architecture-glm"]
+            with patch.object(sys, "argv", argv), patch.object(pilot, "recover_export", return_value={"outcome": "complete"}) as recover, patch.object(pilot, "continue_unreserved", return_value={"outcome": "complete"}) as continuation, patch("builtins.print"):
+                pilot.main()
+            if command == "recover-export":
+                recover.assert_called_once_with(self.root, "tab-architecture-glm")
+                continuation.assert_not_called()
+            else:
+                continuation.assert_called_once_with(self.root)
+                recover.assert_not_called()
+
+    def test_continue_only_unreserved_preserves_deadline_and_stops_on_failure(self):
+        self.assertTrue(callable(getattr(pilot, "recover_export", None)), "explicit export recovery missing")
+        trial, exported = self.failed_collection()
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))):
+            pilot.recover_export(self.root, trial["id"])
+        deadline = (self.root / "deadline.json").read_bytes()
+        with patch.object(pilot, "run_trial", return_value={"outcome": "timeout"}) as run, patch("builtins.print") as output:
+            summary = pilot.continue_unreserved(self.root)
+        self.assertEqual(summary["outcome"], "timeout")
+        self.assertEqual(run.call_count, 1)
+        self.assertNotEqual(run.call_args.args[0]["id"], trial["id"])
+        self.assertEqual(run.call_args.args[2], json.loads(deadline)["deadline"])
+        self.assertTrue(any('"skipped_reserved"' in str(call) for call in output.call_args_list))
+        self.assertEqual((self.root / "deadline.json").read_bytes(), deadline)
+
+    def test_continue_expired_or_unresolved_never_calls_candidate(self):
+        self.assertTrue(callable(getattr(pilot, "continue_unreserved", None)), "explicit continuation missing")
+        trial, _ = self.failed_collection()
+        with patch.object(pilot, "run_trial") as run, self.assertRaises(ValueError):
+            pilot.continue_unreserved(self.root)
+        run.assert_not_called()
+        # Unreserved-only run with an existing expired ledger still cannot call.
+        (self.root / "reservations" / trial["id"]).unlink()
+        pilot.save(self.root / "deadline.json", {"deadline": time.time() - 1})
+        with patch.object(pilot, "run_trial") as run, patch("builtins.print"):
+            self.assertEqual(pilot.continue_unreserved(self.root)["outcome"], "deadline")
+        run.assert_not_called()
 
     def test_one_fresh_session_own_export_no_reasoning_and_no_retry(self):
         ndjson, exported = capture()

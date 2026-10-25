@@ -2,11 +2,14 @@
 
 ## Status and boundaries
 
-**Preparation only; no candidate calls, judgments, scores, or responsibility
-recommendation yet.** Task 1's packets, mutations, expectations, conceptual
-GPT-authored contract and runner require independent review before calls. The
-contract's authorship is the preparing GPT agent, not an extra generative trial;
-it contains no reference implementation. Reviewer approval is still pending.
+**Collection repair pending; no judgments, scores, or responsibility recommendation
+yet.** Initial preparation and the root fix passed independent review. The first
+GLM architecture candidate completed, but its export-to-pipe capture was truncated;
+no further candidate calls followed. The collection fix requires independent
+review before controller recovery/continuation. The frozen conceptual
+GPT-authored contract is not a generated candidate answer. Its authorship is the
+preparing GPT agent, not an extra generative trial;
+it contains no reference implementation.
 
 This is a bounded comparison of architecture/design in **actual Space Fennel**:
 `opencode-go/glm-5.3-flash` versus `openai/gpt-6.1-sol`. Python is thin orchestration,
@@ -139,6 +142,10 @@ global-instruction isolation. All tool/skill permissions remain denied, and any
 exported tool/delegation/retry part invalidates the trial. Ambient instructions,
 providers and CLI internals can still affect both models. Do not claim hermetic
 config isolation or that no provider-internal transport retry can occur.
+Controller evidence also found exported directory metadata reporting the repository
+path despite the requested subprocess control-directory cwd. Preserve that ambient
+isolation limitation; requested cwd and all-deny permissions do not prove actual
+cwd/global-instruction isolation.
 
 ### Fixed primary schedule
 
@@ -168,6 +175,59 @@ reservations/deadline creation; a crash-left lock/reservation is evidence requir
 manual investigation, not permission to retry. The CLI stops on a non-complete
 outcome, and re-running the CLI refuses existing reservations rather than
 continuing or silently selecting fresh answers. There is no automatic resume.
+
+### Explicit collection recovery and continuation
+
+The observed CLI export produced an exit-0 65,536-byte JSON prefix when stdout was
+a pipe, while a controlled **non-generative** regular-file capture returned the
+complete 73,449-byte own export with the same final answer as the original run.
+This proves destination-dependent truncation, not the CLI's exact buffering
+internals or a model failure. Capture now supplies exclusive regular-file stdout
+and stderr handles directly, retaining partial files on timeout/nonzero exit and
+killing/reaping the process group on timeout. It never repairs malformed JSON by
+guessing missing content or bypassing identity/completion verification.
+
+After independent fix review, only the authorized controller performs actual
+artifact recovery (the implementation agent's tests use disposable fixtures):
+
+```bash
+python3 scripts/eval_opencode_pilot.py recover-export --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25 --trial-id tab-architecture-glm
+python3 scripts/eval_opencode_pilot.py continue-unreserved --run-root /tmp/space/opencode-model-pilot/task1-reviewed-2026-10-25
+```
+
+`recover-export` is **collection repair, not a candidate retry**. It requires an
+existing scheduled reservation and original `infrastructure_error` /
+`JSONDecodeError` result. The session ID comes only from that trial's saved run
+NDJSON; there is no caller-supplied session option. It invokes only `opencode
+export` for that same ID, never `run`. The recovered export must verify actual
+provider/model, session ownership and completion, and its final text must equal
+the saved run final text exactly. Returned implementation files remain inert.
+
+Every explicit recovery attempt gets a new
+`recoveries/<trial-id>/<unique-attempt>/` directory containing new export captures
+and an exclusively created `record.json`. Failures remain in that append-only
+history. A successful record embeds the `effective_result` and hashes the original
+failed result, saved run and recovered export; it does **not** overwrite
+`results/<trial-id>.json` or any original raw capture. The original failure and
+recovered evidence represent **one candidate attempt**, never two samples or two
+usage totals. Repeating recovery after success is refused; failed recovery is
+never automatically retried. A crash-left attempt directory is retained for
+investigation, not silently removed.
+
+`continue-unreserved` first checks the frozen artifact hashes and every scheduled
+reservation. Each must have a verified complete original capture/result or a
+unique successful recovery whose hashes, identity/completion and unchanged final
+text are revalidated. An unresolved, missing or changed record refuses continuation
+before any new candidate call. It prints all `skipped_reserved` entries, then calls
+only never-reserved scheduled trials in order, stopping on the first non-complete
+outcome. Existing exclusive reservations still prevent duplicate invocations.
+
+Neither command resets or extends the persisted 90-minute deadline or clears a
+reservation. Recovery export is bounded by remaining overall time and 180 seconds;
+continuation uses the exact saved deadline, not a fresh 90-minute window. With no
+remaining time, no export/new candidate is invoked. If already expired at the
+continuation check, no future candidate is reserved. Independent review and explicit controller execution
+gate both commands; this tooling checkpoint is not permission to run them.
 
 Outcomes distinguish complete, deadline exhausted, timeout, incomplete,
 preflight failure, protocol violation, invalid implementation answer and other
