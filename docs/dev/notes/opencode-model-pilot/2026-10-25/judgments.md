@@ -72,8 +72,9 @@ Relevant source: `assets/lua/search-view.fnl:69–74,103–115`,
 `assets/lua/signal.fnl:38–63`. The external signal is a seeded fixture, not a
 baseline SearchView feature. M correctly did **not** turn omission of redundant
 baseline input disconnection into a lasting leak: InputModel.drop clears its
-signals. Suggested `TEST_FILTER` is absent from the harness; this is a minor
-validation-command issue, not a material ownership-review error or claimed pass.
+signals. M suggests filtered `tests.fast` but omits a concrete `TEST_FILTER`
+assignment: `TEST_FILTER='SearchView'` would select existing tests; without the
+filter, the command runs the broader fast suite, not an unsupported command.
 
 **Limit:** the GPT comparator timed out. One strong local result does not support
 replacing general reviewers or making a scout an approval gate.
