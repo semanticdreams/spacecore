@@ -214,8 +214,10 @@ no work. You will not be penalized for escalating.
 
 **How to escalate:** Report back with status BLOCKED or NEEDS_CONTEXT. Describe
 specifically what you're stuck on, what you've tried, and what kind of help you need.
-The controller can provide more context, re-dispatch with a more capable model,
-or break the task into smaller pieces.
+The controller can provide more context, break the task into smaller pieces,
+or arrange bounded consultation under the canonical `AGENTS.md` contract.
+GLM retains implementation; the read-only expert supplies advice, not a replacement
+implementation worker.
 
 ## Self-Review
 

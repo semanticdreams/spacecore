@@ -450,7 +450,7 @@ def _check_expert_profile(path: Path, repo_root: Path, keys: dict[str, str], raw
     """Enforce the named expert's small supported read-only profile, fail closed."""
     deny = ("edit", "bash", "task", "external_directory", "webfetch", "websearch", "question")
     inspect = ("glob", "grep", "list", "lsp")
-    # Exact ordered read rules prevent later wildcard grants undoing exclusions.
+    # Broad default deny must precede grants; exact read order preserves exclusions.
     expected = {"*", "read", *deny, *inspect}
     permission_keys = re.findall(r'^  ["\']?([^\s:"\']+)["\']?:', raw, re.M)
     safe = (
@@ -460,6 +460,7 @@ def _check_expert_profile(path: Path, repo_root: Path, keys: dict[str, str], raw
         and keys.get("permission") == ""
         and len(permission_keys) == len(expected)
         and set(permission_keys) == expected
+        and permission_keys[0] == "*"
         and re.search(r'^  ["\']\*["\']: deny$', raw, re.M) is not None
         and _mapping_entries(raw, "read") == EXPERT_READ_RULES
         and all(_has_scalar_permission(raw, key, "deny") for key in deny)

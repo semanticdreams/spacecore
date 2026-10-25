@@ -963,6 +963,24 @@ def test_expert_exact_safe_profile_passes(tmp_path):
     assert load_checker().check_repo(repo) == []
 
 
+def test_checked_in_expert_profile_passes():
+    checker = load_checker()
+    path = REPO_ROOT / ".opencode/agents/expert-advisor.md"
+    keys, raw = checker._frontmatter(path.read_text())
+    assert checker._check_expert_profile(path, REPO_ROOT, keys, raw) == []
+
+
+def test_expert_rejects_default_deny_moved_after_inspection_grants(tmp_path):
+    repo = make_repo(tmp_path)
+    text = (REPO_ROOT / ".opencode/agents/expert-advisor.md").read_text()
+    default_deny = '  "*": deny\n'
+    assert text.count(default_deny) == 1
+    # Preserve every key/action but move the broad last-matching rule to the tail.
+    reordered = text.replace(default_deny, "", 1).replace("\n---\n", "\n" + default_deny + "---\n", 1)
+    write_file(repo / ".opencode/agents/expert-advisor.md", reordered)
+    assert "expert-profile" in violation_codes(repo)
+
+
 @pytest.mark.parametrize("old,new", [
     ("model: openai/gpt-6.1-sol", "model: opencode-go/glm-5.3-flash"),
     ("variant: high", "variant: medium"), ("variant: high\n", ""),
@@ -1049,6 +1067,15 @@ def test_context_worker_and_controller_consultation_transitions():
     assert "needs_consultation" in debugging and "before `confirmed`" in debugging
     assert "opencode-go/glm-5.3-flash" in debugging
     assert "smarter model" not in debugging
+
+
+def test_implementer_escalation_keeps_glm_implementation_without_model_fallback():
+    import re
+    text = (REPO_ROOT / ".opencode/agents/implementer.md").read_text()
+    assert not re.search(r"(?:more capable|stronger|smarter)\s+model", text, re.I)
+    escalation = text.split("**How to escalate:**", 1)[1].split("## Self-Review", 1)[0]
+    for term in ("context", "smaller pieces", "bounded consultation", "`AGENTS.md`", "GLM retains implementation"):
+        assert term in escalation
 
 
 def test_direct_exemption_does_not_waive_dual_design_input():
