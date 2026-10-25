@@ -369,6 +369,93 @@
 
 (table.insert tests {:name "assert calls merge preserves calls first single definitions read and repeated recovered reads" :fn public-definition-merge-access-order})
 
+(fn masking-upvalue [run]
+  (assert (and debug (= (type debug.getupvalue) :function)
+               (= (type debug.setupvalue) :function)) "masking characterization requires upvalue access")
+  (var index 1)
+  (var found nil)
+  (var original nil)
+  (var searching true)
+  (while searching
+    (local (name value) (debug.getupvalue run index))
+    (if (= name "outer_only_form")
+        (do (set found index) (set original value) (set searching false))
+        (= name nil) (set searching false)
+        (set index (+ index 1))))
+  (assert (and found (= (type original) :function)) "actual outer-only-form upvalue is required")
+  (values found original))
+
+(fn characterize-masking [ctx n]
+  (local Layout (require :constraints.rules.layout))
+  (local rule (H.find-rule-by-id (Layout.rules) rule-id))
+  (assert rule "interactive-context-assertion rule is required")
+  (local definitions (. ctx.facts.files 1 :definitions))
+  (local before (snapshot ctx {}))
+  (local (index original) (masking-upvalue rule.run))
+  (local completed [])
+  (fn counted-mask [def all-defs]
+    ;; Delegate first: only completed original calls contribute to the count.
+    (local result (table.pack (original def all-defs)))
+    (table.insert completed (length all-defs))
+    (assert (rawequal def (. definitions (length completed))) "masking changed definition order")
+    (each [i expected (ipairs definitions)]
+      (assert (rawequal (. all-defs i) expected) "masking must receive full original definition context"))
+    (table.unpack result 1 result.n))
+  (assert (= (debug.setupvalue rule.run index counted-mask) "outer_only_form"))
+  (local result (table.pack (pcall rule.run ctx)))
+  ;; Restore before asserting results or rethrowing the original error object.
+  (local restored (debug.setupvalue rule.run index original))
+  (local (_ current) (debug.getupvalue rule.run index))
+  (assert (and (= restored "outer_only_form") (rawequal current original)) "masking upvalue was not restored")
+  (when (not (. result 1)) (error (. result 2)))
+  (assert (= result.n 2) "rule must return exactly one value, including nil")
+  (assert (= (. result 2) nil) "canonical nonfunctions must not produce diagnostics")
+  (assert (= (length completed) n) "expected one completed masking call per definition")
+  (each [_ width (ipairs completed)]
+    (assert (= width n) "every completed masking call must receive D=N"))
+  ;; N*D gives 256/1024 structural loop visits, not CPU time or Wine cost.
+  (assert-unchanged before))
+
+(fn characterize-nonfunction-size [dir n]
+  (local fs (require :fs))
+  (local Source (require :constraints.source))
+  (local Facts (require :constraints.facts))
+  (local forms [])
+  (for [i 1 n]
+    (table.insert forms (.. "(local inert-" i " " i ")")))
+  (local path (fs.join-path dir (.. "canonical-" n ".fnl")))
+  (fs.write-file path (table.concat forms "\n"))
+  (local target {:kind :files :name "canonical-nonfunction-masking"
+                 :files [path] :roots [] :module-roots [dir]})
+  (local records (Source.discover target))
+  (assert (= (length records) 1) "fixture must discover exactly one file")
+  (local facts (Facts.extract records))
+  (assert (= (length facts.files) 1) "fixture must extract exactly one file")
+  (local ff (. facts.files 1))
+  (assert (= (length ff.definitions) n) "fixture must contain exactly N definitions")
+  (assert (if ff.recovered-parents (= (length ff.recovered-parents) 0) true) "fixture must not recover parents")
+  (assert (= (length ff.accesses) 0) "fixture must not contain accesses")
+  (assert (= (length ff.calls) 0) "fixture must not contain calls")
+  (each [i def (ipairs ff.definitions)]
+    (assert (= def.kind :local) "fixture definitions must be nonfunctions")
+    (assert (and def.top-level? (= def.enclosing-fn nil)) "fixture definitions must be flat")
+    (assert (= def.name (.. "inert-" i)) "fixture definitions must be distinct and ordered")
+    (assert (= def.form (. forms i)) "fixture forms must be exact quote-free strings"))
+  (characterize-masking {:target target :facts facts :files records} n))
+
+(fn characterize-nonfunction-sizes [dir]
+  (each [_ n (ipairs [16 32])]
+    (characterize-nonfunction-size dir n)))
+
+(fn canonical-nonfunction-masking []
+  (local tempfile (require :tempfile))
+  (local handle (tempfile.TemporaryDirectory {:prefix "canonical-nonfunction-masking-"}))
+  (local (ok result) (pcall characterize-nonfunction-sizes handle.path))
+  (handle:drop)
+  (when (not ok) (error result)))
+
+(table.insert tests {:name "canonical nonfunctions complete N masking calls with full D=N context" :fn canonical-nonfunction-masking})
+
 (fn main []
   (local runner (require :tests.runner))
   (runner.run-tests {:name "constraints-layout-assert-calls" :tests tests}))
