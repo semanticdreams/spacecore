@@ -14,9 +14,11 @@ production agent definitions or model routing during this pilot.
    agents' ownership, review, and escalation duties.
 2. Broad historical task replay is realistic but expensive, confounded by changing
    context, and likely to exceed the requested time horizon.
-3. **Selected:** fixed-context architecture/review cases plus a bounded executable
-   implementation comparison. This separates design ability from ability to
-   execute a stronger model's contract without building a benchmark platform.
+3. **Selected:** fixed-context architecture/review cases using actual Space Fennel
+   modules and a bounded Fennel implementation comparison. This separates design
+   ability from ability to execute a stronger model's contract without building a
+   benchmark platform. The user explicitly corrected the original synthetic
+   Python proposal: project pattern adherence is the primary evaluation target.
 
 Use the existing OpenCode CLI and a thin Python standard-library runner. Preserve
 normal internal CLI subscription authentication; never inspect/copy auth files,
@@ -25,52 +27,49 @@ public-source/synthetic context, not production runtime data.
 
 ## Cases and frozen requirements
 
-Create four reasoning cases, answered independently by each model:
+Create four reasoning cases, answered independently by each model. Source packets
+pin exact repository bytes and short public convention excerpts, not worked
+solutions from historical lifecycle documentation:
 
-1. **Architecture:** extend a small synchronous Python command-availability
-   service with role/evidence-aware projection. Require ownership, lifecycle,
-   interfaces, and an implementable cross-file contract.
-2. **Review:** assess a seeded defective patch and a sound patch; identify concrete
-   failures while avoiding speculative redesign and false positives.
-3. **Escalation:** a separate request introduces automatic role switching and
-   asynchronous updates without specifying ownership/delivery semantics. Name
-   required decisions and safe bounded work rather than inventing policy.
-4. **Evidence handoff:** a claimed completed change omits the authoritative
-   state-layer revision/notification update; all relevant code is supplied.
+1. **Architecture:** propose opt-in retained logical content state for real
+   `assets/lua/tab-view.fnl` while disposing/rebuilding widget subtrees. Supply its
+   focused tests. Require ownership, identity, lifecycle, compatibility,
+   interfaces, and bounded validation; do not retain widgets as model state.
+2. **Review:** assess seeded defective and sound variants of real
+   `assets/lua/search-view.fnl`, with focused tests. Defects concern widget versus
+   layout ownership, recursive double drop, and listener cleanup. Identify concrete
+   failures and avoid speculative redesign or false positives.
+3. **Escalation:** request persistent tab state across dynamic tab-list updates,
+   duplicate/absent IDs, and external updates without specifying identity or state
+   ownership. Identify missing decisions and safe bounded work rather than inventing
+   policy or refusing everything.
+4. **Evidence handoff:** assess a claimed completed `Sized.set-size` change that
+   omits one measurement path or invalidation, with unchanged relevant code supplied.
+   Distinguish reported tests from actual behavioral coverage.
 
-The architecture case uses a roughly 150–180-line baseline across
-`command_policy.py`, `workspace_state.py`, and `workspace_service.py`. Commands
-are inert data, never shell execution. Planner, implementer, reviewer, and
-capability role names ground the task in the project's agent separation without
-claiming this is a real application subsystem.
+One implementation surface is the actual 40-line `assets/lua/sized.fnl` and its
+88-line focused suite: add canonical runtime `set-size` without rebuilding its
+child. Python may orchestrate calls and evidence; it is not the evaluated language.
 
-Public API: immutable `Snapshot(enabled, evidence, revision)`;
-`WorkspaceStore.snapshot`, `set_enabled`, `set_evidence`, `subscribe`;
-`WorkspaceService.commands(workspace, role=None)`,
-`watch(workspace, callback, *, role=None)`, and `close`.
+Publish these requirements; hold out test inputs, not requirements:
 
-Eligibility: `plan` belongs to planner with no evidence requirement; `apply` to
-implementer requiring `planned`; `review` to reviewer requiring `validated`;
-`publish` to capability requiring `validated` and `approved`.
+- Both ordinary and constrained measurement use the current requested size.
+- Preserve existing nonpositive-axis constraint inheritance.
+- Invalidate the wrapper's measurement, not an unrelated root or sibling.
+- Preserve child identity/lifetime; changing size never rebuilds or drops it.
+- Layouters retain direct transform writes, not dirtying setters during layout.
+- Own size state per built instance; do not mutate shared constructor options.
+- Follow applicable final-self-literal, factory/build-context, `local`, canonical
+  key, and explicit-error conventions.
+- Test ordinary/constrained updates, dirtiness, independent instances, and child
+  lifetime; preserve existing tests and compatible default behavior.
 
-Publish these invariants to candidates; hold out test inputs, not requirements:
-
-- Role omitted preserves existing enabled order and role-neutral behavior.
-- Explicit roles return exactly enabled eligible commands; unknown roles error.
-- Semantic enabled/evidence changes increment revision once and notify once;
-  no-op changes do neither; snapshots are immutable.
-- Reads are immediately fresh and caches do not leak across roles/workspaces.
-- Watches deliver immediately once, then exactly once per projected tuple change.
-- One upstream subscription per active service/workspace; reads create none;
-  removing one watcher preserves others; removing the last releases upstream.
-- Unsubscribe/close are idempotent; closed service reads/watches error and no
-  callbacks reach it.
-- Services on the same store have independent lifetimes; replacement is fresh.
-
-Compare three implementations from identical baseline bytes: GPT contract to
-GPT, GLM contract to GLM, and the identical GPT contract to GLM. Include the same
-explicit invariants with each implementation prompt. Preserve weak plans and
-escalations instead of silently repairing them.
+Compare three implementations from identical baseline bytes: the public feature
+brief to GLM (plain substitution); a frozen independently reviewed GPT-authored
+contract to GPT; and the identical contract to GLM (hybrid). Include identical
+requirements and source in all three. Prepare the contract before outputs; it is
+not a reference implementation. Contract effects versus model randomness cannot
+be isolated in this sample. TabView separately measures originating architecture.
 
 ## Execution and evidence boundaries
 
@@ -88,9 +87,9 @@ GLM. Match deployed GPT roles (`xhigh` reasoning, `high` implementation) where
 supported. Missing actual identity or authentication is an explicit preflight
 failure, not evidence about model quality. Never fall back to another model.
 
-Apply returned fixture files only to new scratch copies using an exact filename
-allowlist and reject unsafe paths. Execute generated code only inside an available
-credential-free OS sandbox with no network and bounded resources; do not install
+Apply returned Fennel files only to new scratch asset overlays using an exact
+filename allowlist and reject unsafe paths. Execute generated code only inside an
+available credential-free OS sandbox with no network and bounded resources; do not install
 host packages or widen privileges. If unavailable, continue reasoning evaluation
 and label implementation assessment static-only, with no test-pass claim.
 
@@ -122,19 +121,27 @@ Infrastructure failures, timeouts, and incomplete sessions are distinct outcomes
 
 ## Deliverables, validation, and limits
 
-Deliver a small reproducible runner with mocked tests, frozen cases and fixture
-contract tests, and a concise evidence report with a proposed responsibility
-split. Keep large raw own-session artifacts outside version control; commit
+Deliver a small reproducible runner with mocked tests, frozen cases and native
+acceptance tests, and a concise report with a proposed responsibility split.
+Keep large raw own-session artifacts outside version control; commit
 sanitized summaries and sufficient synthetic artifacts for independent review.
-Validate baseline tests before calls, runner handling of malformed output,
-identity mismatch, completion/errors, timeouts, unsafe paths, and missing usage.
+Validate baseline tests when runtime-ready before calls. Validate runner handling
+of malformed output, identity mismatch, completion/errors, timeouts, unsafe paths,
+and missing usage.
 Review preparation independently before calls and results independently before
-reporting findings. No Space build, Fennel suite, or production config change is
-required; PR CI is the integration gate for any landed tooling.
+reporting findings. Native Fennel validation is compile check first, explicit-file
+constraints second, focused tests third with absolute asset/macro paths, audio
+disabled, keyring skipped, and temporary XDG data. A missing/stale binary requires
+`make build` before execution; do not use system Lua/Fennel as substitute evidence.
+The workspace currently has no `build/` directory. Do not silently start a cold
+multi-hour build for this time-bounded pilot: report static-only results unless a
+trusted runtime and safe execution isolation become available. PR CI is the
+integration gate for any landed tooling; production agent config remains unchanged.
 
 This is a screening pilot, not statistical proof. Fixed context excludes live
 repository search, autonomous tools, recovery loops, long-context performance,
-Fennel/C++, and broad refactors. Treat successful shared-contract execution as
-evidence for narrower GLM duties, not authorization to downgrade architecture or
+C++ bindings, and broad refactors. Static-only implementation review cannot
+establish compilation or runtime correctness. Treat successful shared-contract
+execution as evidence for narrower GLM duties, not authorization to downgrade architecture or
 review gates. Final recommendations may change role boundaries, but adopting
 production routing changes is a separate evidence-informed task.
