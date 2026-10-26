@@ -989,12 +989,15 @@
     (each [_ parent (ipairs ff.recovered-parents)]
       (table.insert all-defs parent)))
   all-defs)
-
+(var make-interactive-observation nil)
 (fn interactive-context-assertion-rule-run [ctx]
   "Rule: flag interactive widgets using clickables or hoverables without
   an actual assert call in the same enclosing function."
+  (local observer (when (= (type ctx) :table) (rawget ctx :observer)))
+  (local observe (when observer (make-interactive-observation observer)))
   (var diagnostics [])
-  (each [_ ff (ipairs (or (. ctx.facts :files) []))]
+  (each [file-index ff (ipairs (or (. ctx.facts :files) []))]
+    (when observe (observe :begin :interactive-file file-index))
     (var interactive-access-texts [])
     ;; Check whether this file is the interaction-router module — its
     ;; router.clickables / router.hoverables are internally owned arrays,
@@ -1023,12 +1026,15 @@
       (let [calls (or ff.calls [])
             all-defs (interactive-definitions ff)]
        (local named-calls (AssertCalls.create {:file-fact ff :definitions all-defs :calls calls}))
-       (each [_ def (ipairs (AssertCalls.select-definitions ff all-defs calls))]
+       (each [definition-index def (ipairs (AssertCalls.select-definitions ff all-defs calls))]
         (var skip-because-param false)
         ;; Build a form that excludes nested named function definitions,
         ;; so accesses inside nested functions are not attributed to the
         ;; outer enclosing function (e.g., Button containing an asserted build).
-        (local cleaned (outer-only-form def all-defs))
+         (when observe (observe :begin :interactive-mask file-index definition-index (# all-defs)))
+         (local cleaned (outer-only-form def all-defs))
+         (when observe (observe :end :interactive-mask file-index definition-index))
+         (when observe (observe :begin :interactive-analysis file-index definition-index))
         (when def.form
           (local params (extract-fn-params def.form))
           (when params
@@ -1101,8 +1107,18 @@
                      :evidence {:function-name (or def.name "<anonymous>")
                                 :interactive-access (or access-used "clickables/hoverables")}
                      :hint (.. "Assert that " (or access-used "the interactive context")
-                                " is available before using it")}))))))))
-   (if (> (length diagnostics) 0) diagnostics nil))
+                                 " is available before using it")})))))
+         (when observe (observe :end :interactive-analysis file-index definition-index)))
+       (when observe (observe :end :interactive-file file-index nil (# all-defs)))))
+    (if (> (length diagnostics) 0) diagnostics nil))
+
+(set make-interactive-observation
+     (fn [observer]
+       (fn notify [edge subphase index definition-index definitions]
+         (observer {:phase :rule :rule-id "layout.interactive-context-assertion"
+                    : edge : subphase : index : definition-index : definitions})
+         nil)
+       notify))
 
 ;; ---------------------------------------------------------------------------
 ;; Rule registry

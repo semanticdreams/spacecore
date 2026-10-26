@@ -148,7 +148,7 @@ containing only these scalar fields (optional fields are omitted when unavailabl
 | --- | --- |
 | `edge` | `begin` or `end` |
 | `phase` | `discover`, `facts`, `select`, `rule`, `baseline`, `summarize` |
-| `subphase` | Optional `scan`, `read`, `parse` (discover) or `extract`, `recover`, `span` (facts) |
+| `subphase` | Optional `scan`, `read`, `parse` (discover), `extract`, `recover`, `span` (facts), or the private interactive rule boundaries below |
 | `file` | Optional safe forward-slash relative file; never an absolute-path fallback |
 | `index` | Optional 1-based file index in discovery/record order, or selected-rule index |
 | `rule-id` | Registered rule identifier on rule events |
@@ -173,11 +173,42 @@ Begin is delivered before its work; end only after that work returns normally.
 Escaping workload errors leave unmatched begins. A rule's existing guarded
 execution can return crash/interruption diagnostics; that is a returned rule
 operation and has an end event, not a claim that the rule passed. Observer calls
-are synchronous and unprotected: callback errors propagate directly, outside the
-existing guarded rule body, without being converted into framework diagnostics.
+are synchronous. Top-level callback errors propagate directly. The internal rule
+context forwards an optional private relay: it protects **only callback delivery**,
+latches the first callback error with a separate presence flag (preserving raw
+table/false/nil errors), and rethrows it into the unchanged rule guard. After
+`run-rule` restores any owned hook, the relay rethrows the original error outside
+that guard, **before result processing or top-level rule END**. Callback failures
+are not accepted framework diagnostics; no workload protection is added.
 Observers must not mutate pipeline state and should return nil.
 
+The interactive rule emits only the following additional private scalar events:
+
+| Field | Exact contract |
+| --- | --- |
+| `phase` | `rule` |
+| `rule-id` | `layout.interactive-context-assertion` |
+| `edge` | `begin` or `end` |
+| `subphase` | `interactive-file`, `interactive-mask`, or `interactive-analysis` |
+| `index` | Existing positive 1-based file iteration index |
+| `definition-index` | Mask/analysis only: positive 1-based **selected-loop ordinal**, reset per file and shared by that iteration's mask/analysis boundaries |
+| `definitions` | Complete merged masking-context count `#all-defs`, at mask BEGIN and file END only |
+
+These fresh tables contain **no other fields**. The ordinal is not a merged
+definition position or stable source identity; it coincides with the merged
+index only on unfiltered/unsafe paths. The existing selector, definition order,
+calls/merge accesses, dynamic form reads, masking and analysis remain unchanged.
+File BEGIN precedes original file work; mask boundaries immediately bracket
+`outer-only-form`; analysis boundaries bracket the remaining original body,
+including ordinary skipped definitions. File END occurs only on normal file
+return. There are no pair/match counters or additional traversals.
+
 With no observer, no event tables are allocated and no observation clocks run.
+Layout reads the optional observer with raw table access (no new `__index`
+effects) and invokes its private event factory only on the observed path. It owns
+no diagnostic counters, timing, formatting or history. No-observer tests combine
+throwing private-factory spies and active controls with source allocation review;
+a clock spy alone is not allocation proof.
 These production modules add no environment switch, clock, formatting, output,
 writer import, protected workload wrapper, coroutine, deadline or hook. Consumers
 own any opt-in policy, clock, bounded formatting/output and overhead assessment;
@@ -215,10 +246,14 @@ the sink adds one newline, flushes immediately, and raises returned write/flush
 errors. The full roots, all five suites, `baseline-data=false`, existing result
 assertions, 120-second case deadline and 1800-second outer application deadline
 are unchanged. Synthetic nested `Runner.run-case` tests verify the existing
-10000-instruction hook stays installed during writes, is restored before teardown,
-and retains its failure latch when an inner timeout exception is caught.
+10000-instruction hook stays installed during pre-timeout writes, is restored
+before teardown, and retains its failure latch when an inner timeout exception
+is caught. On timeout, the original hook disables itself to permit unwind;
+observation does not reinstall it or replace its latched failure with a later
+sink error.
 
-The private live `detail-phase` literal remains **nil** for the first experiment.
+The private live `detail-phase` literal is **`rule`** for the bounded interactive
+boundary diagnostic. Only the full-pipeline test owner selects it.
 There is no new environment selector, command or test-runner marker/schema change.
 Every diagnostic line uses the distinct `[CONSTRAINT-PROGRESS] ` prefix:
 
@@ -231,17 +266,77 @@ Every diagnostic line uses the distinct `[CONSTRAINT-PROGRESS] ` prefix:
   **65536 bytes total**, including the two-byte terminator reservation per line.
   The final available line is
   reserved for `[CONSTRAINT-PROGRESS] cap reached mode=phase`.
-- **Later measured detail:** the injected option may select one known pipeline
+- **Other selected detail:** the injected option may select a known non-rule pipeline
   phase. Only that phase's subphase/file edges are added to the high-level output.
   The entire observer output is capped at **2 MiB** and **512 encoded bytes per
   line**, including the two-byte terminator reservation. Space for
   `[CONSTRAINT-PROGRESS] cap reached mode=detail` and its two-byte terminator is reserved
   inside the total budget. This mode exists for a later evidence-selected
-  experiment; it is not enabled by the live integration. LF output need not fill
+  experiment; it is not the live owner's selection. LF output need not fill
   the physical 2-MiB bound: conservative reserved bytes, not LF bytes alone,
   determine the cap. CRLF output is bounded without that unused byte per line.
 
-After either cap marker, further observation does no clock or formatting work.
+- **Interactive rule detail (`detail-phase=rule`):** other pipeline events are
+  silent; actual **N comes only from top-level Facts END**, not discovery counts
+  or a predicted inventory. Only the named interactive rule's boundaries are
+  consumed. State is fixed aggregate scalars and one current-file/definition slot,
+  never retained event/file/definition history or a file-keyed map. Its entire
+  output is at most **2N+1 records**, **512 serialized bytes per line**, and
+  **2 MiB total**, all including the conservative two-byte CRLF reservation.
+  Before ordinary output, reserve one terminal record (up to 512 bytes including
+  terminator) and one record slot. Exhaustion emits exactly one canonical
+  `outcome=cap` aggregate and stops all clocks, formatting and writes. There is
+  no additional generic cap marker or completion record in this mode.
+
+Interactive records use exactly these fields after `[CONSTRAINT-PROGRESS] `:
+
+```text
+phase=rule subphase=interactive edge=begin file_index at_ms stage=setup
+phase=rule subphase=interactive edge=end file_index definitions masks analyses elapsed_ms mask_ms remaining_ms
+aggregate phase=rule subphase=interactive outcome files_begun files_ended definitions masks analyses elapsed_ms mask_ms remaining_ms pending_file pending_def pending_stage pending_definitions definitions_known pending_ms
+```
+
+The tokens above are field names; emitted fields use `key=value`. Fixed outcome
+values are `complete|unfinished|cap`, meaning **observed boundary completeness,
+never rule/pipeline PASS or deadline compliance**. Summary is emitted once at the
+actual top-level interactive rule END (or once as a terminal cap). It never
+manufactures missing file/definition END. Workload failures caught by the
+unchanged rule guard can yield an unfinished summary. Relay, clock, process or
+sink failure before top-level END may leave **no summary**; that missing completion
+is preserved, not repaired with a finally END.
+
+`masks` and `analyses` increment only on their observed END. Known merged D is
+added to aggregate `definitions` once per file, first at mask BEGIN or, if no
+selected definitions were visited, at file END. These are **different populations**:
+completed mask/analysis counts may be less than D even with complete boundaries.
+No equality with D is required. `pending_def` is the same selected-loop ordinal,
+not a merged position; `pending_def/D` is not completion or remaining-work progress.
+
+`pending_stage` is `none|setup|mask|analysis|between`. Zero pending indices mean
+none; `definitions_known=0` means the pending file's D is unknown, not a measured
+zero. `pending_ms` is elapsed since the last pending-stage boundary. Between mask
+END and analysis BEGIN the ordinal remains pending; after analysis END there is
+no pending ordinal (zero), though the file is still pending until file END.
+`at_ms` is relative to consumer creation; file elapsed is from its BEGIN and
+summary elapsed is from top-level rule BEGIN through END/cap, including unwind.
+
+File `mask_ms` sums completed intervals. Summary `mask_ms` additionally includes
+a **censored pending mask interval only when `pending_stage=mask` explicitly marks
+it**. `remaining_ms=elapsed_ms-mask_ms` includes setup, instrumentation, callback,
+clock, formatting, flushing, GC, inter-boundary and possible unwind costs; it is
+not pure analysis CPU. There are no pair visits/matches or selector-eligibility
+measurements. Instrumented elapsed is neither natural uninstrumented runtime nor
+evidence of a Wine/native speed ratio.
+
+Rule detail reads only allowlisted raw enum/numeric/index fields, with no paths,
+forms, source, names, environment dumps, metatable traversal or arbitrary object
+stringification. Nonfinite/negative values, nonintegral counts/indices and
+arithmetic overflow fail explicitly. Counts and indices must be exact integers
+up to `2^53-1`, including aggregate additions and the computed `2N+1` record limit;
+indices are positive. Bounded six-significant-digit numeric rendering is diagnostic
+and approximate, not an accounting API; values are not silently truncated.
+
+After any terminal cap, further observation does no clock or formatting work.
 There is no fabricated completion at a cap or after a raised workload/sink error.
 An emitted end means that an end event was received, **not** that a rule passed.
 Elapsed values are attached only to matched starts; aggregate `begins` and `ends`
@@ -259,15 +354,16 @@ or data dump is included. Number formatting is bounded and approximate (six
 significant digits); these observations are diagnostics, not exact counters for
 accounting or a timing API.
 
-The phase-first allowance plus the existing approximately 642-KiB capture remains
-below the 16-MiB capture limit; even the optional 2-MiB detail allowance fits within
-that bound. Compare native default-module OFF/ON executed counts, ordered outcomes,
-output size, phase inventory and elapsed time before actual Wine observation.
-Alternating repeated local samples assess obvious instrumentation overhead but
-are not a general speed guarantee. Last-started phases are not a root-cause
-diagnosis; this instrumentation does not itself fix the Wine timeout. The
-separately reviewed scenario-ownership repair above does not waive Task6C or
-Task7's remaining measurement and integration gates.
+The 2-MiB detail allowance plus the existing approximately 642-KiB capture remains
+below the 16-MiB capture limit. Current-source observation requires independent
+SCHEMA / CONTROL / INACTIVE implementation review and sequential compile,
+constraints and focused synthetic/compatibility gates first. The controller owns
+the separately authorized single native observation; implementation and tests
+grant no Wine, profiling or observation authority. Historical frozen Facts-span
+diagnostic artifacts remain untouched and unexecuted. Last-started boundaries
+alone are not a root-cause diagnosis or timeout fix. No baseline allowance, skip,
+deadline, parent runtime policy, public signature or selector has changed; the
+remaining Wine acceptance and integration gates are not waived.
 
 ## Constraint Families
 

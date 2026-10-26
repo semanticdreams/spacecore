@@ -328,8 +328,8 @@
   nil)
 
 (fn full-repo-observer [raw-timings now-ms write]
-  ;; No environment selector for detail. First experiment is phase-first only.
-  (local detail-phase nil)
+  ;; Private selection only; the exact timing opt-in remains unchanged.
+  (local detail-phase :rule)
   (when (= raw-timings "1")
     ((. (require :tests.constraint-progress) :create) {: now-ms : write : detail-phase})))
 
@@ -658,7 +658,12 @@
   (assert (= (type observer) :function))
   (observer {:edge :begin :phase :discover})
   (observer {:edge :begin :phase :discover :subphase :read :index 1})
-  (assert (= state.writes 1) "live selection must remain phase-first"))
+  (assert (= state.writes 0) "rule detail must keep other pipeline events silent")
+  (observer {:edge :end :phase :facts :count 1})
+  (observer {:edge :begin :phase :rule :rule-id "layout.interactive-context-assertion"})
+  (observer {:edge :begin :phase :rule :rule-id "layout.interactive-context-assertion"
+             :subphase :interactive-file :index 1})
+  (assert (= state.writes 1) "live selection must emit the interactive file boundary"))
 
 (fn progress-live-sink-adds-newline-and-flushes []
   (local old-write io.write)
@@ -669,9 +674,13 @@
   (fn now-ms [] 0)
   (fn exercise []
     (local observer (full-repo-observer "1" now-ms write-progress-line))
-    (observer {:edge :begin :phase :discover})
+    (observer {:edge :end :phase :facts :count 1})
+    (observer {:edge :begin :phase :rule :rule-id "layout.interactive-context-assertion"})
+    (observer {:edge :begin :phase :rule :rule-id "layout.interactive-context-assertion"
+               :subphase :interactive-file :index 1})
     (assert (= (# output) 2) "begin must be written and flushed before returning")
-    (observer {:edge :end :phase :discover :count 0}))
+    (observer {:edge :end :phase :rule :rule-id "layout.interactive-context-assertion"
+               :subphase :interactive-file :index 1 :definitions 0}))
   (set io.write fake-write)
   (set io.flush fake-flush)
   (local (ok err) (pcall exercise))
