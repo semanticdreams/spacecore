@@ -122,7 +122,7 @@ Every new event is a fresh scalar-only table containing only:
 | edge | begin or end |
 | subphase | interactive-file, interactive-mask, interactive-analysis |
 | index | existing positive file iteration index |
-| definition-index | existing positive merged-definition index for mask/analysis |
+| definition-index | existing positive selected-definition loop ordinal for mask/analysis (1-based, reset per file, shared by that iteration's mask and analysis boundaries; not a merged-definition position or stable source identity; coincides with the merged index on unfiltered paths) |
 | definitions | #all-defs at mask BEGIN and file END only |
 
 Private notify signature is
@@ -132,6 +132,24 @@ bracket the existing outer-only-form call; analysis BEGIN/END bracket the remain
 original definition body, including ordinary skipped definitions. File END occurs
 only on normal file return. Use existing loop indices and observed-only merged
 array length; add no per-pair or match counters. Never synthesize END during unwind.
+
+### Reconciled index contract (2026-10-26)
+
+`definition-index` is the 1-based ordinal in the existing selected-definition
+iteration, not a merged-definition position or stable source identity. On the
+unsafe/dynamic selector path (`select-definitions` returns `all-defs`), it coincides
+with the merged index. `definitions` remains `#all-defs`, the complete merged
+masking-context count—a different population from observed mask/analysis END
+counts. Consumer pending state `pending_def` carries the same ordinal meaning.
+
+The consumer must not require masks/analyses to equal D, interpret `pending_def` as
+a merged position, or treat `pending_def/D` as completion or remaining-work
+progress. Boundary completeness stays independent of rule acceptance.
+
+Provenance: reconciled via dual-model consultation on 2026-10-26 (GLM proposal;
+expert review ses_e86d6174affexO3i4m8ZAvLAcu, answered; recorded in the SDD ledger)
+after current-source inspection found the compacting selector diverges selected
+ordinals from merged positions.
 
 ## Test-owned timing and bounded output
 
