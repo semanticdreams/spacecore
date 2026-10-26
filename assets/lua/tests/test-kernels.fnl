@@ -1,5 +1,5 @@
 (local fs (require :fs))
-
+(local json (require :json))
 (local tests [])
 (local sysinfo (require :sysinfo))
 (local platform-os (. (sysinfo.platform) :os))
@@ -43,9 +43,9 @@
       (string.find stdout-text "Operation not permitted" 1 true)))
 
 (fn wait-until [kernels timeout-seconds pred]
-  (local deadline (+ (os.clock) (or timeout-seconds 5.0)))
+  (local deadline (+ (sysinfo.now-ms) (* 1000 (or timeout-seconds 5.0))))
   (var done? false)
-  (while (and (not done?) (< (os.clock) deadline))
+  (while (and (not done?) (< (sysinfo.now-ms) deadline))
     (kernels:tick)
     (set done? (pred)))
   done?)
@@ -193,7 +193,7 @@
                       (.. "; status="
                           (tostring current-instance.status)
                           ", error="
-                          (tostring (or current-instance.last-error "")))
+                           (tostring (or current-instance.last-error "")) "; process=" (json.dumps current-instance.process-result))
                       "; instance disappeared")))
 
       (var success-result nil)

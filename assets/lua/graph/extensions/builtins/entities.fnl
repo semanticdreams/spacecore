@@ -67,7 +67,8 @@
   (fn make-string-entity [entity-id]
     (StringEntityNodeModule.StringEntityNode {:entity-id entity-id :store string-store :lifecycle options.lifecycle}))
   (fn make-code-entity [entity-id]
-    (CodeEntityNodeModule.CodeEntityNode {:entity-id entity-id :store code-store :lifecycle options.lifecycle}))
+    (CodeEntityNodeModule.CodeEntityNode {:entity-id entity-id :store code-store :lifecycle options.lifecycle
+                                        :runner options.code-runner :run-store options.code-run-store}))
   (fn make-list-entity [entity-id]
     (ListEntityNodeModule.ListEntityNode {:entity-id entity-id
                                            :store list-store :lifecycle options.lifecycle

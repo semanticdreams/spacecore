@@ -242,7 +242,7 @@
       {:entity-id f.entity.id :store f.store}))
   (local observed-node
     (H.with-fields FlexModule {:Flex observed-flex}
-      (fn [] (H.with-fields package.loaded {:graph/view/previews/code-entity false} make-node))))
+      (fn [] (H.with-fields package.loaded {:graph/view/previews/code-entity false :graph/view/code-entity-editor false} make-node))))
   (local register app.clickables.register)
   (var submitted nil)
   (fn observe-register [self widget]
@@ -257,12 +257,11 @@
     (fn [] (canvas:add-panel-child {:builder builder :position (glm.vec3 0)
                                    :size (glm.vec3 80 45 0)})))
   (observed-node:drop)
-  (assert (= (# flexes) 3) "actual preview root and two columns must be constructed")
-  (local root (. flexes 3))
-  (local content (. root.children 1 :element))
-  (local input (. content.children 1 :element))
-  (local label (. content.children 2 :element))
-  (local button (. root.children 2 :element :children 1 :element))
+  (assert (= (# flexes) 2) "actual preview controls and editor root must be constructed")
+  (local root (. flexes 2))
+  (local input (. root.children 2 :element))
+  (local label (. root.children 3 :element))
+  (local button (. root.children 1 :element :children 1 :element))
   (observe-preview-tree f root)
   (assert (> (count-entries f.widgets) 6) "must observe real visual descendants too")
   (same-preview-value (input:get-text) f.entity.source)
@@ -271,9 +270,9 @@
   (input:set-text "(+ 4 5)\n(+ 6 7)")
   (same-preview-value (. (f.store:get-entity f.entity.id) :source) (input:get-text))
   (button:on-click {})
-  (same-preview-value (preview-text label) "result-1")
+  (assert (string.find (preview-text label) "result-1" 1 true))
   (input.submitted:emit {})
-  (same-preview-value (preview-text label) "result-2")
+  (assert (string.find (preview-text label) "result-2" 1 true))
   (same-preview-value (# f.runs) 2)
   (each [_ request (ipairs f.runs)]
     (same-preview-value [request.source request.id request.language request.kernel]
@@ -318,7 +317,7 @@
   (local last-label (preview-text label))
   (f.node.run-result-changed:emit "after-drop")
   (same-preview-value (preview-text label) last-label)
-  (same-preview-value external-results 5)
+  (same-preview-value external-results 3)
   (same-preview-value (count-entries run-observation.active) 1)
   (f.node.run-result-changed:disconnect external-handler)
   (same-preview-value (count-entries run-observation.active) 0)
@@ -331,18 +330,22 @@
 (fn run-preview-fixture [draw store _root]
   (local f {:store store :restores [] :widgets {} :layouts {} :runs [] :node-drops 0 :weak []})
   (set f.entity (store:create-entity {:source "(+ 1 2)"}))
+  (fn run-code [_self id]
+    (local entity (assert (store:get-entity id)))
+    (table.insert f.runs {:source entity.source :id id :language entity.language :kernel entity.kernel})
+    {:id (.. "run-" (# f.runs)) :code-entity-id id :status "succeeded" :elapsed-ms 0 :created-at 0
+     :snapshot {:name (.. "result-" (# f.runs))} :output "" :initial-result ""
+     :result "" :result-type "nil" :error false :artifacts []})
+  (local code-runner {:run run-code})
   (set f.node ((. (require :graph/nodes/code-entity) :CodeEntityNode)
-               {:entity-id f.entity.id :store store}))
+                {:entity-id f.entity.id :store store :runner code-runner}))
   (local node-drop f.node.drop)
   (set f.node.drop (fn [self] (set f.node-drops (+ f.node-drops 1)) (node-drop self)))
   (set f.node.last-run-result "initial-result")
   (set f.focus ((. (require :focus) :FocusManager) {:root-name "code-preview"}))
   (set f.camera ((require :camera) {:position ((. (require :glm) :vec3) 0 0 100)}))
   (set f.icons ((require :icons)))
-  (fn run-code [_self request callback]
-    (table.insert f.runs request)
-    (callback {:output (.. "result-" (# f.runs))}))
-  (local kernel {:run-code run-code})
+  (local kernel {:run-code (fn obsolete-kernel-call [] (error "code entity must use its code runner"))})
   (fn body []
     (for [_ 1 3]
       (set f.runs [])

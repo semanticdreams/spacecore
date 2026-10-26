@@ -6,6 +6,7 @@
 (local JsonUtils (require :json-utils))
 (local FennelEvaluator (require :fennel-evaluator))
 (local process (require :process))
+(local sysinfo (require :sysinfo))
 (local zmq (require :zmq))
 
 (fn ensure-dir [path]
@@ -73,6 +74,11 @@
       (string.gsub name "%.json$" "")
       nil))
 
+(fn with-callback [cb payload]
+  (if cb
+      (cb payload)
+      nil))
+
 (fn Kernels [opts]
   (local options (or opts {}))
   (local defer-callbacks? (if (= options.defer-callbacks nil) true options.defer-callbacks))
@@ -120,13 +126,8 @@
   (fn emit-instances-changed []
     (instances-changed:emit true))
 
-  (fn with-callback [cb payload]
-    (if cb
-        (cb payload)
-        nil))
-
-  (fn schedule-callback [cb payload]
-    (if (and defer-callbacks? app app.next-frame)
+  (fn schedule-callback [cb payload immediate?]
+    (if (and (not immediate?) defer-callbacks? app app.next-frame)
         (app.next-frame (fn [] (with-callback cb payload)))
         (with-callback cb payload)))
 
@@ -206,7 +207,8 @@
       (schedule-callback request.callback
                          {:output ""
                           :error err
-                          :registers (or request.registers {})})))
+                           :registers (or request.registers {})}
+                         request.callback-immediate?)))
 
   (fn fail-pending-requests [instance err]
     (when (and instance instance.current-request)
@@ -320,7 +322,8 @@
                   (schedule-callback request.callback
                                      {:output output
                                       :error err-text
-                                      :registers registers}))
+                                       :registers registers}
+                                     request.callback-immediate?))
                 (send-next-request instance)))
           true)))
 
@@ -361,7 +364,7 @@
                   (emit-instances-changed)
                   (log-line instance.kernel-id
                             (.. "instance " instance.id " connected to " endpoint)))
-                (when (> (os.clock) (or instance.start-deadline 0))
+                (when (> (sysinfo.now-ms) (or instance.start-deadline 0))
                   (when instance.process-id
                     (pcall (fn [] (process.kill instance.process-id 15))))
                   (set instance.status "error")
@@ -379,7 +382,7 @@
 
       (if (= instance.status "stopping")
           (when (and instance.process-id
-                     (> (os.clock) (or instance.stop-deadline 0)))
+                     (> (sysinfo.now-ms) (or instance.stop-deadline 0)))
             (pcall (fn [] (process.kill instance.process-id 9))))
           nil)))
 
@@ -426,7 +429,7 @@
        :socket nil
        :zmq-context nil
        :last-error nil
-       :start-deadline (+ (os.clock) 5.0)
+       :start-deadline (+ (sysinfo.now-ms) 5000)
        :stop-deadline nil})
     (set (. instances-by-id instance-id) instance)
     (table.insert instance-order instance-id)
@@ -446,7 +449,7 @@
             (set instance.last-error nil)
             (set instance.updated-at (os.time))
             (emit-instances-changed)
-            (set instance.stop-deadline (+ (os.clock) 3.0))
+            (set instance.stop-deadline (+ (sysinfo.now-ms) 3000))
             (when instance.process-id
               (pcall (fn [] (process.kill instance.process-id 15))))
             true)
@@ -456,7 +459,7 @@
                 (set instance.last-error nil)
                 (set instance.updated-at (os.time))
                 (emit-instances-changed)
-                (set instance.stop-deadline (+ (os.clock) 3.0))
+                (set instance.stop-deadline (+ (sysinfo.now-ms) 3000))
                 (when instance.process-id
                   (pcall (fn [] (process.kill instance.process-id 15))))
                 true)
@@ -530,12 +533,12 @@
         ;; If several are running, use the most recently created/ran one.
         (. running (length running))))
 
-  (fn enqueue-run-request [instance source registers catch-errors callback]
+  (fn enqueue-run-request [instance source registers catch-errors callback immediate?]
     (table.insert instance.queue
                   {:source source
                    :registers (or registers {})
                    :catch-errors catch-errors
-                   :callback callback})
+                    :callback callback :callback-immediate? immediate?})
     (send-next-request instance))
 
   (fn list-kernels [_self]
@@ -669,7 +672,8 @@
     (local (kernel resolve-err) (resolve-kernel-spec spec))
     (if resolve-err
         (do
-          (schedule-callback callback {:output "" :error resolve-err :registers (or run-opts.registers {})})
+          (schedule-callback callback {:output "" :error resolve-err :registers (or run-opts.registers {})}
+                             run-opts.callback-immediate?)
           nil)
         (if (= (tostring kernel.id) "0")
             (run-internal run-opts.source run-opts.registers callback)
@@ -680,13 +684,14 @@
                     callback
                     {:output ""
                      :error (.. "No running instance for kernel " (kernel-label kernel))
-                     :registers (or run-opts.registers {})})
+                      :registers (or run-opts.registers {})}
+                    run-opts.callback-immediate?)
                   (enqueue-run-request
                     instance
                     (or run-opts.source "")
                     run-opts.registers
                     (if (= run-opts.catch-errors nil) true run-opts.catch-errors)
-                    callback)))))
+                    callback run-opts.callback-immediate?)))))
     true)
 
   (fn drop [_self]
@@ -722,6 +727,7 @@
    :run-kernel run-kernel
    :stop-instance stop-instance
    :run-code run-code
+   :resolve-kernel (fn [_self selector] (resolve-kernel-spec selector))
    :instance-label instance-label
    :kernel-label kernel-label
    :drop drop})

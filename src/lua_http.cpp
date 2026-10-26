@@ -1,6 +1,8 @@
 #include <sol/sol.hpp>
 
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -10,6 +12,30 @@
 #include "lua_callbacks.h"
 
 namespace {
+
+bool lua_http_debug_enabled()
+{
+    // Share the SPACE_HTTP_CLIENT_DEBUG gate with http_client.cpp so the
+    // Lua-side dispatch boundary is visible in the same per-request trace.
+    static const bool enabled = []() {
+        const char* value = std::getenv("SPACE_HTTP_CLIENT_DEBUG");
+        return value && value[0] != '\0' && value[0] != '0';
+    }();
+    return enabled;
+}
+
+void lua_http_diag(const char* event, uint64_t id, const char* detail)
+{
+    if (!lua_http_debug_enabled()) {
+        return;
+    }
+    std::fprintf(stderr,
+                 "space-http-lua event=%s id=%llu detail=\"%s\"\n",
+                 event,
+                 static_cast<unsigned long long>(id),
+                 detail ? detail : "-");
+    std::fflush(stderr);
+}
 
 struct LuaHttp
 {
@@ -182,6 +208,14 @@ struct LuaHttp
                 });
             }
             cleanup_stream_callback(res.id);
+            char detail[192];
+            std::snprintf(detail, sizeof(detail),
+                          "callback=%s status=%ld body=%zu error=%s",
+                          callback_ids.count(res.id) ? "found" : "MISSING-buffered",
+                          res.status,
+                          res.body.size(),
+                          res.error.empty() ? "-" : res.error.c_str());
+            lua_http_diag("dispatch-response", res.id, detail);
             auto it = callback_ids.find(res.id);
             if (it != callback_ids.end()) {
                 uint64_t cb_id = it->second;
