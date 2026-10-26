@@ -244,8 +244,9 @@ existing `SPACE_TEST_TIMINGS` value is exactly `1`. For that case, disabled valu
 allocate no writer and call neither its clock nor sink. The live clock is `sysinfo.now-ms`;
 the sink adds one newline, flushes immediately, and raises returned write/flush
 errors. The full roots, all five suites, `baseline-data=false`, existing result
-assertions, 120-second case deadline and 1800-second outer application deadline
-are unchanged. Synthetic nested `Runner.run-case` tests verify the existing
+assertions and 1800-second outer application deadline
+are unchanged. This case has an explicit 300-second deadline; the runner default
+remains 120 seconds. Synthetic nested `Runner.run-case` tests verify the existing
 10000-instruction hook stays installed during pre-timeout writes, is restored
 before teardown, and retains its failure latch when an inner timeout exception
 is caught. On timeout, the original hook disables itself to permit unwind;
@@ -449,7 +450,8 @@ oracle is needed before adding that coverage; existing assertion-selector NaN
 fallback tests are unchanged.
 
 Native semantic equivalence and work counts do not establish a Wine speedup or
-120-second full-repository compliance. Uninstrumented alternating comparisons,
+full-repository compliance with the pipeline case's explicit 300-second deadline
+(the runner default remains 120 seconds). Uninstrumented alternating comparisons,
 the unchanged hook-bearing regression vector, full local suite and guarded
 actual reproduction remain separate gates. Selection adds no telemetry or
 progress/privacy contract changes, and changes no baseline, rule or timeout limit.

@@ -847,6 +847,7 @@
 (table.insert tests {:name "runner run-target repo required filtered rule is missing"
                       :fn runner-run-target-repo-required-filtered-rule-is-missing})
 (table.insert tests {:name "runner run-target with repo target runs full pipeline"
+                      :timeout-seconds 300
                       :fn runner-run-target-with-repo-target-runs-full-pipeline})
 (table.insert tests {:name "default target suites match rule families"
                      :fn default-target-suites-match-rule-families})

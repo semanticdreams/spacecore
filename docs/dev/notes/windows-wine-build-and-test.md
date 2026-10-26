@@ -632,7 +632,8 @@ Fixed GNU timeout budgets (each with a further5-second kill escalation):
 
 Outer bounds cover overhead only: they do not add application test time. They
 also terminate a live helper whose output pipes have already reached EOF.
-Case120/240-second policies, regression-child deadlines, assertions, module lists
+Case120/240/300-second policies (300 seconds for the full-repository pipeline
+case), regression-child deadlines, assertions, module lists
 and Windows skips are unchanged. There is no idle watchdog.
 
 Admission acknowledges bounded **Wine CLI cleanup completion**, not independently
