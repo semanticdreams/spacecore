@@ -164,7 +164,7 @@ def prepare(repo_root: Path) -> dict:
     save("evaluator-only.json", EXPECTED)
     save("control/opencode.json", {"$schema": pilot.CONFIG_SCHEMA, "model": GLM,
         "permission": "deny", "plugin": [], "mcp": {}, "agent": {"routing-eval": {
-            "mode": "primary", "model": GLM, "permission": "deny",
+            "mode": "primary", "model": GLM, "variant": pilot.GLM_VARIANT, "permission": "deny",
             "description": "Fixed virtual routing only", "prompt": INSTRUCTION}}})
     artifacts = {name: pilot.sha256(read(name).encode()) for name in
                  ("schema.json", "matrix.json", "evaluator-only.json", "control/opencode.json")}
@@ -222,6 +222,7 @@ def run_phase(repo_root: Path, phase: str) -> dict:
         pass
     try:
         manifest = verified_manifest()
+        pilot.require_glm_high(load_json(read("control/opencode.json")), "routing-eval")
         if phase == "guidance" and not all(checked_runtime_path(RUN_ROOT / f"results/baseline-{i}.json").is_file() for i in range(1, 6)):
             raise ValueError("five baseline outcomes required before guidance")
         slots = [f"{phase}-{i}" for i in range(1, 6)]
@@ -261,7 +262,7 @@ def run_phase(repo_root: Path, phase: str) -> dict:
 
                 try:
                     ndjson = invoke(["opencode", "run", "--pure", "--format", "json", "--agent", "routing-eval",
-                                     "--model", GLM, "--file", str(RUN_ROOT / phase / "packet.txt"), "--", manifest["instruction"]], "-run")
+                                     "--model", GLM, "--variant", pilot.GLM_VARIANT, "--file", str(RUN_ROOT / phase / "packet.txt"), "--", manifest["instruction"]], "-run")
                     sid = own_session(ndjson)
                     result["session_id"] = sid
                     if sid in sessions:
@@ -269,8 +270,7 @@ def run_phase(repo_root: Path, phase: str) -> dict:
                     sessions.add(sid)
                     exported = invoke(["opencode", "export", "--pure", sid], "-export")
                     parsed = parse_capture(ndjson, load_json(exported), GLM, sid)
-                    if any(v is not None for v in parsed["reported_variants_by_message"]):
-                        raise pilot.CaptureError("protocol_violation", "unexpected variant")
+                    pilot.verify_glm_high(parsed)
                     result.update(parsed, outcome="invalid_answer")
                     decisions = parse_answer(parsed["answer"])["decisions"]
                     result.update(outcome="complete", scores=[{

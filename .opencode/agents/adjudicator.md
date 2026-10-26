@@ -2,6 +2,7 @@
 description: Validates candidate review findings against the plan and codebase, rejecting premature improvements and escalating real design ambiguity
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 40
 permission:
   read:

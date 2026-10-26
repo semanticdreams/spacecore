@@ -34,6 +34,7 @@ def agent(name: str, permission_text: str) -> str:
 description: Test {name} agent
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 permission:
 {permission_text}
 ---
@@ -501,7 +502,7 @@ def test_live_dev_primary_is_exact_direct_local_only_profile():
         "mode": "primary", "model": "opencode-go/glm-5.3-flash",
         "steps": "180", "permission": "allow",
     }
-    assert "variant" not in keys
+    assert keys["variant"] == "high"
     for term in [
         "live-dev/<topic>", "before edits", "freshly fetched `origin/main`", "unmerged",
         "dirty", "local only", "task completion", "commit request", "PR creation",
@@ -928,7 +929,7 @@ EXPERT_PERMISSIONS = '''  "*": deny
 
 def expert_agent():
     return agent("expert-advisor", EXPERT_PERMISSIONS).replace(
-        "model: opencode-go/glm-5.3-flash", "model: openai/gpt-6.1-sol\nvariant: high"
+        "model: opencode-go/glm-5.3-flash", "model: openai/gpt-6.1-sol"
     )
 
 
@@ -936,17 +937,20 @@ def expert_agent():
 def test_ordinary_model(name):
     keys, _ = load_checker()._frontmatter((REPO_ROOT / f".opencode/agents/{name}.md").read_text())
     assert keys["model"] == "opencode-go/glm-5.3-flash"
-    assert "variant" not in keys
+    assert keys["variant"] == "high"
 
 
 @pytest.mark.parametrize("name", [*ORDINARY_ROLES, "future-worker"])
-@pytest.mark.parametrize("drift", ["model", "variant"])
+@pytest.mark.parametrize("drift", ["model", "missing", "low", "max"])
 def test_checker_rejects_ordinary_and_future_role_model_drift(tmp_path, name, drift):
     repo = make_repo(tmp_path)
     text = agent(name, "  bash: deny\n").replace("openai/gpt-6.1-sol", "opencode-go/glm-5.3-flash")
     if name in {"fast-dev", "live-dev"}:
         text = text.replace("mode: subagent", "mode: primary").replace("permission:\n  bash: deny", "permission: allow")
-    text = text.replace("opencode-go/glm-5.3-flash", "openai/gpt-6.1-sol") if drift == "model" else text.replace("permission:", "variant: high\npermission:")
+    if drift == "model":
+        text = text.replace("opencode-go/glm-5.3-flash", "openai/gpt-6.1-sol")
+    else:
+        text = text.replace("variant: high\n", "" if drift == "missing" else f"variant: {drift}\n")
     write_file(repo / f".opencode/agents/{name}.md", text)
     assert "agent-model" in violation_codes(repo)
 

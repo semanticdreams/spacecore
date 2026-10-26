@@ -11,7 +11,7 @@ Execute plan by dispatching the **implementer** subagent per task, a task review
 
 ## Model Selection
 
-All ordinary project roles use `opencode-go/glm-5.3-flash`, without variants.
+All ordinary project roles use `opencode-go/glm-5.3-flash`, variant `high`.
 Only read-only `expert-advisor` uses `openai/gpt-6.1-sol` high. Project roles, not
 inherited built-in/hidden/global agents, are covered; use project `explorer` for
 exploration. Fix-loop retries keep the GLM implementer, including rounds 4-5.

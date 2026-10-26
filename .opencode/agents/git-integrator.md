@@ -2,6 +2,7 @@
 description: Runs only guarded Space Git integration wrappers for current-branch status, fetch, safe merge, push, and deterministic follow-up branch decisions.
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 18
 permission:
   read: deny

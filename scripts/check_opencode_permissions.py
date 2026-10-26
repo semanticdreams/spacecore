@@ -436,8 +436,8 @@ def _check_agents(repo_root: Path) -> list[PolicyViolation]:
             violations.append(_violation(path, repo_root, "agent-frontmatter", f"agent frontmatter missing: {', '.join(sorted(missing))}"))
         if name == "expert-advisor":
             violations.extend(_check_expert_profile(path, repo_root, keys, raw))
-        elif keys.get("model") != ORDINARY_MODEL or "variant" in keys:
-            violations.append(_violation(path, repo_root, "agent-model", f"ordinary project agents must use {ORDINARY_MODEL} with no variant"))
+        elif keys.get("model") != ORDINARY_MODEL or keys.get("variant") != "high":
+            violations.append(_violation(path, repo_root, "agent-model", f"ordinary project agents must use {ORDINARY_MODEL} with variant high"))
         violations.extend(_check_permission_profile(path, repo_root, keys))
         violations.extend(_check_no_ask_actions(path, repo_root, raw))
         violations.extend(_check_unsafe_text(path, repo_root, raw))

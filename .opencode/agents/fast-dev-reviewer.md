@@ -2,6 +2,7 @@
 description: Observational whole-branch review for fast-dev and live-dev explicit wrap-up, including all accumulated commits and validation coverage.
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 55
 permission:
   read: allow

@@ -2,6 +2,7 @@
 description: Independently validates root-cause diagnoses and proposed fixes before implementation begins
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 35
 permission:
   read:

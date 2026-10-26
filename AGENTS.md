@@ -38,8 +38,8 @@ exception does not change an already-running agent's rules.
 
 ## GLM-default consultation contract
 
-All sixteen existing project roles use `opencode-go/glm-5.3-flash`, with no
-variant: supervisor, planner, implementer, reviewer, debug-advisor, adjudicator,
+All sixteen existing project roles use `opencode-go/glm-5.3-flash`, with
+variant `high`: supervisor, planner, implementer, reviewer, debug-advisor, adjudicator,
 explorer, web-researcher, config-auditor, git-integrator, github-operator,
 pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev, fast-dev-reviewer.
 Only `expert-advisor` uses `openai/gpt-6.1-sol`, variant `high`, read-only subagent.

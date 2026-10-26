@@ -185,7 +185,7 @@ Once your agent environment is connected to a Space checkout, these repository c
 ### GLM-default roles and bounded expert consultation
 
 The sixteen ordinary project roles are pinned to `opencode-go/glm-5.3-flash`
-without variants: supervisor, planner, implementer, reviewer, debug-advisor,
+with variant `high`: supervisor, planner, implementer, reviewer, debug-advisor,
 adjudicator, explorer, web-researcher, config-auditor, git-integrator,
 github-operator, pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev,
 and fast-dev-reviewer. Only new `expert-advisor` uses `openai/gpt-6.1-sol`, variant
@@ -193,6 +193,15 @@ and fast-dev-reviewer. Only new `expert-advisor` uses `openai/gpt-6.1-sol`, vari
 built-in/hidden/global agents or installation-wide routing. Use project `explorer`
 and named workers, not built-in general/explore as implicit model fallback.
 Root/project OpenCode JSON and home configuration are unchanged by this rollout.
+
+The user-selected high-mode follow-up supersedes the original no-variant setting
+for future GLM use only. Agent frontmatter and newly prepared evaluation profiles
+request `high`; generation CLI calls (including same-author continuations) pass
+`--variant high`. Old frozen no-high runs remain readable but cannot generate
+without new high-mode preparation. Historical captures, scores and observations
+below are unchanged: missing mode metadata remains unknown, not evidence of high.
+No model reevaluation was performed for this setting change. Restart OpenCode to
+load the updated roles; already-running sessions retain their loaded settings.
 
 The canonical [AGENTS.md](../../../AGENTS.md#glm-default-consultation-contract)
 contract requires both models on **every architecture/software-design/system-

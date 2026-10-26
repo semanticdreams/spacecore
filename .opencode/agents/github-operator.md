@@ -2,6 +2,7 @@
 description: Runs only guarded Space GitHub PR wrapper operations for auth, protection checks, PR creation, auto-merge, and merge-queue polling.
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 25
 permission:
   read: deny

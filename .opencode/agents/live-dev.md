@@ -2,6 +2,7 @@
 description: Direct interactive development with explicit validated app refresh and local checkpoints; integration only on explicit wrap-up.
 mode: primary
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 180
 permission: allow
 ---

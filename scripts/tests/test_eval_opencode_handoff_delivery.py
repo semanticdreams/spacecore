@@ -94,6 +94,7 @@ def workspace(tmp_path, monkeypatch):
     bad = answer()
     next(r for r in bad["decisions"] if r["case_id"] == "wrap-up-review")["workflow"] = "fast-dev-reviewer"
     ndjson, exported = capture(helper.AUTHOR, json.dumps(bad))
+    exported["messages"][0]["info"].pop("variant")  # Retained historical mode is unknown.
     for name, value in {"results/clarified-2.json": json.dumps({"session_id": helper.AUTHOR,
             "answer": json.dumps(bad), "actual_model": original.GLM}),
             "raw/clarified-2-run.stdout.txt": ndjson,
@@ -181,7 +182,8 @@ def test_freeze_sources_questions_rubric_config_and_old_snapshots(workspace):
     assert next(iter(config)) == "$schema"
     assert config["permission"] == config["agent"]["routing-eval"]["permission"] == "deny"
     assert config["model"] == config["agent"]["routing-eval"]["model"] == original.GLM
-    assert "variant" not in json.dumps(config)
+    assert "variant" not in config
+    assert config["agent"]["routing-eval"]["variant"] == "high"
     assert config["plugin"] == [] and config["mcp"] == {}
     with pytest.raises(FileExistsError):
         helper.prepare(repo)
@@ -195,7 +197,8 @@ def test_five_slots_each_phase_no_resampling_and_shared_120_deadlines(workspace,
     assert len(calls) == 20
     for i in range(0, 20, 2):
         assert calls[i][1] == calls[i+1][1] == 1120 + i * 2
-        assert not {"--session", "--continue", "--variant"} & set(calls[i][0])
+        assert not {"--session", "--continue"} & set(calls[i][0])
+        assert calls[i][0][calls[i][0].index("--variant") + 1] == "high"
     for phase in ("baseline", "guidance"):
         with pytest.raises(FileExistsError):
             helper.micro(phase)
@@ -206,6 +209,46 @@ def test_five_slots_each_phase_no_resampling_and_shared_120_deadlines(workspace,
     assert len(report["results"]) == 10 and "PRIVATE_REASONING" not in json.dumps(report)
     assert "manual" in report["interpretation"] and "no improvement" in report["interpretation"]
     assert helper.historical_snapshot() == workspace[3]
+
+
+@pytest.mark.parametrize("operation", ["micro", "replay"])
+@pytest.mark.parametrize("variant", [None, "low", "max"])
+def test_old_config_readable_but_no_generation_or_charge(workspace, monkeypatch, operation, variant):
+    root = workspace[1]
+    path = root / "control/opencode.json"
+    config = json.loads(path.read_text())
+    config["agent"]["routing-eval"].pop("variant", None)
+    if variant is not None:
+        config["agent"]["routing-eval"]["variant"] = variant
+    path.write_text(json.dumps(config))
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["artifacts"]["control/opencode.json"] = helper.sha256(path.read_bytes())
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    assert helper.report()["results"] == []
+    calls, _ = fake_cli(monkeypatch, workspace)
+    with pytest.raises(ValueError, match="high"):
+        helper.micro("baseline") if operation == "micro" else helper.replay()
+    assert not calls
+    assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("operation", ["micro", "replay"])
+@pytest.mark.parametrize("variant", [None, "low", "max"])
+def test_new_generation_mode_strict_but_retained_unknown_stays_unknown(workspace, monkeypatch, operation, variant):
+    pre, _, _ = helper.retained_repair()
+    assert "variant" not in pre["messages"][0]["info"]
+    def corrupt(ndjson, exported):
+        exported["messages"][0]["info"]["variant"] = variant
+        return ndjson, exported
+    calls, _ = fake_cli(monkeypatch, workspace, corrupt)
+    if operation == "micro":
+        assert all(r["outcome"] == "blocked" for r in helper.micro("baseline")["results"])
+        assert len(calls) == 10
+    else:
+        result = helper.replay()
+        assert result["state"] == "BLOCKED" and not result["repair_succeeded"]
+        assert result["generation_attempted"] and len(calls) == 3
 
 
 def test_source_match_and_baseline_before_guidance_guards(workspace, monkeypatch):
@@ -287,7 +330,7 @@ def test_micro_actual_identity_and_single_completed_tool_free_message(workspace,
     def corrupt(ndjson, exported):
         info = exported["messages"][0]["info"]
         if fault == "model": info["modelID"] = "wrong"
-        elif fault == "variant": info["variant"] = "high"
+        elif fault == "variant": info["variant"] = "max"
         elif fault == "tools": exported["messages"][0]["parts"].append({**exported["messages"][0]["parts"][0], "type": "tool"})
         elif fault == "incomplete": info["finish"] = "length"
         elif fault == "extra_assistant": exported["messages"].append(copy.deepcopy(exported["messages"][0]))
@@ -308,7 +351,7 @@ def test_replay_single_original_author_only_new_message_and_preserved_protected_
     assert len(calls) == 3 and {d for _, d in calls} == {1180}
     assert calls[0][0] == calls[2][0] == ["opencode", "export", "--pure", helper.AUTHOR]
     assert calls[1][0][calls[1][0].index("--session") + 1] == helper.AUTHOR
-    assert "--variant" not in calls[1][0]
+    assert calls[1][0][calls[1][0].index("--variant") + 1] == "high"
     packet = (workspace[1] / "repair-packet.txt").read_text()
     assert "wrap-up-review" in packet and "workflow" in packet and "fast-dev" in packet
     assert "EXPECTED" not in packet and "evaluator-only" not in packet

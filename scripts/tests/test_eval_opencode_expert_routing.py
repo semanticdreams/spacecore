@@ -56,7 +56,7 @@ def capture(sid, text):
     events = json.dumps({"type": "text", "sessionID": sid, "part": part}) + "\n" + json.dumps(stop)
     export = {"info": {"id": sid}, "messages": [{"info": {
         "id": "msg", "sessionID": sid, "role": "assistant", "providerID": "opencode-go",
-        "modelID": "glm-5.3-flash", "finish": "stop", "time": {"completed": 1}},
+        "modelID": "glm-5.3-flash", "variant": "high", "finish": "stop", "time": {"completed": 1}},
         "parts": [part, {**part, "type": "reasoning", "text": "PRIVATE_REASONING"}]}]}
     return events, export
 
@@ -111,7 +111,7 @@ def test_exclusive_preparation_frozen_full_context_and_no_oracle(workspace):
     assert config["model"] == routing.GLM and config["permission"] == "deny"
     assert config["agent"]["routing-eval"]["permission"] == "deny"
     assert "variant" not in config
-    assert "variant" not in config["agent"]["routing-eval"]
+    assert config["agent"]["routing-eval"]["variant"] == "high"
     assert 12 <= len(routing.matrix()) <= 18
     assert {c["workflow"] for c in routing.matrix()} == {"supervisor", "fast-dev", "live-dev"}
 
@@ -122,6 +122,38 @@ def test_guidance_before_baseline_and_invalid_phase_never_call(workspace, monkey
         with pytest.raises(ValueError):
             routing.run_phase(workspace[0], phase)
     assert not calls
+
+
+@pytest.mark.parametrize("variant", [None, "low", "max"])
+def test_old_config_readable_but_generation_rejected_before_reservation(workspace, monkeypatch, variant):
+    repo, root = workspace
+    path = root / "control/opencode.json"
+    config = json.loads(path.read_text())
+    config["agent"]["routing-eval"].pop("variant", None)
+    if variant is not None:
+        config["agent"]["routing-eval"]["variant"] = variant
+    path.write_text(json.dumps(config))
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["artifacts"]["control/opencode.json"] = routing.pilot.sha256(path.read_bytes())
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    assert routing.report()["results"] == []
+    calls, _ = fake_cli(monkeypatch)
+    with pytest.raises(ValueError, match="high"):
+        routing.run_phase(repo, "baseline")
+    assert not calls
+    assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("variant", [None, "low", "max"])
+def test_generation_rejects_missing_or_nonhigh_reported_mode(workspace, monkeypatch, variant):
+    def corrupt(ndjson, exported):
+        exported["messages"][0]["info"]["variant"] = variant
+        return ndjson, exported
+    calls, _ = fake_cli(monkeypatch, corrupt)
+    results = routing.run_phase(workspace[0], "baseline")["results"]
+    assert all(r["outcome"] == "protocol_violation" for r in results)
+    assert len(calls) == 10
 
 
 def test_exact_ten_fresh_calls_frozen_matrix_sources_and_no_retries(workspace, monkeypatch):
@@ -139,7 +171,8 @@ def test_exact_ten_fresh_calls_frozen_matrix_sources_and_no_retries(workspace, m
     for args, _ in calls[::2]:
         assert args[:3] == ["opencode", "run", "--pure"]
         assert args[args.index("--model") + 1] == routing.GLM
-        assert not set(args) & {"--variant", "--session", "--continue"}
+        assert args[args.index("--variant") + 1] == "high"
+        assert not set(args) & {"--session", "--continue"}
     for args, _ in calls[1::2]:
         assert args[:3] == ["opencode", "export", "--pure"]
         assert args[3].startswith("ses_fresh")
@@ -341,7 +374,7 @@ def test_capture_failures_are_not_quality_scores_or_retries(workspace, monkeypat
         elif fault in {"tool", "retry"}:
             msg["parts"].append({**msg["parts"][0], "type": fault})
         elif fault == "variant":
-            msg["info"]["variant"] = "high"
+            msg["info"]["variant"] = "low"
         else:
             ndjson = "malformed"
         return ndjson, exp

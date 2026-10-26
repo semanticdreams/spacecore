@@ -158,7 +158,8 @@ def test_freezes_same_contract_context_config_acceptance_and_no_old_answers(work
     assert next(iter(config)) == "$schema"
     assert config["permission"] == config["agent"]["routing-eval"]["permission"] == "deny"
     assert config["model"] == config["agent"]["routing-eval"]["model"] == original.GLM
-    assert "variant" not in config and "variant" not in config["agent"]["routing-eval"]
+    assert "variant" not in config
+    assert config["agent"]["routing-eval"]["variant"] == "high"
     assert config["plugin"] == [] and config["mcp"] == {}
     assert list((new / "results").iterdir()) == list((new / "reservations").iterdir()) == []
 
@@ -177,6 +178,37 @@ def test_appended_protocol_is_general_definitions_and_positive_raw_json_recipe()
             original.parse_answer(text)
 
 
+@pytest.mark.parametrize("variant", [None, "low", "max"])
+def test_old_config_remains_reportable_but_cannot_generate(workspace, monkeypatch, variant):
+    _, root, _, _ = workspace
+    path = root / "control/opencode.json"
+    config = json.loads(path.read_text())
+    config["agent"]["routing-eval"].pop("variant", None)
+    if variant is not None:
+        config["agent"]["routing-eval"]["variant"] = variant
+    path.write_text(json.dumps(config))
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["artifacts"]["control/opencode.json"] = helper.sha256(path.read_bytes())
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    assert helper.report()["results"] == []
+    calls, _ = fake_cli(monkeypatch)
+    with pytest.raises(ValueError, match="high"):
+        helper.run()
+    assert not calls
+    assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("variant", [None, "low", "max"])
+def test_generation_rejects_unknown_or_nonhigh_mode(workspace, monkeypatch, variant):
+    def corrupt(ndjson, exported):
+        exported["messages"][0]["info"]["variant"] = variant
+        return ndjson, exported
+    calls, _ = fake_cli(monkeypatch, corrupt)
+    assert all(r["outcome"] == "protocol_violation" for r in helper.run()["results"])
+    assert len(calls) == 10
+
+
 def test_exact_five_calls_no_sixth_no_continuation_shared_deadline_and_old_preservation(workspace, monkeypatch):
     _, new, old, before = workspace
     constants = copy.deepcopy((original.RUN_ROOT, original.INSTRUCTION, original.CASES,
@@ -190,7 +222,8 @@ def test_exact_five_calls_no_sixth_no_continuation_shared_deadline_and_old_prese
     for args, _ in calls[::2]:
         assert args[:3] == ["opencode", "run", "--pure"]
         assert args[args.index("--model") + 1] == original.GLM
-        assert not set(args) & {"--variant", "--session", "--continue"}
+        assert args[args.index("--variant") + 1] == "high"
+        assert not set(args) & {"--session", "--continue"}
         assert str(new / "packet.txt") in args
     for args, _ in calls[1::2]:
         assert args[:3] == ["opencode", "export", "--pure"]
@@ -346,7 +379,7 @@ def test_failed_samples_unpassed_no_rescue_and_fresh_own_sessions(workspace, mon
         elif fault == "tools":
             parts.append({**parts[0], "type": "tool"})
         elif fault == "variant":
-            info["variant"] = "high"
+            info["variant"] = "max"
         elif fault == "incomplete":
             info["finish"] = "length"
         elif fault in {"old_session", "reused_session"}:

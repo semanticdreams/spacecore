@@ -2,6 +2,7 @@
 description: Converts an approved direction into a bounded, executable implementation plan with acceptance criteria and validation scope
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 35
 permission:
   read:

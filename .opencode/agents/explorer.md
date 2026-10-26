@@ -2,6 +2,7 @@
 description: Focused codebase investigation — finds files, patterns, and answers specific questions. Use for targeted repository searches.
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 20
 permission:
   read:

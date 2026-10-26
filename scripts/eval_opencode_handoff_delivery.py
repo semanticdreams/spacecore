@@ -163,14 +163,14 @@ def prepare(repo_root):
         checked_path(root / name, root).mkdir()
     config = {"$schema": original.pilot.CONFIG_SCHEMA, "model": original.GLM, "permission": "deny",
               "plugin": [], "mcp": {}, "agent": {"routing-eval": {"mode": "primary", "model": original.GLM,
-                  "permission": "deny", "description": "Fixed inert delivery evaluation", "prompt": "No tools. Final answer only."}}}
+                  "variant": original.pilot.GLM_VARIANT, "permission": "deny", "description": "Fixed inert delivery evaluation", "prompt": "No tools. Final answer only."}}}
     for name, value in (("control/opencode.json", config), ("questions.txt", QUESTION), ("rubric.txt", RUBRIC)):
         save(name, value)
     artifacts = {n: sha256(read(n)) for n in ("control/opencode.json", "questions.txt", "rubric.txt")}
     artifacts.update(freeze_phase("baseline", sources))
     manifest = {"repo": str(repo), "historical": historical, "artifacts": artifacts, "limits": LIMITS,
                 "question": QUESTION, "rubric": RUBRIC,
-                "isolation": "All-deny config, explicit GLM/no variant, --pure, file-backed captures. Ambient config isolation not proven; no runtime enforcement claim."}
+                "isolation": "All-deny config, explicit GLM/high variant, --pure, file-backed captures. Ambient config isolation not proven; no runtime enforcement claim."}
     save("manifest.json", manifest)
     save("budget.json", {"micro_seconds": 0, "repair_seconds": 0})
     if historical_snapshot() != historical:
@@ -193,12 +193,12 @@ def verified_manifest():
     return manifest
 
 
-def single_capture(ndjson, exported, sid):
+def single_capture(ndjson, exported, sid, *, generation=True):
     if sum(m["info"]["role"] == "assistant" for m in exported["messages"]) != 1:
         raise ValueError("exactly one assistant generation required")
     parsed = parse_capture(ndjson, exported, original.GLM, sid)
-    if any(v is not None for v in parsed["reported_variants_by_message"]):
-        raise ValueError("unexpected variant")
+    if generation:
+        original.pilot.verify_glm_high(parsed)
     message_id = parsed["usage"][0]["message_id"]
     ids = {e["part"]["messageID"] for e in events_from(ndjson) if e.get("part", {}).get("messageID")}
     if ids != {message_id} or run_answer(ndjson) != parsed["answer"]:
@@ -254,6 +254,7 @@ def micro(phase):
         pass
     try:
         manifest = verified_manifest()
+        original.pilot.require_glm_high(load_json(read("control/opencode.json")), "routing-eval")
         slots = [f"{phase}-{i}" for i in range(1, 6)]
         if any(checked_path(RUN_ROOT / "reservations" / s, RUN_ROOT).exists() for s in slots):
             raise FileExistsError("phase consumed; no repeats")
@@ -286,7 +287,7 @@ def micro(phase):
             observed = {}
             def action(run):
                 ndjson = run(["opencode", "run", "--pure", "--format", "json", "--agent", "routing-eval",
-                    "--model", original.GLM, "--file", str(checked_path(RUN_ROOT / phase / "packet.txt", RUN_ROOT)),
+                    "--model", original.GLM, "--variant", original.pilot.GLM_VARIANT, "--file", str(checked_path(RUN_ROOT / phase / "packet.txt", RUN_ROOT)),
                     "--", "Answer the attached five scenarios with plain final explanations."], "-run")
                 sid = own_session(ndjson)
                 observed["session_id"] = sid  # Retain identity even if subsequent verification fails.
@@ -310,7 +311,7 @@ def retained_repair():
         return checked_path(CLARIFIED_ROOT / name, CLARIFIED_ROOT).read_bytes()
     result = load_json(old("results/clarified-2.json"))
     exported = load_json(old("raw/clarified-2-export.stdout.txt"))
-    parsed = single_capture(old("raw/clarified-2-run.stdout.txt").decode(), exported, AUTHOR)
+    parsed = single_capture(old("raw/clarified-2-run.stdout.txt").decode(), exported, AUTHOR, generation=False)
     if result["session_id"] != AUTHOR or result["actual_model"] != original.GLM or result["answer"] != parsed["answer"]:
         raise ValueError("retained author/source mismatch")
     value = load_json(parsed["answer"])
@@ -345,6 +346,7 @@ def replay():
         pass
     try:
         manifest = verified_manifest()
+        original.pilot.require_glm_high(load_json(read("control/opencode.json")), "routing-eval")
         save("reservations/repair", {"slot": "repair", "author": AUTHOR})
         identity = "clarified-2/" + AUTHOR + "/" + manifest["historical"]["clarified"]["raw/clarified-2-export.stdout.txt"]
         state = {"identity": identity, "repair_used": 0, "payload_valid": False, "scope_current": True,
@@ -368,7 +370,7 @@ def replay():
             state.update(repair_used=request["repair_used"])  # Consumed before generation.
             save("repair-state.json", request)
             ndjson = run(["opencode", "run", "--pure", "--format", "json", "--session", AUTHOR,
-                "--agent", "routing-eval", "--model", original.GLM, "--file", str(RUN_ROOT / "repair-packet.txt"),
+                "--agent", "routing-eval", "--model", original.GLM, "--variant", original.pilot.GLM_VARIANT, "--file", str(RUN_ROOT / "repair-packet.txt"),
                 "--", "Perform only the attached original-author format correction."], "-run")
             post = load_json(run(["opencode", "export", "--pure", AUTHOR], "-post"))
             parsed = correction_capture(ndjson, pre, post)

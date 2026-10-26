@@ -2,6 +2,7 @@
 description: Runs only the guarded stale merged current-branch PR recovery wrapper that creates a deterministic follow-up branch and PR.
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 15
 permission:
   read: deny

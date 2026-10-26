@@ -111,7 +111,7 @@ def prepare(repo_root):
               "evaluator-only.json": original.EXPECTED, "sources.json": sources,
               "control/opencode.json": {"$schema": original.pilot.CONFIG_SCHEMA, "model": original.GLM,
                   "permission": "deny", "plugin": [], "mcp": {}, "agent": {"routing-eval": {
-                      "mode": "primary", "model": original.GLM, "permission": "deny",
+                      "mode": "primary", "model": original.GLM, "variant": original.pilot.GLM_VARIANT, "permission": "deny",
                       "description": "Fixed virtual routing only", "prompt": INSTRUCTION}}}}
     for name, value in frozen.items():
         save(name, value)
@@ -149,6 +149,7 @@ def run():
         pass
     try:
         manifest = verified_manifest()
+        original.pilot.require_glm_high(load_json(read("control/opencode.json")), "routing-eval")
         if any(checked_path(RUN_ROOT / "reservations" / slot).exists() for slot in SLOTS):
             raise FileExistsError("slot already consumed; no retries")
         save("clarified.guard", {"slots": SLOTS})
@@ -179,7 +180,7 @@ def run():
 
                 try:
                     ndjson = invoke(["opencode", "run", "--pure", "--format", "json", "--agent", "routing-eval",
-                                     "--model", original.GLM, "--file", str(checked_path(RUN_ROOT / "packet.txt")), "--", INSTRUCTION], "-run")
+                                     "--model", original.GLM, "--variant", original.pilot.GLM_VARIANT, "--file", str(checked_path(RUN_ROOT / "packet.txt")), "--", INSTRUCTION], "-run")
                     sid = own_session(ndjson)
                     result["session_id"] = sid
                     if sid in sessions:
@@ -187,8 +188,7 @@ def run():
                     sessions.add(sid)
                     exported = invoke(["opencode", "export", "--pure", sid], "-export")
                     parsed = parse_capture(ndjson, load_json(exported), original.GLM, sid)
-                    if any(v is not None for v in parsed["reported_variants_by_message"]):
-                        raise CaptureError("protocol_violation", "unexpected variant")
+                    original.pilot.verify_glm_high(parsed)
                     result.update(parsed, outcome="invalid_answer")
                     decisions = original.parse_answer(parsed["answer"])["decisions"]
                     result.update(outcome="complete", scores=[{

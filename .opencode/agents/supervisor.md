@@ -2,6 +2,7 @@
 description: Primary coordination agent that follows skills and dispatches subagents for exploration, planning, implementation, review, and adjudication. Never edits code.
 mode: primary
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 500
 permission:
   read:
@@ -305,6 +306,8 @@ blocking check, and available evidence.
 | **fast-dev**, **live-dev** | User-selected independent primary peers, not implementation workers | opencode-go/glm-5.3-flash |
 | **fast-dev-reviewer** | Observational direct-primary wrap-up review | opencode-go/glm-5.3-flash |
 | **expert-advisor** | One bounded read-only technical critique, never implementation/approval | openai/gpt-6.1-sol (high) |
+
+All ordinary GLM roles in this table use variant `high`.
 
 These pins cover project roles only, not inherited built-in/hidden/global agents.
 Use project `explorer` and named workers rather than built-in general/explore as

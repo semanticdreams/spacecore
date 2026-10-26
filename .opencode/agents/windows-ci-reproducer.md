@@ -2,6 +2,7 @@
 description: Runs only guarded Space Windows CI local reproduction wrapper operations for preflight, setup, and Linux cross-build + Wine validation.
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 20
 permission:
   read: deny

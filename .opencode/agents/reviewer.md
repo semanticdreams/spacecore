@@ -2,6 +2,7 @@
 description: Performs independent full reviews and targeted fix verification without editing code
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 55
 permission:
   read:

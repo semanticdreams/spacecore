@@ -2,6 +2,7 @@
 description: Implements approved plans and accepted review findings using targeted local validation by default
 mode: subagent
 model: opencode-go/glm-5.3-flash
+variant: high
 steps: 100
 permission:
   read:

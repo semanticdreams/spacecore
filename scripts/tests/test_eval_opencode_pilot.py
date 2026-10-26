@@ -327,7 +327,10 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual([t["model"] for t in trials[:4]], [pilot.GLM, pilot.GPT, pilot.GPT, pilot.GLM])
         for trial in trials:
             self.assertEqual(trial["seconds"], 360 if trial["implementation"] else 180)
-            self.assertEqual(trial["variant"], ("high" if trial["implementation"] else "xhigh") if trial["model"] == pilot.GPT else None)
+            self.assertEqual(trial["variant"], ("high" if trial["implementation"] else "xhigh") if trial["model"] == pilot.GPT else "high")
+        config = json.loads((self.root / "control/opencode.json").read_text())
+        self.assertNotIn("variant", config)
+        self.assertEqual(config["agent"]["pilot"]["variant"], "high")
         self.assertEqual(self.manifest["contract_gpt_sha256"], self.manifest["contract_glm_sha256"])
         for filename, digest in self.manifest["artifacts"].items():
             self.assertEqual(pilot.sha256((self.root / filename).read_bytes()), digest)
@@ -346,6 +349,51 @@ class PreparationTests(unittest.TestCase):
             for answer in cases["evaluator_only"]["search-review"].values():
                 self.assertNotIn(answer, packet)
         self.assertFalse(list(self.root.rglob("*.fnl")))
+
+    def test_old_no_high_trial_and_config_are_readable_but_cannot_generate(self):
+        config_path = self.root / "control/opencode.json"
+        prepared_config = json.loads(config_path.read_text())
+        for target in ["trial", "config", "both"]:
+            for variant in [None, "low", "max"]:
+                manifest, config = copy.deepcopy(self.manifest), copy.deepcopy(prepared_config)
+                trial = manifest["trials"][0]
+                if target in ["trial", "both"]:
+                    trial["variant"] = variant
+                if target in ["config", "both"]:
+                    config["agent"]["pilot"].pop("variant", None)
+                    if variant is not None:
+                        config["agent"]["pilot"]["variant"] = variant
+                pilot.save(config_path, config)
+                manifest["artifacts"]["control/opencode.json"] = pilot.sha256(config_path.read_bytes())
+                pilot.save(self.root / "manifest.json", manifest)
+                before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+                self.assertEqual(pilot.checked_manifest(self.root)["trials"], manifest["trials"])
+                with self.subTest(target=target, variant=variant), patch.object(pilot.subprocess, "Popen") as popen:
+                    with self.assertRaisesRegex(ValueError, "high"):
+                        pilot.run_trial(trial, self.root, time.time() + 5400)
+                    # Continuation rejects before dispatch, even to a mocked run_trial.
+                    with patch.object(pilot, "run_trial") as run:
+                        with self.assertRaisesRegex(ValueError, "high"):
+                            pilot.continue_unreserved(self.root)
+                        run.assert_not_called()
+                popen.assert_not_called()
+                self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_glm_generation_requests_high_and_checks_reported_mode(self):
+        for index, variant in enumerate(["high", None, "low", "max"]):
+            trial = [t for t in self.manifest["trials"] if t["model"] == pilot.GLM][index]
+            ndjson, exported = capture()
+            info = exported["messages"][0]["info"]
+            info.update(providerID="opencode-go", modelID="glm-5.3-flash")
+            if variant is not None:
+                info["variant"] = variant
+            with self.subTest(variant=variant), patch.object(pilot.subprocess, "Popen", side_effect=[self.process(ndjson), self.process(json.dumps(exported))]) as popen:
+                result = pilot.run_trial(trial, self.root, time.time() + 5400)
+                args = popen.call_args_list[0].args[0]
+                self.assertEqual(args[args.index("--variant") + 1], "high")
+                self.assertEqual(result["outcome"], "complete" if variant == "high" else "protocol_violation")
+                # Neutral historical parsing must not invent the requested mode.
+                self.assertEqual(pilot.parse_capture(ndjson, exported, pilot.GLM, SID)["reported_variant"], variant)
 
     def test_seeded_variants_and_shared_public_requirements(self):
         cases = json.loads((ROOT / "scripts/evals/opencode_pilot_cases.json").read_text())
