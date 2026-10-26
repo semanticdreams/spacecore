@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-25
+The [static model pilot](/dev/notes/opencode-model-pilot) used actual Space Fennel tasks and independent review of selected, author-blinded excerpts to probe responsible delegation without weakening architecture or review gates. Mixed completions, an invalid answer and timeouts offer qualitative screening, not a model ranking or proof of hybrid success; candidate code was not executed. Strong-model architecture and review authority remain in place and production routing is unchanged, keeping any cheaper-worker adoption contingent on separately authorized trials rather than presumed cost or reliability gains.
+
 ## 2026-10-23
 The [daily devlog workflow](/dev/notes/daily-devlog-automation) now requires examining the full landing window from the latest journal date, recovering meaningful missed days rather than treating a quiet run date as a no-op. Coverage still depends on narrative judgment, not index presence; published sources stay untouched, filler and duplicate entries are skipped, and review plus protected publication remain required. Regression checks guard this catch-up contract, making unattended project-history capture more reliable.
 
