@@ -211,6 +211,85 @@ class ControlRootTests(unittest.TestCase):
 
 
 @unittest.skipIf(pilot is None, "runner not yet implemented")
+class CaptureProcessCleanupTests(unittest.TestCase):
+    def assert_exception_cleanup(self, failure, kill_failure=None, drain_failure=None):
+        with tempfile.TemporaryDirectory(prefix="capture-cleanup-test-") as directory:
+            root = Path(directory)
+            (root / "opencode.json").write_text("{}")
+            prefix = root / "capture"
+            proc = Mock(pid=987654, returncode=None)
+            order = []
+
+            def communicate(**kwargs):
+                if kwargs:  # First call: child started and already produced raw output.
+                    stdout = popen.call_args.kwargs["stdout"]
+                    stderr = popen.call_args.kwargs["stderr"]
+                    stdout.write(b"partial answer")
+                    stderr.write(b"partial diagnostic")
+                    stdout.flush()
+                    stderr.flush()
+                    order.append("interrupted")
+                    raise failure
+                order.append("drain")
+                if drain_failure is not None:
+                    raise drain_failure
+                proc.returncode = -pilot.signal.SIGKILL
+
+            def kill_group(pid, sig):
+                order.append("kill")
+                self.assertEqual((pid, sig), (proc.pid, pilot.signal.SIGKILL))
+                if kill_failure is not None:
+                    raise kill_failure
+
+            def wait():
+                order.append("reap")
+                proc.returncode = -pilot.signal.SIGKILL
+                return proc.returncode
+
+            proc.communicate.side_effect = communicate
+            proc.wait.side_effect = wait
+            with patch.object(pilot.subprocess, "Popen", return_value=proc) as popen, \
+                    patch.object(pilot.os, "killpg", side_effect=kill_group) as kill:
+                with self.assertRaises(type(failure)) as raised:
+                    pilot.capture_process(["opencode", "run"], root, time.time() + 120, prefix)
+            self.assertIs(raised.exception, failure)
+            if drain_failure is not None or (kill_failure is not None and not isinstance(kill_failure, ProcessLookupError)):
+                self.assertIs(raised.exception.__cause__, drain_failure or kill_failure)
+            popen.assert_called_once()
+            self.assertTrue(popen.call_args.kwargs["start_new_session"])
+            kill.assert_called_once_with(proc.pid, pilot.signal.SIGKILL)
+            self.assertEqual(proc.communicate.call_count, 2)
+            self.assertEqual(proc.returncode, -pilot.signal.SIGKILL)
+            self.assertLess(order.index("kill"), order.index("drain"))
+            if drain_failure is not None:
+                proc.wait.assert_called_once_with()
+                self.assertLess(order.index("drain"), order.index("reap"))
+            self.assertEqual(prefix.with_suffix(".stdout.txt").read_bytes(), b"partial answer")
+            self.assertEqual(prefix.with_suffix(".stderr.txt").read_bytes(), b"partial diagnostic")
+            self.assertTrue(popen.call_args.kwargs["stdout"].closed)
+            self.assertTrue(popen.call_args.kwargs["stderr"].closed)
+
+    def test_capture_process_interrupt_kills_and_reaps_process_group(self):
+        self.assert_exception_cleanup(KeyboardInterrupt())
+
+    def test_capture_process_other_exceptional_exits_kill_and_reap(self):
+        for failure in (SystemExit(7), OSError("communicate failed")):
+            with self.subTest(failure=type(failure).__name__):
+                self.assert_exception_cleanup(failure)
+
+    def test_capture_process_exited_group_race_preserves_original_exception(self):
+        for failure in (KeyboardInterrupt(), subprocess.TimeoutExpired("opencode", 120)):
+            with self.subTest(failure=type(failure).__name__):
+                self.assert_exception_cleanup(failure, kill_failure=ProcessLookupError())
+
+    def test_capture_process_kill_error_still_reaps_and_preserves_original_exception(self):
+        self.assert_exception_cleanup(KeyboardInterrupt(), kill_failure=PermissionError("kill denied"))
+
+    def test_capture_process_cleanup_interrupt_still_waits_and_preserves_original_exception(self):
+        self.assert_exception_cleanup(SystemExit(7), drain_failure=KeyboardInterrupt())
+
+
+@unittest.skipIf(pilot is None, "runner not yet implemented")
 class PreparationTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="pilot-test-", dir="/tmp")
@@ -248,7 +327,10 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual([t["model"] for t in trials[:4]], [pilot.GLM, pilot.GPT, pilot.GPT, pilot.GLM])
         for trial in trials:
             self.assertEqual(trial["seconds"], 360 if trial["implementation"] else 180)
-            self.assertEqual(trial["variant"], ("high" if trial["implementation"] else "xhigh") if trial["model"] == pilot.GPT else None)
+            self.assertEqual(trial["variant"], ("high" if trial["implementation"] else "xhigh") if trial["model"] == pilot.GPT else "high")
+        config = json.loads((self.root / "control/opencode.json").read_text())
+        self.assertNotIn("variant", config)
+        self.assertEqual(config["agent"]["pilot"]["variant"], "high")
         self.assertEqual(self.manifest["contract_gpt_sha256"], self.manifest["contract_glm_sha256"])
         for filename, digest in self.manifest["artifacts"].items():
             self.assertEqual(pilot.sha256((self.root / filename).read_bytes()), digest)
@@ -267,6 +349,51 @@ class PreparationTests(unittest.TestCase):
             for answer in cases["evaluator_only"]["search-review"].values():
                 self.assertNotIn(answer, packet)
         self.assertFalse(list(self.root.rglob("*.fnl")))
+
+    def test_old_no_high_trial_and_config_are_readable_but_cannot_generate(self):
+        config_path = self.root / "control/opencode.json"
+        prepared_config = json.loads(config_path.read_text())
+        for target in ["trial", "config", "both"]:
+            for variant in [None, "low", "max"]:
+                manifest, config = copy.deepcopy(self.manifest), copy.deepcopy(prepared_config)
+                trial = manifest["trials"][0]
+                if target in ["trial", "both"]:
+                    trial["variant"] = variant
+                if target in ["config", "both"]:
+                    config["agent"]["pilot"].pop("variant", None)
+                    if variant is not None:
+                        config["agent"]["pilot"]["variant"] = variant
+                pilot.save(config_path, config)
+                manifest["artifacts"]["control/opencode.json"] = pilot.sha256(config_path.read_bytes())
+                pilot.save(self.root / "manifest.json", manifest)
+                before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+                self.assertEqual(pilot.checked_manifest(self.root)["trials"], manifest["trials"])
+                with self.subTest(target=target, variant=variant), patch.object(pilot.subprocess, "Popen") as popen:
+                    with self.assertRaisesRegex(ValueError, "high"):
+                        pilot.run_trial(trial, self.root, time.time() + 5400)
+                    # Continuation rejects before dispatch, even to a mocked run_trial.
+                    with patch.object(pilot, "run_trial") as run:
+                        with self.assertRaisesRegex(ValueError, "high"):
+                            pilot.continue_unreserved(self.root)
+                        run.assert_not_called()
+                popen.assert_not_called()
+                self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_glm_generation_requests_high_and_checks_reported_mode(self):
+        for index, variant in enumerate(["high", None, "low", "max"]):
+            trial = [t for t in self.manifest["trials"] if t["model"] == pilot.GLM][index]
+            ndjson, exported = capture()
+            info = exported["messages"][0]["info"]
+            info.update(providerID="opencode-go", modelID="glm-5.3-flash")
+            if variant is not None:
+                info["variant"] = variant
+            with self.subTest(variant=variant), patch.object(pilot.subprocess, "Popen", side_effect=[self.process(ndjson), self.process(json.dumps(exported))]) as popen:
+                result = pilot.run_trial(trial, self.root, time.time() + 5400)
+                args = popen.call_args_list[0].args[0]
+                self.assertEqual(args[args.index("--variant") + 1], "high")
+                self.assertEqual(result["outcome"], "complete" if variant == "high" else "protocol_violation")
+                # Neutral historical parsing must not invent the requested mode.
+                self.assertEqual(pilot.parse_capture(ndjson, exported, pilot.GLM, SID)["reported_variant"], variant)
 
     def test_seeded_variants_and_shared_public_requirements(self):
         cases = json.loads((ROOT / "scripts/evals/opencode_pilot_cases.json").read_text())
@@ -442,6 +569,116 @@ class PreparationTests(unittest.TestCase):
         with patch.object(pilot.subprocess, "Popen") as popen, self.assertRaises(ValueError):
             pilot.recover_export(self.root, trial["id"])
         popen.assert_not_called()
+
+    def glm_failed_collection(self, reported_variant):
+        # Each parameter has a fresh disposable schedule; no earlier failed
+        # recovery may mask the continuation decision for this parameter.
+        self.root = self.root.parent / ("recovery-" + str(reported_variant))
+        self.manifest = pilot.prepare(ROOT, self.root)
+        trial = self.manifest["trials"][0]
+        ndjson, exported = capture()
+        info = exported["messages"][0]["info"]
+        info.update(providerID="opencode-go", modelID="glm-5.3-flash")
+        if reported_variant is not None:
+            info["variant"] = reported_variant
+        with patch.object(pilot.subprocess, "Popen", side_effect=[self.process(ndjson), self.process('{"truncated":')]):
+            original = pilot.run_trial(trial, self.root, time.time() + 5400)
+        self.assertEqual(original["outcome"], "infrastructure_error")
+        self.assertEqual(original["failure_type"], "JSONDecodeError")
+        return trial, ndjson, exported, original
+
+    def test_glm_high_recovery_checks_mode_before_promotion_and_continuation(self):
+        for variant in ["high", None, "low", "max"]:
+            with self.subTest(reported_variant=variant):
+                trial, _, exported, _ = self.glm_failed_collection(variant)
+                originals = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+                with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))) as popen:
+                    record = pilot.recover_export(self.root, trial["id"])
+                self.assertEqual(popen.call_count, 1)
+                self.assertEqual(popen.call_args.args[0], ["opencode", "export", "--pure", SID])
+                for path, data in originals.items():
+                    self.assertEqual(path.read_bytes(), data)
+                if variant == "high":
+                    self.assertEqual(record["outcome"], "complete")
+                    self.assertEqual(record["effective_result"]["reported_variant"], "high")
+                else:
+                    self.assertNotEqual(record["outcome"], "complete")
+                    self.assertNotIn("effective_result", record)
+                with patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot, "run_trial", return_value={"outcome": "timeout"}) as run, patch("builtins.print"):
+                    if variant == "high":
+                        self.assertEqual(pilot.continue_unreserved(self.root)["outcome"], "timeout")
+                        run.assert_called_once()
+                        self.assertNotEqual(run.call_args.args[0]["id"], trial["id"])
+                    else:
+                        with self.assertRaises(ValueError):
+                            pilot.continue_unreserved(self.root)
+                        run.assert_not_called()
+                    popen.assert_not_called()
+
+    def test_glm_high_continuation_rechecks_mode_in_preexisting_recovery(self):
+        for variant in ["high", None, "low", "max"]:
+            with self.subTest(reported_variant=variant):
+                trial, ndjson, exported, original = self.glm_failed_collection(variant)
+                # Simulate the prior buggy writer's internally consistent recovery
+                # record, rather than trusting promotion-time checks on re-read.
+                attempt = self.root / "recoveries" / trial["id"] / "prior-writer"
+                attempt.mkdir(parents=True)
+                export_path, record_path = attempt / "export.stdout.txt", attempt / "record.json"
+                pilot.save(export_path, exported)
+                parsed = pilot.parse_capture(ndjson, exported, pilot.GLM, SID)
+                record = {"outcome": "complete", "trial_id": trial["id"], "session_id": SID,
+                          "kind": "export_collection_recovery",
+                          "original_result_sha256": pilot.sha256((self.root / "results" / (trial["id"] + ".json")).read_bytes()),
+                          "run_sha256": pilot.sha256(ndjson.encode()),
+                          "export_sha256": pilot.sha256(export_path.read_bytes()),
+                          "export_stdout": str(export_path.relative_to(self.root)),
+                          "effective_result": {**original, **parsed, "outcome": "complete",
+                                               "collection_recovery": str(record_path.relative_to(self.root))}}
+                pilot.save(record_path, record)
+                before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+                with patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot, "run_trial", return_value={"outcome": "timeout"}) as run, patch("builtins.print"):
+                    if variant == "high":
+                        self.assertEqual(pilot.continue_unreserved(self.root)["outcome"], "timeout")
+                        run.assert_called_once()
+                    else:
+                        with self.assertRaisesRegex(pilot.CaptureError, "high"):
+                            pilot.continue_unreserved(self.root)
+                        run.assert_not_called()
+                    popen.assert_not_called()
+                self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_historical_glm_no_variant_recovery_remains_neutral_and_non_generating(self):
+        trial, ndjson, exported, _ = self.glm_failed_collection(None)
+        # Build an old frozen fixture; never rewrite an actual historical run.
+        trial["variant"] = None
+        config_path = self.root / "control/opencode.json"
+        config = json.loads(config_path.read_text())
+        config["agent"]["pilot"].pop("variant")
+        pilot.save(config_path, config)
+        self.manifest["artifacts"]["control/opencode.json"] = pilot.sha256(config_path.read_bytes())
+        pilot.save(self.root / "manifest.json", self.manifest)
+        result_path = self.root / "results" / (trial["id"] + ".json")
+        original = json.loads(result_path.read_text())
+        original.update(requested_variant=None, sent_variant=None)
+        pilot.save(result_path, original)
+        originals = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+        self.assertIsNone(pilot.verify_collection(trial, ndjson, exported)["reported_variant"])
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))) as popen:
+            record = pilot.recover_export(self.root, trial["id"])
+        self.assertEqual(record["outcome"], "complete")
+        self.assertIsNone(record["effective_result"]["reported_variant"])
+        self.assertIsNone(record["effective_result"]["requested_variant"])
+        self.assertIsNone(record["effective_result"]["sent_variant"])
+        self.assertEqual(popen.call_args.args[0], ["opencode", "export", "--pure", SID])
+        original = json.loads((self.root / "results" / (trial["id"] + ".json")).read_text())
+        self.assertIsNone(pilot.recovered_result(self.root, trial, original, ndjson)["reported_variant"])
+        with patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot, "run_trial") as run:
+            with self.assertRaisesRegex(ValueError, "high"):
+                pilot.continue_unreserved(self.root)
+            popen.assert_not_called()
+            run.assert_not_called()
+        for path, data in originals.items():
+            self.assertEqual(path.read_bytes(), data)
 
     def test_recovery_rejects_changed_answer_or_model_and_keeps_failure_history(self):
         self.assertTrue(callable(getattr(pilot, "recover_export", None)), "explicit export recovery missing")

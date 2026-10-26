@@ -1,8 +1,8 @@
 ---
 description: Runs only guarded OpenCode home config verification for project-supplied non-secret support links.
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: medium
+model: opencode-go/glm-5.3-flash
+variant: high
 steps: 15
 permission:
   read:

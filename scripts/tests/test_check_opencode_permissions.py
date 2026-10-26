@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import subprocess
 import sys
@@ -32,7 +33,8 @@ def agent(name: str, permission_text: str) -> str:
     return f"""---
 description: Test {name} agent
 mode: subagent
-model: openai/gpt-6.1-sol
+model: opencode-go/glm-5.3-flash
+variant: high
 permission:
 {permission_text}
 ---
@@ -115,6 +117,7 @@ def make_repo(tmp_path: Path, *, agent_name: str = "example-agent", permission_t
     root = tmp_path / "repo"
     write_file(root / ".opencode" / "opencode.json", json.dumps({"default_agent": "supervisor"}))
     write_capability_files(root)
+    write_file(root / ".opencode/agents/expert-advisor.md", expert_agent())
     write_file(root / ".opencode" / "agents" / f"{agent_name}.md", agent(agent_name, permission_text))
     write_file(root / ".opencode" / "skills" / "example" / "SKILL.md", skill("example"))
     return root
@@ -495,10 +498,11 @@ def live_dev_prompt() -> str:
 def test_live_dev_primary_is_exact_direct_local_only_profile():
     text = live_dev_prompt()
     keys, _ = load_checker()._frontmatter(text)
-    assert {key: keys[key] for key in ("mode", "model", "variant", "steps", "permission")} == {
-        "mode": "primary", "model": "openai/gpt-6.1-sol", "variant": "medium",
+    assert {key: keys[key] for key in ("mode", "model", "steps", "permission")} == {
+        "mode": "primary", "model": "opencode-go/glm-5.3-flash",
         "steps": "180", "permission": "allow",
     }
+    assert keys["variant"] == "high"
     for term in [
         "live-dev/<topic>", "before edits", "freshly fetched `origin/main`", "unmerged",
         "dirty", "local only", "task completion", "commit request", "PR creation",
@@ -890,3 +894,212 @@ def test_github_operator_rejects_actions_log_wildcard_permission(tmp_path: Path)
     )
 
     assert "capability-boundary" in violation_codes(repo)
+
+
+ORDINARY_ROLES = (
+    "adjudicator", "config-auditor", "debug-advisor", "explorer", "fast-dev-reviewer",
+    "fast-dev", "git-integrator", "github-operator", "implementer", "live-dev",
+    "planner", "pr-recovery-operator", "reviewer", "supervisor", "web-researcher",
+    "windows-ci-reproducer",
+)
+EXPERT_PERMISSIONS = '''  "*": deny
+  read:
+    "*": allow
+    "*.env": deny
+    "*.env.*": deny
+    "*.env.example": allow
+    "*auth*": deny
+    "*secret*": deny
+    "*token*": deny
+    "*credential*": deny
+    "*keyring*": deny
+  glob: allow
+  grep: allow
+  list: allow
+  lsp: allow
+  edit: deny
+  bash: deny
+  task: deny
+  external_directory: deny
+  webfetch: deny
+  websearch: deny
+  question: deny
+'''
+
+
+def expert_agent():
+    return agent("expert-advisor", EXPERT_PERMISSIONS).replace(
+        "model: opencode-go/glm-5.3-flash", "model: openai/gpt-6.1-sol"
+    )
+
+
+@pytest.mark.parametrize("name", ORDINARY_ROLES)
+def test_ordinary_model(name):
+    keys, _ = load_checker()._frontmatter((REPO_ROOT / f".opencode/agents/{name}.md").read_text())
+    assert keys["model"] == "opencode-go/glm-5.3-flash"
+    assert keys["variant"] == "high"
+
+
+@pytest.mark.parametrize("name", [*ORDINARY_ROLES, "future-worker"])
+@pytest.mark.parametrize("drift", ["model", "missing", "low", "max"])
+def test_checker_rejects_ordinary_and_future_role_model_drift(tmp_path, name, drift):
+    repo = make_repo(tmp_path)
+    text = agent(name, "  bash: deny\n").replace("openai/gpt-6.1-sol", "opencode-go/glm-5.3-flash")
+    if name in {"fast-dev", "live-dev"}:
+        text = text.replace("mode: subagent", "mode: primary").replace("permission:\n  bash: deny", "permission: allow")
+    if drift == "model":
+        text = text.replace("opencode-go/glm-5.3-flash", "openai/gpt-6.1-sol")
+    else:
+        text = text.replace("variant: high\n", "" if drift == "missing" else f"variant: {drift}\n")
+    write_file(repo / f".opencode/agents/{name}.md", text)
+    assert "agent-model" in violation_codes(repo)
+
+
+def test_expert_is_required(tmp_path):
+    repo = make_repo(tmp_path)
+    (repo / ".opencode/agents/expert-advisor.md").unlink(missing_ok=True)
+    assert "expert-profile" in violation_codes(repo)
+
+
+def test_expert_exact_safe_profile_passes(tmp_path):
+    repo = make_repo(tmp_path)
+    write_file(repo / ".opencode/agents/expert-advisor.md", expert_agent())
+    assert load_checker().check_repo(repo) == []
+
+
+def test_checked_in_expert_profile_passes():
+    checker = load_checker()
+    path = REPO_ROOT / ".opencode/agents/expert-advisor.md"
+    keys, raw = checker._frontmatter(path.read_text())
+    assert checker._check_expert_profile(path, REPO_ROOT, keys, raw) == []
+
+
+def test_expert_rejects_default_deny_moved_after_inspection_grants(tmp_path):
+    repo = make_repo(tmp_path)
+    text = (REPO_ROOT / ".opencode/agents/expert-advisor.md").read_text()
+    default_deny = '  "*": deny\n'
+    assert text.count(default_deny) == 1
+    # Preserve every key/action but move the broad last-matching rule to the tail.
+    reordered = text.replace(default_deny, "", 1).replace("\n---\n", "\n" + default_deny + "---\n", 1)
+    write_file(repo / ".opencode/agents/expert-advisor.md", reordered)
+    assert "expert-profile" in violation_codes(repo)
+
+
+@pytest.mark.parametrize("old,new", [
+    ("model: openai/gpt-6.1-sol", "model: opencode-go/glm-5.3-flash"),
+    ("variant: high", "variant: medium"), ("variant: high\n", ""),
+    ("mode: subagent", "mode: primary"),
+    *[(f"  {key}: deny", f"  {key}: allow") for key in
+      ("edit", "bash", "task", "external_directory", "webfetch", "websearch", "question")],
+    *[(f"  {key}: allow", f"  {key}: deny") for key in ("glob", "grep", "list", "lsp")],
+    ('    "*.env": deny\n', ""), ('    "*auth*": deny\n', ""),
+    ('    "*": allow', '    "*": deny'),
+    ('  "*": deny', '  "*": allow'),
+    ("  bash: deny", '  bash:\n    "*": deny\n    "git status*": allow'),
+    ('    "*auth*": deny', '    "*auth*": deny\n    "*": allow'),
+    ("  task: deny", '  task: deny\n  skill: allow'),
+])
+def test_expert_rejects_pin_access_and_operational_drift(tmp_path, old, new):
+    repo = make_repo(tmp_path)
+    text = expert_agent()
+    assert old in text
+    write_file(repo / ".opencode/agents/expert-advisor.md", text.replace(old, new))
+    assert "expert-profile" in violation_codes(repo)
+
+
+@pytest.mark.parametrize("name", ORDINARY_ROLES)
+def test_existing_permission_mode_and_budget_bytes_preserved(name):
+    # Frozen from task BASE dafba78e; no old Git objects needed in shallow CI.
+    permission_sha256 = {
+        "adjudicator": "c3495c0e68af55c922a3002cb9cecb277c6b580993cf409c70d516bea09328d4",
+        "config-auditor": "0edcb176fe5954aa31aaa3c7b44395e97d0b50b92cef510bbf2d54260d200ac2",
+        "debug-advisor": "c3495c0e68af55c922a3002cb9cecb277c6b580993cf409c70d516bea09328d4",
+        "explorer": "d853f26c3465ccdce97c941fbd7f889bac43c3367153241671fbb2012c84eef4",
+        "fast-dev-reviewer": "653215903d7664cbb233b88feea1931108b30c978dc2ba1530b3b465857035b5",
+        "fast-dev": "874c3ddefbae0b53cf9360a397ec991333c0a5310fcd57f96204e5548861b2c4",
+        "git-integrator": "4df9acae621192f2e4a8ab3b9a9980ae7d7a244db6810105d25e1f2d3b8ab01d",
+        "github-operator": "5f9803d89382041f90b43be6dc76c700a3913434a9f4604409cb2978a08e149e",
+        "implementer": "db407b6a8b61434d684bd8c1ea900895f6b12945bab4b75873aa39fd36970b55",
+        "live-dev": "874c3ddefbae0b53cf9360a397ec991333c0a5310fcd57f96204e5548861b2c4",
+        "planner": "c3495c0e68af55c922a3002cb9cecb277c6b580993cf409c70d516bea09328d4",
+        "pr-recovery-operator": "2a8ab717b46a6be8c268a3f681206500eb0b2070152d9878242f2fd4da9c5942",
+        "reviewer": "c3495c0e68af55c922a3002cb9cecb277c6b580993cf409c70d516bea09328d4",
+        "supervisor": "13be0d4073768da038b1dbafd7baa30d518dba5206c3e4d40e2502de00324ed7",
+        "web-researcher": "55842260df665dff1b772553dfc53ad8345bfcc90a0f5296d62438af4e0f573b",
+        "windows-ci-reproducer": "1d3632121914c29bc8267b6ef47978fb26705669292f4ee9ba5f9a624d14a8dd",
+    }
+    steps = dict(zip(ORDINARY_ROLES, (40, 15, 35, 20, 55, 180, 18, 25, 100, 180, 35, 15, 55, 500, 35, 20)))
+    path = f".opencode/agents/{name}.md"
+    current = (REPO_ROOT / path).read_text()
+    keys, raw = load_checker()._frontmatter(current)
+    assert hashlib.sha256(raw.split("permission:", 1)[1].encode()).hexdigest() == permission_sha256[name]
+    mode = "primary" if name in {"supervisor", "fast-dev", "live-dev"} else "subagent"
+    assert (keys["mode"], keys["steps"]) == (mode, str(steps[name]))
+
+
+REQUEST_FIELDS = {"decision_scope", "trigger", "question", "sources", "invariant",
+                  "evidence", "attempted_fix", "glm_proposal", "decision_needed"}
+
+
+@pytest.mark.parametrize("name,key", [("reviewer", "status"), ("adjudicator", "status"),
+                                      ("debug-advisor", "verdict"), ("fast-dev-reviewer", "status")])
+def test_pending_worker_examples_are_nonapproving_complete_json(name, key):
+    import re
+    text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
+    examples = [json.loads(body) for body in re.findall(r"```json\n(.*?)\n```", text, re.S)]
+    pending = [item for item in examples if item.get(key) == "needs_consultation"]
+    assert pending, "delegation denial requires explicit pending consultation, not own findings or approval"
+    for item in pending:
+        assert REQUEST_FIELDS == set(item["consultation_request"])
+        assert item["consultation_request"]["glm_proposal"]
+        if name == "fast-dev-reviewer":
+            assert item["base_sha"] and item["head_sha"]
+
+
+def test_context_worker_and_controller_consultation_transitions():
+    for name in ("implementer", "planner"):
+        text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
+        assert "NEEDS_CONTEXT" in text and "consultation_request" in text
+        assert "glm_proposal" in text
+    supervisor = (REPO_ROOT / ".opencode/agents/supervisor.md").read_text()
+    for term in ("needs_consultation", "NEEDS_CONTEXT", "expert-advisor", "planner", "adjudicator", "TARGETED", "confirmed"):
+        assert term in supervisor
+    sdd = (REPO_ROOT / ".opencode/skills/subagent-driven-development/SKILL.md").read_text()
+    for term in ("needs_consultation", "consultation_request", "before normal", "new material evidence", "before another repair"):
+        assert term in sdd
+    debugging = (REPO_ROOT / ".opencode/skills/systematic-debugging/SKILL.md").read_text()
+    assert "needs_consultation" in debugging and "before `confirmed`" in debugging
+    assert "opencode-go/glm-5.3-flash" in debugging
+    assert "smarter model" not in debugging
+
+
+def test_implementer_escalation_keeps_glm_implementation_without_model_fallback():
+    import re
+    text = (REPO_ROOT / ".opencode/agents/implementer.md").read_text()
+    assert not re.search(r"(?:more capable|stronger|smarter)\s+model", text, re.I)
+    escalation = text.split("**How to escalate:**", 1)[1].split("## Self-Review", 1)[0]
+    for term in ("context", "smaller pieces", "bounded consultation", "`AGENTS.md`", "GLM retains implementation"):
+        assert term in escalation
+
+
+def test_direct_exemption_does_not_waive_dual_design_input():
+    agents = (REPO_ROOT / "AGENTS.md").read_text()
+    exception = agents.split("## Fast-dev workflow exception", 1)[1].split("## Branch Convention", 1)[0]
+    assert "does not waive" in exception and "dual-model" in exception
+    for name in ("fast-dev", "live-dev"):
+        text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
+        for term in ("expert-advisor", "GLM proposal", "GPT critique", "reconciliation", "project `explorer`"):
+            assert term in text
+    wrap = (REPO_ROOT / ".opencode/skills/fast-dev-wrap-up/SKILL.md").read_text()
+    assert "needs_consultation" in wrap and "expert-advisor" in wrap
+    assert "before direct fixes" in wrap and "new material evidence" in wrap
+
+
+def test_delivery_gate_is_canonical_and_wired_into_all_receiving_controllers():
+    agents = (REPO_ROOT / "AGENTS.md").read_text()
+    assert "### Fail-closed handoff delivery" in agents
+    for name in ("supervisor", "fast-dev", "live-dev"):
+        text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
+        assert "## Handoff delivery gate (before all report handling)" in text
+        assert "AGENTS.md#fail-closed-handoff-delivery" in text
+        assert "before consultation, verdict, fix, cap or completion handling" in " ".join(text.split())

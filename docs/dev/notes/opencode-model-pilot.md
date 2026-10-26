@@ -2,6 +2,14 @@
 
 ## Result and decision
 
+> **User-superseded routing recommendation (2026-10-25):** The conservative
+> strong-model routing advice below is historical, not current policy. The user
+> subsequently chose GLM for all sixteen ordinary project roles plus one bounded
+> read-only GPT expert, with mandatory dual input on every architecture/design/
+> system-contract decision. See the [current workflow](../features/opencode-agent-workflow.md#glm-default-roles-and-bounded-expert-consultation).
+> Pilot observations, findings and execution limits remain unchanged; this policy
+> choice does not demonstrate hybrid success or model competence.
+
 **Qualitative screening only: retain the current strong-model architecture and
 review gates. Do not change production model routing on this evidence.** Eleven
 primary candidate attempts ran exactly once: five effective complete answers, one

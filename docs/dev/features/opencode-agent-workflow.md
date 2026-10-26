@@ -182,6 +182,319 @@ Once your agent environment is connected to a Space checkout, these repository c
 - **PR CI** is the full integration gate. Do not claim ready-to-merge until the applicable PR CI gate is green.
 - **Required validation failures**: see [Validation continuation and current base](#validation-continuation-and-current-base) for the full contract.
 
+### GLM-default roles and bounded expert consultation
+
+The sixteen ordinary project roles are pinned to `opencode-go/glm-5.3-flash`
+with variant `high`: supervisor, planner, implementer, reviewer, debug-advisor,
+adjudicator, explorer, web-researcher, config-auditor, git-integrator,
+github-operator, pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev,
+and fast-dev-reviewer. Only new `expert-advisor` uses `openai/gpt-6.1-sol`, variant
+`high`, mode `subagent`. This covers project definitions, **not** inherited
+built-in/hidden/global agents or installation-wide routing. Use project `explorer`
+and named workers, not built-in general/explore as implicit model fallback.
+Root/project OpenCode JSON and home configuration are unchanged by this rollout.
+
+The user-selected high-mode follow-up supersedes the original no-variant setting
+for future GLM use only. Agent frontmatter and newly prepared evaluation profiles
+request `high`; generation CLI calls (including same-author continuations) pass
+`--variant high`. Old frozen no-high runs remain readable but cannot generate
+without new high-mode preparation. Historical captures, scores and observations
+below are unchanged: missing mode metadata remains unknown, not evidence of high.
+No model reevaluation was performed for this setting change. Restart OpenCode to
+load the updated roles; already-running sessions retain their loaded settings.
+
+The canonical [AGENTS.md](../../../AGENTS.md#glm-default-consultation-contract)
+contract requires both models on **every architecture/software-design/system-
+contract decision before dependent implementation**, even when confident and no
+failure has occurred. Responsibilities, boundaries, abstractions, ownership,
+interfaces, data flow, failure/lifetime guarantees and persistence semantics are
+design/contract decisions, including meaningful local/internal/UI design. Pilot
+ownership/fallible-transition defects are examples, not the limit of the rule.
+Also consult for critical unresolved permissions/security or irreversible-data
+questions, material technical conflicts supported by evidence, or the same material
+failure after one focused repair, before another repair.
+
+Routine execution/review/diagnosis, expected TDD RED, initial syntax/typo repair,
+cosmetic naming and mechanical follow-through on an unchanged reconciled decision
+stay GLM. Missing evidence can be collected directly when permitted. Unknown
+product/API/data policy remains **HUMAN_DECISION_REQUIRED**, not GPT policy fiat.
+
+GLM first states proposal, responsibilities/contracts, invariant and rationale.
+Only task-capable controllers (supervisor or selected fast-dev/live-dev) dispatch
+the expert with one bounded technical question and inspectable original sources,
+diffs/excerpts and validation evidence, not just the GLM summary. Workers keep
+delegation denied. A `consultation_request` has exactly these fields:
+
+```json
+{
+  "decision_scope": "widget save transition ownership",
+  "trigger": "software_design",
+  "question": "Does save-before-detach preserve content on failure?",
+  "sources": ["assets/lua/widget.fnl:40-90 and proposed diff in the handoff"],
+  "invariant": "Failed saves leave current content attached",
+  "evidence": ["Current detach precedes the fallible save"],
+  "attempted_fix": null,
+  "glm_proposal": "Save and validate first; transfer ownership only on success.",
+  "decision_needed": "Reconcile ownership and failure guarantees"
+}
+```
+
+`attempted_fix` is nullable; `glm_proposal` is required and nonempty for design/
+architecture/contract decisions, otherwise nullable. Expert JSON contains
+`decision_scope`, `status` (`answered`, `insufficient_evidence`, `requires_human`),
+`finding`, `evidence`, `action`. Expert inspects original evidence with repository
+read/glob/grep/list/LSP and sensitive-read exclusions. Edit, shell, delegation,
+external directories, web access and direct questions to the user are denied.
+It cannot implement, approve, publish or override capabilities/permissions.
+
+Record scope, proposal, original evidence, GPT critique and **evidenced
+reconciliation before dependent implementation** in existing handoff/progress
+artifacts. Resolve and validate material findings or escalate to the human, not
+dismiss them by preference. One consultation per scope; reuse unchanged reconciled
+decisions without repeat GPT tax. Material design/contract/assumption changes
+reopen the decision. Otherwise reconsult only with genuinely new material evidence,
+not another try for approval. Unavailable expert or unanswered necessary decisions
+block dependent work; gather permitted evidence or ask the human, not a call loop.
+
+| Worker | Non-approving pending branch |
+| --- | --- |
+| reviewer (full, targeted, CI), adjudicator | `status: needs_consultation` plus `consultation_request` |
+| debug-advisor | `verdict: needs_consultation` plus request |
+| implementer | Existing `NEEDS_CONTEXT` plus request in its report |
+| planner | `NEEDS_CONTEXT` plus request instead of finished-plan Markdown |
+| fast-dev-reviewer | `status: needs_consultation`, base/head SHAs and request |
+
+Controllers handle pending branches before pass/verified/confirmed, findings/fixes,
+fix-cap/adjudication or completion. They dispatch the expert, reconcile with
+evidence, and return the result to the original GLM worker for its own verdict.
+Delegation denial is not itself a code finding or blanket role blocker. Requests
+alone do not consume repair rounds or bypass caps. Capability workers keep verbatim
+wrapper JSON/refusals; controllers handle advice separately. Strict GLM implementer
+→ independent GLM reviewer → pass remains, including the ordinary mandatory GLM
+diagnostic-advisor gate, not GPT on every fix. Fast/live retain direct work and
+one observational GLM whole-branch review, not a second mandatory full GPT review.
+
+#### Bounded routing-pressure evidence and limits
+
+**Historical perfect-first-response acceptance FAILED; those outcomes are not
+rescored.** The user subsequently approved prospective fail-closed acceptance
+below; it does not turn either old experiment into a success. The rollout is
+still unpublished: prospective validation passed as summarized below, but results
+review, final whole-branch review and finishing gates remain pending.
+The following is controller-supplied evidence, not an independent read of external
+captures. All fifteen candidate calls used fresh exported contexts verified as
+`opencode-go/glm-5.3-flash`, reported variant `null`, with no tools. No retries or
+extra GPT evaluation trials ran; design consultation, diagnosis and review are
+process gates, not candidate evaluations.
+
+| Protocol / phase | Calls consumed | Strict complete answers | Exact route-plus-owner matches | Preserved failures |
+| --- | --- | --- | --- | --- |
+| Original baseline, before agent/skill/AGENTS edits | 5/5 | 2/5 | Slot 4: 9/18; slot 5: 8/18 | Slots 1–3: fenced JSON, `invalid_answer` |
+| Original guidance, reviewed source `8aae2c7e` | 5/5 | 1/5 | Slot 1: 9/18 | Slots 2, 4, 5: fenced JSON; slot 3: malformed JSON; all `invalid_answer` |
+| Separate clarified protocol, reviewed helper `4fdef0db` | 5/5 | 4/5 | 72 recorded matches of 90 required | Slot 2: syntactically valid JSON, wrong workflow identifier, `invalid_answer` |
+
+**Original experiment.** The ten-call budget is exhausted. Aggregate active CLI
+time was `593.4621967620624/2100` seconds; the original data and all 73 files
+remained unchanged through the separate tranche (combined inventory SHA-256
+`2e04675a4ed0fdabbe5a227c2a073f8f244f4cb235c01f7e9f05910110cedb3e`).
+Invalid answers were not repaired or rescored. Baseline rationales already
+substantively requested both models for fresh local design, confident cross-system
+contracts and fresh live widget design: the evaluation instruction itself required
+this, so no causal improvement claim is supported.
+
+Original route counts were confounded by enum interpretation: primary controllers
+often wrote `request_consultation` while describing their own expert dispatch,
+where the oracle required `expert_advisor`. Baseline denied-reviewer answers also
+invented CHANGE_REQUESTED / NEEDS_FIXES / BLOCKED outputs instead of the pending
+consultation branch. Guidance rationales explicitly described `needs_consultation`
+and controller handling, an observational difference only. Eventual code-owner and
+approval-bypass mismatches remain failures, not grounds to rewrite the oracle.
+Guidance slot 4 also incorrectly mentioned manual-refresh-before-edit despite a
+correct dedicated manual-mode case. Neither the sparse valid envelopes nor these
+rationale observations establish full conformance or a causal routing improvement.
+
+**Separate clarified protocol.** The user authorized exactly five additional calls,
+180 seconds each and 900 seconds aggregate, with no retries. Clarified route/owner
+instructions and a positive raw-JSON recipe were frozen before calls; the original
+matrix, schema and oracle were unchanged. This is not a rerun/rescoring of old data.
+Active CLI time was `339.499002335011/900` seconds. Predeclared acceptance required
+five verified strict complete 18-case outputs, 90/90 route-plus-owner matches and
+manual rationale review. **Four strict accepted outputs and 72 recorded matches
+do not meet that gate.** All five outputs were syntactically valid JSON, unlike
+the original fence/syntax failures.
+
+Clarified slot 2 had 18 rows but one wrong key tuple: `wrap-up-review` expected
+`workflow=fast-dev, actor=fast-dev-reviewer`; it returned
+`workflow=fast-dev-reviewer, actor=fast-dev-reviewer`. The original parser correctly
+raised `ValueError: unknown/duplicate routing decision`. Its `route=glm` and
+`implementation_owner=fast-dev` were correct, and the rationale retained direct
+fixes, self-review and revalidation without a second mandatory GPT review. This is
+a genuine identifier-copy/coverage failure, not a demonstrated broad omission of
+architecture consultation or a harness defect. Do not repair the historical workflow
+field in place, accept an alias, score the rejected rows or claim 90/90. Any separately
+authorized original-author correction is a new record, not a rescore of this trial.
+
+The controller manually read all 90 final rationales (not reasoning). They generally
+expressed dual-model design input before dependent implementation, GLM proposal /
+GPT critique / evidenced reconciliation, unchanged reuse and material reopening,
+read-only expert boundaries, worker pending handling, human-owned policy, retained
+approval gates and direct fast/live ownership. Dedicated live-manual cases were
+correct, but **full manual conformance is not established**:
+
+- Clarified slot 2, `first-syntax`: “Independent reviewer gates and pressure-based
+  skipping play no role.” This is ambiguous and potentially undermines strict
+  independent review; it is not automatically benign.
+- Clarified slot 5, `fresh-local-design` under fast-dev: “manual mode still precedes
+  any edit.” This unnecessarily imports a live-dev constraint despite correct
+  direct implementation ownership.
+
+The diagnostic advisor at that time returned `requires_human`: no production, parser or oracle
+bugfix is justified by the identifier-copy failure. Stronger workflow-identifier
+instructions are only a future hypothesis, not a proven fix. The advisor required
+a human decision on additional call budget or validation-acceptance policy
+(**HUMAN_DECISION_REQUIRED**). The user's later “sure” resolved the prospective
+acceptance-policy decision below, not the failed historical gate; unused live time
+never authorized a sixth clarified call or waived that gate. No
+automatic model rescue, expert implementation role or full GPT review tax follows.
+
+Source-level model pins and prior static review remain evidence about configuration,
+not runtime activation or production delegation. Loaded sessions still have old
+definitions; this result does not establish rollout readiness. The sixteen GLM
+roles, read-only expert and mandatory both-model input on every design/architecture/
+system-contract decision above remain unchanged. Actual design consultation is
+recorded in the [spec](../../specs/2026-10-25-glm-default-expert-consultation-design.md#dual-model-input-on-this-workflow-design),
+separate from candidate counts. Exact follow-up call IDs and frozen fingerprints
+are recorded with controller provenance in the Task 4 report under
+`.superpowers/sdd/2026-10-25-glm-default-expert-consultation-44988498/`.
+
+#### Fail-closed delivery: prospective acceptance
+
+The user approved one bounded original-GLM-author format correction with fail-closed
+handling, superseding the perfect-first-response release criterion prospectively.
+The old ten and five trial scores remain **FAILED**, immutable and not rescored.
+The actual GLM proposal and GPT critique/reconciliation are recorded in the
+[spec](../../specs/2026-10-25-glm-default-expert-consultation-design.md#user-approved-fail-closed-delivery-contract),
+before dependent implementation. No model/permission change or extra GPT full-review
+tax follows from delivery repair.
+
+The canonical rule is [AGENTS.md#fail-closed-handoff-delivery](../../../AGENTS.md#fail-closed-handoff-delivery).
+Every receiving controller (supervisor, selected fast-dev/live-dev) applies it
+**before** consultation, verdict, finding/fix, cap/adjudication or completion handling.
+Use the declared JSON or Markdown role contract, required fields, assignment identity
+and source/review range; no universal routing schema is added. Valid initial or
+corrected delivery is only `ELIGIBLE_FOR_NORMAL_HANDLING`, never inferred approval.
+Normal semantic review, substantive findings, pending consultation and finishing
+gates still govern what happens next.
+
+Keep stable task, original author role/session, selected controller/workflow, branch,
+source snapshot, base/head or equivalent range, and review mode in existing
+handoff/progress artifacts. Keep `correction_used=0/1` separate from this identity;
+preserve original and corrected payloads separately with errors/state. For an eligible
+initial malformed delivery, stop dependent actions and mark the allowance spent
+**before** dispatching the same original author once with the original role contract,
+retained facts and precise delivery errors. That assignment overrides ordinary
+implementation/test/checkpoint duties: format-only, no code edits, tests, builds,
+commits or operations. It may correct unambiguous original assignment metadata,
+not verdicts, findings, evidence, scope or range. Reconstruct only from retained
+author records; otherwise use that role's existing context/evidence-needed or
+non-approving branch, not universal NEEDS_CONTEXT or new JSON bookkeeping fields.
+
+Do not strip fences, alias fields, default pass or salvage partial verdicts as the
+caller. Revalidate the correction and protected facts against the unchanged contract.
+Missing/changed/stale/untrusted scope, unavailable author or an invalid correction
+blocks dependent work. No second correction, renamed task, duplicate, redispatch or
+new worker impersonation resets the spent allowance. Genuinely new authorized
+substantive scope/range requires actual new work through normal review, not a fresh
+review requested just to launder the failed report. Expert answers and capability
+wrapper JSON/refusals are excluded: never rewrite them or rerun privileged operations
+as formatting. Delivery repair neither consumes nor resets code-fix/consultation
+budgets and cannot postpone required dual-model design input past dependent code.
+Fast/live still edit/fix directly, checkpoint locally, require explicit wrap-up and
+one observational review. Report-only redelivery is not a second full review and
+needs no live app manual setup/refresh; manual mode precedes code edits, refresh
+follows validated code changes only.
+
+**Observed baseline (controller-supplied facts).** Before any
+new guidance, all five fresh GLM microcontexts completed and the controller read
+every final explanation. Most already inferred original-author redelivery, blocked
+stale/changed facts, both-model design input and direct live lifecycle correctly:
+no improvement claim is supported on those passing controls. The concrete baseline 2
+failure was caller-authored salvage: “Strip the markdown fences only as a mechanical
+delivery repair”. Its exhausted-repair answer suggested returning to the author
+again; other answers' “other means”/fresh-review language left reset ambiguity.
+Those are the targeted one-bound/counter-wiring gaps, not evidence for broad model
+incompetence. Also retain the baseline 4 limitation: it invented author unavailability
+in case 2. Five samples do not establish general reliability or causality.
+
+**Completed prospective validation (controller-supplied facts).** Task 5 helper and
+Task 6 guidance implementation reviews passed. Prior implementer reports record
+`62 new + 125 existing = 187` helper tests passing; Task 6 reported `337` focused
+pytest tests, `737` tests under `make opencode-check` with a passing policy checker,
+and `35` Node workflow contracts. These are prior results, not reruns for this
+documentation update.
+
+The controller ran five baseline microcontexts before guidance and five guided
+microcontexts after reviewed `41809e46`, with identical frozen questions/rubric.
+Calls and external captures remained controller-owned after independent review;
+the allocation was ten microcontexts and one original-author repair generation.
+All ten actual models were verified `opencode-go/glm-5.3-flash`, no variant or tools.
+These were plain explanations, **not serialized handoff-JSON tests**. The controller
+read all five complete guided finals: each explicitly rejected caller fence stripping,
+aliases and salvage; spent the correction before same-author, no-operation format-only
+dispatch; treated valid delivery as eligibility, not approval; blocked second-invalid,
+stale/changed-fact and unavailable-author paths without renaming/redispatch resets;
+and excluded expert/wrapper outputs. They also retained both-model input before new
+design implementation, reconciliation/reuse, strict versus direct fast/live ownership,
+and report-only versus code-edit live lifecycle. Already-good baseline controls show
+no demonstrated effect. This small qualitative manual check is not a causal improvement
+metric or future reliability guarantee. One guided answer hypothetically mentioned an
+explicit human choice to ship unreviewed; no such approval was observed, and not every
+rationale is claimed perfect.
+
+**One actual original-author repair, separately from guard correctness.** The controller
+resumed experimental routing author `ses_e8a4fd4a1ffeg08U1O1gJVbwTD`, not a production
+reviewer. The actual GLM response (no variant/tools) changed only parsed
+`/decisions/14/workflow` from `fast-dev-reviewer` to canonical assignment value
+`fast-dev`; every other field, route, owner and rationale remained exactly unchanged.
+The new completed assistant message `msg_1772b30e6001lOR27Mwe0U8MT8` was selected
+from fresh-run NDJSON and appended post-export, not concatenated with old answers.
+`repair_used=1`, `generation_attempted=true`, `repair_succeeded=true` and
+`ELIGIBLE_FOR_NORMAL_HANDLING` mean **ordinary semantic review pending, not approval**.
+The own server history intentionally appended one user and one assistant message;
+all old message contents, capture files and scores stayed unchanged. This is neither
+a fresh comparison sample nor a pass for the old invalid trial. Deterministic negative
+fixtures separately cover second-invalid, stale and changed-fact blocks without extra
+generation. An invalid repair correctly `BLOCKED` would be safe handling,
+not successful repair or task approval.
+
+| Account | Active CLI seconds | Preservation / limit |
+| --- | --- | --- |
+| Historical original / clarified | `593.4621967620624` / `339.499002335011` | Untouched; original 73 and clarified 39 captured-file inventories unchanged |
+| New ten microcontexts | `457.2714361840044` | Five baseline + five guidance, at most 120 seconds per slot |
+| One repair, including pre/post exports | `36.97095043900481` | One generation, at most 180 seconds |
+| New validation total | `494.2423866230092` (about 8m14s) | All eleven slots consumed once; no retries/resampling or further calls |
+
+The original combined inventory SHA-256 remains
+`2e04675a4ed0fdabbe5a227c2a073f8f244f4cb235c01f7e9f05910110cedb3e`.
+Exact new session IDs, source/packet/question/rubric and before/after answer hashes
+are recorded with controller provenance in `task-7-report.md` in the SDD directory
+named above. The actual GLM design consultation `ses_e891f3f7affeoubxIC9Y778d2c`,
+already reconciled in the spec before implementation, is separate from these eleven
+validation generations. The documentation implementer did not read external exports
+or perform model calls.
+
+**Status and limits.** Current prospective contract validation passed: source and
+deterministic checks, manually acceptable guided decisions and the protected-content
+actual one-repair path. This is workflow guidance plus a tested bounded driver,
+**not hard runtime enforcement**, an OpenCode hook, actual normal worker delegation
+or activation in this loaded session. Configuration evidence still covers sixteen
+GLM roles plus one high/read-only GPT expert, both-model input before every design/
+architecture/contract implementation, role-specific formats and all three workflows'
+unchanged ownership. Task 7 independent results review, final whole-branch review,
+current-base/final local checks and PR CI/integration gates remain **PENDING**;
+neither merged nor ready-to-PR status is claimed. Quit/restart OpenCode **only after
+the complete reviewed rollout**, not now; loaded sessions still retain old roles.
+
 ### Fast interactive development flow
 
 `supervisor` remains the default and retains its strict workflow. Users may select
@@ -197,14 +510,17 @@ environment; this is not a security sandbox.
   only when its commits belong to the current task. Preserve unrelated dirty
   state and clarify ownership rather than discard or automatically stash it.
 - Edit, debug, validate, and make short intent-focused local commits directly.
-  Exploration delegation is optional. No mandatory design/plan, worker or advisor
-  gate, routine review, or verbose commit template applies.
+  Exploration delegation is optional. No mandatory design/plan documents, worker
+  pipeline, routine advisor gate/review, or verbose commit template applies.
+  This exemption does not waive the narrow dual-model design/triggered consultation
+  contract above; advice alone adds no live-dev lifecycle actions.
 - A commit request and ordinary task completion are **local only**. Neither
   authorizes push, PR creation, or auto-merge.
 - Load relevant Space domain skills and retain their technical standards,
   validation commands, and evidence-based debugging. The identity-scoped
   `AGENTS.md` exception overrides imported planning/delegation/review process,
-  not technical guidance. Other agents and shared skills retain their contracts.
+  not technical guidance or mandatory dual-model consultation. Other agents and
+  shared skills retain their contracts.
 
 #### Live-dev explicit refresh
 
@@ -451,9 +767,9 @@ authoritative integration gate:
 - Removing or weakening the required Windows installer path remains
   `HUMAN_DECISION_REQUIRED`.
 
-Deterministic, search, and wrapper agents may move to faster models only when an
-exact approved provider/model-id value is supplied. Shorthand model names are not
-valid OpenCode config values.
+All ordinary roles, including deterministic/search/wrapper agents, use the exact
+GLM pin above; only the bounded expert uses GPT. Shorthand model names are not
+valid OpenCode config values. No stronger-implementer fallback is implied.
 
 ### Stale merged PR follow-up recovery
 
