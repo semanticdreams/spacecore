@@ -18,6 +18,7 @@
 - One consultation per decision scope; reconsultation requires genuinely new material evidence. No expert implementer or automatic full GPT review.
 - User refinement: every architecture, software-design or system-contract decision requires a GLM proposal and GPT critique before dependent implementation, regardless of confidence or prior failure. Reuse a reconciled decision until materially changed; this applies to all three workflows, including meaningful local design.
 - Ten fresh GLM validation calls maximum: five baseline before any skill edits and five guidance afterward. No retries or extra GPT trials.
+- This original experiment limit is immutable. Separately authorized later tranches use only their explicit addendum budgets/roots; they do not reset, rescore or retry the original experiment.
 - 180 seconds per run plus own-session export, 35 minutes aggregate live CLI time across both phases. Persist consumed time; do not reset it. Offline development/review and human pauses are not live CLI time.
 - Runtime artifacts only under `/tmp/space/opencode-expert-routing`. Controller owns live calls/reads; implementers use repository/mock tests and supplied facts, not denied external reads.
 - Normal internal CLI authentication is allowed; never inspect/copy auth, home config, private logs, databases, other sessions or environment secrets.
@@ -183,3 +184,97 @@ python3 scripts/eval_opencode_expert_routing_clarified.py report
 - [ ] **Step 1:** Controller supplies sanitized new outcomes, model identities, strict/manual acceptance, source fingerprints and exact failures to the repository-only implementer. State old baseline/guidance failures and the new protocol separately. Do not claim causal improvement or effective routing in an already-loaded session.
 - [ ] **Step 2:** Implementer updates documentation, runs relevant checks, self-reviews and checkpoints. Independently review the complete pending results/documentation range. No further policy edits may be silently attributed to already-recorded responses.
 - [ ] **Step 3:** Perform final whole-branch review, fetch/evaluate current `origin/main`, and run `make opencode-check`, relevant helper/parser pytest suites, Node workflow contracts and diff checks. No native build or candidate code execution. Follow guarded integration/merge-queue policy only when required checks and behavioral acceptance are green. Tell the user to quit/restart OpenCode after the reviewed rollout.
+
+## User-approved delivery-contract addendum
+
+The user approved a fail-closed, one-original-author correction path after the
+clarification tranche remained4/5. The spec's “User-approved fail-closed delivery
+contract” at989261a records actual GLM proposal and GPT critique/reconciliation.
+Tasks5–7 prospectively validate this new contract instead of perfect first replies;
+oldten/five failures stay failed. Model pins, permissions and mandatory both-model
+design input remain unchanged. No plugin or hard runtime-enforcement claim.
+
+New validation allowance: five short fresh baseline microcontexts before handoff
+guidance edits, five with-guidance contexts afterward, each at most120s, plus one
+original-author format-correction generation at most180s including exports.
+Maximum11 validation generations, no retries/resampling. The recorded design GLM
+consultation is separate. Controller owns all actual calls/runtime reads; workers
+use mocks and supplied facts only. New runtime is `/tmp/space/opencode-handoff-delivery`.
+
+### Task 5: Small delivery-state validator/replay helper and baseline
+
+**Files:**
+- Create: `scripts/eval_opencode_handoff_delivery.py`.
+- Create: `scripts/tests/test_eval_opencode_handoff_delivery.py`.
+- Reuse read-only: existing capture, strict matrix parser and context helpers.
+- No role/skill/AGENTS guidance changes yet; old helpers and evidence untouched.
+
+**Interfaces:**
+- `evaluate_delivery(case: dict) -> dict`: explicit fixture state evaluation, not a universal production schema engine. Inputs include stable handoff identity, previous correction count/state, declared-format validity, scope/fact preservation, author availability and excluded-role facts. Outputs retain identity/count and yield `FORMAT_REPAIR_REQUIRED`, `ELIGIBLE_FOR_NORMAL_HANDLING` or `BLOCKED`, with reasons.
+- Fixed controller-invoked CLI `prepare --repo-root .`, `micro --phase baseline|guidance`, `replay`, `report`. Preparation/model calls never run implicitly during tests.
+- Runtime artifacts contain frozen source/scenario/rubric snapshots, reservations, captured final text and evidence hashes; exclude private reasoning from summaries.
+
+- [ ] **Step 1:** Write failing tests for initial-valid normal handling; initial malformed ordinary report with unused correction; valid fact-preserving correction after one request; invalid correction exhaustion; duplicates/renaming/staleness not resetting counters; changed facts/verdicts/base/head blocking; original author unavailable; JSON and intentionally Markdown contracts; excluded GPT/wrapper rewriting; and no approval from delivery eligibility.
+
+```python
+def test_invalid_correction_blocks_without_second_request():
+    result = delivery.evaluate_delivery({"identity": "stable-scope", "repair_used": 1,
+        "payload_valid": False, "scope_current": True, "facts_preserved": True,
+        "author_available": True, "excluded": False})
+    assert result["state"] == "BLOCKED"
+    assert result["repair_used"] == 1
+```
+
+- [ ] **Step 2:** Implement the smallest explicit fixture assessor and opt-in driver. Reuse safe file-backed capture/own-session checks and original matrix parser for matrix-shaped replay only; do not generalize it to every role. Reject out-of-scope/symlink paths before reads, use schema-first tool-denied config, preserve normal CLI-internal auth, and never inspect home/auth/private logs/databases.
+- [ ] **Step 3:** Freeze one concise five-scenario question bundle and full relevant old workflow context before any handoff-guidance changes. Each of five fresh contexts sees initial malformed delivery, exhausted correction, changed/stale facts, valid correction still awaiting semantic review, and expert/wrapper exclusions plus direct-primary/lifecycle constraints under deadline/sunk-cost/authority pressure. Ask plain routing explanations; expected actions remain evaluator-only. Same bundle/context assignments are used after guidance, with updated sources only. These are policy-understanding checks, not first-response JSON scoring.
+- [ ] **Step 4:** Add mocked call/accounting tests: five slots per microphase, one replay generation, no duplicate calls/reset/resume loophole,120s/180s limits, actual GLM/no variant/tools checks, source/packet freezing and historical snapshots untouched. A failed attempt consumes its slot. Preserve final explanations without reasoning text; no automatic efficacy/causality claim.
+- [ ] **Step 5:** Implement the bounded replay preparation. It may publicly export only retained own GLM session `ses_e8a4fd4a1ffeg08U1O1gJVbwTD`, retain original assistant IDs/content and canonical request metadata, and authorize only the demonstrated workflow scalar correction. No other field, route, owner, rationale, verdict, evidence or range may change. Preserve all saved historical files and scores. If author/source/facts cannot be verified, record blocked without a generation.
+- [ ] **Step 6:** Tests and independent review precede controller calls.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q scripts/tests/test_eval_opencode_handoff_delivery.py scripts/tests/test_eval_opencode_expert_routing.py scripts/tests/test_eval_opencode_expert_routing_clarified.py scripts/tests/test_eval_opencode_pilot.py
+git diff --check
+```
+
+- [ ] **Step 7:** After review, controller verifies the permitted parent, prepares fixed runtime, runs the five baseline contexts and reads every final explanation before Task6 guidance edits. Record failures and already-compliant controls verbatim. No claim of improvement where baseline already complies; preserve any missing/failed evidence.
+
+### Task 6: Canonical fail-closed handoff rule and all-controller hooks
+
+**Files:**
+- Modify: `AGENTS.md` canonical delivery subsection.
+- Modify: `.opencode/agents/supervisor.md`, `fast-dev.md`, `live-dev.md` controller hooks.
+- Modify ordinary author prompts only where needed: `implementer.md`, `planner.md`, `reviewer.md`, `debug-advisor.md`, `adjudicator.md`, `fast-dev-reviewer.md` under `.opencode/agents/`.
+- Modify short parent references in `.opencode/skills/subagent-driven-development/SKILL.md`, `.opencode/skills/systematic-debugging/SKILL.md`, `.opencode/skills/fast-dev-wrap-up/SKILL.md`.
+- Modify/test: `scripts/tests/test_check_opencode_permissions.py` and new delivery tests; existing checker code only if a concrete policy-regression need requires it, not to add report parsing.
+- Modify: existing `docs/dev/features/opencode-agent-workflow.md`; no duplicate policy page.
+
+**Contract:** stable task/author/controller/branch/source/base-head/mode identity,
+immutable original, one separate correction counter, original-author format-only
+no-operation assignment, unchanged facts and role format, eligible-not-approved
+normal handling, blocked second/stale/changed/unsupported delivery. GPT advice
+and capability wrapper outputs stay outside this repair path.
+
+- [ ] **Step 1:** Add failing source-contract regressions before guidance edits: all3 parent hooks, ordinary author format-only exception to code/test/commit obligations, one correction per stable scope, no counter reset, excluded outputs, valid correction returning to ordinary handlers, and preserved model/permission/consultation/direct-primary contracts.
+- [ ] **Step 2:** Add the canonical rule in AGENTS and short pointers from parents/authors. Validate declared JSON/Markdown formats, not a universal routing field. Mark correction allowance spent before dispatch; resume the original worker with existing facts and precise delivery errors. Do not strip fences, alias fields, default pass, salvage partial verdicts or change scope/SHAs. Missing reconstructable facts produces NEEDS_CONTEXT, not invented content.
+- [ ] **Step 3:** Wire delivery validation before consultation/verdict/fix/cap/completion transitions. It is not a substantive code-fix round, new expert consultation, second whole-branch review or authority grant. Fast/live remain direct; report-only repair triggers no live app setup or refresh. Preserve normal semantic review and all finishing gates after eligible delivery.
+- [ ] **Step 4:** Document the prospective user-approved contract, observed historical failures, stable bookkeeping and runtime-enforcement limitations. Old failed gates remain historical facts, not silently waived successes. Run source/permission/Node guards, self-review, checkpoint and obtain independent review before with-guidance calls.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q scripts/tests/test_check_opencode_permissions.py scripts/tests/test_eval_opencode_handoff_delivery.py
+make opencode-check
+node --test docs/scripts/test-opencode-automation-config.mjs
+git diff --check
+```
+
+- [ ] **Step 5:** Controller runs five new with-guidance microcontexts using the same questions/rubric and manually reads every explanation. Require correct reject/one-author-repair/eligible-normal-handler/block behavior and retained authority; do not score free-form analysis as serialized report delivery or claim model competence.
+- [ ] **Step 6:** Controller performs at most one original-author repair generation using CLI `--session` on the verified retained own session, all tools denied,180s including pre/post exports. Explicitly request only correction of the workflow scalar to original request metadata, preserving other values exactly. This is a new delivery-repair record, not an old trial rerun or fresh comparison sample.
+- [ ] **Step 7:** Select only the new assistant message ID observed in run NDJSON and absent from the pre-export. Verify provider/model/completion/tool absence; never concatenate old and new answers. Verify old assistant contents and historical snapshot inventories unchanged, disclose the intentional server-session append. Parse and compare protected content strictly. Valid preserved correction yields only `ELIGIBLE_FOR_NORMAL_HANDLING`; otherwise `BLOCKED` with no second generation. Deterministic fixtures demonstrate exhaustion without extra live calls.
+
+### Task 7: Record prospective acceptance and finish the complete rollout
+
+**Files:** update `docs/dev/features/opencode-agent-workflow.md` and task reports; generated evidence stays in the fixed runtime root.
+
+- [ ] **Step 1:** Controller supplies sanitized baseline/guidance assessments, repair success or failure, state trace, model identities, counts, timings and immutable-history checks to the repo-only implementer. Record actual blocked/repaired delivery separately from correctness of fail-closed handling. A safe blocked trace is not a repaired or approved task.
+- [ ] **Step 2:** Implementer documents results and limitations, validates text/count consistency, self-reviews/checkpoints; independently review complete result changes. Old ten/five trials remain failed. No policy changes after testing may be attributed to earlier answers.
+- [ ] **Step 3:** Final whole-branch review covers all rollout, helper, guidance and evidence changes. Resolve material defects through implementer/reviewer without unapproved new model calls. Required prospective gates are correct fail-closed traces, preserved inputs/authority/budgets, passing deterministic/source checks and acceptable manual with-guidance decisions—not perfect first-response formatting.
+- [ ] **Step 4:** Fetch/evaluate current `origin/main` through guarded integration wrappers, safe-merge when needed, preserve unrelated work and rerun focused Python/policy/Node/diff checks on a clean tree. No native/Fennel build. Follow default push/PR/merge-queue policy through actual merge only when required gates pass; then tell the user to quit/restart OpenCode. Do not claim this session already migrated.
