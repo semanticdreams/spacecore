@@ -92,6 +92,19 @@
               (table.insert (rawget groups name) call))))
       (when safe groups))))
 
+(fn select-definitions [ff all-defs calls]
+  ;; Reuse the complete canonical guard; unsafe graphs keep the original path.
+  ;; Full all-defs remains the caller's masking/assertion/ancestor context.
+  (if (not (classify ff all-defs calls))
+      all-defs
+      (do
+        (local selected [])
+        (each [_ def (ipairs all-defs)]
+          (when (if (= (rawget def :kind) :fn) true
+                    (not= (type (rawget def :form)) :string))
+            (table.insert selected def)))
+        selected)))
+
 (fn create [opts]
   ;; Capture references only: no classification/eligibility or fact reads until
   ;; the old named branch demands lookup. Nothing is shared across invocations.
@@ -114,4 +127,4 @@
         calls))
   lookup)
 
-{: create}
+{: create : select-definitions}

@@ -1023,7 +1023,7 @@
       (let [calls (or ff.calls [])
             all-defs (interactive-definitions ff)]
        (local named-calls (AssertCalls.create {:file-fact ff :definitions all-defs :calls calls}))
-       (each [_ def (ipairs all-defs)]
+       (each [_ def (ipairs (AssertCalls.select-definitions ff all-defs calls))]
         (var skip-because-param false)
         ;; Build a form that excludes nested named function definitions,
         ;; so accesses inside nested functions are not attributed to the

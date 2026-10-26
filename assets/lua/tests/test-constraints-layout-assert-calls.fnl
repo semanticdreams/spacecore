@@ -10,16 +10,16 @@
   (when (and (= (type value) :table) (not (. seen value)))
     (local entries {})
     (tset seen value entries)
-    (each [key item (pairs value)]
+    (each [key item (values next value)]
       (tset entries key item)
       (snapshot item seen)))
   seen)
 
 (fn assert-unchanged [seen]
-  (each [object entries (pairs seen)]
-    (each [key value (pairs entries)]
+  (each [object entries (values next seen)]
+    (each [key value (values next entries)]
       (assert (rawequal (rawget object key) value) "rule changed an existing fact/reference"))
-    (each [key _ (pairs object)]
+    (each [key _ (values next object)]
       (assert (not= (rawget entries key) nil) "rule added a fact field"))))
 
 (fn assert-same [actual expected]
@@ -385,21 +385,22 @@
   (assert (and found (= (type original) :function)) "actual outer-only-form upvalue is required")
   (values found original))
 
-(fn characterize-masking [ctx n]
+(fn characterize-masking [ctx expected-defs expected-result]
   (local Layout (require :constraints.rules.layout))
   (local rule (H.find-rule-by-id (Layout.rules) rule-id))
   (assert rule "interactive-context-assertion rule is required")
-  (local definitions (. ctx.facts.files 1 :definitions))
+  (local ff (. ctx.facts.files 1))
+  (local definitions [])
+  (each [_ def (ipairs ff.definitions)] (table.insert definitions def))
+  (when ff.recovered-parents
+    (each [_ def (ipairs ff.recovered-parents)] (table.insert definitions def)))
   (local before (snapshot ctx {}))
   (local (index original) (masking-upvalue rule.run))
   (local completed [])
   (fn counted-mask [def all-defs]
     ;; Delegate first: only completed original calls contribute to the count.
     (local result (table.pack (original def all-defs)))
-    (table.insert completed (length all-defs))
-    (assert (rawequal def (. definitions (length completed))) "masking changed definition order")
-    (each [i expected (ipairs definitions)]
-      (assert (rawequal (. all-defs i) expected) "masking must receive full original definition context"))
+    (table.insert completed {:definition def :definitions all-defs})
     (table.unpack result 1 result.n))
   (assert (= (debug.setupvalue rule.run index counted-mask) "outer_only_form"))
   (local result (table.pack (pcall rule.run ctx)))
@@ -409,11 +410,14 @@
   (assert (and (= restored "outer_only_form") (rawequal current original)) "masking upvalue was not restored")
   (when (not (. result 1)) (error (. result 2)))
   (assert (= result.n 2) "rule must return exactly one value, including nil")
-  (assert (= (. result 2) nil) "canonical nonfunctions must not produce diagnostics")
-  (assert (= (length completed) n) "expected one completed masking call per definition")
-  (each [_ width (ipairs completed)]
-    (assert (= width n) "every completed masking call must receive D=N"))
-  ;; N*D gives 256/1024 structural loop visits, not CPU time or Wine cost.
+  (assert-same (. result 2) expected-result)
+  (assert (= (length completed) (length expected-defs))
+          (.. "expected " (length expected-defs) " completed masking calls, got " (length completed)))
+  (each [i observation (ipairs completed)]
+    (assert (rawequal observation.definition (. expected-defs i)) "masking changed candidate order")
+    (assert (= (length observation.definitions) (length definitions)) "masking must receive full D")
+    (each [j expected (ipairs definitions)]
+      (assert (rawequal (. observation.definitions j) expected) "masking lost original context references")))
   (assert-unchanged before))
 
 (fn characterize-nonfunction-size [dir n]
@@ -441,7 +445,11 @@
     (assert (and def.top-level? (= def.enclosing-fn nil)) "fixture definitions must be flat")
     (assert (= def.name (.. "inert-" i)) "fixture definitions must be distinct and ordered")
     (assert (= def.form (. forms i)) "fixture forms must be exact quote-free strings"))
-  (characterize-masking {:target target :facts facts :files records} n))
+  (local ctx {:target target :facts facts :files records})
+  (characterize-masking ctx [] nil)
+  ;; The same real facts on an unsupported file shape retain the original path.
+  (setmetatable ff {})
+  (characterize-masking ctx ff.definitions nil))
 
 (fn characterize-nonfunction-sizes [dir]
   (each [_ n (ipairs [16 32])]
@@ -454,7 +462,222 @@
   (handle:drop)
   (when (not ok) (error result)))
 
-(table.insert tests {:name "canonical nonfunctions complete N masking calls with full D=N context" :fn canonical-nonfunction-masking})
+(table.insert tests {:name "canonical nonfunctions avoid masking while unsafe shapes retain N calls with full D=N" :fn canonical-nonfunction-masking})
+
+(fn candidate-definitions [ff definitions calls]
+  (local Index (require :constraints.rules.layout-assert-calls))
+  (Index.select-definitions ff definitions calls))
+
+(fn assert-candidate-fallback [ff definitions calls]
+  (local before (snapshot [ff definitions calls] {}))
+  (assert (rawequal (candidate-definitions ff definitions calls) definitions)
+          "unsupported graph must retain the identical all-defs array")
+  (assert-unchanged before))
+
+(fn candidate-ordered-references []
+  (local inert {:kind :local :name "value" :form "(local value 1)"})
+  (local first (both "first" 10 "1"))
+  (local absent {:kind :local :name "absent"})
+  (local falsy {:kind :local :name "falsy" :form false})
+  (local anonymous (definition "<anonymous>" "(fn [] 1)" 20))
+  (local recovered (both "recovered" 30 "1"))
+  (local definitions [inert first absent falsy anonymous first])
+  (local ff (fixture definitions []))
+  (tset ff :recovered-parents [recovered inert])
+  (local all-defs [inert first absent falsy anonymous first recovered inert])
+  (local before (snapshot [ff all-defs] {}))
+  (local selected (candidate-definitions ff all-defs ff.calls))
+  (assert (not (rawequal selected all-defs)) "canonical selection must return an ordered subset")
+  (local expected [first absent falsy anonymous first recovered])
+  (assert (= (length selected) (length expected)))
+  (each [i def (ipairs expected)]
+    (assert (rawequal (. selected i) def) "candidate order, duplicates and original references must survive"))
+  (assert-unchanged before)
+  (local empty (fixture [] []))
+  (assert (= (length (candidate-definitions empty empty.definitions empty.calls)) 0)))
+
+(fn mixed-candidates-retain-full-context []
+  (local nested {:kind :local :name "nested" :form "(local nested ctx.clickables)"})
+  (local first (definition "render" "(fn render [ctx] (local nested ctx.clickables))" 10))
+  (local separate {:kind :local :name "separate" :form "(local separate ctx.hoverables)"})
+  (local second (definition "second" "(fn second [ctx] (use ctx.hoverables))" 20))
+  (local recovered {:kind :local :name "recovered" :form "(local recovered 1)"})
+  (local ff (fixture [nested first separate second] []))
+  (tset ff :recovered-parents [recovered])
+  ;; Omitted nested forms must still mask the retained function. The unrelated
+  ;; form must not mask the second function's uncovered hoverables use.
+  (characterize-masking (H.make-ctx [ff]) [first second]
+                        [(diagnostic "second" 20 "ctx.hoverables")]))
+
+(fn candidate-unsupported-fields []
+  (each [_ field (ipairs [:form :name :enclosing-fn])]
+    (each [_ value (ipairs [true 7 {} (fn [] nil)])]
+      (local def {:kind :local :name "inert" :form "(local inert 1)"})
+      (tset def field value)
+      (local ff (fixture [def] []))
+      (assert-candidate-fallback ff ff.definitions ff.calls)))
+  (each [_ field (ipairs [:kind :ignored])]
+    ;; NaN omitted: raw-equality snapshots cannot verify unchanged NaN.
+    (each [_ value (ipairs [{} (fn [] nil) math.huge (- math.huge)])]
+      (local def {:kind :local :name "inert" :form "(local inert 1)"})
+      (tset def field value)
+      (local ff (fixture [def] []))
+      (assert-candidate-fallback ff ff.definitions ff.calls)))
+  (each [_ key (ipairs [true 1 {}])]
+    (local def {:kind :local :form "(local inert 1)"})
+    (tset def key "extra")
+    (local ff (fixture [def] []))
+    (assert-candidate-fallback ff ff.definitions ff.calls)))
+
+(fn candidate-unsupported-containers []
+  (local def {:kind :local :name "inert" :form "(local inert 1)"})
+  (each [_ definitions (ipairs [false 7 "defs" [def false] {1 def 3 def} {1 def :metadata true}])]
+    (local ff (fixture definitions []))
+    (assert-candidate-fallback ff [def] ff.calls))
+  (each [_ calls (ipairs [false 7 "calls" [false] [7] {1 (call "inert" "") 3 (call "inert" "")}
+                         {1 (call "inert" "") :metadata true}])]
+    (local ff (fixture [def] calls))
+    (assert-candidate-fallback ff ff.definitions calls))
+  (each [_ recovered (ipairs [false 7 [false] {2 def} {1 def :metadata true}])]
+    (local ff (fixture [def] []))
+    (tset ff :recovered-parents recovered)
+    (assert-candidate-fallback ff [def] ff.calls))
+  (local ff (fixture [def] []))
+  (assert-candidate-fallback ff [{:kind :local :name "inert" :form def.form}] ff.calls)
+  (assert-candidate-fallback ff ff.definitions [])
+  (tset ff :calls nil)
+  (assert-candidate-fallback ff ff.definitions nil)
+  (tset ff :calls [])
+  (tset ff :recovered-parents [def])
+  (assert-candidate-fallback ff [def] ff.calls))
+
+(fn candidate-namespace-and-call-guards []
+  (local def {:kind :local :name "inert" :form "(local inert 1)"})
+  (each [_ field (ipairs [:module :path])]
+    (each [_ value (ipairs [true 7 {} (fn [] nil)])]
+      (local ff (fixture [def] []))
+      (tset ff field value)
+      (assert-candidate-fallback ff ff.definitions ff.calls)))
+  (each [_ field (ipairs [:callee :enclosing-fn :form :ignored])]
+    (local item (call "inert" "(assert ready)"))
+    (tset item field {})
+    (local ff (fixture [def] [item]))
+    (assert-candidate-fallback ff ff.definitions ff.calls))
+  (local ff (fixture [def] []))
+  (tset ff 1 "metadata")
+  (assert-candidate-fallback ff ff.definitions ff.calls))
+
+(fn candidate-metatables-are-never-invoked []
+  (fn forbidden [] (error "candidate eligibility invoked a metamethod"))
+  (each [_ protection (ipairs [false "protected"])]
+    (local meta {:__index forbidden :__pairs forbidden :__len forbidden
+                 :__eq forbidden :__metatable protection})
+    (for [location 1 8]
+      (local def {:kind :local :name "inert" :form "(local inert 1)"})
+      (local item (call "inert" "(assert ready)"))
+      (local recovered {:kind :local :name "recovered" :form "(local recovered 2)"})
+      (local ff (fixture [def] [item]))
+      (tset ff :recovered-parents [recovered])
+      (local all-defs [def recovered])
+      (local objects [ff ff.definitions ff.calls item def ff.recovered-parents recovered all-defs])
+      (setmetatable (. objects location) meta)
+      (assert-candidate-fallback ff all-defs ff.calls))))
+
+(fn run-public-error [ff]
+  (local Layout (require :constraints.rules.layout))
+  (local rule (H.find-rule-by-id (Layout.rules) rule-id))
+  (assert rule)
+  (local before (snapshot ff {}))
+  (local (ok err) (pcall rule.run (H.make-ctx [ff])))
+  (assert (not ok) "original invalid form/access must still raise an error")
+  (assert-unchanged before)
+  err)
+
+(fn invalid-nonfunction-errors-are-retained []
+  (for [mode 1 4]
+    (local form (if (= mode 1) nil (= mode 2) false (= mode 3) true {}))
+    (local def {:kind :local :name "inert" :form form})
+    (local control {:kind :local :name "inert" :form form})
+    (local ff (fixture [def] []))
+    (local original-path (fixture [control] []))
+    (setmetatable original-path {})
+    (assert-same (run-public-error ff) (run-public-error original-path))))
+
+(fn dynamic-form-error-preserves-sentinel []
+  (local sentinel {})
+  (local trace [])
+  (fn read-form [_ key]
+    (table.insert trace key)
+    (error sentinel))
+  (local def (setmetatable {:kind :local :name "inert"} {:__index read-form :__metatable false}))
+  (local ff (fixture [def] []))
+  (assert-candidate-fallback ff ff.definitions ff.calls)
+  (assert (= (length trace) 0) "raw candidate guard must not touch a dynamic form")
+  (assert (rawequal (run-public-error ff) sentinel) "original table error object must survive unchanged")
+  (assert-same trace [:form]))
+
+(fn candidate-gate-does-not-suppress-access-errors []
+  (local sentinel {})
+  (local trace [])
+  (fn read-path [_ key]
+    (table.insert trace key)
+    (error sentinel))
+  (local def {:kind :local :name "inert" :form "(local inert 1)"})
+  (local ff (fixture [def] []))
+  (local poison (setmetatable {} {:__index read-path :__pairs read-path :__len read-path}))
+  (tset ff :root poison)
+  (tset ff :target poison)
+  (tset ff :accesses [poison])
+  (local before (snapshot ff {}))
+  (assert (= (length (candidate-definitions ff ff.definitions ff.calls)) 0))
+  (assert (= (length trace) 0) "candidate guard must not inspect unrelated payloads")
+  (assert (rawequal (run-public-error ff) sentinel) "access path must still run before candidate selection")
+  (assert-same trace [:path])
+  (assert-unchanged before))
+
+(fn dynamic-access-prefix-and-form-order []
+  (local trace [])
+  (fn read-form [_ key]
+    (table.insert trace key)
+    (assert (= key :form))
+    "(local inert 1)")
+  (fn read-access [_ key]
+    (table.insert trace key)
+    (if (= key :path) ["ctx" "clickables"] (= key :text) "ctx.clickables"))
+  (local definitions [(setmetatable {:kind :local :name "inert"} {:__index read-form})])
+  (local accesses [(setmetatable {} {:__index read-access})])
+  (fn read-file [_ key]
+    (table.insert trace key)
+    (if (= key :accesses) accesses (= key :calls) [] (= key :definitions) definitions))
+  (local ff (fixture [] []))
+  (each [_ key (ipairs [:accesses :calls :definitions])]
+    (tset ff key nil))
+  (setmetatable ff {:__index read-file})
+  (check ff nil)
+  (assert-same trace [:accesses :path :text :calls :definitions :recovered-parents
+                      :form :form :form :form :form :form]))
+
+(fn identical-and-quote-concatenated-forms []
+  (local form "(fn shared [ctx] (use ctx.clickables))")
+  (check (fixture [(definition "first" form 10) (definition "second" form 20)
+                   {:kind :local :name "separate" :form "(local separate 1)"}] []) nil)
+  ;; Removing quoted text synthesizes a keyword: absence in raw text is not a
+  ;; safe reason to drop a function candidate.
+  (check (fixture [(definition "quoted" "(fn quoted [] (use cli\"ignored\"ckables))" 10)
+                   {:kind :local :name "inert" :form "(local inert 1)"}] [])
+         [(diagnostic "quoted" 10 "clickables")]))
+
+(table.insert tests {:name "candidate selection retains ordered function nil false and recovered references" :fn candidate-ordered-references})
+(table.insert tests {:name "mixed candidates retain full original masking context" :fn mixed-candidates-retain-full-context})
+(table.insert tests {:name "candidate selection declines unsupported record fields and keys" :fn candidate-unsupported-fields})
+(table.insert tests {:name "candidate selection retains unsafe containers and merged source identities" :fn candidate-unsupported-containers})
+(table.insert tests {:name "candidate selection guards namespace and call records" :fn candidate-namespace-and-call-guards})
+(table.insert tests {:name "candidate selection never invokes protected metadata callbacks" :fn candidate-metatables-are-never-invoked})
+(table.insert tests {:name "candidate selection retains original nil false and invalid form errors" :fn invalid-nonfunction-errors-are-retained})
+(table.insert tests {:name "candidate selection retains dynamic form error object identity" :fn dynamic-form-error-preserves-sentinel})
+(table.insert tests {:name "candidate selection ignores unrelated payloads without suppressing access errors" :fn candidate-gate-does-not-suppress-access-errors})
+(table.insert tests {:name "candidate selection retains dynamic access prefix and original form read order" :fn dynamic-access-prefix-and-form-order})
+(table.insert tests {:name "candidate selection retains identical masking and quote concatenation diagnostics" :fn identical-and-quote-concatenated-forms})
 
 (fn main []
   (local runner (require :tests.runner))

@@ -280,12 +280,34 @@ The current constraints are grouped into four families:
 
 These constraints complement human review and normal unit/integration tests; they do not replace either one.
 
-### Invocation-local assertion-call selection
+### Invocation-local candidates and assertion-call selection
+
+`layout.interactive-context-assertion` selects analysis candidates only after the
+unchanged access collection, calls read, original/recovered definition merge and
+reference-only assertion-selector creation. The private `select-definitions`
+helper reuses the existing complete canonical classifier. Unsupported graphs
+return the **identical full merged definitions array**, preserving the original
+dynamic reads and errors. On canonical graphs it returns an ordered reference
+subset retaining every function and every record whose form is not strictly a
+string. Only nonfunction/string records are omitted: the interactive-access,
+bare-keyword and dotted-access gates require function kind, so these records
+cannot produce a diagnostic. Nil/false forms remain candidates, preserving their
+original errors. There is no keyword-absence filter; stripping quoted text can
+synthesize a keyword absent from the original form.
+
+The FULL merged definitions array remains the masking, assertion-call and
+ancestor/closure context, including omitted records and original order and
+references. Only the analysis loop's iterable changes. Candidate eligibility
+adds linear definition/container, call and raw-field checks, including temporary
+assertion groups built by the existing classifier and then discarded. These
+groups are not shared with the separate lazy assertion-call selector or cached
+across files/runs.
 
 `layout.interactive-context-assertion` keeps one private lazy selector per file
 and rule invocation. Creating it only captures the file fact, merged definitions
 and original calls references. Anonymous and nil/false-name coverage branches
-never demand eligibility or classification. The first named coverage lookup
+never demand this selector's eligibility or classification; the separate candidate
+pass above still runs. The first named coverage lookup
 checks the entire original/recovered definition graph before serving any group;
 no name, kind, scope or relevance policy is added.
 
@@ -308,15 +330,27 @@ the original calls passed to bare/closure coverage remain unchanged. No cache
 survives a file/run, and neither results nor cleaned forms are cached.
 
 For Q named queries and C calls, repeated named filtering was Q×C entry visits.
-Selection now uses one C-entry eligibility/grouping pass plus the sum of queried
-group sizes. There is also a separate C-key array-density metadata pass (not
-another call-record classification), linear definition/container eligibility and
-linear raw record-field checks. Thus the 100-call/four-query fixture targets
+The lazy named-call selector uses one C-entry eligibility/grouping pass plus the
+sum of queried group sizes. There is also a separate C-key array-density metadata
+pass (not another call-record classification), linear definition/container
+eligibility and linear raw record-field checks. Thus the 100-call/four-query fixture targets
 100 classified records plus eight group visits, **and 100 call-array key
 visits**; it is not a claim of only 108 total operations. Repeated names revisit
-their groups without rebuilding. Zero named demands mean zero selector work.
-Deterministic work proof uses separately reviewed test-only compiled-source
-counters, never production hooks, counters, exports or wall-time assertions.
+their groups without rebuilding. These named-index counts exclude the additional
+candidate pass described above. Zero named demands mean zero lazy named-index
+work, **not zero total selection work**. Deterministic work proof uses separately
+reviewed test-only compiled-source counters and bounded restored private-upvalue
+wrapping, never production instrumentation hooks, counters, observation exports
+or wall-time assertions. Canonical N16/N32 nonfunction fixtures omit the original
+16/32 completed masking calls with full D=N; the corresponding 256/1024 loop
+visits are structurally derived work, not CPU time or a measured Wine fraction.
+
+The candidate unsupported-field matrix excludes numeric NaN: its raw-equality
+snapshot cannot verify unchanged NaN, which is not equal to itself. Positive and
+negative infinity and the other unsupported-input controls remain covered; this
+matrix does not establish candidate-selector NaN coverage. A NaN-aware mutation
+oracle is needed before adding that coverage; existing assertion-selector NaN
+fallback tests are unchanged.
 
 Native semantic equivalence and work counts do not establish a Wine speedup or
 120-second full-repository compliance. Uninstrumented alternating comparisons,
