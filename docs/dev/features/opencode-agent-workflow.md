@@ -267,32 +267,89 @@ one observational GLM whole-branch review, not a second mandatory full GPT revie
 
 #### Bounded routing-pressure evidence and limits
 
-Before skill/AGENTS/agent edits the controller ran five fresh verified GLM contexts,
-no tools or variants. Baseline slots 1–3 emitted fenced rather than required raw
-JSON: preserved `invalid_answer`, not scored or repaired. Slots 4 and 5 were valid
-complete answers with 9/18 and 8/18 exact route-plus-owner matches. The controller
-read all five final rationales: all already substantively requested dual input for
-fresh local design, confident cross-system contracts and fresh live widget design;
-reuse and first-repair restraint were generally already correct. Guidance must
-not claim improvement on these already-compliant controls.
+**Behavioral acceptance failed; the overall rollout is blocked and not published.**
+The following is controller-supplied evidence, not an independent read of external
+captures. All fifteen candidate calls used fresh exported contexts verified as
+`opencode-go/glm-5.3-flash`, reported variant `null`, with no tools. No retries or
+extra GPT evaluation trials ran; design consultation, diagnosis and review are
+process gates, not candidate evaluations.
 
-The main mismatches were controller route labels (`request_consultation` instead
-of `expert_advisor`) and denied-reviewer schemas: baseline 4 conflated delegation
-denial with a CHANGE_REQUESTED finding/task-permission failure; baseline 5 used
-NEEDS_FIXES/BLOCKED with route glm while describing caller consultation. The pending
-schema and parent handlers above address those missing contracts. Three protocol
-failures are not model-quality scores. These are prompt-compliance checks, not
-proof of model competence or hybrid success.
+| Protocol / phase | Calls consumed | Strict complete answers | Exact route-plus-owner matches | Preserved failures |
+| --- | --- | --- | --- | --- |
+| Original baseline, before agent/skill/AGENTS edits | 5/5 | 2/5 | Slot 4: 9/18; slot 5: 8/18 | Slots 1–3: fenced JSON, `invalid_answer` |
+| Original guidance, reviewed source `8aae2c7e` | 5/5 | 1/5 | Slot 1: 9/18 | Slots 2, 4, 5: fenced JSON; slot 3: malformed JSON; all `invalid_answer` |
+| Separate clarified protocol, reviewed helper `4fdef0db` | 5/5 | 4/5 | 72 recorded matches of 90 required | Slot 2: syntactically valid JSON, wrong workflow identifier, `invalid_answer` |
 
-Five guidance calls remain controller-owned **after independent Task 2 review**;
-none are claimed here. The frozen questions/schema/helper remain unchanged. Ten
-calls total, no retries, 180 seconds per call plus own-session export, 2100 seconds
-aggregate active CLI budget; baseline consumed 364.993 seconds, never reset.
-Workers use repository/mock tests and supplied facts, not external capture reads
-or model calls. Actual GLM proposal plus GPT critique/reconciliation for this design
-is recorded in the [spec](../../specs/2026-10-25-glm-default-expert-consultation-design.md#dual-model-input-on-this-workflow-design),
-separate from pressure counts. Restart OpenCode only after the complete reviewed
-rollout: running sessions retain old loaded models/rules until restart.
+**Original experiment.** The ten-call budget is exhausted. Aggregate active CLI
+time was `593.4621967620624/2100` seconds; the original data and all 73 files
+remained unchanged through the separate tranche (combined inventory SHA-256
+`2e04675a4ed0fdabbe5a227c2a073f8f244f4cb235c01f7e9f05910110cedb3e`).
+Invalid answers were not repaired or rescored. Baseline rationales already
+substantively requested both models for fresh local design, confident cross-system
+contracts and fresh live widget design: the evaluation instruction itself required
+this, so no causal improvement claim is supported.
+
+Original route counts were confounded by enum interpretation: primary controllers
+often wrote `request_consultation` while describing their own expert dispatch,
+where the oracle required `expert_advisor`. Baseline denied-reviewer answers also
+invented CHANGE_REQUESTED / NEEDS_FIXES / BLOCKED outputs instead of the pending
+consultation branch. Guidance rationales explicitly described `needs_consultation`
+and controller handling, an observational difference only. Eventual code-owner and
+approval-bypass mismatches remain failures, not grounds to rewrite the oracle.
+Guidance slot 4 also incorrectly mentioned manual-refresh-before-edit despite a
+correct dedicated manual-mode case. Neither the sparse valid envelopes nor these
+rationale observations establish full conformance or a causal routing improvement.
+
+**Separate clarified protocol.** The user authorized exactly five additional calls,
+180 seconds each and 900 seconds aggregate, with no retries. Clarified route/owner
+instructions and a positive raw-JSON recipe were frozen before calls; the original
+matrix, schema and oracle were unchanged. This is not a rerun/rescoring of old data.
+Active CLI time was `339.499002335011/900` seconds. Predeclared acceptance required
+five verified strict complete 18-case outputs, 90/90 route-plus-owner matches and
+manual rationale review. **Four strict accepted outputs and 72 recorded matches
+do not meet that gate.** All five outputs were syntactically valid JSON, unlike
+the original fence/syntax failures.
+
+Clarified slot 2 had 18 rows but one wrong key tuple: `wrap-up-review` expected
+`workflow=fast-dev, actor=fast-dev-reviewer`; it returned
+`workflow=fast-dev-reviewer, actor=fast-dev-reviewer`. The original parser correctly
+raised `ValueError: unknown/duplicate routing decision`. Its `route=glm` and
+`implementation_owner=fast-dev` were correct, and the rationale retained direct
+fixes, self-review and revalidation without a second mandatory GPT review. This is
+a genuine identifier-copy/coverage failure, not a demonstrated broad omission of
+architecture consultation or a harness defect. Do not repair the workflow field,
+accept an alias, score the rejected rows or claim 90/90.
+
+The controller manually read all 90 final rationales (not reasoning). They generally
+expressed dual-model design input before dependent implementation, GLM proposal /
+GPT critique / evidenced reconciliation, unchanged reuse and material reopening,
+read-only expert boundaries, worker pending handling, human-owned policy, retained
+approval gates and direct fast/live ownership. Dedicated live-manual cases were
+correct, but **full manual conformance is not established**:
+
+- Clarified slot 2, `first-syntax`: “Independent reviewer gates and pressure-based
+  skipping play no role.” This is ambiguous and potentially undermines strict
+  independent review; it is not automatically benign.
+- Clarified slot 5, `fresh-local-design` under fast-dev: “manual mode still precedes
+  any edit.” This unnecessarily imports a live-dev constraint despite correct
+  direct implementation ownership.
+
+The diagnostic advisor returned `requires_human`: no production, parser or oracle
+bugfix is justified by the identifier-copy failure. Stronger workflow-identifier
+instructions are only a future hypothesis, not a proven fix. **HUMAN_DECISION_REQUIRED**
+for additional call budget or an explicit validation-acceptance policy decision;
+unused live time does not authorize a sixth call or waive the strict gate. No
+automatic model rescue, expert implementation role or full GPT review tax follows.
+
+Source-level model pins and prior static review remain evidence about configuration,
+not runtime activation or production delegation. Loaded sessions still have old
+definitions; this result does not establish rollout readiness. The sixteen GLM
+roles, read-only expert and mandatory both-model input on every design/architecture/
+system-contract decision above remain unchanged. Actual design consultation is
+recorded in the [spec](../../specs/2026-10-25-glm-default-expert-consultation-design.md#dual-model-input-on-this-workflow-design),
+separate from candidate counts. Exact follow-up call IDs and frozen fingerprints
+are recorded with controller provenance in the Task 4 report under
+`.superpowers/sdd/2026-10-25-glm-default-expert-consultation-44988498/`.
 
 ### Fast interactive development flow
 
