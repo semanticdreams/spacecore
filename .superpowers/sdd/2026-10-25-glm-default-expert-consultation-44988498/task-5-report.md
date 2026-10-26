@@ -207,3 +207,109 @@ Baseline compliance cannot support an improvement claim. The prior first-perfect
 five-call gate remains historically **FAILED**; prospective safe delivery handling
 does not rescore or approve it. Loaded project roles remain unchanged in this
 running session until the separately authorized complete-rollout restart.
+
+## Accepted final whole-branch finding R2-1 — fix round 1
+
+### Scope and checkpoint
+
+Verified starting HEAD exactly matches assigned
+`FIX_BASE=778b794ce778931e3eba6453c5ce18e7d1999def`; initial worktree/index clean.
+This section covers only the accepted cancellation-cleanup finding, not a new
+review of the other branch changes or a new model/policy validation tranche.
+The original Task 5 implementation checkpoint remains `87aca044`.
+The fix checkpoint is the commit containing this appended section; its exact SHA
+is supplied in the final handoff and can be resolved using the report-path log
+command above. Independent targeted verification must inspect `FIX_BASE..HEAD`.
+
+Complete fix file list:
+
+- `scripts/eval_opencode_pilot.py` — shared `capture_process` cleanup only.
+- `scripts/tests/test_eval_opencode_pilot.py` — five focused cleanup regressions.
+- `scripts/tests/test_eval_opencode_handoff_delivery.py` — one integration regression
+  coupling real shared capture logic to the existing synthetic delivery fixtures.
+- `.superpowers/sdd/2026-10-25-glm-default-expert-consultation-44988498/task-5-report.md`
+  — this appended fix evidence.
+
+The accepted finding explicitly authorizes this narrow exception to the earlier
+no-pilot-runner-edit restriction. Frozen cases/data, source policy, questions,
+oracles, parsers, actual captured files, historical results and success records
+were not changed or rescored. No driver production code or budget rules changed.
+
+### Root cause and implementation
+
+`capture_process` starts a separate process session but previously killed/reaped
+it only when `communicate` raised `TimeoutExpired`. A `KeyboardInterrupt`,
+`SystemExit` or ordinary exception could propagate while that child group remained
+running. Existing ledger-only interruption tests did not exercise this boundary.
+
+The same boundary now handles `BaseException` after a child has been started:
+send `SIGKILL` only to the group identified by that child PID, drain via
+`communicate`, and explicitly `wait` even if draining itself raises. A group that
+already exited (`ProcessLookupError`) is an expected race, not a reason to skip
+reaping. The original exception instance is propagated; unexpected cleanup errors
+are chained as its explicit cause rather than suppressed or substituted. Normal
+successful/nonzero behavior and the existing timeout classification remain intact.
+Raw capture files are retained and their handles close on unwind.
+
+This restores the already-approved lifetime contract at the shared boundary for
+all reusers. It adds no new design/authority contract and needs no repeat design
+consultation or model call. Parent/unrelated process groups are not targeted;
+`start_new_session=True` and the exact child PID target are regression-checked.
+
+### TDD and validation
+
+Compile-check evidence: **not applicable** (Python-only change; no native/Fennel
+execution). Constraint status: **not applicable** (no Fennel constraints, role or
+policy changes). **Constraint Impact: not applicable.**
+
+RED, before the production edit:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 rtk pytest -q scripts/tests/test_eval_opencode_pilot.py::CaptureProcessCleanupTests::test_capture_process_interrupt_kills_and_reaps_process_group
+Pytest: 0 passed, 1 failed
+```
+
+The failure is the `kill.assert_called_once_with(proc.pid, SIGKILL)` assertion:
+after the fake started child's first `communicate` raised `KeyboardInterrupt`,
+the old boundary propagated it without calling `killpg`. The focused command was
+repeated before implementation with the same expected failure. All additional
+cleanup and delivery-integration fixtures were also written before implementation;
+their pre-edit run failed on missing cleanup/error-preservation assertions.
+
+GREEN after the shared-boundary change:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 rtk pytest -q scripts/tests/test_eval_opencode_pilot.py::CaptureProcessCleanupTests::test_capture_process_interrupt_kills_and_reaps_process_group
+Pytest: 1 passed
+
+PYTHONDONTWRITEBYTECODE=1 rtk pytest -q scripts/tests/test_eval_opencode_pilot.py::CaptureProcessCleanupTests scripts/tests/test_eval_opencode_handoff_delivery.py::test_capture_interrupt_cleanup_keeps_delivery_slots_and_budget_consumed
+Pytest: 6 passed
+
+PYTHONDONTWRITEBYTECODE=1 rtk pytest -q scripts/tests/test_eval_opencode_pilot.py scripts/tests/test_eval_opencode_expert_routing.py scripts/tests/test_eval_opencode_expert_routing_clarified.py scripts/tests/test_eval_opencode_handoff_delivery.py
+Pytest: 193 passed
+```
+
+Output pristine. Coverage includes interrupt, SystemExit, ordinary communicate
+failure, timeout/interrupt raced with group exit, unexpected kill failure, a second
+interrupt during cleanup, same-instance exception propagation, visible cleanup
+causes, exact child-group targeting, reaping, closed handles and byte-preserved
+partial stdout/stderr. Existing nonzero/timeout and regular-file stdio tests remain
+green. The integration case uses shared capture with mocked Popen/killpg and proves
+all five phase slots and the full reserved 120-second charge remain consumed, no
+second Popen/retry occurs, and synthetic historical hashes stay unchanged.
+
+### Self-review, limitations and handoff
+
+Self-reviewed the complete narrow diff and failure paths. No test weakened and no
+unrelated index/worktree entry changed. Focused six new tests plus all four helper
+suites cover the shared capture behavior and downstream accounting; a full Space
+build/suite is unrelated and was not run. Diff whitespace checks passed; complete
+staged checks are repeated before the task-scoped local checkpoint.
+
+An unexpected OS cleanup failure is surfaced explicitly; it is not silently
+reported as successful termination. No real model cancellation trial was performed
+or needed for this offline regression. **This fix round made zero model calls,
+zero live runtime preparations and zero reads of actual external evidence roots.**
+No native/Fennel execution, permission edits, credentials/private data access,
+push/PR/integration or history rewrite. Ready for independent targeted verification,
+not an approval or integration claim.

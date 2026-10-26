@@ -241,12 +241,21 @@ def capture_process(args, control, deadline, raw_prefix):
                                 stderr=stderr, text=True, start_new_session=True)
         try:
             proc.communicate(timeout=remaining)
-        except subprocess.TimeoutExpired:
+        except BaseException as failure:
+            # Every unwind owns the detached child group, not only deadline expiry.
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass  # exit raced with timeout; still reap and classify as timeout
-            proc.communicate()
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass  # Child group already exited; still reap the started child.
+                finally:
+                    try:
+                        proc.communicate()
+                    finally:
+                        proc.wait()  # Reap even if draining is itself interrupted.
+            except BaseException as cleanup_failure:
+                # Keep cancellation/timeout primary, but never hide cleanup failures.
+                raise failure from cleanup_failure
             raise
     if proc.returncode != 0:
         raise ValueError("CLI exited nonzero: " + str(proc.returncode))

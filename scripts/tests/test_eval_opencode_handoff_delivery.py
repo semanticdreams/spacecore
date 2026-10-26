@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from unittest.mock import Mock
 
 import pytest
 
@@ -244,6 +245,29 @@ def test_crash_reserves_all_five_slots_and_budget_first(workspace, monkeypatch):
         helper.micro("baseline")
     with pytest.raises(FileExistsError):
         helper.micro("baseline")
+
+
+def test_capture_interrupt_cleanup_keeps_delivery_slots_and_budget_consumed(workspace, monkeypatch):
+    pilot = original.pilot
+    failure = KeyboardInterrupt()
+    proc = Mock(pid=987654, returncode=None)
+    proc.communicate.side_effect = [failure, (None, None)]
+    popen, kill = Mock(return_value=proc), Mock()
+    monkeypatch.setattr(subprocess, "Popen", popen)
+    monkeypatch.setattr(pilot.os, "killpg", kill)
+    monkeypatch.setattr(helper, "capture_process", pilot.capture_process)
+    with pytest.raises(KeyboardInterrupt) as raised:
+        helper.micro("baseline")
+    assert raised.value is failure
+    kill.assert_called_once_with(proc.pid, pilot.signal.SIGKILL)
+    assert proc.communicate.call_count == 2
+    report = helper.report()
+    assert report["budget"] == {"micro_seconds": 120, "repair_seconds": 0}
+    assert all(report["attempts"][f"baseline-{i}"] == "reserved_without_result" for i in range(1, 6))
+    assert helper.historical_snapshot() == workspace[3]
+    with pytest.raises(FileExistsError):
+        helper.micro("baseline")
+    popen.assert_called_once()
 
 
 def test_timeouts_consume_phase_without_retries(workspace, monkeypatch):

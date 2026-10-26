@@ -211,6 +211,85 @@ class ControlRootTests(unittest.TestCase):
 
 
 @unittest.skipIf(pilot is None, "runner not yet implemented")
+class CaptureProcessCleanupTests(unittest.TestCase):
+    def assert_exception_cleanup(self, failure, kill_failure=None, drain_failure=None):
+        with tempfile.TemporaryDirectory(prefix="capture-cleanup-test-") as directory:
+            root = Path(directory)
+            (root / "opencode.json").write_text("{}")
+            prefix = root / "capture"
+            proc = Mock(pid=987654, returncode=None)
+            order = []
+
+            def communicate(**kwargs):
+                if kwargs:  # First call: child started and already produced raw output.
+                    stdout = popen.call_args.kwargs["stdout"]
+                    stderr = popen.call_args.kwargs["stderr"]
+                    stdout.write(b"partial answer")
+                    stderr.write(b"partial diagnostic")
+                    stdout.flush()
+                    stderr.flush()
+                    order.append("interrupted")
+                    raise failure
+                order.append("drain")
+                if drain_failure is not None:
+                    raise drain_failure
+                proc.returncode = -pilot.signal.SIGKILL
+
+            def kill_group(pid, sig):
+                order.append("kill")
+                self.assertEqual((pid, sig), (proc.pid, pilot.signal.SIGKILL))
+                if kill_failure is not None:
+                    raise kill_failure
+
+            def wait():
+                order.append("reap")
+                proc.returncode = -pilot.signal.SIGKILL
+                return proc.returncode
+
+            proc.communicate.side_effect = communicate
+            proc.wait.side_effect = wait
+            with patch.object(pilot.subprocess, "Popen", return_value=proc) as popen, \
+                    patch.object(pilot.os, "killpg", side_effect=kill_group) as kill:
+                with self.assertRaises(type(failure)) as raised:
+                    pilot.capture_process(["opencode", "run"], root, time.time() + 120, prefix)
+            self.assertIs(raised.exception, failure)
+            if drain_failure is not None or (kill_failure is not None and not isinstance(kill_failure, ProcessLookupError)):
+                self.assertIs(raised.exception.__cause__, drain_failure or kill_failure)
+            popen.assert_called_once()
+            self.assertTrue(popen.call_args.kwargs["start_new_session"])
+            kill.assert_called_once_with(proc.pid, pilot.signal.SIGKILL)
+            self.assertEqual(proc.communicate.call_count, 2)
+            self.assertEqual(proc.returncode, -pilot.signal.SIGKILL)
+            self.assertLess(order.index("kill"), order.index("drain"))
+            if drain_failure is not None:
+                proc.wait.assert_called_once_with()
+                self.assertLess(order.index("drain"), order.index("reap"))
+            self.assertEqual(prefix.with_suffix(".stdout.txt").read_bytes(), b"partial answer")
+            self.assertEqual(prefix.with_suffix(".stderr.txt").read_bytes(), b"partial diagnostic")
+            self.assertTrue(popen.call_args.kwargs["stdout"].closed)
+            self.assertTrue(popen.call_args.kwargs["stderr"].closed)
+
+    def test_capture_process_interrupt_kills_and_reaps_process_group(self):
+        self.assert_exception_cleanup(KeyboardInterrupt())
+
+    def test_capture_process_other_exceptional_exits_kill_and_reap(self):
+        for failure in (SystemExit(7), OSError("communicate failed")):
+            with self.subTest(failure=type(failure).__name__):
+                self.assert_exception_cleanup(failure)
+
+    def test_capture_process_exited_group_race_preserves_original_exception(self):
+        for failure in (KeyboardInterrupt(), subprocess.TimeoutExpired("opencode", 120)):
+            with self.subTest(failure=type(failure).__name__):
+                self.assert_exception_cleanup(failure, kill_failure=ProcessLookupError())
+
+    def test_capture_process_kill_error_still_reaps_and_preserves_original_exception(self):
+        self.assert_exception_cleanup(KeyboardInterrupt(), kill_failure=PermissionError("kill denied"))
+
+    def test_capture_process_cleanup_interrupt_still_waits_and_preserves_original_exception(self):
+        self.assert_exception_cleanup(SystemExit(7), drain_failure=KeyboardInterrupt())
+
+
+@unittest.skipIf(pilot is None, "runner not yet implemented")
 class PreparationTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="pilot-test-", dir="/tmp")
