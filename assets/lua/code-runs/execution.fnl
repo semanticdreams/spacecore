@@ -74,15 +74,29 @@
   (local context {:id options.id :code-entity-id options.code-entity-id
                   :defer defer :wrap wrap :write write :attach-artifact attach-artifact})
   (fn evaluate [_self callback]
-    (local result (boundary callback))
-    (when (and (. result 1) (not terminal?))
-      (if deferred?
-          (options.update {:initial-result (describe (. result 2))})
-          (settle "succeeded" (. result 2))))
+    ;; The initial evaluation shares the boundary discipline but keeps the
+    ;; stack alive until its return is recorded, so a deferred run's
+    ;; initial result persists before any immediate callback's staged
+    ;; outcome commits.
+    (live!)
+    (set depth (+ depth 1))
+    (local result (table.pack (xpcall callback error-data)))
+    (set depth (- depth 1))
+    (when (not (. result 1))
+      (set pending {:status "failed" :error (. result 2)}))
+    (when (and (. result 1) deferred?)
+      (options.update {:initial-result (describe (. result 2))}))
+    (flush)
+    (when (and (. result 1) (not deferred?) (not terminal?) (not pending))
+      (settle "succeeded" (. result 2)))
     result)
   (fn interrupt [_self status reason]
     (when (and (not terminal?) (not committing?))
-      (set pending {:status status :error {:message reason :traceback ""}})
+      ;; A repeat interrupt (deadline retry after a persistence failure) must
+      ;; re-drive the already-staged outcome instead of asserting on it; the
+      ;; completion's own deadline override still decides the final status.
+      (when (not pending)
+        (set pending {:status status :error {:message reason :traceback ""}}))
       ;; Teardown/deadline is terminal even if an external callback still holds us.
       (flush true)))
   {:context context :evaluate evaluate :interrupt interrupt :terminal? (fn [_self] terminal?)})

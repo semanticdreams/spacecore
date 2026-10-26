@@ -29,8 +29,10 @@ report produced by a run is an independent record owned by its own store.
 
 The full code-entity view includes searchable run history. Selecting a row
 reveals only that run; Latest Run reveals the newest stored record. Historical
-runs and artifacts are not expanded automatically. The run's full view exposes
-source and payloads; its preview contains compact metadata and navigation only.
+runs and artifacts are not expanded automatically. Run records share one
+payload contract across preview and full view — output, initial return, result,
+and error — with the preview bounding output to a recent tail; the executed
+source is never inlined (**Show Code** loads the source entity instead).
 
 ## Explicit deferred completion (internal Fennel kernel)
 

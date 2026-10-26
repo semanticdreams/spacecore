@@ -85,7 +85,10 @@
   (fn [] (with-fixture (fn [f]
     (local run (run-source f "(local done (execution:defer)) ((execution:wrap (fn [] (done:succeed :immediate)))) :returned"))
     (assert (= run.status "succeeded"))
-    (assert (= run.result "immediate"))))))
+    (assert (= run.result "immediate"))
+    ;; Even when an immediate callback completes the run during evaluation,
+    ;; the deferred initial return is still recorded.
+    (assert (= run.initial-result "returned"))))))
 
 (add "runs can finish out of order without sharing contexts"
   (fn [] (with-fixture (fn [f]
@@ -104,6 +107,68 @@
     (assert (= (. (f.store:get-run run.id) :status) "timed-out"))
     (f.capture.cb)
     (assert (= (. (f.store:get-run run.id) :status) "timed-out"))))))
+
+(fn flaky-runner [f fail-count]
+  ;; A runner over a store wrapper whose first `fail-count` terminal
+  ;; (status-bearing) updates throw; non-terminal updates pass through.
+  (var terminal-failures 0)
+  (local flaky {:create-run (fn [_self fields] (f.store:create-run fields))
+                :get-run (fn [_self id] (f.store:get-run id))
+                :list-runs (fn [_self] (f.store:list-runs))
+                :update-run (fn [_self id fields]
+                  (when (and fields.status (< terminal-failures fail-count))
+                    (set terminal-failures (+ terminal-failures 1))
+                    (error "storage unavailable"))
+                  (f.store:update-run id fields))})
+  (local globals {})
+  (each [key value (pairs _G)] (tset globals key value))
+  (tset globals :capture f.capture)
+  (Runner {:store flaky :code-store f.codes :kernels f.kernels
+           :clock (fn [] f.time.now) :wall-clock (fn [] f.time.now)
+           :pump? false :owner {:session "flaky"}
+           :owner-alive? (fn [_owner] true) :globals globals}))
+
+(fn expect-deadline-supervision [f runner]
+  ;; Synchronous completion: the initial evaluation commits the record.
+  (local code (f.create "(+ 5 3)"))
+  (local (ok err) (pcall runner.run runner code.id))
+  ;; The persistence failure is surfaced explicitly...
+  (assert (not ok) "expected the terminal persistence failure to surface")
+  (assert (has? (tostring err) "storage unavailable"))
+  ;; ...and the record is still supervised, not orphaned.
+  (local record (. (f.store:list-runs) 1))
+  (assert (= record.status "running"))
+  (set f.time.now 901000)
+  (runner:tick)
+  (local final (f.store:get-run record.id))
+  (assert (= final.status "timed-out"))
+  (assert (has? final.error.message "deadline exceeded")))
+
+(fn expect-timeout-retry [f runner]
+  (local code (f.create "(local done (execution:defer)) (set capture.cb (execution:wrap (fn [] (done:succeed :late))))"))
+  (local run (runner:run code.id {:timeout-ms 20}))
+  (assert (= run.status "running"))
+  (set f.time.now 31)
+  ;; The first deadline interrupt hits the storage failure; the error is
+  ;; explicit and the run stays supervised.
+  (local (ok err) (pcall runner.tick runner))
+  (assert (not ok) "expected the failed timeout commit to surface")
+  (assert (has? (tostring err) "storage unavailable"))
+  (assert (= (. (f.store:get-run run.id) :status) "running"))
+  ;; The next tick re-drives the staged outcome to a terminal record.
+  (runner:tick)
+  (local final (f.store:get-run run.id))
+  (assert (= final.status "timed-out"))
+  (f.capture.cb)
+  (assert (= (. (f.store:get-run run.id) :status) "timed-out")))
+
+(add "a failed terminal persistence keeps the deadline supervising the run"
+  (fn [] (with-fixture (fn [f]
+    (expect-deadline-supervision f (flaky-runner f 1))))))
+
+(add "a failed timeout commit retries on the next deadline tick"
+  (fn [] (with-fixture (fn [f]
+    (expect-timeout-retry f (flaky-runner f 1))))))
 
 (add "multiple deferrals and completions fail explicitly"
   (fn [] (with-fixture (fn [f]
