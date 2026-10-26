@@ -24,7 +24,9 @@
                    (CodeEntityStore.get-default {:base-dir data-dir}))
    :workflow-store (or options.workflow-store application.workflow-store
                        (WorkflowStore.get-default {:base-dir data-dir}))
-   :workflow-runner (or options.workflow-runner application.workflow-runner)
+    :workflow-runner (or options.workflow-runner application.workflow-runner)
+    :code-run-store (or options.code-run-store application.code-run-store)
+    :code-runner (or options.code-runner application.code-runner)
    :string-store (or options.string-store application.string-store
                      (StringEntityStore.get-default {:base-dir data-dir}))
    :list-store (or options.list-store application.list-store

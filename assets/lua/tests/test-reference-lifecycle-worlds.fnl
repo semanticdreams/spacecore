@@ -572,7 +572,7 @@
   (local font {:metadata {:metrics {:ascender 1 :descender -1} :atlas {:width 1 :height 1}}
                :glyph-map {65533 glyph 4242 glyph}})
   (local names {:open_in_new true :close_fullscreen true :more_vert true :content_copy true
-                :tag true :delete true :table true :code true :close true :my_location true :play_arrow true})
+                 :tag true :delete true :table true :code true :close true :my_location true :play_arrow true :history true})
   (fn resolve [_self name]
     (assert (. names name)
             (.. "unexpected reference fixture icon: " name))

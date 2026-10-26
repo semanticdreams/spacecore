@@ -1538,9 +1538,9 @@
   (when (and app.kernels app.kernels.drop)
     (app.kernels:drop)
     (set app.kernels nil))
-  (local Kernels (require :kernels))
-  (set app.kernels (Kernels.get-default))
+  (set app.kernels ((. (require :kernels) :get-default)))
   (local stores (ReferenceComposition.init-reference-stores! app))
+  ((. (require :code-runs/runtime) :init!) app)
   (local WorkflowCodeExecutor (require :workflows/code-executor))
   (local WorkflowRunner (require :workflows/runner))
   (set app.workflow-code-executor
@@ -1993,9 +1993,9 @@
 (var drop-built-in-graph-extensions! nil)
 
 (fn app.drop []
+  ((. (require :code-runs/runtime) :drop!) app)
   (set (. package.loaded "renderers") nil)
-  (set app.workflow-runner nil)
-  (set app.workflow-code-executor nil)
+  (each [_ field (ipairs [:workflow-runner :workflow-code-executor])] (tset app field nil))
   (drop-agent-runtime!)
   (InputState.release-active-input)
   (AppBootstrap.drop-states)

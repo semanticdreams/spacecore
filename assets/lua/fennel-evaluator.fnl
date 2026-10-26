@@ -53,10 +53,15 @@
       "unknown error"
       (if (= (type value) "string")
           value
-          (tostring value))))
+          (safe-tostring value))))
 
-(fn eval-source [source]
-  (local (ok result) (pcall fennel.eval source {:env _G}))
+(fn eval-source [source opts]
+  (local options (or opts {}))
+  (assert (= (type options) :table) "eval-source options must be a table")
+  (local env (or options.env _G))
+  (fn evaluate [] (fennel.eval source {:env env}))
+  (fn trace [err] (debug.traceback (format-error err) 2))
+  (local (ok result) (if options.traceback? (xpcall evaluate trace) (pcall evaluate)))
   {:ok ok :result result})
 
 {:format-result format-result

@@ -4,6 +4,7 @@
 (local {:CodeEntityNode CodeEntityNode} (require :graph/nodes/code-entity))
 (local CodeEntityNodeView (require :graph/view/views/code-entity))
 (local CodeEntityStore (require :entities/code))
+(local CodeRunStore (require :code-runs/store))
 (local fs (require :fs))
 (local glm (require :glm))
 
@@ -20,8 +21,10 @@
     (fs.remove-all dir))
   (fs.create-dirs dir)
   (local store (CodeEntityStore.CodeEntityStore {:base-dir dir}))
+  (local run-store (CodeRunStore.Store {:base-dir dir}))
   (local (ok result) (pcall f {:root dir
-                               :store store}))
+                               :store store
+                               :run-store run-store}))
   (fs.remove-all dir)
   (if ok
       result
@@ -38,7 +41,8 @@
            :source "(+ 40 2)"
            :kernel 0}))
       (local node (CodeEntityNode {:entity-id entity.id
-                                   :store deps.store}))
+                                    :store deps.store
+                                    :run-store deps.run-store}))
       (set node.last-run-result "42")
       (graph:add-node node {})
 

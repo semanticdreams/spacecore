@@ -110,19 +110,22 @@ void http_client_diag(const char* event,
                       uint64_t id,
                       const char* url,
                       std::size_t active_count,
-                      bool always_on)
+                      bool always_on,
+                      const char* detail = nullptr)
 {
     if (!(always_on ? native_lifecycle_diagnostics_enabled() : http_client_debug_enabled())) {
         return;
     }
     std::fprintf(stderr,
-                 "space-http-client event=%s client=%p thread=%llu id=%llu active=%zu url=%s\n",
+                 "space-http-client event=%s client=%p thread=%llu id=%llu active=%zu url=%s%s%s\n",
                  event,
                  client,
                  diagnostic_thread_id(),
                  static_cast<unsigned long long>(id),
                  active_count,
-                 url ? url : "-");
+                 url ? url : "-",
+                 detail ? " detail=\"" : "",
+                 detail ? detail : "");
     std::fflush(stderr);
 }
 
@@ -374,7 +377,18 @@ HttpResponse HttpClient::perform(const QueuedRequest& req)
     if (header_list) {
         curl_slist_free_all(header_list);
     }
+    long result_status = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &result_status);
     curl_easy_cleanup(curl);
     diagnostic_emit("perform-end", req.id, req.request.url.c_str());
+    char result_detail[192];
+    std::snprintf(result_detail, sizeof(result_detail),
+                  "curl=%d(%s) status=%ld body=%zu cancelled=%d",
+                  static_cast<int>(code),
+                  curl_easy_strerror(code),
+                  result_status,
+                  out.body.size(),
+                  out.cancelled ? 1 : 0);
+    http_client_diag("perform-result", this, req.id, req.request.url.c_str(), 0, false, result_detail);
     return out;
 }
