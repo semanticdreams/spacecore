@@ -570,6 +570,116 @@ class PreparationTests(unittest.TestCase):
             pilot.recover_export(self.root, trial["id"])
         popen.assert_not_called()
 
+    def glm_failed_collection(self, reported_variant):
+        # Each parameter has a fresh disposable schedule; no earlier failed
+        # recovery may mask the continuation decision for this parameter.
+        self.root = self.root.parent / ("recovery-" + str(reported_variant))
+        self.manifest = pilot.prepare(ROOT, self.root)
+        trial = self.manifest["trials"][0]
+        ndjson, exported = capture()
+        info = exported["messages"][0]["info"]
+        info.update(providerID="opencode-go", modelID="glm-5.3-flash")
+        if reported_variant is not None:
+            info["variant"] = reported_variant
+        with patch.object(pilot.subprocess, "Popen", side_effect=[self.process(ndjson), self.process('{"truncated":')]):
+            original = pilot.run_trial(trial, self.root, time.time() + 5400)
+        self.assertEqual(original["outcome"], "infrastructure_error")
+        self.assertEqual(original["failure_type"], "JSONDecodeError")
+        return trial, ndjson, exported, original
+
+    def test_glm_high_recovery_checks_mode_before_promotion_and_continuation(self):
+        for variant in ["high", None, "low", "max"]:
+            with self.subTest(reported_variant=variant):
+                trial, _, exported, _ = self.glm_failed_collection(variant)
+                originals = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+                with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))) as popen:
+                    record = pilot.recover_export(self.root, trial["id"])
+                self.assertEqual(popen.call_count, 1)
+                self.assertEqual(popen.call_args.args[0], ["opencode", "export", "--pure", SID])
+                for path, data in originals.items():
+                    self.assertEqual(path.read_bytes(), data)
+                if variant == "high":
+                    self.assertEqual(record["outcome"], "complete")
+                    self.assertEqual(record["effective_result"]["reported_variant"], "high")
+                else:
+                    self.assertNotEqual(record["outcome"], "complete")
+                    self.assertNotIn("effective_result", record)
+                with patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot, "run_trial", return_value={"outcome": "timeout"}) as run, patch("builtins.print"):
+                    if variant == "high":
+                        self.assertEqual(pilot.continue_unreserved(self.root)["outcome"], "timeout")
+                        run.assert_called_once()
+                        self.assertNotEqual(run.call_args.args[0]["id"], trial["id"])
+                    else:
+                        with self.assertRaises(ValueError):
+                            pilot.continue_unreserved(self.root)
+                        run.assert_not_called()
+                    popen.assert_not_called()
+
+    def test_glm_high_continuation_rechecks_mode_in_preexisting_recovery(self):
+        for variant in ["high", None, "low", "max"]:
+            with self.subTest(reported_variant=variant):
+                trial, ndjson, exported, original = self.glm_failed_collection(variant)
+                # Simulate the prior buggy writer's internally consistent recovery
+                # record, rather than trusting promotion-time checks on re-read.
+                attempt = self.root / "recoveries" / trial["id"] / "prior-writer"
+                attempt.mkdir(parents=True)
+                export_path, record_path = attempt / "export.stdout.txt", attempt / "record.json"
+                pilot.save(export_path, exported)
+                parsed = pilot.parse_capture(ndjson, exported, pilot.GLM, SID)
+                record = {"outcome": "complete", "trial_id": trial["id"], "session_id": SID,
+                          "kind": "export_collection_recovery",
+                          "original_result_sha256": pilot.sha256((self.root / "results" / (trial["id"] + ".json")).read_bytes()),
+                          "run_sha256": pilot.sha256(ndjson.encode()),
+                          "export_sha256": pilot.sha256(export_path.read_bytes()),
+                          "export_stdout": str(export_path.relative_to(self.root)),
+                          "effective_result": {**original, **parsed, "outcome": "complete",
+                                               "collection_recovery": str(record_path.relative_to(self.root))}}
+                pilot.save(record_path, record)
+                before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+                with patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot, "run_trial", return_value={"outcome": "timeout"}) as run, patch("builtins.print"):
+                    if variant == "high":
+                        self.assertEqual(pilot.continue_unreserved(self.root)["outcome"], "timeout")
+                        run.assert_called_once()
+                    else:
+                        with self.assertRaisesRegex(pilot.CaptureError, "high"):
+                            pilot.continue_unreserved(self.root)
+                        run.assert_not_called()
+                    popen.assert_not_called()
+                self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_historical_glm_no_variant_recovery_remains_neutral_and_non_generating(self):
+        trial, ndjson, exported, _ = self.glm_failed_collection(None)
+        # Build an old frozen fixture; never rewrite an actual historical run.
+        trial["variant"] = None
+        config_path = self.root / "control/opencode.json"
+        config = json.loads(config_path.read_text())
+        config["agent"]["pilot"].pop("variant")
+        pilot.save(config_path, config)
+        self.manifest["artifacts"]["control/opencode.json"] = pilot.sha256(config_path.read_bytes())
+        pilot.save(self.root / "manifest.json", self.manifest)
+        result_path = self.root / "results" / (trial["id"] + ".json")
+        original = json.loads(result_path.read_text())
+        original.update(requested_variant=None, sent_variant=None)
+        pilot.save(result_path, original)
+        originals = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+        self.assertIsNone(pilot.verify_collection(trial, ndjson, exported)["reported_variant"])
+        with patch.object(pilot.subprocess, "Popen", return_value=self.process(json.dumps(exported))) as popen:
+            record = pilot.recover_export(self.root, trial["id"])
+        self.assertEqual(record["outcome"], "complete")
+        self.assertIsNone(record["effective_result"]["reported_variant"])
+        self.assertIsNone(record["effective_result"]["requested_variant"])
+        self.assertIsNone(record["effective_result"]["sent_variant"])
+        self.assertEqual(popen.call_args.args[0], ["opencode", "export", "--pure", SID])
+        original = json.loads((self.root / "results" / (trial["id"] + ".json")).read_text())
+        self.assertIsNone(pilot.recovered_result(self.root, trial, original, ndjson)["reported_variant"])
+        with patch.object(pilot.subprocess, "Popen") as popen, patch.object(pilot, "run_trial") as run:
+            with self.assertRaisesRegex(ValueError, "high"):
+                pilot.continue_unreserved(self.root)
+            popen.assert_not_called()
+            run.assert_not_called()
+        for path, data in originals.items():
+            self.assertEqual(path.read_bytes(), data)
+
     def test_recovery_rejects_changed_answer_or_model_and_keeps_failure_history(self):
         self.assertTrue(callable(getattr(pilot, "recover_export", None)), "explicit export recovery missing")
         trial, exported = self.failed_collection()

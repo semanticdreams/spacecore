@@ -373,6 +373,8 @@ def run_answer(ndjson):
 
 def verify_collection(trial, ndjson, exported):
     parsed = parse_capture(ndjson, exported, trial["model"], own_session(ndjson))
+    if trial["model"] == GLM and trial.get("variant") == GLM_VARIANT:
+        verify_glm_high(parsed)
     if parsed["answer"] != run_answer(ndjson):
         raise ValueError("recovered final text differs from saved run")
     if trial["implementation"]:
