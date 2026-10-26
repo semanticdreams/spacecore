@@ -18,6 +18,7 @@ import uuid
 
 GPT = "openai/gpt-6.1-sol"
 GLM = "opencode-go/glm-5.3-flash"
+GLM_VARIANT = "high"
 CONFIG_SCHEMA = "https://opencode.ai/config.json"
 RUN_ROOT = Path("/tmp/space/opencode-model-pilot")
 CASES = Path(__file__).resolve().parent / "evals/opencode_pilot_cases.json"
@@ -119,7 +120,7 @@ def prepare(repo_root: Path, run_root: Path) -> dict:
         freeze(filename, packet(case).encode())
         for model in ([GLM, GPT] if index % 2 == 0 else [GPT, GLM]):
             trials.append({"id": case["id"] + ("-gpt" if model == GPT else "-glm"),
-                           "model": model, "variant": "xhigh" if model == GPT else None,
+                           "model": model, "variant": "xhigh" if model == GPT else GLM_VARIANT,
                            "packet": filename, "seconds": 180, "implementation": False})
     plain = packet(cases["implementation"])
     contracted = plain + "\n## Frozen conceptual contract\n" + cases["contract"]["text"] + "\n"
@@ -128,11 +129,11 @@ def prepare(repo_root: Path, run_root: Path) -> dict:
     for label, model, contract in [("sized-glm-plain", GLM, False),
                                    ("sized-gpt-contract", GPT, True),
                                    ("sized-glm-contract", GLM, True)]:
-        trials.append({"id": label, "model": model, "variant": "high" if model == GPT else None,
+        trials.append({"id": label, "model": model, "variant": "high" if model == GPT else GLM_VARIANT,
                        "packet": "packets/sized-contract.txt" if contract else "packets/sized-plain.txt",
                        "seconds": 360, "implementation": True})
     config = {"$schema": CONFIG_SCHEMA, "permission": "deny", "plugin": [], "mcp": {},
-              "agent": {"pilot": {"mode": "primary", "permission": "deny",
+              "agent": {"pilot": {"mode": "primary", "variant": GLM_VARIANT, "permission": "deny",
                                   "description": "Static fixed-context pilot, no tools",
                                   "prompt": INSTRUCTION}}}
     freeze("control/opencode.json", (json.dumps(config, indent=2) + "\n").encode())
@@ -241,12 +242,21 @@ def capture_process(args, control, deadline, raw_prefix):
                                 stderr=stderr, text=True, start_new_session=True)
         try:
             proc.communicate(timeout=remaining)
-        except subprocess.TimeoutExpired:
+        except BaseException as failure:
+            # Every unwind owns the detached child group, not only deadline expiry.
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass  # exit raced with timeout; still reap and classify as timeout
-            proc.communicate()
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass  # Child group already exited; still reap the started child.
+                finally:
+                    try:
+                        proc.communicate()
+                    finally:
+                        proc.wait()  # Reap even if draining is itself interrupted.
+            except BaseException as cleanup_failure:
+                # Keep cancellation/timeout primary, but never hide cleanup failures.
+                raise failure from cleanup_failure
             raise
     if proc.returncode != 0:
         raise ValueError("CLI exited nonzero: " + str(proc.returncode))
@@ -276,11 +286,25 @@ def checked_manifest(run_root):
     return manifest
 
 
+def require_glm_high(config, agent, trials=()):
+    """Generation preflight only; historical manifests/captures remain unmodified."""
+    if config.get("agent", {}).get(agent, {}).get("variant") != GLM_VARIANT:
+        raise ValueError("GLM generation requires a newly prepared high-variant config")
+    if any(t.get("variant") != GLM_VARIANT for t in trials if t["model"] == GLM):
+        raise ValueError("GLM generation requires newly prepared high-variant trials")
+
+
+def verify_glm_high(parsed):
+    if not parsed["reported_variants_by_message"] or any(v != GLM_VARIANT for v in parsed["reported_variants_by_message"]):
+        raise CaptureError("protocol_violation", "reported GLM variant must be high; missing mode is unknown")
+
+
 def run_trial(trial: dict, run_root: Path, overall_deadline: float) -> dict:
     run_root = control_root(run_root)
     manifest = checked_manifest(run_root)
     if trial not in manifest["trials"]:
         raise ValueError("unplanned trial")
+    require_glm_high(load_json((run_root / "control/opencode.json").read_text()), "pilot", manifest["trials"])
     # A run lock serializes the persistent deadline and exclusive reservations.
     lock = run_root / "execution.lock"
     with lock.open("x"):
@@ -313,6 +337,8 @@ def run_trial(trial: dict, run_root: Path, overall_deadline: float) -> dict:
                 exported = capture_process(["opencode", "export", "--pure", session_id], run_root / "control",
                                            call_deadline, run_root / "raw" / (trial["id"] + "-export"))
                 result.update(parse_capture(ndjson, load_json(exported), trial["model"], session_id))
+                if trial["model"] == GLM:
+                    verify_glm_high(result)
                 result["outcome"] = "complete"
                 if trial["implementation"]:
                     try:
@@ -347,6 +373,8 @@ def run_answer(ndjson):
 
 def verify_collection(trial, ndjson, exported):
     parsed = parse_capture(ndjson, exported, trial["model"], own_session(ndjson))
+    if trial["model"] == GLM and trial.get("variant") == GLM_VARIANT:
+        verify_glm_high(parsed)
     if parsed["answer"] != run_answer(ndjson):
         raise ValueError("recovered final text differs from saved run")
     if trial["implementation"]:
@@ -431,6 +459,7 @@ def continue_unreserved(run_root):
     """Preflight every reservation, then attempt only untouched schedule entries."""
     run_root = control_root(run_root)
     manifest = checked_manifest(run_root)
+    require_glm_high(load_json((run_root / "control/opencode.json").read_text()), "pilot", manifest["trials"])
     deadline = load_json((run_root / "deadline.json").read_text())["deadline"]
     reserved = {p.name for p in (run_root / "reservations").iterdir()}
     if reserved - {t["id"] for t in manifest["trials"]}:

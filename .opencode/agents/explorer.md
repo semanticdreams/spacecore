@@ -1,8 +1,8 @@
 ---
 description: Focused codebase investigation — finds files, patterns, and answers specific questions. Use for targeted repository searches.
 mode: subagent
-model: openai/gpt-6.1-sol
-variant: medium
+model: opencode-go/glm-5.3-flash
+variant: high
 steps: 20
 permission:
   read:
