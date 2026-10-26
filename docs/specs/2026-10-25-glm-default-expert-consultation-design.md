@@ -293,7 +293,9 @@ handoff/progress artifacts.
 3. This assignment is **format-only, no code edits, tests, builds, commits,
    operations, changed findings/verdicts/evidence or source/review range**. It may
    reissue existing facts and correct permitted assignment metadata; it cannot
-   invent missing facts. If reconstruction is unsupported, return NEEDS_CONTEXT.
+   invent missing facts. If reconstruction is unsupported, use the role's existing
+   context/evidence-needed or non-approving branch (NEEDS_CONTEXT where supported),
+   not a new universal status or response field.
    Caller-side fence stripping, aliases, default pass or salvaged partial verdicts
    are forbidden.
 4. Validate the correction against the unchanged role contract and retained facts.
