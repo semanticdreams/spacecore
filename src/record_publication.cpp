@@ -62,6 +62,28 @@ void append_error(std::optional<std::string>& errors, const std::string& message
     }
 }
 
+// Called only from a catch. Failure to represent one error must never prevent
+// subsequent close attempts; retain scalar truth without allocating.
+void capture_cleanup_error(std::optional<std::string>& errors, bool& lost,
+                           std::exception_ptr& diagnostic_failure) noexcept
+{
+    try { append_error(errors, current_error()); }
+    catch (...) {
+        lost = true;
+        if (!diagnostic_failure) diagnostic_failure = std::current_exception();
+    }
+}
+
+template<class Handle>
+void close_all(std::initializer_list<Handle*> handles, std::optional<std::string>& errors,
+               bool& lost, std::exception_ptr& diagnostic_failure) noexcept
+{
+    for (auto* handle : handles) {
+        try { handle->close_checked(); }
+        catch (...) { capture_cleanup_error(errors, lost, diagnostic_failure); }
+    }
+}
+
 std::string workspace_name()
 {
     static std::atomic<unsigned long long> sequence {0};
@@ -213,7 +235,8 @@ public:
     ~Attempt() noexcept
     {
         if (!cleaned_) {
-            try { cleanup(); } catch (...) {} // Explicit cleanup reports all normal errors.
+            bool lost = false;
+            try { cleanup(lost); } catch (...) {} // Explicit cleanup reports all normal errors.
         }
     }
 
@@ -312,14 +335,25 @@ public:
             os_error("atomic renameat publication");
     }
 
-    std::optional<std::string> cleanup()
+    std::optional<std::string> cleanup(bool& diagnostic_lost)
     {
-        cleaned_ = true;
         std::optional<std::string> errors;
-        if (!owned_) return errors;
+        std::exception_ptr diagnostic_failure;
+        try { cleanup_namespace(errors); }
+        catch (...) { capture_cleanup_error(errors, diagnostic_lost, diagnostic_failure); }
+        close_all({&record_, &workspace_, &anchor_, &parent_}, errors, diagnostic_lost, diagnostic_failure);
+        cleaned_ = true; // Every retained handle has now received its explicit close attempt.
+        if (diagnostic_failure) std::rethrow_exception(diagnostic_failure);
+        return errors;
+    }
+
+private:
+    void cleanup_namespace(std::optional<std::string>& errors)
+    {
+        if (!owned_) return;
         if (workspace_.get() < 0 || !workspace_id_) {
             append_error(errors, "workspace identity unavailable; left untouched");
-            return errors;
+            return;
         }
         try {
             private_directory(anchor_.get());
@@ -329,7 +363,7 @@ public:
                 fail("private cleanup namespace identity changed");
         } catch (...) {
             append_error(errors, current_error());
-            return errors;
+            return;
         }
         cleanup_entry("record", record_id_, errors);
         struct stat named {};
@@ -339,14 +373,8 @@ public:
         } else if (::unlinkat(anchor_.get(), workspace_name_.c_str(), AT_REMOVEDIR) != 0) {
             append_error(errors, "remove workspace: " + std::error_code(errno, std::generic_category()).message());
         }
-        for (Handle* handle : {&record_, &workspace_, &anchor_, &parent_}) {
-            try { handle->close_checked(); }
-            catch (...) { append_error(errors, current_error()); }
-        }
-        return errors;
     }
 
-private:
     int parent() const { return parent_.get(); }
 
     Handle acquire_directory(int parent, const char* name, std::optional<struct stat>& expected)
@@ -849,7 +877,10 @@ public:
 
     ~Attempt() noexcept
     {
-        if (!cleaned_) { try { cleanup(); } catch (...) {} }
+        if (!cleaned_) {
+            bool lost = false;
+            try { cleanup(lost); } catch (...) {}
+        }
     }
 
     void prepare()
@@ -974,12 +1005,23 @@ public:
             static_cast<FILE_INFORMATION_CLASS>(10), "atomic NtSetInformationFile rename");
     }
 
-    std::optional<std::string> cleanup()
+    std::optional<std::string> cleanup(bool& diagnostic_lost)
+    {
+        std::optional<std::string> errors;
+        std::exception_ptr diagnostic_failure;
+        try { cleanup_namespace(errors); }
+        catch (...) { capture_cleanup_error(errors, diagnostic_lost, diagnostic_failure); }
+        close_all({&record_, &workspace_, &anchor_, &parent_}, errors, diagnostic_lost, diagnostic_failure);
+        cleaned_ = true;
+        if (diagnostic_failure) std::rethrow_exception(diagnostic_failure);
+        return errors;
+    }
+
+private:
+    void cleanup_namespace(std::optional<std::string>& errors)
     {
         native_.set_phase("cleanup");
-        cleaned_ = true;
-        std::optional<std::string> errors;
-        if (!owned_) return errors;
+        if (!owned_) return;
         try {
             auto named = native_.relative(anchor_.get(), workspace_name_, true, false, directory_access);
             if (!workspace_id_ || !identity(metadata(named.get(), true), *workspace_id_))
@@ -991,15 +1033,9 @@ public:
             BOOLEAN remove = TRUE; // FILE_DISPOSITION_INFORMATION.DeleteFile
             native_.information(workspace_.get(), &remove, sizeof(remove),
                 static_cast<FILE_INFORMATION_CLASS>(13), "remove owned attempt by handle");
-        } catch (...) { append_error(errors, current_error()); return errors; }
-        for (Handle* handle : {&workspace_, &anchor_, &parent_}) {
-            try { handle->close_checked(); }
-            catch (...) { append_error(errors, current_error()); }
-        }
-        return errors;
+        } catch (...) { append_error(errors, current_error()); }
     }
 
-private:
     Handle optional_destination()
     {
         bool missing = false;
@@ -1129,10 +1165,18 @@ struct Operation::Impl {
 
     Phase finish_cleanup()
     {
+        std::optional<std::string> error;
         try {
-            const auto error = attempt.cleanup();
-            if (error) append_error(state.cleanup_error, *error);
-        } catch (...) { append_error(state.cleanup_error, current_error()); }
+            error = attempt.cleanup(state.cleanup_diagnostic_lost);
+        } catch (...) {
+            // Attempt has finalized all handles even when its text capture failed.
+            state.cleanup_diagnostic_lost = true;
+            state.phase = Phase::done;
+            append_error(state.cleanup_error, current_error());
+            return state.phase;
+        }
+        try { if (error) append_error(state.cleanup_error, *error); }
+        catch (...) { state.cleanup_diagnostic_lost = true; }
         state.phase = Phase::done;
         return state.phase;
     }
@@ -1222,31 +1266,49 @@ Result publish(const fs::path& destination, std::string_view expected_bytes, con
     if (wine::detected()) return wine::publish(destination, expected_bytes, hooks);
 #endif
     detail::Operation operation(destination, expected_bytes);
-    auto phase = operation.advance({detail::Phase::start, false, {}});
-    while (phase != detail::Phase::done) {
-        const std::function<void()>* hook = nullptr;
-        switch (phase) {
-        case detail::Phase::before_write: hook = &hooks.before_write; break;
-        case detail::Phase::before_security: hook = &hooks.before_security; break;
-        case detail::Phase::before_commit: hook = &hooks.before_commit; break;
-        case detail::Phase::before_cleanup: hook = &hooks.before_cleanup; break;
-        default: fail("unexpected publication hook phase");
+    const auto result = [&operation](bool recovered) -> Result {
+        const auto& state = operation.state();
+        auto cleanup = state.cleanup_error;
+        if (state.cleanup_diagnostic_lost || recovered)
+            append_error(cleanup, "native publication cleanup/diagnostic exception recovered; diagnostic detail may be lost");
+        if (state.failure) {
+            auto failure = *state.failure;
+            if (cleanup) failure.append("; cleanup: " + *cleanup);
+            fail(failure);
         }
-        detail::Reply reply {phase, false, {}};
-        try { if (*hook) (*hook)(); }
-        catch (...) {
-            reply.failed = true;
-            reply.error = current_error();
+        return {state.committed, std::move(cleanup)};
+    };
+    try {
+        auto phase = operation.advance({detail::Phase::start, false, {}});
+        while (phase != detail::Phase::done) {
+            const std::function<void()>* hook = nullptr;
+            switch (phase) {
+            case detail::Phase::before_write: hook = &hooks.before_write; break;
+            case detail::Phase::before_security: hook = &hooks.before_security; break;
+            case detail::Phase::before_commit: hook = &hooks.before_commit; break;
+            case detail::Phase::before_cleanup: hook = &hooks.before_cleanup; break;
+            default: fail("unexpected publication hook phase");
+            }
+            detail::Reply reply {phase, false, {}};
+            try { if (*hook) (*hook)(); }
+            catch (...) {
+                reply.failed = true;
+                reply.error = current_error();
+            }
+            phase = operation.advance(reply);
         }
-        phase = operation.advance(reply);
+        return result(false);
+    } catch (...) {
+        if (!operation.state().committed) throw;
+        // Scalar-first recovery. Never replay a callback or an already completed
+        // namespace cleanup, and do not allocate a cancellation reason.
+        try {
+            if (operation.state().phase == detail::Phase::before_cleanup)
+                operation.advance({detail::Phase::before_cleanup, false, {}});
+            if (operation.state().phase != detail::Phase::done) std::terminate();
+            return result(true); // One additional representation attempt only.
+        } catch (...) { std::terminate(); }
     }
-    const auto& state = operation.state();
-    if (state.failure) {
-        auto failure = *state.failure;
-        if (state.cleanup_error) failure.append("; cleanup: " + *state.cleanup_error);
-        fail(failure);
-    }
-    return {state.committed, state.cleanup_error};
 }
 
 } // namespace record_publication

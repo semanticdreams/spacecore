@@ -20,6 +20,8 @@ namespace allocation_test {
 thread_local bool disabled = false;
 thread_local bool fail_next = false;
 thread_local unsigned one_shot_failures = 0;
+thread_local long fail_after = -1;
+thread_local unsigned allocations = 0;
 struct Failure : std::bad_alloc {
     const char* what() const noexcept override
     {
@@ -35,6 +37,11 @@ struct Failure : std::bad_alloc {
 }
 void* operator new(std::size_t size)
 {
+    ++allocation_test::allocations;
+    if (allocation_test::fail_after == 0) {
+        allocation_test::fail_after = -1;
+        allocation_test::fail_next = true;
+    } else if (allocation_test::fail_after > 0) --allocation_test::fail_after;
     if (allocation_test::fail_next) {
         allocation_test::fail_next = false;
         ++allocation_test::one_shot_failures;
@@ -439,14 +446,23 @@ void denied_inline_response_and_real_release_fault()
         if (request.opcode == SRP_RELEASE && releases == 1) {
             check(status == SRP_UNSUCCESSFUL && (response.flags & SRP_POISONED)
                 && (response.flags & SRP_COMMITTED), "real first RELEASE fault retains poisoned ownership and truth");
+            check(read(f.root / "record") == "new" && read(attempt / "unrelated") == "keep",
+                "single cleanup pass preserves committed bytes and exact foreign bytes");
+            check(!fs::exists(attempt / "record"), "single namespace pass leaves no owned record entry");
             fs::remove(attempt / "unrelated");
+        } else if (request.opcode == SRP_RELEASE) {
+            check(status == SRP_SUCCESS && (response.flags & SRP_COMMITTED) && response.event == SRP_DONE,
+                "second RELEASE retires finalized committed context");
         }
     };
     const auto result = drive(entry, f.root / "record", "new", hooks);
     check(result.committed && result.cleanup_error && result.cleanup_error->find("stale or incompatible") != std::string::npos,
         "original transport failure survives real release-recovery poison");
     check(releases == 2 && cleanup_hooks == 1 && read(f.root / "record") == "new", "exactly one cleanup-only release recovery, no hook/rename replay");
-    entry.retired(); clean(f);
+    entry.retired();
+    check(fs::is_directory(attempt) && fs::is_empty(attempt), "terminal retirement never replays namespace removal");
+    fs::remove(attempt); // Explicit fixture cleanup after terminal-state assertions.
+    clean(f);
 }
 
 void failed_response_text_and_precommit_allocation()
@@ -561,6 +577,8 @@ void one_shot_postcommit_allocation()
                     if (releases == 1) {
                         check(status == SRP_UNSUCCESSFUL, "first real emergency RELEASE is allocation-poisoned, not retired");
                         check(read(attempt / "unrelated") == "keep", "poisoned native cleanup preserved obstruction");
+                        check(read(f.root / "record") == "committed" && !fs::exists(attempt / "record"),
+                            "single namespace pass retains committed bytes and no owned record entry");
                         fs::remove(attempt / "unrelated");
                     } else {
                         check(status == SRP_SUCCESS && response.event == SRP_DONE, "second real emergency RELEASE retires");
@@ -574,14 +592,19 @@ void one_shot_postcommit_allocation()
                     "recovered postcommit allocation returns explicit truthful lifecycle result");
                 entry.retired();
                 if (poison_release) {
-                    clean(f);
+                    check(fs::is_directory(attempt) && fs::is_empty(attempt),
+                        "second RELEASE cannot replay terminal namespace cleanup");
                     check(final_poison && result.cleanup_error->find("driver test allocator unavailable:") != std::string::npos
                         && result.cleanup_error->find("[truncated]") != std::string::npos
                         && result.cleanup_error->find("[producer truncated]") != std::string::npos,
-                        "combined one-shot OOM and emergency RELEASE recovery preserves native poison detail/truncation");
+                         "combined one-shot OOM and emergency RELEASE recovery preserves native poison detail/truncation");
+                    fs::remove(attempt); // Fixture cleanup only after all retained-state assertions.
+                    clean(f);
                 } else if (obstruct_cleanup) {
                     check(result.cleanup_error->find("remove workspace:") != std::string::npos
-                        && read(attempt / "unrelated") == "keep", "recovery consumes final native RELEASE errors, preserves unrelated bytes");
+                         && read(attempt / "unrelated") == "keep", "recovery consumes final native RELEASE errors, preserves unrelated bytes");
+                    check(fs::is_directory(attempt) && !fs::exists(attempt / "record"),
+                        "obstructed terminal attempt remains without an owned record");
                 } else clean(f);
                 check(cleanup_hooks == 1 && entry.count(SRP_BEGIN) == 1 && entry.count(SRP_SNAPSHOT) == (poison_release ? 2 : 1)
                     && entry.count(SRP_RELEASE) == (poison_release ? 2 : 1) && entry.count(SRP_ADVANCE) == 4,
@@ -646,9 +669,12 @@ void fatal_invariants()
 }
 } // namespace
 
+void native_driver_allocation_tests();
+
 int main()
 {
     try {
+        native_driver_allocation_tests();
         throwing_entry_after_real_begin();
         one_shot_postcommit_allocation();
         real_success_and_nesting();

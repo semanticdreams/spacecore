@@ -178,6 +178,8 @@ void respond(SrpCall& response, const Context* context, const char* transient_er
         if (state.cleanup_error) { response.flags |= SRP_CLEANUP_PRESENT; cleanup = *state.cleanup_error; }
         if (context->poisoned) response.flags |= SRP_POISONED;
         transport = {context->transport.data(), context->transport_size};
+        if (state.cleanup_diagnostic_lost && !context->poisoned)
+            transport = "native cleanup diagnostic detail lost during exception recovery";
         if (context->transport_truncated && !transient_error) response.flags |= SRP_TRANSPORT_TRUNCATED;
     }
     if (transient_error) transport = transient_error;

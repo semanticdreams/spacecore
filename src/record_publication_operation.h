@@ -26,6 +26,7 @@ struct Reply {
 struct State {
     Phase phase = Phase::start;
     bool committed = false;
+    bool cleanup_diagnostic_lost = false;
     std::optional<std::string> failure, cleanup_error;
 };
 

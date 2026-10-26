@@ -558,11 +558,19 @@ void poison_prevents_publication_and_release_recovers()
     const auto release_status = finalization.invoke(SRP_RELEASE);
     allocation_test::disabled = false;
     check(release_status == SRP_UNSUCCESSFUL && finalization.call.context == id
-        && (finalization.call.flags & SRP_POISONED) && (finalization.call.flags & SRP_COMMITTED), "unexpected incomplete finalization retains recoverable ownership");
-    check(finalization.invoke(SRP_SNAPSHOT) == SRP_SUCCESS && finalization.call.context == id, "failed release ID remains queryable");
+        && (finalization.call.flags & SRP_POISONED) && (finalization.call.flags & SRP_COMMITTED), "diagnostic failure retains queryable poisoned ownership");
+    check(finalization.invoke(SRP_SNAPSHOT) == SRP_SUCCESS && finalization.call.context == id
+        && finalization.call.event == SRP_DONE && (finalization.call.flags & SRP_POISONED)
+        && finalization.call.transport_error.required > 0, "terminal poisoned context retains diagnostics before retirement");
+    check(read(fixture.root / "second") == "committed" && read(attempt / "unrelated") == "keep",
+        "single cleanup pass preserves committed and foreign bytes");
+    check(!fs::exists(attempt / "record"), "published owned entry is no longer in attempt");
     fs::remove(attempt / "unrelated");
-    check(finalization.invoke(SRP_RELEASE) == SRP_SUCCESS && (finalization.call.flags & SRP_COMMITTED), "explicit finalization recovery retires only after completion");
+    check(finalization.invoke(SRP_RELEASE) == SRP_SUCCESS && (finalization.call.flags & SRP_COMMITTED)
+        && finalization.call.event == SRP_DONE, "second release retires finalized context without namespace replay");
     invalid_old_id(id);
+    check(fs::is_directory(attempt) && fs::is_empty(attempt), "terminal cleanup never retries removal after obstruction changes");
+    fs::remove(attempt); // Fixture cleanup, after the terminal-state assertions.
     clean(fixture);
 }
 
