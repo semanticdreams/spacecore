@@ -129,3 +129,57 @@ python3 scripts/eval_opencode_expert_routing.py report
 **Acceptance:** Sixteen ordinary project pins GLM/no variants, one exact read-only GPT expert; no permission expansion. All request branches have non-approving controller handling. Every architecture/design/system-contract decision has both model inputs before dependent implementation; unchanged decisions are reused. Supervisor strict ownership and fast/live direct ownership remain distinct. Bounded updated pressure checks show dual-design coverage, escalation and restraint, with missing/failed evidence honestly reported.
 
 **Out of scope:** Global/root/project JSON edits, built-in/hidden role guarantees, automatic model switching, expert implementers, extra full GPT reviews, generic benchmark infrastructure, prior pilot resets, private-data browsing, native/Fennel changes, and extra model trials.
+
+## Subsequent user authorization
+
+The original ten pressure calls were consumed without a passing guidance gate.
+The user explicitly approved a separate five-call clarification tranche after
+diagnostic review. Only this new tranche is excepted from the original call cap;
+the original evidence, oracle, instruction and budget are not reset or rescored.
+Use the spec's clarification meanings and predeclared strict acceptance criteria.
+
+### Task 3: Bounded clarification helper, not a policy or oracle rewrite
+
+**Files:**
+- Create: `scripts/eval_opencode_expert_routing_clarified.py`.
+- Create: `scripts/tests/test_eval_opencode_expert_routing_clarified.py`.
+- Reuse read-only: `scripts/eval_opencode_expert_routing.py` and pilot capture/parser primitives.
+- No changes to production agents, skills, old helper, old tests or old runtime evidence.
+
+**Interfaces:** fixed CLI `prepare --repo-root .`, `run`, `report`; fixed new root
+`/tmp/space/opencode-expert-routing-clarified`; five fresh own sessions only.
+The helper reuses the unchanged matrix/schema/oracle and original strict parser;
+its frozen instruction appends definitions and a raw-JSON recipe, not case answers.
+
+- [ ] **Step 1: Add failing tests** for unchanged original matrix/schema/oracle, original-evidence byte preservation, strict fenced/malformed JSON rejection, new root rejection before reads, exclusive preparation, five consumed slots/no repeats, and independent 900-second active budget.
+
+```python
+def test_fences_still_fail():
+    with pytest.raises(ValueError):
+        original.parse_answer('```json\n{"decisions": []}\n```')
+```
+
+- [ ] **Step 2: Implement the narrow helper.** Reuse file-backed capture, own-session model/completion/tool checks and existing parsing. Generate schema-first all-deny config, preserve normal internal auth, and never browse private data. Freeze the current allowlisted workflow context and the new instruction before calls. Record user authorization, source/packet fingerprints and original experiment metadata hashes; never write to the original root. Use exclusive slots and budget reservation before calls so crashes cannot authorize retries. Keep a separate report, not a new baseline/guidance comparison or hidden retry path.
+- [ ] **Step 3: Validate offline and checkpoint for independent review.** Implementer has no external-read authority: all live root preparation/calls remain controller-owned; use mocked/disposable fixtures only.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q scripts/tests/test_eval_opencode_expert_routing_clarified.py scripts/tests/test_eval_opencode_expert_routing.py scripts/tests/test_eval_opencode_pilot.py
+git diff --check
+```
+
+- [ ] **Step 4: Controller prepares and freezes the separate tranche after review.** Inspect the packet, source/oracle equality, empty results/reservations, strict acceptance and original metadata fingerprints. The definitions clarify the existing contract; do not modify expected answers to match past outputs.
+- [ ] **Step 5: Controller invokes exactly five calls.** Each is GLM/no variant/no tools, fresh session, 180-second run-plus-export cap. Preserve every attempt and manually inspect every final rationale. All five strict outputs and all 90 route/owner pairs must pass before calling the behavioral gate green. A failed attempt is not regenerated.
+
+```bash
+python3 scripts/eval_opencode_expert_routing_clarified.py prepare --repo-root .
+python3 scripts/eval_opencode_expert_routing_clarified.py run
+python3 scripts/eval_opencode_expert_routing_clarified.py report
+```
+
+### Task 4: Record truthful validation and finish the complete branch
+
+**Files:** update only `docs/dev/features/opencode-agent-workflow.md` and task reports as needed; preserve old pilot observations.
+
+- [ ] **Step 1:** Controller supplies sanitized new outcomes, model identities, strict/manual acceptance, source fingerprints and exact failures to the repository-only implementer. State old baseline/guidance failures and the new protocol separately. Do not claim causal improvement or effective routing in an already-loaded session.
+- [ ] **Step 2:** Implementer updates documentation, runs relevant checks, self-reviews and checkpoints. Independently review the complete pending results/documentation range. No further policy edits may be silently attributed to already-recorded responses.
+- [ ] **Step 3:** Perform final whole-branch review, fetch/evaluate current `origin/main`, and run `make opencode-check`, relevant helper/parser pytest suites, Node workflow contracts and diff checks. No native build or candidate code execution. Follow guarded integration/merge-queue policy only when required checks and behavioral acceptance are green. Tell the user to quit/restart OpenCode after the reviewed rollout.

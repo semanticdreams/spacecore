@@ -188,3 +188,53 @@ critiqued that proposal and reconciled it here:
 - Reject letting the cheaper owner dismiss an unresolved material finding by
   preference. Reconciliation needs evidence; unresolved material disagreement
   remains a human decision. Reconsultation requires new material evidence.
+
+## User-authorized clarification validation tranche
+
+After the original ten calls, strict guidance validation did not pass: three
+answers used Markdown fences, one contained malformed JSON, and the sole valid
+answer had route/owner mismatches. The diagnostic advisor supported a bounded
+clarification but required human authorization for further calls. The user then
+said "do it", authorizing the proposed separate five-call GLM tranche.
+
+Preserve the original ten runs, manifests, questions, instructions, expected
+answers, budgets and scores byte-for-byte. Do not normalize or rescore old replies.
+The new protocol only explains existing route/owner meanings and gives a positive
+raw-JSON output recipe. It does not change scenario text, oracle, schemas, production
+agent policy, or mandatory GLM/GPT design consultation.
+
+Use a separate fixed runtime root
+`/tmp/space/opencode-expert-routing-clarified`, fresh sessions, and its own frozen
+manifest and five-slot ledger. Reuse the existing safe capture/parser and matrix
+primitives; no generic experiment framework. Limit the new tranche to exactly
+five attempts, each run plus own-session export at most 180 seconds, at most 900
+seconds aggregate live execution. Failed/incomplete attempts consume slots. No
+retries, continuation tricks, extra smoke calls, or additional model providers.
+
+Clarify existing meanings before freezing the packet:
+
+- `expert_advisor`: a task-capable primary dispatches the bounded expert itself.
+- `request_consultation`: a task-denied worker returns a non-approving structured
+  request to its controller; it does not dispatch the expert.
+- `human`: genuinely unknown product/policy needs a human decision; this does not
+  make the human the eventual code implementation owner in these workflow cases.
+- `blocked`: the specifically proposed unsafe/bypass/publication action cannot
+  proceed. Do not label that action `glm` merely because other valid work remains.
+- `glm`: the specifically requested ordinary, authorized next work stays GLM.
+- `implementation_owner`: eventual code/fix owner, including while a decision is
+  blocked: supervisor uses implementer; direct fast/live primaries remain owners.
+
+The first non-whitespace output character is `{` and the last is `}`; emit exactly
+one JSON object with the prescribed decisions array, no Markdown wrapper or
+surrounding prose. Keep strings correctly escaped and rationales concise. Strict
+parsing remains unchanged: fenced or malformed JSON still fails.
+
+Predeclared acceptance: all five actual identities are verified GLM, all five
+outputs pass the original strict schema and complete 18-case coverage, all 90
+route/owner pairs match the unchanged oracle, and manual review finds preserved
+dual-model design-before-implementation, proposal/critique/reconciliation/reuse,
+worker/controller authority, human policy, direct-primary ownership, and live
+manual-before-edit/refresh-after-validation behavior. This is new-protocol
+conformance evidence, not a causal improvement claim over the old protocol or
+proof of general architectural ability. If it fails, preserve the failures and
+do not claim completion or publish under an invented pass.
