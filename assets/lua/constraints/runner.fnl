@@ -190,6 +190,22 @@
       {:required-rule-ids applicable-rule-ids
        :entries []}))
 
+(fn make-rule-observer [observer]
+  ;; Only callback delivery is protected here; rule work retains its original guard.
+  (var failed? false)
+  (var first-error nil)
+  (fn notify [event]
+    (local (ok err) (pcall observer event))
+    (when (not ok)
+      (when (not failed?)
+        (set failed? true)
+        (set first-error err))
+      (error err 0)))
+  (fn raise-observer-error []
+    ;; Presence is separate from the value: false and nil are valid raw errors.
+    (when failed? (error first-error 0)))
+  (values notify raise-observer-error))
+
 (fn M.run-target [target opts]
   "Execute the full constraint pipeline for a target:
    1. Discover source files
@@ -227,6 +243,11 @@
   (local all-diagnostics [])
   (local present-rule-ids [])
   (local ctx {:facts fact-db})
+  (local raise-observer-error
+    (when observer
+      (local (notify raise-error) (make-rule-observer observer))
+      (tset ctx :observer notify)
+      raise-error))
   (each [index rule (ipairs applicable-rules)]
     (let [rule-id (or rule.id rule.constraint-id "unknown-rule")
           rule-fn (or rule.run rule.fn)]
@@ -238,6 +259,8 @@
                                 target
                                 o.timeout-seconds
                                 rule-id)]
+        ;; run-rule has restored its hook; callback errors escape outside its guard.
+        (when raise-observer-error (raise-observer-error))
         (when result
           (each [_ d (ipairs result)]
             ;; Ensure every diagnostic identifies the target

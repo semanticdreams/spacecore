@@ -486,6 +486,207 @@
   (assert (not ok) "observer failure must not be swallowed or made into diagnostics")
   (assert (= err sentinel)))
 
+(fn with-synthetic-rule [rule body]
+  (local Runner (require :constraints.runner))
+  (local Source (require :constraints.source))
+  (local Facts (require :constraints.facts))
+  (local Registry (require :constraints.rules.init))
+  (local discover Source.discover)
+  (local extract Facts.extract)
+  (local all-rules Registry.all-rules)
+  (local target {:kind :files :files [] :suites []})
+  (local records [{}])
+  (local facts {:files records :private-token {}})
+  (set Source.discover (fn [actual _observer] (assert (= actual target)) records))
+  (set Facts.extract (fn [actual _observer] (assert (= actual records)) facts))
+  (set Registry.all-rules (fn [] [{:id :synthetic :family :test :run rule}]))
+  (local (ok result) (pcall body Runner target facts))
+  (set Source.discover discover)
+  (set Facts.extract extract)
+  (set Registry.all-rules all-rules)
+  (if ok result (error result 0)))
+
+(fn raw-snapshot [value]
+  (local snapshot {})
+  (each [key item (values next value)] (tset snapshot key item))
+  snapshot)
+
+(fn assert-raw-unchanged [expected actual]
+  (each [key item (values next expected)] (assert (= item (rawget actual key))))
+  (each [key item (values next actual)] (assert (= item (rawget expected key)))))
+
+(fn runner-forwards-rule-observer [returns-nil?]
+  (local event {:phase :rule :subphase :synthetic :edge :begin})
+  (var context nil)
+  (var active? false)
+  (fn rule [ctx]
+    (set context ctx)
+    (if active?
+        (do (assert (= (type ctx.observer) :function) "rule context must forward observer")
+            (assert (= (ctx.observer event) nil) "notify returns nil"))
+        (assert (= (rawget ctx :observer) nil) "inactive context has no observer field"))
+    (if returns-nil? nil
+        [{:constraint-id :synthetic :family :test :severity :warning :message "first" :hint "fix"}
+         {:constraint-id :synthetic :family :test :severity :error :message "second" :hint "fix"}]))
+  (fn check [Runner target facts]
+    (local target-before (raw-snapshot target))
+    (local facts-before (raw-snapshot facts))
+    (local files-before (raw-snapshot facts.files))
+    (local expected (Runner.run-target target {:baseline-data false}))
+    (assert (= context.facts facts) "Facts identity must be exact")
+    (set active? true)
+    (var deliveries 0)
+    (fn observe [actual]
+      (when actual.subphase
+        (assert (= actual event) "callback receives exact event reference")
+        (set deliveries (+ deliveries 1))))
+    (local actual (Runner.run-target target {:baseline-data false :observer observe}))
+    (assert (= deliveries 1))
+    (assert (= context.facts facts))
+    (assert-result-parity expected actual)
+    (each [_ diagnostic (ipairs actual.diagnostics)] (assert (= diagnostic.target target)))
+    (assert-raw-unchanged target-before target)
+    (assert-raw-unchanged facts-before facts)
+    (assert-raw-unchanged files-before facts.files))
+  (with-synthetic-rule rule check))
+
+(fn find-upvalue [owner wanted]
+  (var index 1)
+  (var found nil)
+  (while (and (not found) (debug.getupvalue owner index))
+    (local (name value) (debug.getupvalue owner index))
+    (when (= name wanted) (set found {:index index :value value}))
+    (set index (+ index 1)))
+  (assert found (.. "missing private upvalue " wanted))
+  found)
+
+(fn runner-inactive-does-not-enter-observer-factory []
+  (fn check [Runner target _facts]
+    (local factory (find-upvalue Runner.run-target :make_rule_observer))
+    (local sentinel {})
+    (fn fail [_observer] (error sentinel 0))
+    (debug.setupvalue Runner.run-target factory.index fail)
+    (fn check-inactive []
+      (local expected (Runner.run-target target))
+      (assert-result-parity expected (Runner.run-target target {}))
+      (assert-result-parity expected (Runner.run-target target {:observer nil})))
+    (fn ignore-event [_event] nil)
+    (local (ok err) (pcall check-inactive))
+    (local (active-ok active-err) (pcall Runner.run-target target {:observer ignore-event}))
+    (debug.setupvalue Runner.run-target factory.index factory.value)
+    (assert ok (tostring err))
+    (assert (not active-ok) "active control must enter factory spy")
+    (assert (= active-err sentinel)))
+  (with-synthetic-rule (fn [_ctx] nil) check))
+
+(fn with-sentinel-hook [body]
+  (local (old-hook old-mask old-count) (debug.gethook))
+  (fn sentinel [] nil)
+  (debug.sethook sentinel "" 7777)
+  (local (ok err) (pcall body sentinel))
+  (if old-hook (debug.sethook old-hook old-mask old-count) (debug.sethook nil "" 0))
+  (if ok err (error err 0)))
+
+(fn assert-sentinel-hook [sentinel]
+  (local (hook mask count) (debug.gethook))
+  (assert (and (= hook sentinel) (= mask "") (= count 7777))
+          "previous hook must be restored before outside propagation/teardown"))
+
+(fn runner-relays-raw-observer-error [failure timeout]
+  (local second {})
+  (var calls 0)
+  (var ended? false)
+  (fn rule [ctx]
+    ;; A rule may catch a callback error, but cannot erase or replace its ownership.
+    (local (ok err) (pcall ctx.observer {:subphase :synthetic}))
+    (assert (not ok))
+    (assert (= err failure))
+    (ctx.observer {:subphase :synthetic}))
+  (fn check [Runner target _facts]
+    (fn observe [event]
+      (when (and (= event.phase :rule) (= event.edge :end)) (set ended? true))
+      (when event.subphase
+        (set calls (+ calls 1))
+        (error (if (= calls 1) failure second) 0)))
+    (fn guarded [sentinel]
+      (local (ok err) (pcall Runner.run-target target
+                             {:baseline-data false :timeout-seconds timeout :observer observe}))
+      (assert-sentinel-hook sentinel)
+      (assert (not ok) "callback failure must escape, not become a framework result")
+      (assert (= err failure) "first raw callback failure must win, including false/nil")
+      (assert (= calls 2))
+      (assert (not ended?) "relay must escape before top-level rule END"))
+    (with-sentinel-hook guarded))
+  (with-synthetic-rule rule check))
+
+(fn runner-rule-workload-error-keeps-guard []
+  (local failure {})
+  (var ended? false)
+  (fn observe [event]
+    (when (and (= event.phase :rule) (= event.edge :end)) (set ended? true)))
+  (fn check [Runner target _facts]
+    (local result (Runner.run-target target {:baseline-data false :observer observe}))
+    (assert (= result.status :fail))
+    (assert (= result.counts.total 1))
+    (assert (= (. result.diagnostics 1 :family) :framework))
+    (assert ended? "ordinary rule failure still emits top-level END"))
+  (with-synthetic-rule (fn [_ctx] (error failure 0)) check))
+
+(fn runner-outer-timeout-ownership [location secondary-failure?]
+  (local TestRunner (require :tests.runner))
+  (local secondary {})
+  (var now 0)
+  (var ended? false)
+  (var teardown? false)
+  (fn now-ms [] now)
+  (fn expire []
+    (set now 120001)
+    (local hook (debug.gethook))
+    (assert hook)
+    (hook))
+  (fn rule [ctx]
+    (if (= location :work) (expire) (ctx.observer {:subphase :synthetic})))
+  (fn check [Runner target _facts]
+    (fn observe [event]
+      (when event.subphase (expire))
+      (when (and (= event.phase :rule) (= event.edge :end))
+        (set ended? true)
+        (when secondary-failure? (error secondary 0))))
+    (fn guarded [sentinel]
+      (fn body []
+        (local result (Runner.run-target target {:baseline-data false :observer observe}))
+        (assert (= result.status :fail) "caught outer work timeout remains ordinary rule failure"))
+      (fn teardown [] (assert-sentinel-hook sentinel) (set teardown? true))
+      (local (ok err cleanup-errors)
+        (TestRunner.run-case {:name "nested observer deadline" :fn body :teardown teardown}
+                             120 nil now-ms))
+      (assert-sentinel-hook sentinel)
+      (assert (not ok))
+      (assert (= err "test timed out after 120s: nested observer deadline")
+              "original timeout latch must win over later observer errors")
+      (assert teardown?)
+      (assert (= (# cleanup-errors) 0))
+      (assert (= ended? (= location :work)) "only caught work timeout may reach rule END"))
+    (with-sentinel-hook guarded))
+  (with-synthetic-rule rule check))
+
+(table.insert tests {:name "runner forwards internal observer with complete diagnostic parity"
+                     :fn #(runner-forwards-rule-observer false)})
+(table.insert tests {:name "runner forwards internal observer with nil rule result parity"
+                     :fn #(runner-forwards-rule-observer true)})
+(table.insert tests {:name "runner nil observer never enters private relay factory"
+                     :fn runner-inactive-does-not-enter-observer-factory})
+(each [_ failure (ipairs [{:label :table :value {}} {:label :false :value false} {:label :nil}])]
+  (each [_ mode (ipairs [{:label :unguarded} {:label :timed :timeout 60}])]
+    (table.insert tests {:name (.. "runner relays first raw " failure.label " observer error " mode.label)
+                         :fn #(runner-relays-raw-observer-error failure.value mode.timeout)})))
+(table.insert tests {:name "runner observed ordinary rule failure retains guard semantics"
+                     :fn runner-rule-workload-error-keeps-guard})
+(each [_ variant (ipairs [{:location :work} {:location :work :secondary? true} {:location :observer}])]
+  (table.insert tests {:name (.. "runner outer timeout ownership in " variant.location
+                                (if variant.secondary? " with secondary sink failure" ""))
+                       :fn #(runner-outer-timeout-ownership variant.location variant.secondary?)}))
+
 (table.insert tests {:name "runner observer preserves results and registered phase/rule order"
                      :fn runner-observer-parity-and-phase-order})
 (table.insert tests {:name "runner observer preserves old call compatibility"
