@@ -156,8 +156,15 @@ reproduce stage order is:
 
 GNU timeout steps retain a further5-second kill escalation. Admission probes
 remain60 seconds, initialization90, fixed path/registry commands30, smoke60,
-wineserver stop/wait10/15, parent terminal cleanup backstop45 seconds. Existing
-case120/240 policies and skips are unchanged. These are limits, **not measured PASS
+wineserver stop/wait10/15, parent terminal cleanup backstop45 seconds.
+The runner default remains 120 seconds; the full-repository pipeline case has an
+explicit 300-second deadline, human-authorized on 2026-10-26 after measured Wine
+evidence. The three app-root reload integration cases and reference-lifecycle
+composition startup cases also retain explicit 300-second deadlines. The
+240-second overrides remain in the runner's synthetic budget regressions, not as
+a general case deadline. Wine publication components retain their 120/120/30/30-second
+budgets and independent 420-second outer helper. Existing environment-override
+precedence and skips are unchanged. These are limits, **not measured PASS
 timings**; publication does not consume or enlarge application time.
 
 One initialized owned session uses **schema-4** owner/receipt validation. Admission
