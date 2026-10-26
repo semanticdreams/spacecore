@@ -270,7 +270,8 @@ one observational GLM whole-branch review, not a second mandatory full GPT revie
 **Historical perfect-first-response acceptance FAILED; those outcomes are not
 rescored.** The user subsequently approved prospective fail-closed acceptance
 below; it does not turn either old experiment into a success. The rollout is
-still unpublished, pending the new gates and independent review.
+still unpublished: prospective validation passed as summarized below, but results
+review, final whole-branch review and finishing gates remain pending.
 The following is controller-supplied evidence, not an independent read of external
 captures. All fifteen candidate calls used fresh exported contexts verified as
 `opencode-go/glm-5.3-flash`, reported variant `null`, with no tools. No retries or
@@ -338,12 +339,13 @@ correct, but **full manual conformance is not established**:
   any edit.” This unnecessarily imports a live-dev constraint despite correct
   direct implementation ownership.
 
-The diagnostic advisor then returned `requires_human`: no production, parser or oracle
+The diagnostic advisor at that time returned `requires_human`: no production, parser or oracle
 bugfix is justified by the identifier-copy failure. Stronger workflow-identifier
 instructions are only a future hypothesis, not a proven fix. The advisor required
 a human decision on additional call budget or validation-acceptance policy
-(**HUMAN_DECISION_REQUIRED**); unused live time does not authorize a sixth call or
-waive the strict gate. No
+(**HUMAN_DECISION_REQUIRED**). The user's later “sure” resolved the prospective
+acceptance-policy decision below, not the failed historical gate; unused live time
+never authorized a sixth clarified call or waived that gate. No
 automatic model rescue, expert implementation role or full GPT review tax follows.
 
 Source-level model pins and prior static review remain evidence about configuration,
@@ -403,7 +405,7 @@ one observational review. Report-only redelivery is not a second full review and
 needs no live app manual setup/refresh; manual mode precedes code edits, refresh
 follows validated code changes only.
 
-**Observed baseline and bounded next gates (controller-supplied facts).** Before any
+**Observed baseline (controller-supplied facts).** Before any
 new guidance, all five fresh GLM microcontexts completed and the controller read
 every final explanation. Most already inferred original-author redelivery, blocked
 stale/changed facts, both-model design input and direct live lifecycle correctly:
@@ -415,20 +417,74 @@ Those are the targeted one-bound/counter-wiring gaps, not evidence for broad mod
 incompetence. Also retain the baseline 4 limitation: it invented author unavailability
 in case 2. Five samples do not establish general reliability or causality.
 
-The unchanged Task 5 driver/fixtures constrain five guided microcontexts with the
-same questions/rubric (ten microcalls total, at most 120 seconds each), then at most
-one original-author repair generation (180 seconds including pre/post own-session
-exports). These calls and external captures are controller-owned, **after independent
-review**, not implementer validation. Preserve old snapshots and select only the new
-verified completed tool-free assistant message, never concatenate old and new answers;
-disclose the intentional retained server-session append. No retries or resampling.
-Required gates are deterministic fail-closed fixtures, source/authority guards,
-manual guided decisions and an honest bounded replay. An invalid repair correctly
-`BLOCKED` is valid safety handling, not successful repair or task approval. A valid
-repair resumes ordinary handling and still needs semantic review. Source guidance
-and this evaluation driver are **not hard runtime enforcement** or an OpenCode plugin;
-they do not intercept all future sessions. Loaded sessions retain old model pins
-and instructions until the later restart after the complete reviewed rollout.
+**Completed prospective validation (controller-supplied facts).** Task 5 helper and
+Task 6 guidance implementation reviews passed. Prior implementer reports record
+`62 new + 125 existing = 187` helper tests passing; Task 6 reported `337` focused
+pytest tests, `737` tests under `make opencode-check` with a passing policy checker,
+and `35` Node workflow contracts. These are prior results, not reruns for this
+documentation update.
+
+The controller ran five baseline microcontexts before guidance and five guided
+microcontexts after reviewed `41809e46`, with identical frozen questions/rubric.
+Calls and external captures remained controller-owned after independent review;
+the allocation was ten microcontexts and one original-author repair generation.
+All ten actual models were verified `opencode-go/glm-5.3-flash`, no variant or tools.
+These were plain explanations, **not serialized handoff-JSON tests**. The controller
+read all five complete guided finals: each explicitly rejected caller fence stripping,
+aliases and salvage; spent the correction before same-author, no-operation format-only
+dispatch; treated valid delivery as eligibility, not approval; blocked second-invalid,
+stale/changed-fact and unavailable-author paths without renaming/redispatch resets;
+and excluded expert/wrapper outputs. They also retained both-model input before new
+design implementation, reconciliation/reuse, strict versus direct fast/live ownership,
+and report-only versus code-edit live lifecycle. Already-good baseline controls show
+no demonstrated effect. This small qualitative manual check is not a causal improvement
+metric or future reliability guarantee. One guided answer hypothetically mentioned an
+explicit human choice to ship unreviewed; no such approval was observed, and not every
+rationale is claimed perfect.
+
+**One actual original-author repair, separately from guard correctness.** The controller
+resumed experimental routing author `ses_e8a4fd4a1ffeg08U1O1gJVbwTD`, not a production
+reviewer. The actual GLM response (no variant/tools) changed only parsed
+`/decisions/14/workflow` from `fast-dev-reviewer` to canonical assignment value
+`fast-dev`; every other field, route, owner and rationale remained exactly unchanged.
+The new completed assistant message `msg_1772b30e6001lOR27Mwe0U8MT8` was selected
+from fresh-run NDJSON and appended post-export, not concatenated with old answers.
+`repair_used=1`, `generation_attempted=true`, `repair_succeeded=true` and
+`ELIGIBLE_FOR_NORMAL_HANDLING` mean **ordinary semantic review pending, not approval**.
+The own server history intentionally appended one user and one assistant message;
+all old message contents, capture files and scores stayed unchanged. This is neither
+a fresh comparison sample nor a pass for the old invalid trial. Deterministic negative
+fixtures separately cover second-invalid, stale and changed-fact blocks without extra
+generation. An invalid repair correctly `BLOCKED` would be safe handling,
+not successful repair or task approval.
+
+| Account | Active CLI seconds | Preservation / limit |
+| --- | --- | --- |
+| Historical original / clarified | `593.4621967620624` / `339.499002335011` | Untouched; original 73 and clarified 39 captured-file inventories unchanged |
+| New ten microcontexts | `457.2714361840044` | Five baseline + five guidance, at most 120 seconds per slot |
+| One repair, including pre/post exports | `36.97095043900481` | One generation, at most 180 seconds |
+| New validation total | `494.2423866230092` (about 8m14s) | All eleven slots consumed once; no retries/resampling or further calls |
+
+The original combined inventory SHA-256 remains
+`2e04675a4ed0fdabbe5a227c2a073f8f244f4cb235c01f7e9f05910110cedb3e`.
+Exact new session IDs, source/packet/question/rubric and before/after answer hashes
+are recorded with controller provenance in `task-7-report.md` in the SDD directory
+named above. The actual GLM design consultation `ses_e891f3f7affeoubxIC9Y778d2c`,
+already reconciled in the spec before implementation, is separate from these eleven
+validation generations. The documentation implementer did not read external exports
+or perform model calls.
+
+**Status and limits.** Current prospective contract validation passed: source and
+deterministic checks, manually acceptable guided decisions and the protected-content
+actual one-repair path. This is workflow guidance plus a tested bounded driver,
+**not hard runtime enforcement**, an OpenCode hook, actual normal worker delegation
+or activation in this loaded session. Configuration evidence still covers sixteen
+GLM roles plus one high/read-only GPT expert, both-model input before every design/
+architecture/contract implementation, role-specific formats and all three workflows'
+unchanged ownership. Task 7 independent results review, final whole-branch review,
+current-base/final local checks and PR CI/integration gates remain **PENDING**;
+neither merged nor ready-to-PR status is claimed. Quit/restart OpenCode **only after
+the complete reviewed rollout**, not now; loaded sessions still retain old roles.
 
 ### Fast interactive development flow
 
