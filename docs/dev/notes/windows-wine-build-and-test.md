@@ -422,6 +422,8 @@ with `_Exit` fallback rather than debugger abort. Explicit final cleanup remains
 inside60s. Numeric native-result and post-assertion control-completion observations
 are diagnostic only, never report/grant authority, and disclose no paths/env/bindings.
 
+Historical status at `97bc9dfa` (superseded by the measured PASS at `fa4fc4b2`
+in the 2026-10-26 publication evidence below):
 Installed-runtime feasibility remains UNPROVED. The latest measured revision
 `97bc9dfa` passed build/admission but its first cpp-022 intact control stopped at
 location06 (lexical mask7), before publication or copied-SO identity proof; later
@@ -437,7 +439,7 @@ full Wine and cleanup. Native Windows assertions and the fixed store base-dir
 exception remain unchanged; native NT remains unexercised under Wine and a real
 foreign-UID probe remains not-configured.
 
-### Current publication contract (source, not final Wine acceptance)
+### Current publication contract (measured Wine acceptance below)
 
 [Record publication](../features/record-publication.md) is the canonical phase,
 ABI, loader, authority/lifetime and host-policy reference. The approved real POSIX
@@ -495,13 +497,54 @@ This is not default-root coverage; production stores/appdirs remain unchanged.
 The source contract is reviewed through
 `a8012ef002c1bc21ae2c2685e788ddbcc7bb2c8e`; it is not a final runtime-tested Wine
 revision. Earlier compatibility proof is not final Wine publication success.
-Actual Wine/PE publication categories and the full Wine gate remain pending.
+Actual Wine/PE publication categories and the full Wine gate subsequently measured
+PASS at `fa4fc4b2`, as recorded below. Earlier source-checkpoint statements that
+Wine publication or full-suite validation was pending/unproved are historical and
+superseded by this measured run.
 Native NT assertions remain intact and unexercised under Wine;
-foreign_uid_probe=not-configured. No final all-category PASS or measured final-run
-timing is claimed here. Whole-branch review and capability-owned controlled actual
-Wine execution remain required; later measured-source documentation may follow in
-a separate checkpoint. No stronger crash guarantee than native publication is
+foreign_uid_probe=not-configured. The full Wine gate measured 4867/4867 PASS in
+900773.002ms. Capability-owned controlled actual Wine execution is complete for
+this revision; this checkpoint delivers the measured-source documentation.
+Independent checkpoint review and final integration gates remain required.
+No stronger crash guarantee than native publication is
 claimed for application death, memory corruption or power loss.
+
+**Measured-result update (2026-10-26).** A fresh full guarded
+`windows-ci-reproducer` run measured source HEAD
+`fa4fc4b2dc6465f89c85627017a442796695707e`. Retained capture directory:
+`build/windows-ci-repro/20261026T192428846633Z-2fbf968e2a3543808e0f8f3889cdb0d0/`.
+Top-level `complete:true`, `sealed:true`; all stages `capture_complete`,
+`log_truncated:false`. Windows build, runtime packaging, output verification,
+publication build, admission and publication validation: **ALL PASS**.
+
+- Publication **ALL PASS**: cpp-022 deadline=120s child-umask=0022 PASS;
+  cpp-002 deadline=120s child-umask=0002 PASS; store-write deadline=30s
+  `WINE_RECORD_PUBLICATION_WRITE_OK`; store-read deadline=30s
+  `WINE_RECORD_PUBLICATION_READ_OK`.
+- Admission entry0 status=0; entry1 admitted (status -1073741811 is the expected
+  probe contract); admission exit=0, `API contract admitted`. Five private cases
+  1-5 each phase=9 outcome=1 errno=0 exit=0 signal=0 native-result=0.
+- Aggregate publication result:
+  `{"bridge_build_id":"f7758a46e95eaa1b2893e20faa11c6a9a577c60ff49d513a042571410bd9b3b2","event":"publication-result","foreign_uid_probe":"not-configured","passed":true,"version":1}`.
+- Wine fast suite: **4867 executed / 4867 PASS / 0 FAIL**, exit 0, total suite
+  **900773.002ms**; zero `[FAIL]` lines (controller-verified).
+- The full-repository pipeline case, on its explicit 300-second deadline from
+  `fa4fc4b2`, PASSED: `[RUN]` line 10668 → `[PASS]` line 13426 in the capture.
+  Instrumented Wine aggregate: outcome=complete files_begun=1378 files_ended=1378
+  elapsed_ms=50375.1 mask_ms=15244.8 remaining_ms=35130.3, pending none. This is
+  the interactive aggregate timing, not the total suite or full-case duration.
+- Cleanup **PASS**: stop_returncode 0, wait_returncode 0.
+- Payload SHA-256: `space.exe`
+  `884c16b6173fc28656fce282fd1dc79c63dabe998c0bcd951ef4c013977aac27`;
+  `space-cli.exe`
+  `e6c5a2ca0f2795aadd151cb3de91a8a2bc8410a283c67881dd45abce6bd40aed`;
+  payload_inventory_sha256
+  `68b571bf219616340f057a27b1f93a958c638031968972be96f156969bf66c23`.
+
+This supersedes the `97bc9dfa` build/admission PASS and location06 stop as current
+feasibility evidence; that revision's narrative above remains history. Wine is not
+native Windows CI: native Windows CI remains authoritative for Windows-host-only
+behavior and final integration.
 <!-- /publication-evidence -->
 
 For OpenCode Windows CI failure reproduction, use the guarded wrapper sequence:
@@ -812,8 +855,8 @@ The following Task5/6 subsections retain intermediate source/host-model boundari
 for audit, including what was inactive at that time. Their WIP and future-task
 wording does not describe current activation: Tasks7–9 are reviewed source
 checkpoints, and the current contract above and canonical feature page supersede
-their stage/receipt/authorization descriptions. Actual final Wine acceptance is
-still pending.
+their stage/receipt/authorization descriptions. Actual final Wine acceptance
+measured PASS at `fa4fc4b2`; see the 2026-10-26 publication evidence above.
 
 #### Private publication operation ABI (Task5 source/host-model admission stage)
 

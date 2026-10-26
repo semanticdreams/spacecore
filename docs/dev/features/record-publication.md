@@ -108,7 +108,7 @@ allocation with `HeapFree` before BEGIN. Mapped paths are raw host bytes, never 
 PE filesystem-path/assumed UTF-8 conversion. Mapping is acquisition, not
 authorization; the POSIX backend owns retained handles and namespace checks.
 Source tests cover missing leaves, local relative/drive paths and case semantics;
-their actual PE/Wine execution remains pending as qualified below. No Z: mapping
+their actual PE/Wine execution measured PASS at `fa4fc4b2` as recorded below. No Z: mapping
 is assumed. NUL/reserved/alternate-stream/device/UNC/remote forms refuse.
 
 ## Host policy and represented authority
@@ -232,14 +232,15 @@ Bounded numeric case/phase/outcome/errno/exit/signal/native-result diagnostics a
 control-completion after all control assertions aid diagnosis; they are not report
 or grant authority. No path, environment, binding or payload is dumped.
 
-Installed-runtime feasibility remains UNPROVED: native host models do not establish
+Installed-runtime feasibility measured PASS at `fa4fc4b2` in the fresh full guarded
+run recorded below; native host models alone do not establish
 direct Wine64 synchronous PE completion, installed loader selection, actual roots,
 encoding, retirement or timing. The prior first-control location-07 refusal is
-not evidence that a different override spelling works. Only a fresh full
-`windows-ci-reproducer` run after independent source review can establish the
+not evidence that a different override spelling works. The fresh full
+`windows-ci-reproducer` run measured the
 intact control and then all five cases under both umasks, reports, stores, unchanged
-four-generation grants, full Wine gate and terminal cleanup. Native Windows and
-POSIX branches, unexercised Wine category separation and the fixed store base-dir
+four-generation grants, full Wine gate and terminal cleanup PASS. Native Windows and
+POSIX branches, Wine category separation and the fixed store base-dir
 exception remain unchanged.
 
 Each C++ result is a **parent-pinned** report: exclusively allocated0600,
@@ -274,10 +275,14 @@ Cleanup acknowledges bounded Wine CLI completion, not native-process quiescence.
 This documentation describes reviewed source through
 `a8012ef002c1bc21ae2c2685e788ddbcc7bb2c8e`, not an actual runtime-tested final Wine
 revision. Earlier compatibility proof is not final Wine publication success.
-Actual Wine/PE publication categories and the full Wine gate remain pending:
+Actual Wine/PE publication categories and the full Wine gate measured PASS at
+`fa4fc4b2dc6465f89c85627017a442796695707e` on 2026-10-26:
 production entry0/entry1, common/host-policy/mapping-authority categories, both
 umasks, all five loader children, fresh writer/reader and grant/generation/cleanup
-acceptance still require controlled execution at the finally reviewed revision.
+acceptance passed controlled execution. The full Wine suite executed 4867 tests:
+4867 PASS / 0 FAIL, exit 0, total suite 900773.002ms. The complete, sealed capture
+and detailed measured results are recorded in the
+[Windows/Wine measured-result update](../notes/windows-wine-build-and-test.md#current-publication-contract-measured-wine-acceptance-below).
 Native NT assertions remain intact and unexercised under Wine;
 foreign_uid_probe=not-configured. Restricted Wine tokens do not substitute for a
 real differing-UID probe with positive controls.
@@ -288,8 +293,8 @@ publication/operation/ABI/driver CTests, persistence tests, full Linux and host
 tooling gates are separate evidence from actual Wine. Whole-branch independent
 review precedes capability-only actual focused/full Wine execution. Required
 failures must retain command/status/output/revision/tree evidence and be diagnosed,
-not skipped or relabeled. A later docs-only checkpoint must identify the exact
-measured source revision and retained run before recording final Wine results.
+not skipped or relabeled. This docs-only checkpoint identifies the exact
+measured source revision and retained run for the final Wine results above.
 PR CI remains the integration gate; native Windows-only behavior retains its own
 authority without substituting for required local Wine publication validation.
 

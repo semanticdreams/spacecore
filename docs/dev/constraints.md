@@ -364,7 +364,9 @@ grant no Wine, profiling or observation authority. Historical frozen Facts-span
 diagnostic artifacts remain untouched and unexecuted. Last-started boundaries
 alone are not a root-cause diagnosis or timeout fix. No baseline allowance, skip,
 deadline, parent runtime policy, public signature or selector has changed; the
-remaining Wine acceptance and integration gates are not waived.
+Wine acceptance measured PASS at `fa4fc4b2` (4867/4867); see the
+[2026-10-26 measured-result update](notes/windows-wine-build-and-test.md#current-publication-contract-measured-wine-acceptance-below).
+Integration gates are not waived.
 
 ## Constraint Families
 
