@@ -238,3 +238,103 @@ manual-before-edit/refresh-after-validation behavior. This is new-protocol
 conformance evidence, not a causal improvement claim over the old protocol or
 proof of general architectural ability. If it fails, preserve the failures and
 do not claim completion or publish under an invented pass.
+
+## User-approved fail-closed delivery contract
+
+The five-call clarification tranche remained 4/5 strict accepted outputs. The
+user subsequently approved the proposed alternative: reject malformed or
+inconsistent handoffs, allow one bounded original-GLM-author format correction,
+and never advance without a valid handoff. This prospectively replaces perfect
+first-response delivery as the rollout criterion; none of the original ten or
+five outcomes is changed, repaired in place, rescored or relabeled successful.
+
+### Dual-model proposal and reconciliation
+
+Actual GLM proposal session `ses_e891f3f7affeoubxIC9Y778d2c` was verified from its
+own public export as `opencode-go/glm-5.3-flash`, completed with no tools. It
+proposed controller-owned delivery states, one original-author content-frozen
+correction separate from code-fix/consultation budgets, immutable failed reports,
+and corrected delivery being eligible for ordinary semantic review, not approved.
+The current GPT supervisor inspected the existing role and skill contracts and
+critiqued/reconciled that proposal before implementation:
+
+- Apply it to all task-capable controllers, including fast-dev/live-dev receiving
+  observational reviews, not only supervisor. Direct primary replies to the human
+  do not acquire a new universal JSON format or supervisor worker pipeline.
+- Use each role's declared format: JSON where required, Markdown plans/reviews
+  where intended. The experimental `route` field is not a production-wide field.
+- Keep one stable identity per original handoff, not a budget key containing a
+  mutable attempt number. Include task, author role, selected controller/workflow,
+  branch, recorded base/head or equivalent source snapshot, and review mode.
+  A changed label, redispatch, duplicate or stale reply cannot reset allowance.
+- Reject scope/authorship/staleness mismatches rather than permitting SHA or
+  identity edits to disguise unreviewed work. Only unambiguous delivery metadata
+  copied from the original assignment, such as the demonstrated workflow label,
+  may be corrected without new work.
+- Keep capability wrapper JSON/refusals and GPT expert answers outside this GLM
+  repair path. GLM must not synthesize wrapper facts, rerun privileged operations,
+  rewrite expert evidence or turn unavailable advice into approval.
+- A corrected valid delivery enters the original ordinary handler/reviewer. It
+  needs no extra full-review layer and grants no pass, permission or publication.
+  Do not invent unspecified daily rate caps or a new tracking subsystem.
+
+### Delivery states and authority
+
+The receiving controller checks format, required fields, assignment identity,
+source/review range, and consistency before using a report as any verdict.
+Preserve original payloads and record delivery state/correction usage in existing
+handoff/progress artifacts.
+
+1. Valid initial delivery enters normal semantic handling. Quality, findings,
+   consultation needs and approval remain governed by the original contract.
+2. An eligible malformed delivery stops dependent actions. The controller may
+   resume the same GLM author once with the original contract/evidence and precise
+   delivery errors. Mark the one correction as consumed before dispatch.
+3. This assignment is **format-only, no code edits, tests, builds, commits,
+   operations, changed findings/verdicts/evidence or source/review range**. It may
+   reissue existing facts and correct permitted assignment metadata; it cannot
+   invent missing facts. If reconstruction is unsupported, return NEEDS_CONTEXT.
+   Caller-side fence stripping, aliases, default pass or salvaged partial verdicts
+   are forbidden.
+4. Validate the correction against the unchanged role contract and retained facts.
+   A valid corrected delivery is only eligible for ordinary semantic handling;
+   otherwise block dependent work. No second delivery repair or budget reset.
+5. Stale/untrusted evidence, changed substantive content or an unavailable original
+   author stays blocked/context-needed, not papered over with a new worker. Existing
+   technical consultation/human escalation may apply but cannot create a verdict.
+
+Delivery correction neither consumes nor resets substantive code-fix rounds or
+expert consultation counts. It cannot defer mandatory dual-model design input
+past dependent implementation. Fast/live keep direct fixes and one observational
+review; live manual mode and refresh are for code edits, not report-only repair.
+
+### Bounded validation and prospective acceptance
+
+Implement workflow guidance and narrow validation helpers, not an OpenCode runtime
+plugin or universal report-schema engine. State explicitly that source guidance
+and replay tests do not prove hard runtime enforcement for all future sessions.
+
+Use five short fresh GLM pressure controls before guidance changes and the same
+five fresh contexts afterward, covering initial invalid delivery, one used repair,
+changed/stale evidence, valid-but-substantive findings, and excluded expert/wrapper
+authority across all three workflows. Responses are routing explanations assessed
+manually, not another serialized-production-handoff perfection benchmark. Preserve
+baseline compliance and limitations; do not claim causality from a small sample.
+Each call is at most 120 seconds, ten pressure calls maximum, no resampling.
+
+Add deterministic fixtures that prove reject-before-use, exactly one author repair,
+valid correction returning only to normal handling, and a failed/changed/stale
+correction blocking with no additional action or model call. Replay the retained
+real bad report through one explicitly authorized GLM correction, with at most one
+generation and a 180-second combined run/export budget. A new correction record
+must preserve the rejected original. Any original own-session continuation must
+retain old snapshots and select only the new verified assistant message, never
+concatenate the old invalid answer or claim a fresh comparison sample.
+
+Required acceptance is correct fail-closed state handling, unchanged schema and
+authority boundaries, complete deterministic/source checks, manually acceptable
+post-guidance decisions, and an honest bounded correction trace. A valid repair
+may enter normal review; an invalid repair must block. The model is not required
+to succeed on every first response or every correction, and no blocked trace may
+be presented as an approved task. Preserve and report actual repair success or
+failure separately. No extra model calls or retries beyond these limits.
