@@ -1,5 +1,6 @@
 """Host publication tests: inert Wine tools plus real host-only ABI/SO checks."""
 import ctypes
+import fcntl
 import hashlib
 import importlib
 import json
@@ -9,6 +10,8 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -1624,6 +1627,125 @@ def test_publication_fixed_builder_seals_pair_and_replaces_only_recognized_outpu
     assert not [call for call in fixture.calls() if Path(call[0]).name in ('wine64', 'wine-stable')]
     builtins = [call for call in fixture.calls() if '--builtin' in call]
     assert len(builtins) == 2 and all(Path(call[-1]).name == 'space_record_publication.dll' for call in builtins)
+
+
+@pytest.mark.parametrize('support', [False, True], ids=['production', 'support'])
+def test_builder_replacement_waits_for_consumer_admitted_during_compilation(support_builder_fixture, monkeypatch, support):
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    build = module.build_test_support if support else module.build_publication
+    output = fixture.root / 'build' / ('wine-publication-tests' if support else 'wine-publication')
+    build(fixture.root, session)
+    old = (output.stat().st_ino, (output / 'build.json').read_bytes())
+    compiling, resume, verified = (threading.Event() for _ in range(3))
+    original = module._compile
+    source_name = '_test_sources' if support else '_sources'
+    sources = getattr(module, source_name)
+    source_checks = []
+    calls, errors = [], []
+
+    def compile_paused(args, stage):
+        calls.append(args)
+        if len(calls) == 1:
+            compiling.set()
+            assert resume.wait(10), 'consumer must be able to enter while compilation is paused'
+        original(args, stage)
+
+    def checked_sources(repo):
+        value = sources(repo)
+        source_checks.append(value)
+        if len(source_checks) == 2:
+            verified.set()  # Final source revalidation, immediately before replacement.
+        return value
+
+    def rebuild():
+        try:
+            build(fixture.root, session)
+        except BaseException as error:
+            errors.append(error)
+
+    monkeypatch.setattr(module, '_compile', compile_paused)
+    monkeypatch.setattr(module, source_name, checked_sources)
+    worker = threading.Thread(target=rebuild)
+    worker.start()
+    fd = os.open(fixture.root / 'build', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    try:
+        assert compiling.wait(10)
+        # Same inode lock as execute_admitted; nonblocking admission also proves
+        # the builder does NOT hold it across compiler execution (deadlock risk).
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        resume.set()
+        assert verified.wait(15)
+        worker.join(timeout=1)
+        assert (output.stat().st_ino, (output / 'build.json').read_bytes()) == old, 'admitted consumer lost its artifact binding'
+        assert worker.is_alive(), 'replacement must wait until admitted consumer releases build inode lock'
+    finally:
+        resume.set()
+        os.close(fd)
+        worker.join(timeout=15)
+    assert not worker.is_alive() and not errors, errors
+    assert output.stat().st_ino != old[0]
+
+
+@pytest.mark.parametrize('interrupted', [False, True], ids=['timeout', 'interrupt'])
+def test_compiler_failure_terminates_owned_group_and_reaps_driver(tmp_path, monkeypatch, interrupted):
+    module = builder_module()
+    driver = tmp_path / 'forking-compiler.py'
+    pidfile = tmp_path / 'descendant.pid'
+    driver.write_text('''import os, signal, sys, time
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
+child = os.fork()
+if child:
+    with open(sys.argv[1], 'w') as stream: stream.write(str(child))
+while True: time.sleep(1)
+''')
+    real_popen = subprocess.Popen
+    leaders = []
+
+    class BoundedCompiler(real_popen):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            leaders.append(self.pid)
+        def wait(self, timeout=None):
+            if timeout is not None and timeout > 100:
+                try:
+                    return super().wait(timeout=0.5)
+                except subprocess.TimeoutExpired:
+                    if interrupted:
+                        raise KeyboardInterrupt('compiler interrupted')
+                    raise
+            return super().wait(timeout=timeout)
+
+    monkeypatch.setattr(module.subprocess, 'Popen', BoundedCompiler)
+    descendant = None
+    try:
+        with pytest.raises(KeyboardInterrupt if interrupted else module.BuildError):
+            module._compile([sys.executable, str(driver), str(pidfile)], tmp_path)
+        descendant = int(pidfile.read_text())
+        deadline = time.monotonic() + 3
+        def running(pid):
+            status = Path(f'/proc/{pid}/stat')
+            return status.exists() and status.read_text().split()[2] not in ('Z', 'X')
+        while running(descendant) and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert not running(descendant), 'compiler descendant survived timeout/interruption'
+        assert not running(leaders[0]), 'compiler driver survived timeout/interruption'
+        with pytest.raises(ChildProcessError):
+            os.waitpid(leaders[0], os.WNOHANG)
+    finally:
+        if descendant is None and pidfile.exists():
+            descendant = int(pidfile.read_text())
+        for pid in [*leaders, descendant]:
+            if pid is not None:
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+        for pid in leaders:
+            try:
+                os.waitpid(pid, 0)
+            except ChildProcessError:
+                pass
 
 
 @pytest.mark.parametrize('damage', ['extra', 'symlink-root', 'symlink-file', 'unrecognized', 'tamper', 'unowned'])

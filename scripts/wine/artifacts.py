@@ -638,6 +638,11 @@ def prepare(session):
             record[name] = evidence._stream_info(str(session.directory / f'publication.{name}.log'))
         record = evidence._capture(ROOT, session.directory, {'stages': []}, record, logs,
                                    list(PUBLICATION), session, persist=False)
+        code = record['returncode']
+        if type(code) is int and code != 0:
+            return code
+        if code != 0 or not record['capture_complete'] or record['outcome'] != 'pass':
+            raise ValueError('Failed publication capture: ' + record['outcome'])
         with locked_build():
             authorize_application(session, record)
         return 0

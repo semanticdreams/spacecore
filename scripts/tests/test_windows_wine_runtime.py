@@ -1586,6 +1586,31 @@ def test_prepare_execution_exception_cleans_once_and_rethrows_original(runtime, 
     assert 'wineserver -k exit=37' in stderr
 
 
+@pytest.mark.parametrize('code', [17, 124, 0])
+def test_public_prepare_rejects_publication_capture_without_authorization(runtime, monkeypatch, code):
+    from wine import artifacts, prefix
+    for key, value in runtime.env.items():
+        monkeypatch.setenv(key, value)
+    session = prefix.create_session(runtime.root)
+    helper = runtime.root / 'scripts/wine/publication_validation.py'
+    helper.write_text(f'import sys\nsys.exit({code})\n')
+    monkeypatch.setattr(artifacts, 'ROOT', runtime.root)
+    monkeypatch.setattr(artifacts, 'BUILD', runtime.root / 'build')
+    monkeypatch.setattr(prefix, 'wait_leader', lambda *args, **kwargs: 0)
+    authorizations = []
+    monkeypatch.setattr(artifacts, 'authorize_application', lambda *args: authorizations.append(args))
+    if code:
+        assert artifacts.prepare(session) == code, 'public prepare must preserve actual helper failure status'
+    else:
+        with pytest.raises(ValueError, match='publication capture'):
+            artifacts.prepare(session)
+    assert authorizations == [], 'failed or inconsistent capture must not attempt application authorization'
+    servers = [call['server'] for call in runtime.calls() if 'server' in call]
+    # wait_leader is isolated above; Session state still records scoped cleanup.
+    assert session.state()['ended'] and session.state()['authorized_for'] is None
+    assert not servers
+
+
 def test_retry_refuses_changed_or_unowned_fixed_report_without_deleting_it(runtime):
     from wine import artifacts, prefix
     runtime.package()

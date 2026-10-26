@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import hashlib
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
+import fcntl
 import json
 import os
 from pathlib import Path
 import re
+import signal
 import stat
 import struct
 import subprocess
@@ -207,17 +209,52 @@ def _compile(args, stage):
     env.update(PATH='/usr/bin:/bin', LC_ALL='C')
     with tempfile.TemporaryFile(dir=stage) as log:
         try:
-            result = subprocess.run(args, cwd=stage, env=env, stdin=subprocess.DEVNULL,
-                                    stdout=log, stderr=log, timeout=120)
+            process = subprocess.Popen(args, cwd=stage, env=env, stdin=subprocess.DEVNULL,
+                                       stdout=log, stderr=log, close_fds=True, start_new_session=True)
+            try:
+                code = process.wait(timeout=120)
+            except BaseException:
+                # Keep staging/log ownership until our entire POSIX group has
+                # received bounded termination and the direct child is reaped.
+                with prefix.cleanup_signals():
+                    try:
+                        os.killpg(process.pid, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        pass
+                    finally:
+                        # The leader may exit before descendants. Always kill
+                        # the remaining owned group, not just a live leader.
+                        try:
+                            os.killpg(process.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                        process.wait(timeout=5)
+                raise
         except (OSError, subprocess.SubprocessError) as error:
             raise BuildError(f'Publication build command failed: {Path(args[0]).name}: {error}') from error
-        if result.returncode:
+        if code:
             log.seek(0)
             raw = log.read(4097)
             detail = raw[:4096].decode('utf-8', 'backslashreplace')
             if len(raw) > 4096:
                 detail += ' [truncated]'
-            raise BuildError(f'Publication compiler failed ({result.returncode}): {detail}')
+            raise BuildError(f'Publication compiler failed ({code}): {detail}')
+
+
+@contextmanager
+def _locked_build(build):
+    """Same build-directory inode lock as admitted consumers; never compile here."""
+    prefix.real_directory(build)
+    fd = os.open(build, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(fd)
 
 
 def _remove_recognized(output):
@@ -275,19 +312,20 @@ def build_publication(repo: Path, session: prefix.Session) -> dict:
         publication_toolchain.verify_toolchain(identity)
         if _sources(repo) != sources:
             raise BuildError('Publication source inputs changed during build')
-        if _recognized_output(output) != previous:
-            raise BuildError('Publication output changed during build')
-        backup = stage / 'old'
-        if previous is not None:
-            output.rename(backup)
-        try:
-            new.rename(output)
-        except OSError:
+        with _locked_build(build):
+            if _recognized_output(output) != previous:
+                raise BuildError('Publication output changed during build')
+            backup = stage / 'old'
             if previous is not None:
-                backup.rename(output)
-            raise
-        if previous is not None:
-            _remove_recognized(backup)
+                output.rename(backup)
+            try:
+                new.rename(output)
+            except OSError:
+                if previous is not None:
+                    backup.rename(output)
+                raise
+            if previous is not None:
+                _remove_recognized(backup)
     return manifest
 
 
@@ -554,24 +592,25 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
             raise BuildError('Test support source inputs changed during build')
         if _capture_launch_metadata(repo, session, identity) != launch or _regular(header) != launch_header:
             raise BuildError('Test support launch pins/header changed during build')
-        if _recognized_test_output(output, for_replacement=True) != previous:
-            raise BuildError('Test support output changed during build')
-        backup = stage / 'old'
-        if previous is not None:
-            output.rename(backup)
-        try:
-            new.rename(output)
-        except OSError:
+        with _locked_build(build):
+            if _recognized_test_output(output, for_replacement=True) != previous:
+                raise BuildError('Test support output changed during build')
+            backup = stage / 'old'
             if previous is not None:
-                backup.rename(output)
-            raise
-        if previous is not None:
-            _recognized_test_output(backup, for_replacement=True)
-            for relative in (*TEST_PAIR, TEST_DISCOVERY, 'build.json'):
-                (backup / relative).unlink()
-            for directory in reversed(DIRECTORIES):
-                (backup / directory).rmdir()
-            backup.rmdir()
+                output.rename(backup)
+            try:
+                new.rename(output)
+            except OSError:
+                if previous is not None:
+                    backup.rename(output)
+                raise
+            if previous is not None:
+                _recognized_test_output(backup, for_replacement=True)
+                for relative in (*TEST_PAIR, TEST_DISCOVERY, 'build.json'):
+                    (backup / relative).unlink()
+                for directory in reversed(DIRECTORIES):
+                    (backup / directory).rmdir()
+                backup.rmdir()
     return manifest
 
 
