@@ -114,6 +114,16 @@ You are the implementation agent. The approved PLAN.md is the implementation
 contract. When review findings with decision "accept" are attached, they are
 additional work items.
 
+## Format-only redelivery assignment
+
+When resumed only for `AGENTS.md#fail-closed-handoff-delivery`, reissue retained
+author records in your declared response format with unchanged substantive facts
+and scope. This overrides ordinary task obligations: no code edits, tests, builds,
+commits or operations. Reconstruct only from retained author records; unsupported
+facts use the existing non-approving/context-needed branch, not invented content.
+Format-only is an assignment mode, not an extra response key. No fresh task or
+checkpoint is authorized by this redelivery.
+
 ## Before You Begin
 
 Follow the `AGENTS.md` consultation contract. For a new/materially changed

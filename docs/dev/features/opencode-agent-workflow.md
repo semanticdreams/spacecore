@@ -267,7 +267,10 @@ one observational GLM whole-branch review, not a second mandatory full GPT revie
 
 #### Bounded routing-pressure evidence and limits
 
-**Behavioral acceptance failed; the overall rollout is blocked and not published.**
+**Historical perfect-first-response acceptance FAILED; those outcomes are not
+rescored.** The user subsequently approved prospective fail-closed acceptance
+below; it does not turn either old experiment into a success. The rollout is
+still unpublished, pending the new gates and independent review.
 The following is controller-supplied evidence, not an independent read of external
 captures. All fifteen candidate calls used fresh exported contexts verified as
 `opencode-go/glm-5.3-flash`, reported variant `null`, with no tools. No retries or
@@ -317,8 +320,9 @@ raised `ValueError: unknown/duplicate routing decision`. Its `route=glm` and
 `implementation_owner=fast-dev` were correct, and the rationale retained direct
 fixes, self-review and revalidation without a second mandatory GPT review. This is
 a genuine identifier-copy/coverage failure, not a demonstrated broad omission of
-architecture consultation or a harness defect. Do not repair the workflow field,
-accept an alias, score the rejected rows or claim 90/90.
+architecture consultation or a harness defect. Do not repair the historical workflow
+field in place, accept an alias, score the rejected rows or claim 90/90. Any separately
+authorized original-author correction is a new record, not a rescore of this trial.
 
 The controller manually read all 90 final rationales (not reasoning). They generally
 expressed dual-model design input before dependent implementation, GLM proposal /
@@ -334,11 +338,12 @@ correct, but **full manual conformance is not established**:
   any edit.” This unnecessarily imports a live-dev constraint despite correct
   direct implementation ownership.
 
-The diagnostic advisor returned `requires_human`: no production, parser or oracle
+The diagnostic advisor then returned `requires_human`: no production, parser or oracle
 bugfix is justified by the identifier-copy failure. Stronger workflow-identifier
-instructions are only a future hypothesis, not a proven fix. **HUMAN_DECISION_REQUIRED**
-for additional call budget or an explicit validation-acceptance policy decision;
-unused live time does not authorize a sixth call or waive the strict gate. No
+instructions are only a future hypothesis, not a proven fix. The advisor required
+a human decision on additional call budget or validation-acceptance policy
+(**HUMAN_DECISION_REQUIRED**); unused live time does not authorize a sixth call or
+waive the strict gate. No
 automatic model rescue, expert implementation role or full GPT review tax follows.
 
 Source-level model pins and prior static review remain evidence about configuration,
@@ -350,6 +355,80 @@ recorded in the [spec](../../specs/2026-10-25-glm-default-expert-consultation-de
 separate from candidate counts. Exact follow-up call IDs and frozen fingerprints
 are recorded with controller provenance in the Task 4 report under
 `.superpowers/sdd/2026-10-25-glm-default-expert-consultation-44988498/`.
+
+#### Fail-closed delivery: prospective acceptance
+
+The user approved one bounded original-GLM-author format correction with fail-closed
+handling, superseding the perfect-first-response release criterion prospectively.
+The old ten and five trial scores remain **FAILED**, immutable and not rescored.
+The actual GLM proposal and GPT critique/reconciliation are recorded in the
+[spec](../../specs/2026-10-25-glm-default-expert-consultation-design.md#user-approved-fail-closed-delivery-contract),
+before dependent implementation. No model/permission change or extra GPT full-review
+tax follows from delivery repair.
+
+The canonical rule is [AGENTS.md#fail-closed-handoff-delivery](../../../AGENTS.md#fail-closed-handoff-delivery).
+Every receiving controller (supervisor, selected fast-dev/live-dev) applies it
+**before** consultation, verdict, finding/fix, cap/adjudication or completion handling.
+Use the declared JSON or Markdown role contract, required fields, assignment identity
+and source/review range; no universal routing schema is added. Valid initial or
+corrected delivery is only `ELIGIBLE_FOR_NORMAL_HANDLING`, never inferred approval.
+Normal semantic review, substantive findings, pending consultation and finishing
+gates still govern what happens next.
+
+Keep stable task, original author role/session, selected controller/workflow, branch,
+source snapshot, base/head or equivalent range, and review mode in existing
+handoff/progress artifacts. Keep `correction_used=0/1` separate from this identity;
+preserve original and corrected payloads separately with errors/state. For an eligible
+initial malformed delivery, stop dependent actions and mark the allowance spent
+**before** dispatching the same original author once with the original role contract,
+retained facts and precise delivery errors. That assignment overrides ordinary
+implementation/test/checkpoint duties: format-only, no code edits, tests, builds,
+commits or operations. It may correct unambiguous original assignment metadata,
+not verdicts, findings, evidence, scope or range. Reconstruct only from retained
+author records; otherwise use that role's existing context/evidence-needed or
+non-approving branch, not universal NEEDS_CONTEXT or new JSON bookkeeping fields.
+
+Do not strip fences, alias fields, default pass or salvage partial verdicts as the
+caller. Revalidate the correction and protected facts against the unchanged contract.
+Missing/changed/stale/untrusted scope, unavailable author or an invalid correction
+blocks dependent work. No second correction, renamed task, duplicate, redispatch or
+new worker impersonation resets the spent allowance. Genuinely new authorized
+substantive scope/range requires actual new work through normal review, not a fresh
+review requested just to launder the failed report. Expert answers and capability
+wrapper JSON/refusals are excluded: never rewrite them or rerun privileged operations
+as formatting. Delivery repair neither consumes nor resets code-fix/consultation
+budgets and cannot postpone required dual-model design input past dependent code.
+Fast/live still edit/fix directly, checkpoint locally, require explicit wrap-up and
+one observational review. Report-only redelivery is not a second full review and
+needs no live app manual setup/refresh; manual mode precedes code edits, refresh
+follows validated code changes only.
+
+**Observed baseline and bounded next gates (controller-supplied facts).** Before any
+new guidance, all five fresh GLM microcontexts completed and the controller read
+every final explanation. Most already inferred original-author redelivery, blocked
+stale/changed facts, both-model design input and direct live lifecycle correctly:
+no improvement claim is supported on those passing controls. The concrete baseline 2
+failure was caller-authored salvage: “Strip the markdown fences only as a mechanical
+delivery repair”. Its exhausted-repair answer suggested returning to the author
+again; other answers' “other means”/fresh-review language left reset ambiguity.
+Those are the targeted one-bound/counter-wiring gaps, not evidence for broad model
+incompetence. Also retain the baseline 4 limitation: it invented author unavailability
+in case 2. Five samples do not establish general reliability or causality.
+
+The unchanged Task 5 driver/fixtures constrain five guided microcontexts with the
+same questions/rubric (ten microcalls total, at most 120 seconds each), then at most
+one original-author repair generation (180 seconds including pre/post own-session
+exports). These calls and external captures are controller-owned, **after independent
+review**, not implementer validation. Preserve old snapshots and select only the new
+verified completed tool-free assistant message, never concatenate old and new answers;
+disclose the intentional retained server-session append. No retries or resampling.
+Required gates are deterministic fail-closed fixtures, source/authority guards,
+manual guided decisions and an honest bounded replay. An invalid repair correctly
+`BLOCKED` is valid safety handling, not successful repair or task approval. A valid
+repair resumes ordinary handling and still needs semantic review. Source guidance
+and this evaluation driver are **not hard runtime enforcement** or an OpenCode plugin;
+they do not intercept all future sessions. Loaded sessions retain old model pins
+and instructions until the later restart after the complete reviewed rollout.
 
 ### Fast interactive development flow
 

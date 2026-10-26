@@ -105,6 +105,61 @@ otherwise requires genuinely new material evidence, not another try for approval
 Unavailable expert, insufficient evidence or an unanswered necessary decision
 blocks dependent work. Gather permitted evidence or ask the human; do not loop.
 
+### Fail-closed handoff delivery
+
+The receiving controller (`supervisor` or selected `fast-dev`/`live-dev`) validates
+the declared role format, required fields, assignment identity and source/review
+range **before consultation, verdict, fix, cap or completion handling**. JSON roles
+remain JSON; Markdown plans/reviews remain Markdown where declared. Do not infer
+pass from framing. Valid initial and corrected deliveries are only
+`ELIGIBLE_FOR_NORMAL_HANDLING`: ordinary semantic processing, **not approval**.
+
+Record in existing handoff/progress artifacts (not a new tracking subsystem):
+- Stable identity: task, original author role/session, selected controller/workflow,
+  branch, source snapshot, recorded base/head or equivalent range, and review mode.
+- `correction_used=0/1`, separate from the identity, not an attempt in the key.
+- Immutable original and corrected payloads separately, delivery errors and state.
+
+For an initial eligible malformed delivery with the original GLM author available
+and retained author records supporting unchanged facts, stop dependent actions.
+Mark `correction_used=1` **before dispatch**, then resume that same author once with
+the original assignment/role contract, retained facts and precise delivery errors.
+The format-only assignment permits redelivery only: **no code edits, tests, builds,
+commits or operations**, overriding ordinary task/checkpoint obligations. No
+verdict, findings, evidence or range facts may be rewritten; only unambiguous
+assignment metadata copied from the original request may be corrected.
+No caller-side fence stripping, aliases, defaults or partial verdict salvage.
+
+Reconstruct missing facts only from retained author records; otherwise use that
+role's existing context/evidence-needed or non-approving branch, with
+NEEDS_CONTEXT only where supported. There is no universal new status or field:
+format-only is an assignment mode, not an extra JSON response key. Controller
+bookkeeping is not a worker response-schema extension. Revalidate the correction
+against the unchanged declared contract, identity/range and protected facts before
+ordinary semantic handling; successful serialization alone grants no verdict.
+
+Block dependent work for missing/changed/stale/untrusted scope, changed substantive
+facts, or author unavailable; do not paper over gaps with paper SHAs or a new worker
+impersonating the author. After one invalid correction, block: no second request,
+rename or redispatch reset. Duplicates do not reset the allowance. A genuinely
+new authorized substantive scope/range requires explicit actual new work through
+the normal review flow, not laundering the old invalid report and not an automatic
+fresh-review loophole. Escalation may gather context but cannot manufacture a verdict.
+
+GPT expert answers and capability wrapper JSON/refusals are excluded from this GLM
+repair path: do not rewrite expert evidence/refusals or rerun privileged operations
+as a formatter. Existing expert one-question/new-material-evidence gates and
+capability refusals remain unchanged. Delivery repair neither consumes nor resets
+code-fix rounds or consultation budgets, and cannot defer required both-model
+design input before dependent implementation.
+
+Fast/live retain direct edits/fixes, local checkpoints, explicit wrap-up and one
+observational review. Same-author format-only redelivery is not a new full review
+and triggers no app manual setup or refresh: live manual mode precedes code edits;
+explicit refresh follows validated code changes only. This guidance and the bounded
+evaluation driver are not hard runtime enforcement; normal semantic review and
+all applicable finishing gates still apply.
+
 ### Worker requests and controller transitions
 
 Workers keep delegation denied. A delegation denial is not itself a code finding,

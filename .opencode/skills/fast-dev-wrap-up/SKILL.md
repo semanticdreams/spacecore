@@ -22,6 +22,15 @@ and clarify ownership rather than silently renaming, switching, or adopting unre
 Own finishing directly with raw `git` and `gh`. No direct main push, rebase,
 force-push, branch deletion, or worktree cleanup.
 
+## Handoff delivery preflight
+
+Apply `AGENTS.md#fail-closed-handoff-delivery` before consultation, verdict, fix,
+cap or completion transitions on the observational report. One same-author
+format-only redelivery, marked spent before dispatch, is not a code-fix round or
+a second full review. Valid delivery resumes the ordinary handler, not approval;
+exhausted/stale/untrusted delivery blocks without a budget reset. Retain direct
+fixes; report-only repair triggers no live app setup or refresh.
+
 ## Bounded consultation, not another full review
 
 The `AGENTS.md` consultation contract applies before dependent implementation and

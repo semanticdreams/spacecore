@@ -16,6 +16,14 @@ Only read-only `expert-advisor` uses `openai/gpt-6.1-sol` high. Project roles, n
 inherited built-in/hidden/global agents, are covered; use project `explorer` for
 exploration. Fix-loop retries keep the GLM implementer, including rounds 4-5.
 
+## Handoff delivery preflight
+
+Apply `AGENTS.md#fail-closed-handoff-delivery` before consultation, verdict, fix,
+cap or completion transitions for every received report, including targeted/CI
+and adjudication. One same-author format-only redelivery, marked spent before
+dispatch, is not a code-fix round. Valid delivery resumes the ordinary handler,
+not approval; exhausted/stale/untrusted delivery blocks without a budget reset.
+
 ## Pending consultation handler
 
 Apply the canonical `AGENTS.md` contract before normal report/review/fix/cap

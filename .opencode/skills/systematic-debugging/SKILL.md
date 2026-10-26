@@ -24,6 +24,15 @@ follow-through alone stay GLM. Unknown product/API/data policy is human-owned.
 Live-dev establishes manual mode before edits and explicitly refreshes validated
 code changes; consultation alone requires no lifecycle action.
 
+## Handoff delivery preflight
+
+Apply `AGENTS.md#fail-closed-handoff-delivery` before consultation, verdict, fix,
+cap or completion transitions, including diagnostic confirmation and full/targeted
+review. One same-author format-only redelivery, marked spent before dispatch, is
+not a code-fix round. Valid delivery resumes the ordinary handler, not approval;
+exhausted/stale/untrusted delivery blocks without a budget reset. Direct primaries
+retain direct fixes; report-only repair triggers no live app setup or refresh.
+
 ## The Iron Law
 
 ```

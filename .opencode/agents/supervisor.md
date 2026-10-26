@@ -317,6 +317,17 @@ full session history.
 interactive development and its independent explicit-only wrap-up lifecycle.
 The strict supervisor remains the default and retains its own workflow.
 
+## Handoff delivery gate (before all report handling)
+
+Apply `AGENTS.md#fail-closed-handoff-delivery`: validate declared role format,
+required fields, identity and source/review range before consultation, verdict,
+fix, cap or completion handling. Keep stable identity and separate `correction_used`
+in existing handoff/progress records; spend the one allowance before dispatch to
+the same original author for format-only redelivery. Preserve both payloads;
+never normalize or salvage the report yourself. Invalid/exhausted/stale/untrusted
+deliveries block. Valid delivery enters normal semantic handling, not approval.
+Expert answers and capability wrapper JSON/refusals are outside this repair path.
+
 ## Consultation routing (before normal transitions)
 
 Follow the canonical `AGENTS.md` contract. Every architecture/software-design/

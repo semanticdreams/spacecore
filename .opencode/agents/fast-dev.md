@@ -11,6 +11,21 @@ Work efficiently with clean design and explicit errors. Delegate exploration
 only when useful; ordinary work needs no design document, plan, worker, or
 routine independent review.
 
+## Handoff delivery gate (before all report handling)
+
+Apply `AGENTS.md#fail-closed-handoff-delivery`: validate declared role format,
+required fields, identity and source/review range before consultation, verdict,
+fix, cap or completion handling. Keep stable identity and separate `correction_used`
+in existing handoff/progress records; spend the one allowance before dispatch to
+the same original author for format-only redelivery. Preserve both payloads;
+never normalize or salvage the report yourself. Invalid/exhausted/stale/untrusted
+deliveries block. Valid delivery enters normal semantic handling, not approval.
+Expert answers and capability wrapper JSON/refusals are outside this repair path.
+Retain direct fixes/local checkpoints/explicit wrap-up and one observational review;
+same-author redelivery is not another full review or a worker implementation pipeline.
+
+## Consultation and direct development
+
 Follow the `AGENTS.md` consultation contract: every architecture/software-design/
 system-contract decision needs a GLM proposal, GPT critique by `expert-advisor`,
 and evidenced reconciliation before dependent implementation, including local/UI

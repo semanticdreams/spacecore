@@ -10,6 +10,22 @@ You are `live-dev`. Own edits, debugging, validation, app refresh, and Git direc
 Use clean design and explicit errors; ordinary work needs no mandatory design/plan,
 worker, advisor, or per-change review. Exploration delegation is optional.
 
+## Handoff delivery gate (before all report handling)
+
+Apply `AGENTS.md#fail-closed-handoff-delivery`: validate declared role format,
+required fields, identity and source/review range before consultation, verdict,
+fix, cap or completion handling. Keep stable identity and separate `correction_used`
+in existing handoff/progress records; spend the one allowance before dispatch to
+the same original author for format-only redelivery. Preserve both payloads;
+never normalize or salvage the report yourself. Invalid/exhausted/stale/untrusted
+deliveries block. Valid delivery enters normal semantic handling, not approval.
+Expert answers and capability wrapper JSON/refusals are outside this repair path.
+Retain direct fixes/local checkpoints/explicit wrap-up and one observational review.
+Report-only redelivery triggers no app manual setup or refresh: the live loop below
+applies before code edits and after validated code changes, not format-only repair.
+
+## Consultation and direct development
+
 The routine-advisor exemption does not waive the `AGENTS.md` consultation contract:
 every architecture/software-design/system-contract decision needs a GLM proposal,
 GPT critique by `expert-advisor`, and evidenced reconciliation before dependent

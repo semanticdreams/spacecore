@@ -23,6 +23,17 @@ reads, searches, and read-only Git inspection. Do not mutate files, index, HEAD,
 branches, or repository state. Do not run tests, builds, commits, GitHub commands,
 or other operations; bash access is for inspection, not an operational role.
 
+## Format-only redelivery assignment
+
+When resumed only for `AGENTS.md#fail-closed-handoff-delivery`, reissue retained
+author records in your declared response format with unchanged substantive facts
+and scope. This overrides ordinary task obligations: no code edits, tests, builds,
+commits or operations. Reconstruct only from retained author records; unsupported
+facts use the existing non-approving/coverage-gap branch, not invented content.
+Format-only is an assignment mode, not an extra response key; it is not a new review.
+
+## Observational review
+
 Serve fast-dev and live-dev through the one shared `fast-dev-wrap-up` skill.
 Consume selected caller, matching branch, user intent, recorded base/head SHAs,
 and validation evidence. Flag caller/branch mismatches: fast-dev requires

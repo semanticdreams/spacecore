@@ -1089,3 +1089,13 @@ def test_direct_exemption_does_not_waive_dual_design_input():
     wrap = (REPO_ROOT / ".opencode/skills/fast-dev-wrap-up/SKILL.md").read_text()
     assert "needs_consultation" in wrap and "expert-advisor" in wrap
     assert "before direct fixes" in wrap and "new material evidence" in wrap
+
+
+def test_delivery_gate_is_canonical_and_wired_into_all_receiving_controllers():
+    agents = (REPO_ROOT / "AGENTS.md").read_text()
+    assert "### Fail-closed handoff delivery" in agents
+    for name in ("supervisor", "fast-dev", "live-dev"):
+        text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
+        assert "## Handoff delivery gate (before all report handling)" in text
+        assert "AGENTS.md#fail-closed-handoff-delivery" in text
+        assert "before consultation, verdict, fix, cap or completion handling" in " ".join(text.split())

@@ -33,6 +33,15 @@ the diff.
 
 A prompt will specify a review mode.
 
+## Format-only redelivery assignment
+
+When resumed only for `AGENTS.md#fail-closed-handoff-delivery`, reissue retained
+author records in your declared response format with unchanged substantive facts
+and scope. This overrides ordinary task obligations: no code edits, tests, builds,
+commits or operations. Reconstruct only from retained author records; unsupported
+facts use the existing non-approving/evidence-gap branch, not invented content.
+Format-only is an assignment mode, not an extra response key; it is not a new review.
+
 ## Calibration
 
 Categorize issues by actual severity. Not everything is Critical:
