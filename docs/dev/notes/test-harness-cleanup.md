@@ -330,10 +330,14 @@ ASCII and independently bounded to 128 encoded bytes plus quotes; truncation is
 marked `[truncated]`. Disabled observations resolve no extra paths and emit no
 output. In-module controls exercise escaping, caps, unrelated writes, and a
 canonical destination whose raw prefix differs. Native timings on/off runs
-check outcomes, caps, and parity. The actual Wine cause is established by the
-earlier guarded operands; success of this fixture repair in Wine still requires
-the next guarded combined run. The bounded observations retain their original
-raw operands and predicates for that verification, rather than assuming success.
+check outcomes, caps, and parity. When this repair was documented, the actual
+Wine cause was established by the earlier guarded operands, but repair success
+still required the next guarded combined run. The bounded observations retained
+their original raw operands and predicates for that verification, rather than
+assuming success. That pending status is historical: the
+[2026-10-26 measured result](windows-wine-build-and-test.md#current-publication-contract-measured-wine-acceptance-below)
+at `fa4fc4b2` subsequently recorded full Wine acceptance **4867/4867 PASS**, capture
+`20261026T192428846633Z-2fbf968e2a3543808e0f8f3889cdb0d0`.
 
 ## See also
 
