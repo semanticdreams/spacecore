@@ -1475,7 +1475,7 @@ def test_root_fatal_grace_bounds_all_process_and_pipe_states(tmp_path, monkeypat
     monkeypatch.setattr(evidence.time, 'monotonic', lambda: origin + (clock() - origin) * 30)
     body = f"os.write(2, {(FATAL_BANNER + chr(10)).encode()!r})\n"
     if mode == 'near-hard-deadline':
-        body = "observe('launch', launched_monotonic=start-1799, hard_deadline_monotonic=start+1)\n" + body
+        body = "observe('launch', launched_monotonic=start-1799, hard_deadline_monotonic=(start-1799)+1800)\n" + body
         # Send just this launch (the protocol rejects a second launch).
     if mode == 'early-eof':
         body += 'os.close(1); os.close(2); os.close(fd)\ntime.sleep(60)'
