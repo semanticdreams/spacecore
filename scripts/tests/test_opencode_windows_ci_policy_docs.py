@@ -119,6 +119,19 @@ def test_actual_reporter_evidence_guard_rejects_overclaims(limitation, overclaim
 
 PUBLICATION_PAGE = 'docs/dev/features/record-publication.md'
 WINE_NOTES = 'docs/dev/notes/windows-wine-build-and-test.md'
+MEASURED_REVISION = 'fa4fc4b2dc6465f89c85627017a442796695707e'
+MEASURED_CAPTURE = 'build/windows-ci-repro/20261026T192428846633Z-2fbf968e2a3543808e0f8f3889cdb0d0/'
+MEASURED_BRIDGE = 'f7758a46e95eaa1b2893e20faa11c6a9a577c60ff49d513a042571410bd9b3b2'
+MEASURED_EVIDENCE_MARKERS = (
+    MEASURED_REVISION, MEASURED_CAPTURE,
+    f'"bridge_build_id":"{MEASURED_BRIDGE}"',
+    '4867 executed / 4867 PASS / 0 FAIL', '900773.002ms',
+    'Publication ALL PASS', 'complete:true', 'sealed:true',
+)
+UNSUPPORTED_PUBLICATION_CLAIMS = (
+    'native Windows CI passed', 'entropy-certified',
+    'power-loss durability guaranteed', 'foreign_uid_probe=passed',
+)
 
 
 def normalized(text):
@@ -160,33 +173,94 @@ def test_publication_docs_describe_current_eight_stage_closed_harness(path):
         assert phrase in text
 
 
+def publication_evidence(text):
+    return normalized(text.split('<!-- publication-evidence -->', 1)[1]
+                      .split('<!-- /publication-evidence -->', 1)[0].replace('**', ''))
+
+
 def assert_publication_evidence_limits(text):
-    evidence = normalized(text.split('<!-- publication-evidence -->', 1)[1]
-                          .split('<!-- /publication-evidence -->', 1)[0])
+    evidence = publication_evidence(text)
     for phrase in ('a8012ef002c1bc21ae2c2685e788ddbcc7bb2c8e',
-                   'Earlier compatibility proof is not final Wine publication success',
-                   'Actual Wine/PE publication categories and the full Wine gate remain pending',
-                   'Native NT assertions remain intact and unexercised under Wine',
-                   'foreign_uid_probe=not-configured'):
+                    'Earlier compatibility proof is not final Wine publication success',
+                    'Actual Wine/PE publication categories and the full Wine gate',
+                    MEASURED_REVISION, 'measured PASS at',
+                    '4867 PASS / 0 FAIL', 'exit 0', '900773.002ms',
+                    'Native NT assertions remain intact and unexercised under Wine',
+                    'foreign_uid_probe=not-configured'):
         assert phrase in evidence
+    for claim in UNSUPPORTED_PUBLICATION_CLAIMS:
+        assert claim not in evidence
+
+
+def assert_measured_publication_evidence(text):
+    evidence = publication_evidence(text)
+    assert_publication_evidence_limits(text)
+    for marker in MEASURED_EVIDENCE_MARKERS:
+        assert marker in evidence
+    for phrase in ('Wine is not native Windows CI',
+                   'native Windows CI remains authoritative',
+                   'No stronger crash guarantee than native publication is claimed for '
+                   'application death, memory corruption or power loss'):
+        assert phrase in evidence
+    assert 'not entropy certification' in normalized(text.replace('**', ''))
 
 
 @pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
 def test_publication_docs_separate_source_contract_from_actual_wine_evidence(path):
+    """Reviewed source and measured Wine success must retain distinct evidence limits."""
     assert_publication_evidence_limits(read(path))
 
 
+@pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
+def test_publication_docs_measured_success_has_retained_capture_and_limits(path):
+    """The summary links to the exact revision/capture/counts/bridge evidence, not native CI."""
+    if path == PUBLICATION_PAGE:
+        assert ('../notes/windows-wine-build-and-test.md#'
+                'current-publication-contract-measured-wine-acceptance-below') in publication_evidence(read(path))
+    assert_measured_publication_evidence(read(WINE_NOTES))
+
+
+@pytest.mark.parametrize('marker', MEASURED_EVIDENCE_MARKERS)
+def test_measured_wine_gate_guard_rejects_missing_evidence(marker):
+    """A full Wine PASS claim needs all evidence markers together in the evidence block."""
+    text = read(WINE_NOTES)
+    assert_measured_publication_evidence(text)
+    evidence = publication_evidence(text)
+    assert marker in evidence
+    # Leave the marker elsewhere on the page: unrelated/history text cannot prove PASS.
+    changed = text.replace(text.split('<!-- publication-evidence -->', 1)[1]
+                           .split('<!-- /publication-evidence -->', 1)[0],
+                           evidence.replace(marker, '') + ' The full Wine gate passed.', 1)
+    with pytest.raises(AssertionError):
+        assert_measured_publication_evidence(changed + '\n' + marker)
+
+
+@pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
 @pytest.mark.parametrize('limitation,overclaim', [
     ('not final Wine publication success', 'final Wine publication success'),
-    ('full Wine gate remain pending', 'full Wine gate passed'),
+    (MEASURED_REVISION, 'unmeasured-revision'),
     ('intact and unexercised under Wine', 'verified under Wine'),
     ('foreign_uid_probe=not-configured', 'foreign_uid_probe=passed'),
 ])
-def test_publication_evidence_guard_rejects_overclaims(limitation, overclaim):
-    text = read(PUBLICATION_PAGE)
+def test_publication_evidence_guard_rejects_overclaims(path, limitation, overclaim):
+    """Measured Wine success does not upgrade earlier source, NT or foreign-UID proof."""
+    text = read(path)
+    assert_publication_evidence_limits(text)
     assert limitation in text
     with pytest.raises(AssertionError):
         assert_publication_evidence_limits(text.replace(limitation, overclaim, 1))
+
+
+@pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
+@pytest.mark.parametrize('overclaim', UNSUPPORTED_PUBLICATION_CLAIMS)
+def test_publication_evidence_guard_rejects_unsupported_added_claims(path, overclaim):
+    """Even a complete measured Wine result cannot support false additional claims."""
+    text = read(path)
+    assert_publication_evidence_limits(text)
+    changed = text.replace('<!-- /publication-evidence -->',
+                           overclaim + '\n<!-- /publication-evidence -->', 1)
+    with pytest.raises(AssertionError):
+        assert_publication_evidence_limits(changed)
 
 
 def test_wine_notes_supersede_native_substitution_and_six_stage_contract():
@@ -199,12 +273,22 @@ def test_wine_notes_supersede_native_substitution_and_six_stage_contract():
 
 @pytest.mark.parametrize('path', [PUBLICATION_PAGE, WINE_NOTES])
 def test_publication_docs_closed_unix_child_launch_is_source_only_not_installed_proof(path):
+    """Native models establish the launch contract; only the separate actual run proves Wine."""
     text = normalized(read(path))
     for phrase in ('support ABI2/features7', 'production ABI1/features3', 'SrptLaunch',
                    '152 bytes', 'CONFIGURE', 'RUN', 'GNU libc2.34', 'posix_spawn',
                    'native Wine64 implementation', 'not a wrapper', 'Unix loader environment',
                    'call-start', '13 seconds', 'ownership-uncertain', 'without unwinding',
-                   'SPACE_WINE_PUBLICATION_TEST_CRYPTO', 'stock installed loader',
-                   'Installed-runtime feasibility remains UNPROVED'):
+                   'SPACE_WINE_PUBLICATION_TEST_CRYPTO',
+                   'stock installed loader paths remain separate runtime dependencies',
+                   'installed loader selection, actual roots, encoding, retirement or timing'):
         assert phrase in text
+    if path == PUBLICATION_PAGE:
+        assert 'Closed Unix launch for private children (source contract)' in text
+        assert 'native host models alone do not establish' in text
+        assert 'Installed-runtime feasibility measured PASS at `fa4fc4b2`' in text
+    else:
+        assert 'Closed private-child Unix launch (source only)' in text
+        assert 'Native compile/models are not real Wine proof' in text
+        assert 'historical and superseded by this measured run' in text
     assert_publication_evidence_limits(read(path))
