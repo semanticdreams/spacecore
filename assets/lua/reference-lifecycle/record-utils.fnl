@@ -121,7 +121,7 @@
     (when (fs.exists directory)
       (local status (fs.stat directory))
       (assert (and (not status.error) status.is-dir) "unsupported record directory")
-      (each [_ entry (ipairs (fs.list-dir directory true true))]
+      (each [_ entry (ipairs (fs.list-dir directory true))]
         (assert (not entry.error) (.. entry.path ": " (tostring entry.error)))
         (when (= (string.sub entry.name (- (# extension))) extension)
           (assert entry.is-file (.. "unsupported record path: " entry.path))

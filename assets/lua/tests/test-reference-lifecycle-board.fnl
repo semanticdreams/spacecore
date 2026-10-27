@@ -642,7 +642,7 @@
 (fn fail-board-removal [fixture view service boundary]
   (fn action [] (view:remove-item "source"))
   (if (= boundary "source retirement")
-      (H.with-fs-failure :remove (. (fixture.stores.string-store:snapshot-entity "s") :path)
+      (H.with-record-failure fixture.stores.string-store :remove! (. (fixture.stores.string-store:snapshot-entity "s") :path)
         #(H.assert-error "permission denied" action))
       (= boundary "pending clear")
       (H.with-fs-failure :remove (fs.join-path fixture.stores.base-dir "reference-lifecycle" "pending.json")
@@ -732,15 +732,52 @@
 (add "final review link rollback failure retains both errors" true (fn rollback-error [fixture]
   (local s fixture.stores)
   (local view (fixture.mount))
-  (local remove fs.remove)
+  (local files s.link-store.files)
+  (local remove files.remove!)
   (fn reject [path]
     (if (= (fs.parent path) s.link-store.entities-dir) (error "semantic rollback denied") (remove path)))
   (fn connect [] (view:connect-items fixture.board.items.source fixture.board.items.a))
   (fn attempt []
     (local message (H.assert-error "creation listener failed" connect))
     (assert (string.find message "semantic rollback denied" 1 true) "original and cleanup errors must both propagate"))
-  (H.with-fields fs {:remove reject} #(rejected-signal s.link-store.link-entity-created attempt))
+  (H.with-fields files {:remove! reject} #(rejected-signal s.link-store.link-entity-created attempt))
   (assert (= (# fixture.board.connectors-in-order) 2))
   (assert (s.link-store:get-entity "k"))))
+
+(add "diagnostics preserve both raw causes without private payloads or metamethods" true (fn diagnostic-causes [fixture]
+  (local store fixture.stores.link-store)
+  (local view (fixture.mount))
+  (fn forbidden [...] (error "Board diagnostic metamethod invoked"))
+  (local hostile {:__index forbidden :__tostring forbidden :__pairs forbidden})
+  (local private (setmetatable {:marker "PRIVATE-BOARD-RESULT"} hostile))
+  (local primary (setmetatable {:message "primary Board diagnostic" :code :private-code :outcome :committed :result private} hostile))
+  (local cleanup (setmetatable {:message "cleanup Board diagnostic" :code :storage-failed :outcome :not-committed :result private} hostile))
+  (local create store.create-entity)
+  (local remove store.files.remove!)
+  (var creates 0)
+  (var removals 0)
+  (fn fail-after-create [self opts]
+    (create self opts)
+    (set creates (+ creates 1))
+    (error primary))
+  (fn fail-remove [path]
+    (if (= (fs.parent path) store.entities-dir)
+        (do (set removals (+ removals 1)) (error cleanup))
+        (remove path)))
+  (fn connect [] (view:connect-items fixture.board.items.source fixture.board.items.a))
+  (fn inspect []
+    (local message (H.assert-error "primary Board diagnostic" connect))
+    (assert (string.find message "Board semantic link rollback failed: cleanup Board diagnostic" 1 true))
+    (assert (not (string.find message "PRIVATE-BOARD-RESULT" 1 true))))
+  (fn guarded [] (H.with-fields store {:create-entity fail-after-create} inspect))
+  (H.with-fields store.files {:remove! fail-remove} guarded)
+  (assert (= creates 1))
+  (assert (= removals 1) "rendering must not add a cleanup attempt")
+  (assert (= (rawget primary :code) :private-code))
+  (assert (= (rawget primary :outcome) :committed))
+  (assert (= (rawget cleanup :outcome) :not-committed))
+  (assert (= (rawget primary :result) (rawget cleanup :result) private))
+  (assert (= (# fixture.board.connectors-in-order) 2))
+  (assert (= (# (store:list-entities)) 2) "failed cleanup must retain the committed attempt-owned link")))
 
 {:tests tests :main (fn [] ((. (require :tests/runner) :run) tests))}

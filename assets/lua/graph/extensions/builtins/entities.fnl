@@ -1,5 +1,6 @@
 (local Common (require :graph/extensions/builtins/common))
 (local KeyLoaderUtils (require :graph/key-loader-utils))
+(local EntityCapabilities (require :graph/capabilities/entities))
 (local StringEntityNodeModule (require :graph/nodes/string-entity))
 (local CodeEntityNodeModule (require :graph/nodes/code-entity))
 (local CodeEntityListNode (require :graph/nodes/code-entity-list))
@@ -36,10 +37,10 @@
    {:id "code" :label "code" :action-name "Code Entities"
     :icon "code" :browser-key "code-entity-list"}])
 
-(fn loader-opts [ctx]
-  {:owner-id ctx.owner-id :extension-id ctx.extension-id})
+(fn loader-opts [ctx access]
+  {:owner-id ctx.owner-id :extension-id ctx.extension-id :access access})
 
-(fn register-store-node-loader [graph ctx scheme store make-node]
+(fn register-store-node-loader [graph ctx scheme store make-node access]
   (graph:register-key-loader scheme
     (fn [key]
       (local entity-id (KeyLoaderUtils.extract-id scheme key))
@@ -47,7 +48,7 @@
         (local entity (store:get-entity entity-id))
         (when entity
           (make-node entity-id))))
-    (loader-opts ctx)))
+    (loader-opts ctx access)))
 
 (fn install-entity-loaders [options graph ctx]
   (local catalog (assert options.entity-type-catalog "builtin-graph-entities requires :entity-type-catalog"))
@@ -58,8 +59,11 @@
   (local link-store (assert options.link-store "builtin-graph-entities requires :link-store"))
   (local identity-store (assert options.identity-store "builtin-graph-entities requires :identity-store"))
   (local notebook-store (assert options.notebook-store "builtin-graph-entities requires :notebook-store"))
+  (local access (EntityCapabilities.access-by-scheme {:string-store string-store :link-store link-store}))
   (local handles [])
-  (fn add! [handle] (table.insert handles handle))
+  (fn add! [handle]
+    (ctx:record-handle handle)
+    (table.insert handles handle))
   (fn make-string-entity [entity-id]
     (StringEntityNodeModule.StringEntityNode {:entity-id entity-id :store string-store :lifecycle options.lifecycle}))
   (fn make-code-entity [entity-id]
@@ -97,7 +101,7 @@
   (fn make-entities [] (EntitiesNode {:entity-type-catalog catalog}))
   (fn make-notebooks [] (NotebooksNode {:store notebook-store}))
   (add! (register-store-node-loader graph ctx "string-entity" string-store
-      make-string-entity))
+      make-string-entity access.string-entity))
   (add! (register-store-node-loader graph ctx "code-entity" code-store
       make-code-entity))
   (add! (register-store-node-loader graph ctx "list-entity" list-store
@@ -105,7 +109,7 @@
   (add! (register-store-node-loader graph ctx "dict-entity" dict-store
       make-dict-entity))
   (add! (register-store-node-loader graph ctx "link-entity" link-store
-      make-link-entity))
+      make-link-entity access.link-entity))
   (add! (register-store-node-loader graph ctx "identity" identity-store
       make-identity))
   (add! (graph:register-key-loader "notebook"
@@ -114,7 +118,7 @@
   (add! (graph:register-key-loader "string-entity-list"
       (Common.exact-key-loader "string-entity-list"
         make-string-entity-list)
-      (loader-opts ctx)))
+      (loader-opts ctx access.string-entity-list)))
   (add! (graph:register-key-loader "string-entity-search"
       (Common.exact-key-loader "string-entity-search"
         make-string-entity-search)
@@ -133,7 +137,7 @@
   (add! (graph:register-key-loader "link-entity-list"
       (Common.exact-key-loader "link-entity-list"
         make-link-entity-list)
-      (loader-opts ctx)))
+      (loader-opts ctx access.link-entity-list)))
   (add! (graph:register-key-loader "entities"
       (Common.exact-key-loader "entities" make-entities)
       (loader-opts ctx)))

@@ -7,7 +7,7 @@
 
 (fn make-temp-dir []
   (set temp-counter (+ temp-counter 1))
-  (fs.join-path temp-root (.. "entities-" (os.time) "-" temp-counter)))
+  (fs.absolute (fs.join-path temp-root (.. "entities-" (os.time) "-" temp-counter))))
 
 (fn with-temp-dir [f]
   (local dir (make-temp-dir))
@@ -610,12 +610,57 @@
     (tset observed method operation))
   observed)
 
+(local list-observation-scenarios {:move true :remove true :selection true :name true :recovery true})
+(local list-observation-budget {:lines 0 :counts {}})
+
+(fn list-path-token [path]
+  (assert (= (type path) :string) "List operand must be a path string")
+  ;; Reuse the runner's byte escaping and 128-byte :code field budget; strip only
+  ;; the fixed code= label. Each quoted token is at most 130 encoded bytes.
+  (string.sub ((. (require :tests.error-format) :format-error) {:code path}) 6))
+
+(fn record-list-observation-line [state scenario root path absolute-root absolute-path intended]
+  (local raw-prefix? (= (string.sub path 1 (# root)) root))
+  (local line (.. "[LIST-OPERANDS] scenario=" scenario
+    " root=" (list-path-token root) " path=" (list-path-token path)
+    " absolute-root=" (list-path-token absolute-root)
+    " absolute-path=" (list-path-token absolute-path) " intended=" (list-path-token intended)
+    " raw-prefix=" (tostring raw-prefix?) " intended-equal=" (tostring (= absolute-path intended))))
+  (assert (<= (# line) 1024) "List operand line exceeds encoded byte budget")
+  (set state.lines (+ state.lines 1))
+  (tset state.counts scenario (+ (. state.counts scenario) 1))
+  line)
+
+(fn make-list-write-observer [state scenario root destination timing sink]
+  (when (and (= timing "1") (. list-observation-scenarios scenario))
+    (local absolute-root (fs.absolute root))
+    (local intended (fs.absolute destination))
+    (assert (= (fs.parent absolute-root) (fs.absolute temp-root)) "observe generated List fixtures only")
+    (assert (= intended (fs.absolute (fs.join-path root "entities" "list" "list.json")))
+            "observe only the fixture-owned List destination")
+    (when (= (. state.counts scenario) nil) (tset state.counts scenario 0))
+    (fn observe [path]
+      (when (and (< state.lines 12) (< (. state.counts scenario) 2))
+        (local absolute-path (fs.absolute path))
+        ;; Qualification deliberately does not use the suspect raw-prefix test.
+        (when (= absolute-path intended)
+          (local line (record-list-observation-line state scenario root path absolute-root absolute-path intended))
+          (sink line))))
+    observe))
+
+(fn write-list-observation [line] (print line) (io.flush))
+
 (fn observe-list-presentation [f body]
   (local original-write JsonUtils.write-json!)
   (local clickables (assert app.clickables "list presentation requires native clickables"))
   (local original-register clickables.register)
+  ;; The fixture root is canonical; the native separator makes this a component boundary.
+  (local write-prefix (fs.join-path f.root ""))
+  (local observe-write (make-list-write-observer list-observation-budget f.observation-scenario
+    f.root f.path (os.getenv "SPACE_TEST_TIMINGS") write-list-observation))
   (fn write [path value]
-    (when (= (string.sub path 1 (# f.root)) f.root) (set f.writes (+ f.writes 1)))
+    (when observe-write (observe-write path))
+    (when (= (string.sub (fs.absolute path) 1 (# write-prefix)) write-prefix) (set f.writes (+ f.writes 1)))
     (original-write path value))
   (fn register [self widget]
     (when widget.clicked (table.insert f.buttons widget))
@@ -639,7 +684,7 @@
   (local (drop-ok drop-error) (pcall drop-list-presentation f))
   (if (not ok) (error result) (not drop-ok) (error drop-error) result))
 
-(fn run-list-presentation [store root screen body]
+(fn run-list-presentation [store root screen body scenario]
   (local ids store.identity-store)
   (ids:create-entity {:id "z" :target-key "node-key-alpha"})
   (ids:create-entity {:id "a" :target-key "node-key-alpha"})
@@ -650,14 +695,14 @@
     ((. (require :graph/nodes/list-entity) :ListEntityNode) {:entity-id "list" :store store}) true))
   (observe-list-presentation {:store store :root root :screen screen :entity entity :node node
     :path (fs.join-path store.entities-dir "list.json") :targets [] :buttons []
-    :calls [] :writes 0 :updated 0 :changed 0 :created 0} body))
+    :calls [] :writes 0 :updated 0 :changed 0 :created 0 :observation-scenario scenario} body))
 
-(fn with-list-presentation [body]
+(fn with-list-presentation [body scenario]
   (assert (and app app.engine (app.engine:is-started) (not (app.engine:is-shutdown)))
           "List unit fixture requires initialized caller context")
   (fn stored [store root]
     (local unit {:width 640 :height 360 :ui [] :targets [] :domain [] :records {}})
-    (fn run [] (init-list-unit unit) (run-list-presentation store root unit body))
+    (fn run [] (init-list-unit unit) (run-list-presentation store root unit body scenario))
     (local (ok result) (pcall run))
     (local (clean-ok clean-error) (pcall drop-list-resources [unit.targets unit.domain unit.ui]))
     (if (not ok) (error result) (not clean-ok) (error clean-error) result))
@@ -885,20 +930,54 @@
   (local count (# f.buttons)) (f.node.items-changed:emit {})
   (assert (= (- (# f.buttons) count) 12) "only the surviving List view may rebuild three rows")
   (assert-list-rows f canonical-items ["node-key-alpha" "node-key-alpha" "node-key-beta"])
+  (same-presentation-value f.entity (json.loads (fs.read-file f.path)))
   (same-presentation-value [f.writes f.updated f.changed f.created] [1 1 0 0]))
 
-(fn add-list-presentation-test [suffix body]
-  (fn run [] (with-list-presentation body))
+(fn list-counter-equivalent-spellings [f]
+  (assert (= f.root (fs.absolute f.root)) "all fixture users must share the canonical root")
+  (local absolute (fs.absolute f.path))
+  (local relative (fs.relative absolute))
+  (local equivalent (fs.join-path (fs.parent absolute) "." "list.json"))
+  (assert (not (= relative absolute)) "regression requires a distinct relative spelling")
+  (local value (json.loads (fs.read-file absolute)))
+  (each [i path (ipairs [absolute relative equivalent])]
+    (assert (= (fs.absolute path) absolute) "all spellings must identify the same canonical List leaf")
+    (reset-list-observation f)
+    (set value.name (.. "spelling-" i))
+    (JsonUtils.write-json! path value)
+    (assert (= (fs.read-file absolute) (json.dumps value)) "real writer must persist the exact JSON bytes")
+    (assert (= f.writes 1) (.. "canonical-equivalent write must count once for spelling " i))
+    (same-presentation-value [f.updated f.changed f.created] [0 0 0])))
+
+(fn list-counter-sibling-prefix [f]
+  (local sibling-root (.. f.root "-sibling"))
+  (local path (fs.join-path sibling-root "list.json"))
+  (local value {:fixture "sibling-prefix"})
+  (fs.create-dirs sibling-root)
+  (fn write []
+    (reset-list-observation f)
+    (JsonUtils.write-json! path value)
+    (assert (= (fs.read-file path) (json.dumps value)) "sibling write must reach the real disk")
+    (assert (= f.writes 0) "a sibling sharing the raw root prefix must not count")
+    (same-presentation-value [f.updated f.changed f.created] [0 0 0]))
+  (local (ok err) (pcall write))
+  (fs.remove-all sibling-root)
+  (when (not ok) (error err)))
+
+(fn add-list-presentation-test [suffix body scenario]
+  (fn run [] (with-list-presentation body scenario))
   (table.insert tests {:name (.. "list item presentation " suffix) :fn run}))
 
 (add-list-presentation-test "passive display preserves canonical aliases" list-presentation-passive)
 (add-list-presentation-test "duplicate semantics retain distinct aliases" list-presentation-duplicates)
-(add-list-presentation-test "move callbacks preserve exact order after refresh" list-presentation-move)
-(add-list-presentation-test "remove targets canonical alias only" list-presentation-remove)
-(add-list-presentation-test "selection authoring preserves explicit references" list-presentation-selection)
+(add-list-presentation-test "move callbacks preserve exact order after refresh" list-presentation-move :move)
+(add-list-presentation-test "remove targets canonical alias only" list-presentation-remove :remove)
+(add-list-presentation-test "selection authoring preserves explicit references" list-presentation-selection :selection)
 (add-list-presentation-test "focus uses canonical existing key without opening/loading" list-presentation-focus)
-(add-list-presentation-test "name-only edit preserves membership" list-presentation-name)
-(add-list-presentation-test "unresolved and resolver errors do not author" list-presentation-errors)
+(add-list-presentation-test "name-only edit preserves membership" list-presentation-name :name)
+(add-list-presentation-test "unresolved and resolver errors do not author" list-presentation-errors :recovery)
+(add-list-presentation-test "write counter accepts canonical-equivalent spellings" list-counter-equivalent-spellings)
+(add-list-presentation-test "write counter excludes sibling-root prefixes" list-counter-sibling-prefix)
 
 (fn assert-list-fixture-lifetime [run expected]
   (local caller (assert app)) (local engine (assert caller.engine))
@@ -986,6 +1065,58 @@
   (list-lifetime-scenario true true))
 (table.insert tests {:name "presentation fixture lifetime List normal return" :fn list-lifetime-normal})
 (table.insert tests {:name "presentation fixture lifetime List callback exception" :fn list-lifetime-exception})
+
+(fn list-observation-encoding []
+  (assert (= (type list-path-token) :function) "List operand encoder is required")
+  (local text (list-path-token (.. "line\n\r\t" (string.char 27 0) "雪\\\"")))
+  (assert (= text "\"line\\n\\r\\t\\x1b\\x00\\xe9\\x9b\\xaa\\\\\\\"\""))
+  (local huge (list-path-token (string.rep (.. "雪" (string.char 0)) 10000)))
+  (assert (<= (# huge) 130) "path budget includes quotes and encoded bytes")
+  (assert (string.find huge "[truncated]" 1 true))
+  (for [i 1 (# huge)] (assert (<= 32 (string.byte huge i) 126)))
+  (local (ok _err) (pcall list-path-token {:private "not a path"}))
+  (assert (not ok) "operand encoder must accept only path strings"))
+
+(fn list-observation-controls []
+  (assert (= (type make-list-write-observer) :function) "List write observer is required")
+  (with-temp-dir (fn [root]
+    (local raw-root (fs.relative root))
+    (assert (= (fs.absolute raw-root) (fs.absolute root)) "relative control must preserve exact absolute fixture path")
+    (local destination (fs.join-path root "entities" "list" "list.json"))
+    (local path (fs.absolute destination))
+    (local state {:lines 0 :counts {}})
+    (local lines [])
+    (fn sink [line] (table.insert lines line))
+    (fn forbidden [...] (error "disabled observation must not resolve paths or write"))
+    (fn disabled []
+      (each [_ timing (ipairs ["" "0" "true"])]
+        (assert (= (make-list-write-observer state :move raw-root destination timing forbidden) nil)))
+      (assert (= (make-list-write-observer state :move raw-root destination nil forbidden) nil)))
+    (H.with-fields fs {:absolute forbidden} disabled)
+    (assert (= state.lines 0))
+    (each [_ scenario (ipairs [:move :remove :selection :name :recovery])]
+      (local observe (make-list-write-observer state scenario raw-root destination "1" sink))
+      (observe (fs.join-path root "entities" "list" "other.json"))
+      (observe (fs.join-path (.. root "-unrelated") "entities" "list" "list.json"))
+      (for [_ 1 4] (observe path))
+      (assert (= (. state.counts scenario) 2)))
+    (assert (= state.lines 10)) (assert (= (# lines) 10))
+    (each [_ line (ipairs lines)]
+      (assert (<= (# line) 1024))
+      (for [i 1 (# line)] (assert (<= 32 (string.byte line i) 126)))
+      (assert (string.find line "[LIST-OPERANDS]" 1 true))
+      (assert (string.find line "raw-prefix=false" 1 true) "canonical writes must survive raw-prefix mismatch")
+      (assert (string.find line "intended-equal=true" 1 true))
+      (assert (not (string.find line "unrelated" 1 true)))
+      (assert (not (string.find line "other.json" 1 true))))
+    (local capped {:lines 11 :counts {}})
+    (local observe (make-list-write-observer capped :move raw-root destination "1" sink))
+    (observe path) (observe path)
+    (assert (= capped.lines 12)) (assert (= capped.counts.move 1))
+    (assert (= (# lines) 11)))))
+
+(table.insert tests {:name "List operand observation escapes and bounds scalar paths" :fn list-observation-encoding})
+(table.insert tests {:name "List operand observation excludes unrelated writes and obeys disabled and output caps" :fn list-observation-controls})
 
 (local main
   (fn []

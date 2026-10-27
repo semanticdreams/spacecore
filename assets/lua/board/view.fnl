@@ -139,6 +139,13 @@
   (assert (= (. (store:snapshot-entity id) :value) false) "Board semantic link id collision")
   id)
 
+(fn diagnostic-message [err]
+  (local message (if (= (type err) :table) (rawget err :message) err))
+  (if (= (type message) :string) message
+      (= (type message) :number) (string.format "%.17g" message)
+      (= (type message) :boolean) (if message "true" "false")
+      (.. "unknown error (" (type err) ")")))
+
 (fn create-semantic-connector! [board link-store same-key? source target source-key target-key options]
   (var created-link-id nil)
   (fn create []
@@ -161,7 +168,7 @@
     (when created-link-id
       (local (cleanup-ok cleanup-error) (pcall link-store.retire-entity! link-store created-link-id))
       (when (not cleanup-ok)
-        (error (.. (tostring connector-or-err) "; Board semantic link rollback failed: " (tostring cleanup-error)))))
+        (error (.. (diagnostic-message connector-or-err) "; Board semantic link rollback failed: " (diagnostic-message cleanup-error)))))
     (error connector-or-err))
   connector-or-err)
 

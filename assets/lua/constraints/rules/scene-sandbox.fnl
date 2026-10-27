@@ -394,47 +394,99 @@
          :evidence {:assertion "slot.layout-root render routing"}
          :hint "ensure the Scene slot provides a layout root for render routing"}))))
 
+(fn fixture-traceback [err]
+  (debug.traceback (tostring err) 2))
+
+(fn attempt-fixture-cleanup! [fixture errors stage f ...]
+  ;; A failing operation must not change the app used by later owned cleanup.
+  (rawset _G :app fixture)
+  (local (ok err) (pcall f ...))
+  (when (not ok)
+    (table.insert errors (.. "scene fixture cleanup " stage " failed: " (tostring err)))))
+
+(fn initialize-scene-fixture! [fixture Activities]
+  (local Intersectables (require :intersectables))
+  (local Clickables (require :clickables))
+  (local Hoverables (require :hoverables))
+  (local {: LightSystem} (require :light-system))
+  (local Signal (require :signal))
+  (local Camera (require :camera))
+  (local Scene (require :scene))
+  (local glm (require :glm))
+  ;; Record each returned owner before the next constructor/call can fail.
+  (set fixture.intersectables (Intersectables))
+  (local intersectables (assert fixture.intersectables "scene fixture requires intersectables"))
+  (set fixture.clickables (Clickables {: intersectables}))
+  (set fixture.hoverables (Hoverables {: intersectables}))
+  (set fixture.lights (LightSystem {}))
+  (set fixture.create-default-projection (. (require :app-projection) :create-default-projection))
+  (set fixture.activities-changed (Signal))
+  (set fixture.activity-dock-changed (Signal))
+  (set fixture.workspace-shell-changed (Signal))
+  (Activities.ensure-registry)
+  (set fixture.camera (Camera {:position (glm.vec3 0 0 100)}))
+  (local camera (assert fixture.camera "scene fixture requires camera"))
+  (set fixture.scene (Scene {: camera}))
+  (set fixture.active-world-runtime.scene (assert fixture.scene "scene fixture requires scene")))
+
+(fn cleanup-fixture-activities! [fixture errors Activities]
+  (local registry fixture.activity-registry)
+  (when registry
+    (when registry.active-activity-spec
+      (attempt-fixture-cleanup! fixture errors "activity deactivation" Activities.deactivate-active-activity))
+    ;; Unregister calls deactivation and session drop internally. Detach each
+    ;; already-attempted owner even on failure so that it cannot be retried.
+    (set registry.active-activity-id nil)
+    (set registry.active-activity-spec nil)
+    (set registry.active-activity-session nil)
+    (set fixture.active-activity-id nil)
+    (set fixture.active-world-runtime.active-activity-id nil)
+    (when (. registry.sessions :sandbox)
+      (attempt-fixture-cleanup! fixture errors "sandbox session" Activities.drop-activity-session! "sandbox"))
+    (tset registry.sessions :sandbox nil)
+    (when (. registry.activities :sandbox)
+      (attempt-fixture-cleanup! fixture errors "sandbox unregistration" Activities.unregister-activity "sandbox"))))
+
+(fn with-scene-fixture [f]
+  (local caller app)
+  (local Activities (require :activities))
+  ;; No shallow copy: only Engine and read-only themes are borrowed. Scene
+  ;; services, shell state, activity signals/registry and sessions belong here.
+  (local fixture {:testing true :engine caller.engine :themes caller.themes
+                  :canvas {:visible? false :interactive? false}
+                  :active-world-runtime {:activity-sessions {} :activity-session-state {}}})
+  (fn run []
+    (initialize-scene-fixture! fixture Activities)
+    (f fixture.scene))
+  (rawset _G :app fixture)
+  (local (ok result) (xpcall run fixture-traceback))
+  (local errors [])
+  (attempt-fixture-cleanup! fixture errors "activities" cleanup-fixture-activities! fixture errors Activities)
+  (each [_ key (ipairs [:scene :camera :hoverables :clickables :intersectables])]
+    (local resource (. fixture key))
+    (when resource
+      (attempt-fixture-cleanup! fixture errors key resource.drop resource)))
+  ;; LightSystem has no drop API. All fixture references can now be released.
+  (rawset _G :app caller)
+  (local messages [])
+  (when (not ok) (table.insert messages (tostring result)))
+  (each [_ err (ipairs errors)] (table.insert messages err))
+  (if (> (# messages) 0) (error (table.concat messages "\n") 0) result))
+
 (fn active-render-context-routing-rule-run [ctx]
   "Scenario: verify that the active Scene slot context supplies render vectors."
   (local Scenarios (require :constraints.scenarios))
   (local diagnostics [])
-  (Scenarios.with-test-app
-    (fn []
-      ;; Import needed modules inside the scenario (has real app environment)
-      (local glm (require :glm))
-      (local Activities (require :activities))
-      (local Scene (require :scene))
-      (local Camera (require :camera))
-      (local AppProjection (require :app-projection))
-      (local SandboxActivityUnit (require :sandbox-activity-unit))
-
-      ;; Setup: ensure activity is registered and active
-      (SandboxActivityUnit.load-sandbox-activity!)
-
-      ;; Ensure projection factory is available (required by Scene.reset-projection)
-      (when (not app.create-default-projection)
-        (set app.create-default-projection AppProjection.create-default-projection))
-
-      ;; Create a scene with camera
-      (local camera (Camera {:position (glm.vec3 0 0 100)}))
-      (local scene (Scene {:camera camera}))
-
-      ;; Set up the runtime as if sandbox is active
-      (set app.active-world-runtime {:scene scene})
-      (tset app :canvas {:visible? false :interactive? false})
-
-      ;; Activate the sandbox activity
-      (Activities.activate-activity "sandbox")
-
-      ;; Verify: the scene should have an active slot for sandbox
-      ;; with render context (ctx) and layout root for render routing
-      (let [slot (scene:activity-slot "sandbox")]
-        (check-scene-slot-routing diagnostics slot))
-
-      ;; Cleanup
-      (scene:drop)
-      (camera:drop)
-      (tset app :active-world-runtime nil)))
+  (fn check-routing [scene]
+    (local SandboxActivityUnit (require :sandbox-activity-unit))
+    (local Activities (require :activities))
+    (SandboxActivityUnit.load-sandbox-activity!)
+    (Activities.activate-activity "sandbox")
+    ;; Keep the actual Sandbox activation and original slot-routing assertions.
+    (local slot (scene:activity-slot "sandbox"))
+    (check-scene-slot-routing diagnostics slot))
+  (fn run [] (with-scene-fixture check-routing))
+  (Scenarios.with-test-app run)
   (if (> (length diagnostics) 0) diagnostics nil))
 
 ;; ---------------------------------------------------------------------------

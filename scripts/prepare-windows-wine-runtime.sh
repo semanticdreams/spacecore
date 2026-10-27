@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="${BUILD_DIR:-${ROOT_DIR}/build/windows}"
-TARGET_EXE="${1:-${BUILD_DIR}/space.exe}"
-
-"${ROOT_DIR}/scripts/prepare-windows-runtime.sh" "${TARGET_EXE}"
-"${ROOT_DIR}/scripts/build-wine-bcryptprimitives-mock.sh" "${BUILD_DIR}/bcryptprimitives.dll"
-
-echo "Wine runtime prepared in ${BUILD_DIR}"
+if [ "$#" -ne 0 ]; then
+    echo "Usage: prepare-windows-wine-runtime.sh (no arguments)" >&2
+    exit 1
+fi
+exec python3 "${ROOT_DIR}/scripts/wine/artifacts.py" prepare

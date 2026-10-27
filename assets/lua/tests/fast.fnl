@@ -14,6 +14,7 @@
     :tests.test-runtime-timers
     :tests.test-runtime-scheduler
     :tests.test-runtime-updates
+    :tests.test-runner
     :tests.test-layout-stats-view
     :tests.test-clickables
     :tests.test-clipboard
@@ -130,6 +131,8 @@
       :tests.test-temporal-closeout
      :tests.test-tempfile
     :tests.test-graph-loaders
+     :tests.test-graph-capabilities
+     :tests.test-graph-entity-capabilities
     :tests.test-sysinfo
     :tests.test-flamegraph
     :tests.test-units
@@ -153,6 +156,8 @@
     :tests.test-reference-lifecycle-worlds
     :tests.test-reference-lifecycle-projections
     :tests.test-string-entities
+    :tests.test-string-entity-editor
+    :tests.test-entity-record-persistence
     :tests.test-string-entity-search
     :tests.test-string-entity-create-child
     :tests.test-code-entities
@@ -288,14 +293,16 @@
     :tests.test-constraints-runner
     :tests.test-constraints-source
     :tests.test-constraints-facts
-    :tests.test-constraints-baseline
-    :tests.test-constraints-rules-scene-sandbox
+     :tests.test-constraints-baseline
+     :tests.test-constraints-scenarios
+     :tests.test-constraints-rules-scene-sandbox
     :tests.test-constraints-rules-lifecycle
      :tests.test-constraints-rules-test-isolation
      :tests.test-constraints-rules-test-isolation-precision
     :tests.test-constraints-rules-layout
     :tests.test-constraints-rules-structure
     :tests.test-constraints-default-run
+    :tests.test-constraints-layout-progress
     :tests.test-constraints-integration-config]})
 
 (local main

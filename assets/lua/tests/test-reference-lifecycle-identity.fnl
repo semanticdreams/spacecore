@@ -12,26 +12,6 @@
   (assert (= (JsonUtils.stable-json (H.snapshot-tree s.base-dir))
              (JsonUtils.stable-json before)) "persisted bytes must remain unchanged"))
 
-(fn with-graph [s f]
-  (local Graph (require :graph/core))
-  (local GraphMap (require :graph/map))
-  (local Entities (require :graph/extensions/builtins/entities))
-  (local Catalog (require :entities/type-catalog))
-  (local graph (Graph {:identity-store s.identity-store :link-store s.link-store
-                      :string-store s.string-store :morphs {} :entity-events? false}))
-  (local options {})
-  (each [key value (pairs s)] (tset options key value))
-  (set options.entity-type-catalog (Catalog.EntityTypeCatalog {:types (Entities.entity-types)}))
-  (local descriptor (. (Entities.descriptors options) 1))
-  (descriptor.install-loaders graph {:owner-id descriptor.unit-id :extension-id descriptor.id})
-  (local map (GraphMap.GraphMap {:graph graph}))
-  (local (ok result) (pcall f graph map))
-  (local (cleanup-ok cleanup-error)
-    (pcall (fn [] (map:drop) (graph:drop))))
-  (if (not ok) (error result)
-      (not cleanup-ok) (error cleanup-error)
-      result))
-
 (fn with-publications [store f]
   (local counts {:created 0 :updated 0 :deleted 0})
   (local records [])
@@ -95,7 +75,7 @@
   (assert (= (store:ensure-key "") "")))
 
 (fn graph-ensure [s]
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (local before (JsonUtils.stable-json (graph:capture-state)))
     (local key (graph:ensure-identity-key "external:new" {:id "hidden"}))
     (assert (= key "identity:hidden"))
@@ -109,7 +89,7 @@
 
 (fn graph-free-resolution [s use-map?]
   (s.identity-store:create-entity {:id "a" :target-key "external:terminal"})
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (var loads 0)
     (fn load-external [_] (set loads (+ loads 1)) nil)
     (graph:register-key-loader "external" load-external)
@@ -142,7 +122,7 @@
 (fn cycles [s]
   (each [_ pair (ipairs [["self" "self"] ["a" "b"] ["b" "a"] ["up" "a"]])]
     (s.identity-store:create-entity {:id (. pair 1) :target-key (.. "identity:" (. pair 2))}))
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (local before (H.snapshot-tree s.base-dir))
     (each [_ subject (ipairs [graph map s.identity-store])]
       (each [_ key (ipairs ["identity:self" "identity:a" "identity:up"])]
@@ -153,7 +133,7 @@
 
 (fn depth-32 [s]
   (make-chain s.identity-store 32)
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (each [_ subject (ipairs [graph map s.identity-store])]
       (local (key chain) (subject:resolve-key "identity:1"))
       (assert (= key "external:terminal"))
@@ -165,7 +145,7 @@
 
 (fn depth-33 [s]
   (make-chain s.identity-store 33)
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (local before (H.snapshot-tree s.base-dir))
     (each [_ subject (ipairs [map graph s.identity-store])]
       (assert-depth-error subject {}))
@@ -175,7 +155,7 @@
 
 (fn explicit-limits [s]
   (make-chain s.identity-store 3)
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (each [_ subject (ipairs [map graph s.identity-store])]
       (fn resolve-visited [] (subject:resolve-key "identity:1" {:visited {:identity:2 true}}))
       (assert-depth-error subject {:max-depth 2})
@@ -190,7 +170,7 @@
 
 (fn terminal-keys [s]
   (s.identity-store:create-entity {:id "draft"})
-  (with-graph s (fn [graph map]
+  (H.with-graph s (fn [graph map]
     (local before (H.snapshot-tree s.base-dir))
     (each [_ subject (ipairs [graph map s.identity-store])]
       (each [_ key (ipairs ["identity:missing" "identity:draft" "external:raw" ""])]

@@ -68,5 +68,7 @@ export CMAKE_ASM_MASM_FLAGS="${CMAKE_ASM_MASM_FLAGS:--m64}"
 cat <<'EOF'
 Windows build complete.
 To prepare and run the Windows fast tests under Wine:
+  scripts/package-windows-runtime.sh
+  scripts/prepare-windows-wine-runtime.sh
   scripts/test-windows-under-wine.sh
 EOF

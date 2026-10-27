@@ -1,12 +1,23 @@
+(local ErrorFormat (require :tests.error-format))
+
 (fn log-line [msg]
   (print msg)
   (io.flush))
 
+(fn describe-error [err]
+  (local (ok message) (pcall ErrorFormat.format-error err))
+  (if (and ok (= (type message) :string)) message (.. "<" (type err) ">")))
+
 (fn protected-call [traceback f]
-  (if traceback
-      (xpcall f (fn [err]
-                  (traceback err 2)))
-      (pcall f)))
+  (fn report-error [err]
+    (local message (describe-error err))
+    (traceback message 2))
+  ;; Without traceback, preserve raw error identity for direct executor callers.
+  ;; Logging sinks still normalize it before displaying any diagnostics.
+  (if traceback (xpcall f report-error) (pcall f)))
+
+(fn error-message [err traceback]
+  (if (and traceback (= (type err) :string)) err (describe-error err)))
 
 (fn copy-array [items]
   (local out [])
@@ -56,9 +67,12 @@
         (var timeout-message nil)
         (local (old-hook old-mask old-count) (debug-lib.gethook))
         (fn timeout-hook []
-          (when (>= (- (now-ms) started-at) timeout-ms)
+          (when (and (not timed-out?) (>= (- (now-ms) started-at) timeout-ms))
             (set timed-out? true)
             (set timeout-message (.. "test timed out after " timeout-seconds "s: " test.name))
+            ;; Deliver once, then allow protected cleanup/rollback to finish.
+            ;; The latch below still fails cases that catch this exception.
+            (debug-lib.sethook nil "" 0)
             (error timeout-message 2)))
         (debug-lib.sethook timeout-hook "" 10000)
         (local (ok err) (protected-call traceback test.fn))
@@ -89,7 +103,9 @@
   (values (and ok cleanup-ok) (if ok (if cleanup-ok result cleanup-result) result) teardown-errors))
 
 (fn with-owned-engine [owned-engine body traceback]
-  (local (ok result) (protected-call traceback body))
+  ;; Body errors are runner-generated counts/validation or already-normalized
+  ;; load errors. Do not escape their generated stacks a second time.
+  (local (ok result) (pcall body))
   (var shutdown-attempted? false)
   (fn shutdown-owned []
     (assert owned-engine "test runner requires its captured owned engine")
@@ -103,10 +119,13 @@
           (verbose-stage "[SUITE-ENGINE]" "shutdown attempt")
           (owned-engine:shutdown)
           (verbose-stage "[SUITE-ENGINE]" "shutdown returned"))))
-  (local (cleanup-ok cleanup-result) (protected-call traceback shutdown-owned))
+  (local (cleanup-ok cleanup-result) (pcall shutdown-owned))
+  (local shutdown-message (when (not cleanup-ok) (describe-error cleanup-result)))
   (when (not cleanup-ok)
-    (log-line (.. "[SUITE-ENGINE] shutdown failed: " (tostring cleanup-result))))
-  (if (not ok) (error result 0)
+    (log-line (.. "[FAIL] engine shutdown " shutdown-message)))
+  (if (and (not ok) (not cleanup-ok) (= (type result) :string))
+      (error (.. result "\nengine shutdown also failed: " shutdown-message) 0)
+      (not ok) (error result 0)
       (not cleanup-ok) (error cleanup-result 0)
       result))
 
@@ -337,13 +356,13 @@
     (local timeout-seconds (select-test-timeout-seconds raw-timeout test.timeout-seconds))
     (local (ok err teardown-errors) (run-case test timeout-seconds traceback))
     (each [_ cleanup-error (ipairs teardown-errors)]
-      (log-line (.. "[TEARDOWN-ERROR] " test.name ": " (tostring cleanup-error))))
+      (log-line (.. "[TEARDOWN-ERROR] " test.name ": " (error-message cleanup-error traceback))))
     (if ok
         (when test-verbose
           (log-line (.. "[PASS] " test.name)))
         (do
           (log-line (.. "[FAIL] " test.name))
-          (log-line (tostring err))
+          (log-line (error-message err traceback))
           (set failures (+ failures 1)))))
 
   (values failures (# registered-tests)))
@@ -363,7 +382,7 @@
   (when suite.teardown
     (local (_ok err) (protected-call traceback suite.teardown))
     (when (not _ok)
-      (log-line (.. "[FAIL] teardown " (tostring err)))
+      (log-line (.. "[FAIL] teardown " (error-message err traceback)))
       (set failures (+ failures 1))))
 
   (when (> failures 0)
@@ -401,7 +420,10 @@
       (protected-call traceback (fn []
                                   (require module-name))))
     (when (not ok)
-      (error (.. "Failed to load " module-name ":\n" (tostring result))))
+      (log-line (.. "[FAIL] load " module-name))
+      (local message (error-message result traceback))
+      (log-line message)
+      (error (.. "Failed to load " module-name ":\n" message)))
     (do
       (when (not (= (type result) "table"))
         (error (.. module-name " must return a test suite")))
@@ -429,7 +451,7 @@
   (when suite.teardown
     (local (_ok err) (protected-call traceback suite.teardown))
     (when (not _ok)
-      (log-line (.. "[FAIL] teardown " (tostring err)))
+      (log-line (.. "[FAIL] teardown " (error-message err traceback)))
       (set failures (+ failures 1))))
 
   (when print-timings

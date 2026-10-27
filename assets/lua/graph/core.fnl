@@ -13,6 +13,7 @@
 (local StringEntityStore (require :entities/string))
 (local Morphs (require :morphs/init))
 (local KeyLoaderUtils (require :graph/key-loader-utils))
+(local Capabilities (require :graph/capabilities))
 (local R (require :reference-lifecycle/record-utils))
 
 (fn reference-color [color original]
@@ -70,7 +71,7 @@
     true)
 
 ;; This explicit lifecycle path never resolves nodes or loads hidden endpoints.
-;; Legacy entity-event hydration stays unchanged until the atomic action cutover.
+;; Domain notifications follow the same non-materializing endpoint rule.
 (fn reconcile-link-projections! [graph link-edge-map]
     (assert graph.link-store "Core link projections require canonical link store")
     (local desired {})
@@ -132,7 +133,9 @@
     (assert (not (. key-loaders scheme))
             (.. "register-key-loader duplicate scheme: " scheme))
     (local options (or opts {}))
+    (local access (and (not (= options.access nil)) (Capabilities.prepare-access scheme options.access)))
     (local registration {:scheme scheme
+                         :access access
                          :loader-fn loader-fn
                          :owner-id options.owner-id
                          :extension-id options.extension-id
@@ -226,6 +229,10 @@
                  :edge-map edge-map
                  ;; Built-in start nodes are descriptor-loaded, not auto-created.
                  :entity-events? entity-events?
+                  :discover (fn [_self args] (Capabilities.discover key-loaders args))
+                  :describe (fn [_self ref] (Capabilities.describe key-loaders ref))
+                  :invoke (fn [_self ref id args preconditions]
+                            (Capabilities.invoke key-loaders ref id args preconditions))
                  :node-added node-added
                  :node-removed node-removed
                  :node-replaced node-replaced
@@ -580,15 +587,14 @@
         (fn [_self target-key opts]
             (identity-store:ensure-key (tostring (or target-key "")) opts)))
 
+    ;; Domain notifications may reconcile visible endpoints, never materialize
+    ;; adapters. Explicit resolve-key/resolve-node retain their loading behavior.
+    (fn visible-endpoint [key]
+        (. nodes (identity-store:resolve-key key)))
+
     (fn add-link-edge-for-entity [entity entity-id]
-        (local source-key (self:resolve-key entity.source-key))
-        (local target-key (self:resolve-key entity.target-key))
-        (var source-node (. nodes source-key))
-        (var target-node (. nodes target-key))
-        (when (and (not source-node) source-key)
-            (set source-node (self:load-by-key source-key)))
-        (when (and (not target-node) target-key)
-            (set target-node (self:load-by-key target-key)))
+        (local source-node (visible-endpoint entity.source-key))
+        (local target-node (visible-endpoint entity.target-key))
         (when (and source-node target-node)
             (local label (or (and entity.metadata entity.metadata.name) ""))
             (local edge (GraphEdge {:source source-node
@@ -633,8 +639,7 @@
     (set check-link-edges-for-node
         (fn [node]
             (when (and node node.key)
-                (local all-keys (icollect [k _ (pairs nodes)] k))
-                (local link-entities (link-store:find-edges-for-nodes all-keys))
+                (local link-entities (link-store:list-entities))
                 (each [_ entity (ipairs link-entities)]
                     (when (not (. link-edge-map (tostring entity.id)))
                         (maybe-add-link-edge entity))))))
@@ -642,7 +647,6 @@
     (var link-created-handler nil)
     (var link-updated-handler nil)
     (var link-deleted-handler nil)
-    (var string-entity-created-handler nil)
 
     (fn refresh-link-edges-for-key [key]
         (local key-str (tostring (or key "")))
@@ -672,12 +676,6 @@
             (link-store.link-entity-deleted:connect
                 (fn [entity]
                     (maybe-remove-link-edge entity))))
-
-        (set string-entity-created-handler
-            (string-store.string-entity-created:connect
-                (fn [entity]
-                    (when (and entity entity.id)
-                        (self:load-by-key (.. "string-entity:" (tostring entity.id)))))))
 
         (set identity-updated-handler
             (identity-store.identity-updated:connect
@@ -719,9 +717,6 @@
         (when link-deleted-handler
             (link-store.link-entity-deleted:disconnect link-deleted-handler true)
             (set link-deleted-handler nil))
-        (when string-entity-created-handler
-            (string-store.string-entity-created:disconnect string-entity-created-handler true)
-            (set string-entity-created-handler nil))
         (when identity-updated-handler
             (identity-store.identity-updated:disconnect identity-updated-handler true)
             (set identity-updated-handler nil))
@@ -734,6 +729,9 @@
 
     (set self.drop
         (fn [_self]
+            (each [scheme _ (pairs key-loaders)]
+                (unregister-key-loader-scheme key-loaders scheme
+                                             {:owner-id (. key-loaders scheme :owner-id)}))
             (each [_ node (pairs nodes)]
                 (when node.unmount
                     (node:unmount))

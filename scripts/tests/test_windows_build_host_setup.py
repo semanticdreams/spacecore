@@ -37,8 +37,9 @@ def test_mingw_epoxy_imported_target_filters_host_include_directories() -> None:
 
 def test_windows_smoke_rg_dependency_is_installed_and_guarded() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
+    packages = read_repo_text('scripts/wine/publication_toolchain.py')
     workflows = [
-        ".github/workflows/test.yml",
+        ".github/workflows/windows.yml",
         ".github/workflows/build.yml",
     ]
 
@@ -47,7 +48,7 @@ def test_windows_smoke_rg_dependency_is_installed_and_guarded() -> None:
         assert "scripts/setup-windows-build-host.sh" in workflow
         assert "| rg " in workflow
 
-    assert "ripgrep" in setup_script
+    assert "ripgrep" in packages
     assert "command -v rg" in setup_script
     assert "Missing ripgrep after setup." in setup_script
 
@@ -55,13 +56,13 @@ def test_windows_smoke_rg_dependency_is_installed_and_guarded() -> None:
 def test_windows_build_host_installs_masm_compatible_llvm_ml() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
 
-    assert "llvm-14" in setup_script
+    assert "llvm-14" in read_repo_text('scripts/wine/publication_toolchain.py')
 
 
 def test_windows_build_host_installs_and_verifies_zip() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
 
-    assert "    zip" in setup_script
+    assert "'zip'" in read_repo_text('scripts/wine/publication_toolchain.py')
     assert "command -v zip" in setup_script
     assert "Missing zip after setup." in setup_script
 
@@ -71,7 +72,7 @@ def test_windows_build_host_installs_and_verifies_powershell_core() -> None:
 
     assert "install_powershell_core" in setup_script
     assert "packages-microsoft-prod.deb" in setup_script
-    assert "sudo apt-get install -y powershell" in setup_script
+    assert "install_host_packages powershell" in setup_script
     assert "command -v pwsh" in setup_script
     assert "PowerShell Core (pwsh) is required by vcpkg." in setup_script
 
@@ -79,9 +80,9 @@ def test_windows_build_host_installs_and_verifies_powershell_core() -> None:
 def test_windows_build_host_installs_and_verifies_autotools_for_vcpkg_ports() -> None:
     setup_script = read_repo_text("scripts/setup-windows-build-host.sh")
 
-    assert "    autoconf" in setup_script
-    assert "    automake" in setup_script
-    assert "    libtool" in setup_script
+    packages = read_repo_text('scripts/wine/publication_toolchain.py')
+    for name in ('autoconf', 'automake', 'libtool'):
+        assert repr(name) in packages
     assert "command -v autoconf" in setup_script
     assert "Missing autoconf after setup." in setup_script
 
@@ -105,29 +106,31 @@ def test_windows_build_from_linux_preflights_vcpkg_host_tools() -> None:
 
 def test_windows_under_wine_resolves_wine_command_with_fallbacks() -> None:
     wine_script = read_repo_text("scripts/test-windows-under-wine.sh")
+    runtime_script = read_repo_text("scripts/wine/prefix.py")
 
-    assert "resolve_wine_cmd()" in wine_script
-    assert "${WINE_CMD:-}" in wine_script
-    assert "command -v wine64" in wine_script
-    assert "command -v wine" in wine_script
-    assert "Missing required command: wine64 or wine" in wine_script
-    assert 'WINE_CMD="$(resolve_wine_cmd)"' in wine_script
-    assert '"${WINE_CMD}" "${CLI_EXE}" -m "${TEST_MODULE}"' in wine_script
+    assert "def resolve_wine():" in runtime_script
+    assert "os.environ.get('WINE_CMD')" in runtime_script
+    assert "shutil.which('wine64')" in runtime_script
+    assert "shutil.which('wine')" in runtime_script
+    assert "Missing required command: wine64 or wine" in runtime_script
+    assert 'scripts/wine/artifacts.py" prepare' in read_repo_text("scripts/prepare-windows-wine-runtime.sh")
+    assert 'scripts/wine/artifacts.py" fast1800' in wine_script
+    assert not (REPO_ROOT / 'scripts/wine/runtime.sh').exists()
     assert "wine64 \"${CLI_EXE}\"" not in wine_script
 
 
 def test_workflow_windows_smoke_uses_wine_fallback() -> None:
     workflow_paths = [
-        ".github/workflows/test.yml",
+        ".github/workflows/windows.yml",
         ".github/workflows/build.yml",
     ]
 
     for workflow_path in workflow_paths:
         workflow = read_repo_text(workflow_path)
-        assert "WINE_CMD=wine64" in workflow
-        assert "WINE_CMD=wine" in workflow
-        assert "Missing required command: wine64 or wine" in workflow
-        assert 'timeout 60s "${WINE_CMD}" build/windows/space-cli.exe --help >/dev/null' in workflow
+        assert "source scripts/wine/runtime.sh" not in workflow
+        assert "configure_admitted_wine_runtime" not in workflow
+        assert 'scripts/prepare-windows-wine-runtime.sh\n' in workflow
+        assert 'python3 "${ROOT_DIR}/scripts/wine/artifacts.py" smoke60' in workflow
         assert "timeout 60s wine64 build/windows/space-cli.exe --help >/dev/null" not in workflow
 
 
@@ -158,8 +161,10 @@ def test_windows_temporal_tzdata_is_bundled_and_packaged() -> None:
     assert "SPACE_WINDOWS_TZDATA_DIR" in date_cmake
     assert "Required Windows temporal tzdata file missing" in date_cmake
 
-    assert 'TZDATA_SOURCE="${ROOT_DIR}/external/date/tzdata"' in package_script
-    assert 'cp -r "${TZDATA_SOURCE}" "${DIST_DIR}/tzdata"' in package_script
+    artifacts = read_repo_text("scripts/wine/artifacts.py")
+    assert 'scripts/wine/artifacts.py" package' in package_script
+    assert 'ROOT / "external/date/tzdata"' in artifacts
+    assert 'copy_tree(tzdata, stage / "tzdata")' in artifacts
 
     assert "SPACE_TZDATA_PATH" in temporal_core
     assert "bundled Windows tzdata not found" in temporal_core
@@ -184,7 +189,7 @@ def test_windows_temporal_tzdata_is_bundled_and_packaged() -> None:
     for required_file in required_tzdata_files:
         assert (tzdata_dir / required_file).is_file()
         assert required_file in date_cmake
-        assert required_file in package_script
+        assert required_file in artifacts
         assert required_file in temporal_core
     assert (tzdata_dir / "version").read_text(encoding="utf-8").strip() == "2025b"
 

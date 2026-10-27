@@ -1,10 +1,10 @@
 (local fs (require :fs))
 (local BuildContext (require :build-context))
+(local json (require :json))
+(local process (require :process))
+(local Uuid (require :uuid))
 
 (local tests [])
-
-(var temp-counter 0)
-(local temp-root (fs.join-path "/tmp/space/tests" "string-entities"))
 
 (fn make-icons-stub []
   {:resolve (fn [_self _name]
@@ -15,20 +15,25 @@
                  :hoverables (assert app.hoverables "test requires app.hoverables")
                  :icons (make-icons-stub)}))
 
-(fn make-temp-dir []
-  (set temp-counter (+ temp-counter 1))
-  (fs.join-path temp-root (.. "entities-" (os.time) "-" temp-counter)))
+(fn create-fixture-dir! [path]
+  (if (= (string.sub package.config 1 1) "/")
+      (assert (= (. (process.run {:args ["mkdir" "-m" "700" path] :timeout 10}) :exit-code) 0)
+              "fixture directory must be exclusively created private")
+      (assert (fs.create-dir path) "fixture directory must be exclusive")))
 
 (fn with-temp-dir [f]
-  (local dir (make-temp-dir))
-  (when (fs.exists dir)
-    (fs.remove-all dir))
-  (fs.create-dirs dir)
-  (local (ok result) (pcall f dir))
+  (local dir (fs.join-path (if (= (string.sub package.config 1 1) "/") "/tmp"
+                             ((. (require :appdirs) :tmp-dir))) (.. "string-entities-" (Uuid.v4))))
+  (create-fixture-dir! dir)
+  (fn run-fixture []
+    (create-fixture-dir! (fs.join-path dir "entities"))
+    (create-fixture-dir! (fs.join-path dir "entities" "string"))
+    (f dir))
+  (local (ok result) (pcall run-fixture))
   (fs.remove-all dir)
   (if ok
       result
-      (error result)))
+      (error (if (= (type result) :table) (json.dumps result) result))))
 
 (fn with-temp-store [f]
   (with-temp-dir
@@ -229,7 +234,8 @@
       (assert node.color "should have color")
       (assert node.entity-deleted "should have entity-deleted signal")
       (assert node.get-entity "should have get-entity method")
-      (assert node.update-value "should have update-value method")
+      (assert node.read-text "should have read-text method")
+      (assert node.replace-text "should have replace-text method")
       (assert node.delete-entity "should have delete-entity method")
       (node:drop))))
 

@@ -36,7 +36,11 @@
 
 ## Errors and Platform Notes
 
-`InputDialType` expects an `InputState` userdata from `input-state`. Returned pending values are low-level integer arrays whose meaning is defined by the dial-type native implementation.
+`InputDialType(input-state)` requires a non-null native `InputState` userdata, such as `app.engine.input`. Omitting the argument or passing `nil`, a table, a scalar, or unrelated userdata raises a Lua error containing `InputDialType requires a non-null InputState userdata`.
+
+The adapter borrows the native input state; it does not take ownership or extend its lifetime. The caller must keep the `InputState` and its owner alive for the entire adapter lifetime. The argument check does not detect correctly typed userdata whose native object has already been destroyed.
+
+Returned pending values are low-level integer arrays whose meaning is defined by the dial-type native implementation.
 
 ## Related Modules
 

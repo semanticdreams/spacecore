@@ -24,7 +24,12 @@
         (local owner-context (if owner (.. " owner " (tostring owner)) ""))
         (local record-context (if change (.. " at " (diagnostic-field change :address)
                                              " (" (diagnostic-field change :path) ")") ""))
-        (error (.. context owner-context record-context ": " (tostring result))))))
+        (local message (if (= (type result) :table) (rawget result :message) result))
+        (local cause (if (= (type message) :string) message
+                        (= (type message) :number) (string.format "%.17g" message)
+                        (= (type message) :boolean) (if message "true" "false")
+                        (.. "unknown error (" (type result) ")")))
+        (error (.. context owner-context record-context ": " cause)))))
 
 ;; The journal's path is diagnostic data, never an independent IO capability.
 ;; Re-derive each address through its canonical owner on every replay.

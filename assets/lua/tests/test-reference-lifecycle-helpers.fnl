@@ -27,7 +27,10 @@
 (fn assert-error [fragment f]
   (local (ok result) (pcall f))
   (assert (not ok) (.. "expected error containing: " fragment))
-  (local message (tostring result))
+  (local raw-message (if (= (type result) :table) (rawget result :message) result))
+  (assert (or (= (type raw-message) :string) (= (type raw-message) :number)
+              (= (type raw-message) :boolean) (= raw-message nil)) "error message must be scalar")
+  (local message (tostring raw-message))
   (assert (string.find message fragment 1 true)
           (.. "expected error containing " fragment ", got: " message))
   message)
@@ -61,16 +64,28 @@
   (local GraphMap (require :graph/map))
   (local Entities (require :graph/extensions/builtins/entities))
   (local Catalog (require :entities/type-catalog))
+  (local Registry (require :graph/extension-registry))
   (local options ((require :tests/code-run-fixture-options) s))
   (each [key value (pairs (or opts {:morphs {} :entity-events? false}))]
     (tset options key value))
   (local graph (Graph options))
   (set options.entity-type-catalog (Catalog.EntityTypeCatalog {:types (Entities.entity-types)}))
   (local descriptor (. (Entities.descriptors options) 1))
-  (descriptor.install-loaders graph {:owner-id descriptor.unit-id :extension-id descriptor.id})
-  (local map (GraphMap.GraphMap {:graph graph}))
-  (local (ok result) (pcall f graph map))
-  (local (cleanup-ok cleanup-error) (pcall (fn [] (map:drop) (graph:drop))))
+  (local registry (Registry.GraphExtensionRegistry))
+  (local handle (registry:register-extension descriptor))
+  (local runtime {:graph graph})
+  (var map nil)
+  (fn run []
+    (registry:install-runtime runtime)
+    (set map (GraphMap.GraphMap {:graph graph}))
+    (f graph map))
+  (fn cleanup []
+    (when map (map:drop))
+    (registry:uninstall-runtime runtime)
+    (handle:unregister)
+    (graph:drop))
+  (local (ok result) (pcall run))
+  (local (cleanup-ok cleanup-error) (pcall cleanup))
   (if (not ok) (error result)
       (not cleanup-ok) (error cleanup-error)
       result))
@@ -83,6 +98,18 @@
   (local (ok result) (pcall f))
   (each [key _ (pairs fields)] (tset target key (. previous key)))
   (if ok result (error result)))
+
+(fn with-record-failure [store method path f]
+  (local files (assert store.files "record fault requires owning files"))
+  (local original (assert (. files method) (.. "missing record method: " method)))
+  (local target (fs.absolute path))
+  (fn reject [candidate ...]
+    (if (= (fs.absolute candidate) target)
+        (error (.. "injected permission denied: " method " " path))
+        (original candidate ...)))
+  (local fields {})
+  (tset fields method reject)
+  (with-fields files fields f))
 
 (fn cold-lifecycle [s]
   (local manager ((require :world-manager) {:root-dir (fs.join-path s.base-dir "worlds")}))
@@ -394,7 +421,8 @@
  :stores stores
  :assert-error assert-error
  :snapshot-tree snapshot-tree
- :with-fs-failure with-fs-failure
+  :with-fs-failure with-fs-failure
+  :with-record-failure with-record-failure
  :with-graph with-graph
  :with-fields with-fields
  :cold-lifecycle cold-lifecycle :with-native-world with-native-world :with-canonical-stores with-canonical-stores

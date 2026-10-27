@@ -992,9 +992,20 @@
   ;; The rule internally uses Scenarios.with-test-app;
   ;; the test must NOT double-wrap in with-test-app.
   ;; Call rule.run directly with a context that has the expected shape.
+  (local caller app)
+  (local canvas caller.canvas)
+  (local runtime caller.active-world-runtime)
+  (local registry caller.activity-registry)
+  (local lights caller.lights)
+  (local projection-factory caller.create-default-projection)
   (local result (rule.run {:target {:kind :repo :name :test}
-                           :facts (make-fact-db [])
-                           :files []}))
+                            :facts (make-fact-db [])
+                            :files []}))
+  (assert (= app caller) "routing scenario restores the borrowed caller")
+  (assert (and (= caller.canvas canvas) (= caller.active-world-runtime runtime)
+               (= caller.activity-registry registry) (= caller.lights lights)
+               (= caller.create-default-projection projection-factory))
+          "routing scenario owns its shell, registry, lights and projection factory")
   ;; The real scenario should pass (nil) when the sandbox activation works correctly.
   (assert (= result nil) (.. "expected scenario to pass (nil), got diagnostics count: " (if result (length result) 0))))
 

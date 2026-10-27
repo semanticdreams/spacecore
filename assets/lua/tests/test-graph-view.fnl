@@ -156,7 +156,7 @@
     graph)
 
 (fn make-test-graph []
-    (local graph (Graph {:with-start false}))
+    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
     (local original-has-key-loader graph.has-key-loader-for-key)
     (set graph.has-key-loader-for-key
          (fn [self key]
@@ -167,7 +167,7 @@
 (fn make-test-graph-map [opts]
     (local options (if opts opts {}))
     (local graph (make-test-graph))
-    (GraphMap.GraphMap {:graph graph :id (if options.id options.id "main")}))
+    (BuiltinGraphTestHelpers.make-graph-map graph options))
 (var temp-counter 0)
 (local temp-root (fs.join-path "/tmp/space/tests" "graph-fs-node-tmp"))
 (fn make-temp-dir []
@@ -454,7 +454,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {}))
             (local start ((require :graph/nodes/start))) (graph:add-node start {:auto-focus? true})
             (local builder (start.view start))
             (local view (builder ctx))
@@ -485,7 +485,7 @@
                     (fs.write-file cpp-file "#include \"sub/dep.h\"\n")
                     (fs.write-file txt-file "skip")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (CodeDirNode {:path root :root root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local builder (node.view node))
@@ -532,7 +532,7 @@
                 (fn [root]
                     (local child-dir (fs.join-path root "sub"))
                     (fs.create-dirs child-dir)
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (FsNode {:path root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local actions (node:actions))
@@ -556,7 +556,7 @@
                 (fn [root]
                     (local path (fs.join-path root "main.fnl"))
                     (fs.write-file path "(local x 1)\n")
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (FsNode {:path path}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local actions (node:actions))
@@ -580,7 +580,7 @@
                 (fn [root]
                     (local fnl-file (fs.join-path root "main.fnl"))
                     (fs.write-file fnl-file "(local x 1)\n")
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local builtins (BuiltinGraphTestHelpers.install-builtins! graph {}))
                     (local graph-map (GraphMap.GraphMap {:graph graph :id "code-actions"}))
                     (local dir-key (.. "fs:" (fs.absolute root)))
@@ -623,7 +623,7 @@
                     (fs.write-file main-file "(local dep (require :sub/dep))\n")
                     (fs.write-file dep-file "(local x 1)\n")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (FnlModuleNode {:path main-file :lua-root root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local actions (node:actions))
@@ -658,7 +658,7 @@
                     (fs.write-file main-file "#include \"sub/dep.h\"\n")
                     (fs.write-file dep-file "#pragma once\n")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local code-dir (CodeDirNode {:path root :root root}))
                     (graph:add-node code-dir {:position (glm.vec3 0 0 0)})
                     (local code-dir-view ((code-dir.view code-dir) ctx))
@@ -703,7 +703,7 @@
                     (fs.write-file path "See [README](../README.md)\n")
                     (fs.write-file (fs.join-path root "README.md") "# title\n")
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local node (TextModuleNode {:path path :project-root root}))
                     (graph:add-node node {:position (glm.vec3 0 0 0)})
                     (local view ((node.view node) ctx))
@@ -773,7 +773,7 @@
             (with-temp-dir
                 (fn [root]
                     (local ctx (make-ctx))
-                    (local graph (Graph {:with-start false}))
+                    (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (local child-dir (fs.join-path root "child"))
                     (local file (fs.join-path root "note.txt"))
                     (fs.create-dirs child-dir)
@@ -842,7 +842,7 @@
                         (fn []
                           (local ctx (make-ctx))
                           (set ctx.panel-target panel-target)
-                          (local graph (Graph {:with-start false}))
+                          (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                           (local node (FsNode {:path root}))
                           (graph:add-node node {:position (glm.vec3 0 0 0)})
                           (local builder (node.view node))
@@ -895,7 +895,7 @@
           (fn []
             (local ctx (make-ctx))
             (set ctx.panel-target panel-target)
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local conversation (LlmConversationNode {}))
             (graph:add-node conversation {:position (glm.vec3 0 0 0)})
             (local builder (conversation.view conversation))
@@ -928,7 +928,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local target {:one 1 :nested {:two 2}})
             (local node (TableNode {:table target
                                     :label "root"
@@ -967,7 +967,7 @@
             (local selector (ObjectSelector {:project (fn [position _opts] position)
                                              :ctx ctx
                                              :enabled? true}))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["a" "b" "c"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-remove-selected"}))
             (local view (GraphView {:graph-map map
@@ -1060,7 +1060,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local conversation (LlmConversationNode {}))
             (graph:add-node conversation {:position (glm.vec3 0 0 0)})
             (local builder (conversation.view conversation))
@@ -1082,7 +1082,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local node (LlmMessageNode {:key "llm-message:test"
                                          :role "assistant"
                                          :content "Hello"
@@ -1113,7 +1113,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local node (LlmNode))
             (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local builder (node.view node))
@@ -1134,7 +1134,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local node (LlmConversationsNode {}))
             (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local builder (node.view node))
@@ -1603,7 +1603,7 @@
                                                                                  :position [50 60 0]
                                                                                  :size [400 300 0]})
                                                            captured-state)})
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["panel-swap"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-panel-placement"}))
             (local first (Graph.GraphNode {:key "panel-swap"
@@ -1858,7 +1858,7 @@
                            :remove-panel-child (fn [_self _element] nil)})
             (local ctx (make-ctx))
             (var view nil)
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["header-button-test"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-header-buttons"}))
             (var opened? false)
@@ -1973,7 +1973,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (register-graph-map-test-loaders graph ["menu-node"])
             (local map (GraphMap.GraphMap {:graph graph :id "test-menu"}))
             (var opened nil)
@@ -2093,7 +2093,7 @@
                                                  (for [i (length self.children) 1 -1]
                                                      (when (= (. self.children i) element)
                                                          (table.remove self.children i))))})
-            (local graph (Graph {}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {}))
             (local node ((require :graph/nodes/start))) (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local views (GraphViewNodeViews {:ctx ctx
                                               :view-target target}))
@@ -2346,27 +2346,71 @@
             (set app.terrain-rect-pick-session original-terrain-rect-pick-session))))
 
 
-(fn graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick [] (assert app.clickables "heightfield clickables test requires app.clickables") (assert app.hoverables "heightfield clickables test requires app.hoverables")
-    (with-temp-data-dir
-        (fn [_root]
+(local (graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick
+        graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick)
+  (do
+    ;; Keep this fixture local to the two terrain cases: the module is at Lua's
+    ;; top-level local-variable ceiling. Cleanup must also run on failed assertions.
+    (fn with-terrain-pick-fixture [engine-events? body]
+      (assert app.clickables "terrain pick fixture requires app.clickables")
+      (assert app.hoverables "terrain pick fixture requires app.hoverables")
+      (local saved
+        (icollect [_ key (ipairs [:hud :scene :clickables :hoverables :intersectables
+                                  :screen-pos-ray :movables :resizables :first-person-controls
+                                  :states :terrain-rect-pick-session])]
+          {:key key :value (. app key)}))
+      (local original-states app.states)
+      (var suspended-state nil)
+      (local cleanup [])
+      (local errors [])
+      (fn defer! [f] (table.insert cleanup f))
+      (fn attempt [f]
+        (local (ok err) (pcall f))
+        (when (not ok) (table.insert errors (tostring err))))
+      (fn install-states! []
+        (local states ((require :states)))
+        (defer! (fn [] (states:drop)))
+        (states:add-state :normal (if engine-events? ((require :normal-state)) {}))
+        (states:add-state :terrain-rect-pick ((require :terrain-rect-pick-state)))
+        (set-app-states! states)
+        (states:set-state :normal))
+      (fn run []
+        ;; Leave the old state while its original services are still installed.
+        (set suspended-state (TestSupport.suspend-active-state original-states))
+        (set app.intersectables (Intersectables))
+        (set app.clickables ((require :clickables) {:intersectables app.intersectables}))
+        (set app.hoverables ((require :hoverables) {:intersectables app.intersectables}))
+        (assert app.clickables "terrain pick fixture must install clickables")
+        (assert app.hoverables "terrain pick fixture must install hoverables")
+        (set app.screen-pos-ray
+             (fn [pointer]
+               {:origin (glm.vec3 (or pointer.x 0) (or pointer.y 0) 10)
+                :direction (glm.vec3 0 0 -1)}))
+        (set app.movables {:on-mouse-button-down (fn [_self _payload] nil)
+                           :on-mouse-button-up (fn [_self _payload] nil)
+                           :on-mouse-motion (fn [_self _payload] nil)
+                           :drag-active? (fn [_self] false)})
+        (set app.resizables {:on-mouse-button-down (fn [_self _payload] false)
+                             :on-mouse-button-up (fn [_self _payload] nil)
+                             :on-mouse-motion (fn [_self _payload] nil)
+                             :drag-active? (fn [_self] false)})
+        (set app.first-person-controls {:on-mouse-button-down (fn [_self _payload] nil)
+                                        :on-mouse-button-up (fn [_self _payload] nil)
+                                        :on-mouse-motion (fn [_self _payload] nil)
+                                        :drag-active? (fn [_self] false)})
+        (body {:defer! defer! :install-states! install-states!}))
+      (attempt run)
+      (for [i (length cleanup) 1 -1] (attempt (. cleanup i)))
+      ;; Restore nil slots, the manager host, and services before re-entering the
+      ;; original state. A cleanup error must not strand the surrounding app.
+      (each [_ entry (ipairs saved)] (set (. app entry.key) entry.value))
+      (StateSystemBindings.bind-states-host original-states)
+      (attempt (fn [] (TestSupport.resume-active-state suspended-state)))
+      (when (> (length errors) 0) (error (table.concat errors "\n"))))
+
+    (fn clickables-pick-body [fixture]
             (local {:HeightfieldPerlinToolNode HeightfieldPerlinToolNode}
                    (require :graph/nodes/heightfield-perlin-tool))
-            (local States (require :states))
-            (local TerrainRectPickState (require :terrain-rect-pick-state))
-            (local Clickables (require :clickables))
-            (local Hoverables (require :hoverables))
-            (local original-hud app.hud)
-            (local original-scene app.scene)
-            (local original-clickables (assert app.clickables "heightfield clickables test requires app.clickables"))
-            (local original-hoverables (assert app.hoverables "heightfield clickables test requires app.hoverables"))
-            (local original-intersectables app.intersectables)
-            (local original-screen-pos-ray app.screen-pos-ray)
-            (local original-movables app.movables)
-            (local original-resizables app.resizables)
-            (local original-fpc app.first-person-controls)
-            (local original-terrain-rect-pick-session app.terrain-rect-pick-session)
-            (local original-states app.states)
-            (var suspended-state nil)
             (local terrain-record (make-heightfield-terrain-record))
             (local scene
               {:screen-pos-terrain-domain-hit
@@ -2398,25 +2442,6 @@
                                                             :terrains [terrain-record]}
                                                     :hud {:panels []}}}))
             (local manager (make-world-manager {:entry entry}))
-            (set app.intersectables (Intersectables))
-            (set app.clickables (Clickables {:intersectables app.intersectables}))
-            (set app.hoverables (Hoverables {:intersectables app.intersectables}))
-            (set app.screen-pos-ray
-                 (fn [pointer]
-                     {:origin (glm.vec3 (or pointer.x 0) (or pointer.y 0) 10)
-                      :direction (glm.vec3 0 0 -1)}))
-            (set app.movables {:on-mouse-button-down (fn [_self _payload] nil)
-                               :on-mouse-button-up (fn [_self _payload] nil)
-                               :on-mouse-motion (fn [_self _payload] nil)
-                               :drag-active? (fn [_self] false)})
-            (set app.resizables {:on-mouse-button-down (fn [_self _payload] false)
-                                 :on-mouse-button-up (fn [_self _payload] nil)
-                                 :on-mouse-motion (fn [_self _payload] nil)
-                                 :drag-active? (fn [_self] false)})
-            (set app.first-person-controls {:on-mouse-button-down (fn [_self _payload] nil)
-                                            :on-mouse-button-up (fn [_self _payload] nil)
-                                            :on-mouse-motion (fn [_self _payload] nil)
-                                            :drag-active? (fn [_self] false)})
             (local ctx (make-ctx))
             (local target {:build-context ctx
                            :world-units-per-pixel 1
@@ -2433,13 +2458,9 @@
                                                          (table.remove self.children i))))})
             (set app.hud target)
             (set app.scene scene)
-            (local states (States))
-            (states:add-state :normal {})
-            (states:add-state :terrain-rect-pick (TerrainRectPickState))
-            (states:set-state :normal)
-            (set suspended-state (TestSupport.suspend-active-state original-states))
-            (set-app-states! states)
+            (fixture.install-states!)
             (local graph (make-test-graph-map))
+            (fixture.defer! (fn [] (graph:drop)))
             (local node (HeightfieldPerlinToolNode {:world-id "world-a"
                                                     :activity-id "sandbox"
                                                     :world-manager manager
@@ -2448,6 +2469,7 @@
             (local views (GraphViewNodeViews {:graph-map graph
                                               :ctx ctx
                                               :view-target target}))
+            (fixture.defer! (fn [] (views:drop-all)))
             (views:open node)
             (local dialog (. target.children 1))
             (local body-card (unwrap-element (. dialog.children 2)))
@@ -2456,6 +2478,7 @@
             (local button tool-view.pick-button)
             (assert button "Expected terrain tool pick button")
             (local original-intersect button.intersect)
+            (fixture.defer! (fn [] (set button.intersect original-intersect)))
             (set button.intersect
                  (fn [_self _ray]
                      (values true (glm.vec3 0 0 0) 0.0)))
@@ -2476,46 +2499,18 @@
             (assert (= picked-target.x1 3))
             (assert (= picked-target.z1 4))
             (assert-codepoints-eq (tool-view.selection-label:get-codepoints)
-                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]"))
-            (set button.intersect original-intersect)
-            (views:drop-all)
-            (graph:drop)
-            (set app.hud original-hud)
-            (set app.scene original-scene)
-            (set app.clickables original-clickables)
-            (set app.hoverables original-hoverables)
-            (set app.intersectables original-intersectables)
-            (set app.screen-pos-ray original-screen-pos-ray)
-            (set app.movables original-movables)
-            (set app.resizables original-resizables)
-            (set app.first-person-controls original-fpc)
-            (set-app-states! original-states)
-            (TestSupport.resume-active-state suspended-state)
-            (set app.terrain-rect-pick-session original-terrain-rect-pick-session))))
+                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]")))
 
-
-(fn graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick [] (assert app.clickables "heightfield engine-events test requires app.clickables") (assert app.hoverables "heightfield engine-events test requires app.hoverables")
-    (with-temp-data-dir
+    (fn graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick []
+      (with-temp-data-dir
         (fn [_root]
+          (assert app.clickables "heightfield clickables test requires app.clickables")
+          (assert app.hoverables "heightfield clickables test requires app.hoverables")
+          (with-terrain-pick-fixture false clickables-pick-body))))
+
+    (fn engine-events-pick-body [fixture]
             (local {:HeightfieldPerlinToolNode HeightfieldPerlinToolNode}
                    (require :graph/nodes/heightfield-perlin-tool))
-            (local States (require :states))
-            (local TerrainRectPickState (require :terrain-rect-pick-state))
-            (local NormalState (require :normal-state))
-            (local Clickables (require :clickables))
-            (local Hoverables (require :hoverables))
-            (local original-hud app.hud)
-            (local original-scene app.scene)
-            (local original-clickables (assert app.clickables "heightfield engine-events test requires app.clickables"))
-            (local original-hoverables (assert app.hoverables "heightfield engine-events test requires app.hoverables"))
-            (local original-intersectables app.intersectables)
-            (local original-screen-pos-ray app.screen-pos-ray)
-            (local original-movables app.movables)
-            (local original-resizables app.resizables)
-            (local original-fpc app.first-person-controls)
-            (local original-terrain-rect-pick-session app.terrain-rect-pick-session)
-            (local original-states app.states)
-            (var suspended-state nil)
             (local terrain-record (make-heightfield-terrain-record))
             (local scene
               {:screen-pos-terrain-domain-hit
@@ -2547,25 +2542,6 @@
                                                             :terrains [terrain-record]}
                                                     :hud {:panels []}}}))
             (local manager (make-world-manager {:entry entry}))
-            (set app.intersectables (Intersectables))
-            (set app.clickables (Clickables {:intersectables app.intersectables}))
-            (set app.hoverables (Hoverables {:intersectables app.intersectables}))
-            (set app.screen-pos-ray
-                 (fn [pointer]
-                     {:origin (glm.vec3 (or pointer.x 0) (or pointer.y 0) 10)
-                      :direction (glm.vec3 0 0 -1)}))
-            (set app.movables {:on-mouse-button-down (fn [_self _payload] nil)
-                               :on-mouse-button-up (fn [_self _payload] nil)
-                               :on-mouse-motion (fn [_self _payload] nil)
-                               :drag-active? (fn [_self] false)})
-            (set app.resizables {:on-mouse-button-down (fn [_self _payload] false)
-                                 :on-mouse-button-up (fn [_self _payload] nil)
-                                 :on-mouse-motion (fn [_self _payload] nil)
-                                 :drag-active? (fn [_self] false)})
-            (set app.first-person-controls {:on-mouse-button-down (fn [_self _payload] nil)
-                                            :on-mouse-button-up (fn [_self _payload] nil)
-                                            :on-mouse-motion (fn [_self _payload] nil)
-                                            :drag-active? (fn [_self] false)})
             (local ctx (make-ctx))
             (local target {:build-context ctx
                            :world-units-per-pixel 1
@@ -2582,13 +2558,9 @@
                                                          (table.remove self.children i))))})
             (set app.hud target)
             (set app.scene scene)
-            (local states (States))
-            (states:add-state :normal (NormalState))
-            (states:add-state :terrain-rect-pick (TerrainRectPickState))
-            (states:set-state :normal)
-            (set suspended-state (TestSupport.suspend-active-state original-states))
-            (set-app-states! states)
+            (fixture.install-states!)
             (local graph (make-test-graph-map))
+            (fixture.defer! (fn [] (graph:drop)))
             (local node (HeightfieldPerlinToolNode {:world-id "world-a"
                                                     :activity-id "sandbox"
                                                     :world-manager manager
@@ -2597,6 +2569,7 @@
             (local views (GraphViewNodeViews {:graph-map graph
                                               :ctx ctx
                                               :view-target target}))
+            (fixture.defer! (fn [] (views:drop-all)))
             (views:open node)
             (local dialog (. target.children 1))
             (local body-card (unwrap-element (. dialog.children 2)))
@@ -2605,6 +2578,7 @@
             (local button tool-view.pick-button)
             (assert button "Expected terrain tool pick button")
             (local original-intersect button.intersect)
+            (fixture.defer! (fn [] (set button.intersect original-intersect)))
             (set button.intersect
                  (fn [_self _ray]
                      (values true (glm.vec3 0 0 0) 0.0)))
@@ -2625,22 +2599,44 @@
             (assert (= picked-target.x1 3))
             (assert (= picked-target.z1 4))
             (assert-codepoints-eq (tool-view.selection-label:get-codepoints)
-                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]"))
-            (set button.intersect original-intersect)
-            (views:drop-all)
-            (graph:drop)
-            (set app.hud original-hud)
-            (set app.scene original-scene)
-            (set app.clickables original-clickables)
-            (set app.hoverables original-hoverables)
-            (set app.intersectables original-intersectables)
-            (set app.screen-pos-ray original-screen-pos-ray)
-            (set app.movables original-movables)
-            (set app.resizables original-resizables)
-            (set app.first-person-controls original-fpc)
-            (set-app-states! original-states)
-            (TestSupport.resume-active-state suspended-state)
-            (set app.terrain-rect-pick-session original-terrain-rect-pick-session))))
+                                  (TextUtils.codepoints-from-text "12 samples across [1, 2] to [3, 4]")))
+
+    (fn graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick []
+      (with-temp-data-dir
+        (fn [_root]
+          (assert app.clickables "heightfield engine-events test requires app.clickables")
+          (assert app.hoverables "heightfield engine-events test requires app.hoverables")
+          (with-terrain-pick-fixture true engine-events-pick-body))))
+
+    (fn assert-terrain-fixture-cleanup [engine-events?]
+      (local saved
+        (icollect [_ key (ipairs [:hud :scene :clickables :hoverables :intersectables
+                                  :screen-pos-ray :movables :resizables :first-person-controls
+                                  :states :terrain-rect-pick-session])]
+          {:key key :value (. app key)}))
+      (var cleanup-ran? false)
+      (fn fail-body [fixture]
+        (fixture.install-states!)
+        (fixture.defer! (fn [] (set cleanup-ran? true)))
+        (fixture.defer! (fn [] (error "terrain fixture cleanup sentinel")))
+        (assert false "terrain fixture assertion sentinel"))
+      (local (ok err) (pcall with-terrain-pick-fixture engine-events? fail-body))
+      (assert (not ok) "Fixture must rethrow assertion failures")
+      (assert (string.find (tostring err) "terrain fixture assertion sentinel" 1 true))
+      (assert (string.find (tostring err) "terrain fixture cleanup sentinel" 1 true)
+              "Cleanup errors must remain visible alongside the assertion")
+      (assert cleanup-ran? "A failing cleanup must not prevent remaining cleanup")
+      (each [_ entry (ipairs saved)]
+        (assert (= (. app entry.key) entry.value) (.. "Terrain fixture leaked " entry.key))))
+
+    (table.insert tests
+      {:name "GraphView terrain pick fixtures restore services and states after assertion and cleanup failures"
+       :fn (fn []
+             (assert-terrain-fixture-cleanup false)
+             (assert-terrain-fixture-cleanup true))})
+
+    (values graph-view-node-views-clickables-drive-heightfield-perlin-tool-pick
+            graph-view-node-views-engine-events-drive-heightfield-perlin-tool-pick)))
 
 (fn graph-layout-module-updates-lines-and-labels []
     (with-temp-data-dir
@@ -3403,7 +3399,7 @@
     (with-temp-data-dir
         (fn [_root]
             (local ctx (make-ctx))
-            (local graph (Graph {:with-start false}))
+            (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
             (local (ok err) (pcall (fn [] (GraphView {:graph graph :ctx ctx}))))
             (assert (not ok) "GraphView should reject :graph without :graph-map")
             (assert (string.find (tostring err) "GraphView requires :graph-map" 1 true)
@@ -3641,7 +3637,7 @@
             (view:drop)
             (graph:drop))))
 
-(table.insert tests {:name "GraphView draws triangle edge between nodes" :fn edge-produces-triangles})
+(table.insert tests {:name "GraphView draws triangle edge between nodes" :fn (BuiltinGraphTestHelpers.ordered-fixtures edge-produces-triangles start-node-view-adds-quit-node)})
 (table.insert tests {:name "Start node view adds quit node edge" :fn start-node-view-adds-quit-node})
 (table.insert tests {:name "Start node view adds fs node edge" :fn start-node-view-adds-fs-node})
 (table.insert tests {:name "Start node view adds table node edge" :fn start-node-view-adds-table-node})
@@ -4247,7 +4243,7 @@
                 (pcall
                   (fn []
                     (local ctx (make-ctx))
-                    (set graph (Graph {:with-start false}))
+                    (set graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
                     (set graph-map (GraphMap.GraphMap {:graph graph :id "receiver-map"}))
                     (set view (GraphView {:graph-map graph-map :ctx ctx}))
                     (local state {:extra_panels [{:kind "llm-conversation-messages-view-dialog"
@@ -4405,7 +4401,7 @@
       (local path (fs.join-path root "main.fnl"))
       (fs.write-file path "(local x 1)\n")
       (local ctx (make-ctx))
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local node (FsNode {:path path}))
       (set node.list-directory
            (fn [_self _path]
@@ -4433,7 +4429,7 @@
       (local ExternalEditor (require :external-editor))
       (local path (fs.join-path root "main.fnl"))
       (fs.write-file path "(local x 1)\n")
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local node (FsNode {:path path}))
       (graph:add-node node {:position (glm.vec3 0 0 0)})
       (local interaction (find-search-row (node:emit-items) "Edit externally"))
@@ -4464,7 +4460,7 @@
     (fn [root]
       (local path (fs.join-path root "note.md"))
       (fs.write-file path "# hello\n")
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local node (FsNode {:path path}))
       (graph:add-node node {:position (glm.vec3 0 0 0)})
       (local interaction (find-search-row (node:emit-items) "View text"))
@@ -4486,7 +4482,7 @@
   (var graph nil)
   (local (ok err) (pcall (fn []
     (fs.create-dirs relative-parent) (fs.write-file absolute-path "# relative viewer\n")
-    (set graph (Graph {:with-start false})) (local node (FsNode {:path relative-path})) (graph:add-node node {:position (glm.vec3 0 0 0)})
+    (set graph (BuiltinGraphTestHelpers.make-graph {:with-start false})) (local node (FsNode {:path relative-path})) (graph:add-node node {:position (glm.vec3 0 0 0)})
     (local interaction (find-search-row (node:emit-items) "View text"))
     (assert interaction "Relative text file should expose View text interaction")
     (assert (= interaction.path absolute-path) "File interaction path should be absolute")
@@ -4499,7 +4495,7 @@
 (fn fs-node-module-interactions-preserve-key-formats []
   (with-fs-interaction-test-dir
     (fn [root]
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local file-cases
         [{:name "main.fnl"
           :label "Open as Fennel Module"
@@ -4530,7 +4526,7 @@
 (fn fs-node-uppercase-module-interactions-restore-through-key-loaders []
   (with-fs-interaction-test-dir
       (fn [root]
-      (local source-graph (Graph {:with-start false}))
+      (local source-graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local source-builtins (BuiltinGraphTestHelpers.install-builtins! source-graph {}))
       (local file-cases
         [{:name "MAIN.FNL"
@@ -4553,7 +4549,7 @@
         (assert (source-graph:lookup module-key)
                 (.. file-case.name " should add module node before persistence")))
       (local state (source-graph:capture-state))
-      (local restored-graph (Graph {:with-start false}))
+      (local restored-graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (local restored-builtins (BuiltinGraphTestHelpers.install-builtins! restored-graph {}))
       (restored-graph:restore-state state)
       (each [_ file-case (ipairs file-cases)]
@@ -4577,7 +4573,7 @@
     (pcall
       (fn []
         (when (fs.exists absolute-root) (fs.remove-all absolute-root)) (fs.create-dirs absolute-root) (fs.write-file (fs.join-path absolute-root "child.txt") "hello")
-        (set graph (Graph {:with-start false})) (local node (FsNode {:path relative-root})) (graph:add-node node {:position (glm.vec3 0 0 0)})
+        (set graph (BuiltinGraphTestHelpers.make-graph {:with-start false})) (local node (FsNode {:path relative-root})) (graph:add-node node {:position (glm.vec3 0 0 0)})
         (local entry (find-search-row (node:emit-items) "child.txt"))
         (assert entry "Relative directory should list child file")
         (assert (not (= entry.path (fs.absolute expected-child-path))) "Directory entry path should remain relative by raw comparison") (assert (paths-eq entry.path expected-child-path) "Directory entry path should match expected relative child path") (assert (= entry.path expected-child-path) "Directory entry path should preserve relative parent style")
@@ -4592,7 +4588,7 @@
     (fn [root]
       (local node (FsNode {:path root}))
       (local fallback-ctx (make-ctx))
-      (local graph (Graph {:with-start false}))
+      (local graph (BuiltinGraphTestHelpers.make-graph {:with-start false}))
       (set graph.ctx fallback-ctx)
       (graph:add-node node {:position (glm.vec3 0 0 0)})
       (local builder (node.view node))

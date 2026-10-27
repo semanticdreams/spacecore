@@ -530,6 +530,7 @@
 
 (local J (require :json-utils))
 (local json (require :json))
+(local PreviewIO (require :tests/notebook-preview-io))
 (local preview-keys ["identity:z" "identity:a"])
 
 (fn own-preview-resource [unit group resource first?]
@@ -567,7 +568,7 @@
           (.. "expected " (J.stable-json expected) ", got " (J.stable-json actual))))
 
 (fn reset-preview-observation [f]
-  (set f.writes 0) (set f.signals {}) (set f.calls []))
+  (set f.writes 0) (set f.signals {}) (set f.calls []) (set f.replacement-result nil))
 
 (fn preview-child [widget index] (. widget.children index :element))
 (fn notebook-row [f index] (assert (. f.view.list.item-widgets index) "expected actual notebook row"))
@@ -619,17 +620,6 @@
   (table.insert f.targets target)
   f.view)
 
-(fn preview-observed-methods [f store methods]
-  (local out {})
-  (each [_ method (ipairs methods)]
-    (local original (. store method))
-    (fn operation [self ...]
-      (table.insert f.calls {:store store.base-dir :method method
-                            :args (json.loads (J.stable-json [...]))})
-      (original self ...))
-    (tset out method operation))
-  out)
-
 (fn preview-subscription [f signal label]
   (assert signal "notebook preview observations require native owning signal")
   (fn handler [_]
@@ -648,15 +638,7 @@
     [f.stores.list-store.list-entity-updated :list-updated]
     [f.stores.list-store.list-entity-items-changed :list-items]])]
     (table.insert subscriptions (preview-subscription f (. pair 1) (. pair 2))))
-  (local original fs.write-file)
-  (fn write [path bytes]
-    (when (= (string.sub path 1 (# f.root)) f.root) (set f.writes (+ f.writes 1)))
-    (original path bytes))
-  (fn run [] (body f))
-  (fn content [] (H.with-fields f.content (preview-observed-methods f f.content [:update-entity]) run))
-  (fn notebook [] (H.with-fields f.store
-    (preview-observed-methods f f.store [:update-notebook :add-item :remove-item :move-item]) content))
-  (local (ok result) (pcall H.with-fields fs {:write-file write} notebook))
+  (local (ok result) (pcall PreviewIO.with-observations f body))
   (each [_ pair (ipairs subscriptions)]
     (local signal (. pair 1)) (signal:disconnect (. pair 2) true))
   (local (drop-ok drop-error) (pcall drop-preview-resources [f.screen.targets f.screen.domain]))
@@ -791,7 +773,10 @@
   (assert (not ok) "initial notebook open must propagate its error")
   (when expected
     (if (= (type expected) :table) (assert (= result expected) "original initial-open exception identity")
-        (assert (string.find (tostring result) expected 1 true))))
+        (do
+          (local message (if (= (type result) :table) (rawget result :message) result))
+          (assert (and (= (type message) :string) (string.find message expected 1 true))
+                  "original initial-open diagnostic must propagate"))))
   (same-preview-value (notebook-open-baseline f) before)
   (local target (. f.screen.targets (# f.screen.targets) :resource))
   (assert (= (# (target:get-text-ssbo-draw-list)) 0) "failed initial open must release native text")
@@ -887,6 +872,7 @@
   (open-notebook-preview f) (reset-preview-observation f)
   (local original (json.loads (fs.read-file f.path)))
   (local content-before (. (f.content:snapshot-entity "s") :value))
+  (local before-revision (assert content-before.revision "edit requires the pre-edit owning revision"))
   (local decoy-before (H.snapshot-tree f.decoy.base-dir))
   (local author-before (H.snapshot-tree f.author.base-dir))
   (f.view.name-input:set-text "Renamed metadata")
@@ -894,11 +880,17 @@
   (input:set-text "Edited concrete value")
   (same-preview-value f.calls
     [{:store f.store.base-dir :method :update-notebook :args ["n" {:name "Renamed metadata"}]}
-     {:store f.content.base-dir :method :update-entity :args ["s" {:value "Edited concrete value"}]}])
+     {:store f.content.base-dir :method :replace-text :args ["s" "Edited concrete value" before-revision]}])
   (set original.name "Renamed metadata") (set original.updated-at f.record.updated-at)
   (same-preview-value f.record original)
   (set content-before.value "Edited concrete value") (set content-before.updated-at f.held.updated-at)
+  (local saved (assert f.replacement-result "actual owning replacement result required"))
+  (assert (and (= (type saved.revision) :string) (> (# saved.revision) 0)
+               (not (= saved.revision before-revision))) "successful edit must return a fresh revision")
+  (same-preview-value saved {:id "s" :value "Edited concrete value" :revision f.held.revision})
+  (set content-before.revision saved.revision)
   (same-preview-value f.held content-before)
+  (same-preview-value (. (f.content:snapshot-entity "s") :value) content-before)
   (same-preview-value (H.snapshot-tree f.decoy.base-dir) decoy-before)
   (same-preview-value (H.snapshot-tree f.author.base-dir) author-before)
   (assert-preview-membership f preview-keys)
@@ -1055,11 +1047,11 @@
   (historical-notebook-items f ["string-entity:t"])
   (local content-path (. (f.content:snapshot-entity "t") :path))
   (tset f.content.cache "t" nil)
-  (fn read-error [] (H.with-fs-failure :read-file content-path refresh))
-  (H.assert-error "injected permission denied" read-error)
-  (fn read-open [] (H.with-fs-failure :read-file content-path
+  (fn read-error [] (H.assert-error "injected permission denied" refresh))
+  (PreviewIO.with-denied-read f.content content-path read-error)
+  (fn read-open [] (assert-failed-notebook-open f "injected permission denied"
     (fn opening [] (open-notebook-preview f))))
-  (assert-failed-notebook-open f "injected permission denied" read-open))
+  (PreviewIO.with-denied-read f.content content-path read-open))
 
 (fn notebook-preview-teardown [f]
   (local adapter (f.graph:load-by-key "string-entity:s"))

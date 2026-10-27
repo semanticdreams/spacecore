@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
@@ -16,6 +17,7 @@
 #endif
 
 #include "paths.h"
+#include "record_publication.h"
 
 namespace fs = std::filesystem;
 
@@ -687,8 +689,7 @@ sol::table fs_file_token(sol::this_state ts, const std::string& path)
     return build_file_token_table(lua, fs::path(path));
 }
 
-sol::table fs_list_dir(sol::this_state ts, const std::string& path, sol::optional<bool> include_hidden_opt,
-                       sol::optional<bool> strict_opt)
+sol::table fs_list_dir(sol::this_state ts, const std::string& path, sol::optional<bool> include_hidden_opt)
 {
     sol::state_view lua(ts);
     sol::table items = lua.create_table();
@@ -696,8 +697,7 @@ sol::table fs_list_dir(sol::this_state ts, const std::string& path, sol::optiona
     bool include_hidden = include_hidden_opt.value_or(true);
 
     std::error_code ec;
-    fs::directory_options options = strict_opt.value_or(false)
-        ? fs::directory_options::none : fs::directory_options::skip_permission_denied;
+    fs::directory_options options = fs::directory_options::none;
     fs::directory_iterator it(path.empty() ? fs::path(".") : fs::path(path), options, ec);
     throw_with_message("fs.list_dir", ec);
 
@@ -884,6 +884,52 @@ void fs_append_file(const std::string& path, const std::string& contents)
         throw sol::error("fs.append_file: unable to append " + path);
     }
     file << contents;
+}
+
+sol::table fs_publish_record(sol::this_state ts,
+                              const std::string& path,
+                              const std::string& expected_bytes,
+                              sol::optional<sol::object> opts)
+{
+    record_publication::Hooks hooks;
+    if (opts) {
+        if (opts->get_type() != sol::type::table)
+            throw sol::error("fs.publish-record: options must be a table");
+        const sol::table options = opts->as<sol::table>();
+        for (const auto& entry : options) {
+            if (entry.first.get_type() != sol::type::string || entry.second.get_type() != sol::type::function) {
+                throw sol::error("fs.publish-record: options must be named phase functions");
+            }
+            const auto name = entry.first.as<std::string>();
+            const auto callback = entry.second.as<sol::protected_function>();
+            const auto hook = [callback, name]() mutable {
+                sol::protected_function_result result = callback();
+                if (!result.valid()) {
+                    const sol::error error = result;
+                    throw std::runtime_error(error.what());
+                }
+                if (result.return_count() != 1 || result.get_type() != sol::type::boolean
+                    || !result.get<bool>()) {
+                    throw std::runtime_error("fs.publish-record: " + name + " must return true");
+                }
+            };
+            if (name == "test-before-write") hooks.before_write = hook;
+            else if (name == "test-before-security") hooks.before_security = hook;
+            else if (name == "test-before-commit") hooks.before_commit = hook;
+            else if (name == "test-before-cleanup") hooks.before_cleanup = hook;
+            else throw sol::error("fs.publish-record: unknown option " + name);
+        }
+    }
+    sol::state_view lua(ts);
+    // Allocate the ordinary success envelope and its hash slots before the
+    // irreversible native operation. There is no postcommit token/stat query.
+    sol::table envelope = lua.create_table(0, 2);
+    envelope["committed"] = true;
+    envelope["cleanup-error"] = std::string();
+    const auto result = record_publication::publish(path, expected_bytes, hooks);
+    if (result.cleanup_error) envelope["cleanup-error"] = *result.cleanup_error;
+    else envelope["cleanup-error"] = sol::lua_nil;
+    return envelope;
 }
 
 sol::table fs_atomic_replace_if_current(sol::this_state ts,
@@ -1157,6 +1203,7 @@ sol::table create_fs_table(sol::state_view lua)
     fs_table.set_function("write-file", &fs_write_file);
     fs_table.set_function("append-file", &fs_append_file);
     fs_table.set_function("atomic-replace-if-current", &fs_atomic_replace_if_current);
+    fs_table.set_function("publish-record", &fs_publish_record);
     fs_table.set_function("create-dir", &fs_create_dir);
     fs_table.set_function("create-dirs", &fs_create_dirs);
     fs_table.set_function("remove", &fs_remove);

@@ -1,24 +1,30 @@
 (local fs (require :fs))
+(local json (require :json))
+(local process (require :process))
+(local Uuid (require :uuid))
+
 (local H (require :tests/test-reference-lifecycle-helpers))
 (local tests [])
 
-(var temp-counter 0)
-(local temp-root (fs.join-path "/tmp/space/tests" "link-entities"))
-
-(fn make-temp-dir []
-  (set temp-counter (+ temp-counter 1))
-  (fs.join-path temp-root (.. "entities-" (os.time) "-" temp-counter)))
+(fn create-fixture-dir! [path]
+  (if (= (string.sub package.config 1 1) "/")
+      (assert (= (. (process.run {:args ["mkdir" "-m" "700" path] :timeout 10}) :exit-code) 0)
+              "fixture directory must be exclusively created private")
+      (assert (fs.create-dir path) "fixture directory must be exclusive")))
 
 (fn with-temp-dir [f]
-  (local dir (make-temp-dir))
-  (when (fs.exists dir)
-    (fs.remove-all dir))
-  (fs.create-dirs dir)
-  (local (ok result) (pcall f dir))
+  (local dir (fs.join-path (if (= (string.sub package.config 1 1) "/") "/tmp"
+                             ((. (require :appdirs) :tmp-dir))) (.. "link-entities-" (Uuid.v4))))
+  (create-fixture-dir! dir)
+  (fn run-fixture []
+    (create-fixture-dir! (fs.join-path dir "entities"))
+    (create-fixture-dir! (fs.join-path dir "entities" "link"))
+    (f dir))
+  (local (ok result) (pcall run-fixture))
   (fs.remove-all dir)
   (if ok
       result
-      (error result)))
+      (error (if (= (type result) :table) (json.dumps result) result))))
 
 (fn with-temp-store [f]
   (with-temp-dir
@@ -141,7 +147,7 @@
                                           :target-key "b"
                                           :metadata {:foo "bar" :nested {:x 1}}}))
       (local LinkEntityStore (require :entities/link))
-      (local new-store (LinkEntityStore.LinkEntityStore {:base-dir root}))
+      (local new-store (LinkEntityStore.LinkEntityStore {:base-dir root :identity-store store.identity-store}))
       (local retrieved (new-store:get-entity entity.id))
       (assert (= retrieved.metadata.foo "bar") "metadata.foo should be preserved")
       (assert (= retrieved.metadata.nested.x 1) "nested metadata should be preserved"))))
@@ -252,7 +258,6 @@
                       :fn entities-node-includes-link-type})
 
 (local JsonUtils (require :json-utils))
-(local json (require :json))
 
 (fn same-value [actual expected]
   (assert (= (JsonUtils.stable-json actual) (JsonUtils.stable-json expected))
@@ -302,9 +307,9 @@
   (fn update [store id fields]
     (table.insert f.updates (json.loads (JsonUtils.stable-json fields)))
     (original-update store id fields))
-  (fn write [path value]
+  (fn write [path value opts]
     (when (= (string.sub path 1 (# f.root)) f.root) (set f.writes (+ f.writes 1)))
-    (original-write path value))
+    (original-write path value opts))
   (fn register [clickables widget]
     (when widget.clicked (table.insert f.buttons widget))
     (original-register clickables widget))

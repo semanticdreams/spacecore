@@ -2,6 +2,8 @@
 (local fs (require :fs))
 (local process (require :process))
 (local RuntimeBin (require :tests.runtime-bin))
+(local JsonUtils (require :json-utils))
+(local json (require :json))
 
 (var temp-counter 0)
 (local fs-temp-root (fs.join-path "/tmp/space/tests" "fs-test-tmp"))
@@ -36,6 +38,57 @@
 
 (fn string-contains? [haystack needle]
   (not= nil (string.find (tostring haystack) needle 1 true)))
+
+(fn chmod! [path mode]
+  (local result (process.run {:args ["chmod" mode path] :timeout 10}))
+  (assert (= result.exit-code 0) (.. "permission fixture chmod failed: " result.stderr)))
+
+(fn permission-mode [path]
+  (local permissions (. (fs.stat path) :permissions))
+  (local digits [])
+  (for [group 0 2]
+    (local start (+ (* group 3) 1))
+    (local r (if (= (string.sub permissions start start) "r") 4 0))
+    (local w (if (= (string.sub permissions (+ start 1) (+ start 1)) "w") 2 0))
+    (local x (if (= (string.sub permissions (+ start 2) (+ start 2)) "x") 1 0))
+    (table.insert digits (tostring (+ r w x))))
+  (table.concat digits))
+
+(fn with-denied-directory [dir f mode]
+  (local denied-mode (if (= mode nil) "000" mode))
+  (if (not= (string.sub package.config 1 1) "/")
+      (print "permission fixture: NOT APPLICABLE (non-POSIX platform; portable fault tests still run)")
+      (do
+        (local identity (process.run {:args ["id" "-u"] :timeout 10}))
+        (assert (= identity.exit-code 0) "cannot establish effective permission-fixture privilege")
+        (local euid (assert (tonumber identity.stdout) "id -u must return an effective uid"))
+        (if (= euid 0)
+            (print "permission fixture: NOT APPLICABLE (POSIX effective uid 0 bypasses mode denial)")
+            (do
+              (print (.. "permission fixture: APPLICABLE (POSIX effective uid " euid ", mode " denied-mode ")"))
+              (local original (permission-mode dir))
+              (chmod! dir denied-mode)
+              (local (ok result) (pcall f))
+              (local (restored restore-error) (pcall chmod! dir original))
+              (assert restored restore-error)
+              (when (not ok) (error result)))))))
+
+(fn assert-list-error [path]
+  (local (ok err) (pcall fs.list-dir path))
+  (assert (not ok) "fs.list-dir must reject inaccessible/non-directory paths by default")
+  (assert (string-contains? err "fs.list_dir") (tostring err)))
+
+(fn fs-list-dir-errors []
+  (with-temp-dir (fn list-errors [root]
+    (assert (= (length (fs.list-dir root)) 0) "readable empty directory must succeed")
+    (local file (fs.join-path root "record"))
+    (fs.write-file file "data")
+    (assert-list-error (fs.join-path root "missing"))
+    (assert-list-error file)
+    (assert (= (length (fs.list-dir root)) 1) "readable nonempty directory must succeed")
+    (fn denied [] (assert-list-error root))
+    (with-denied-directory root denied)
+    (assert (= (length (fs.list-dir root)) 1) "permissions must be restored"))))
 
 (fn repeated-text [chunk count]
   (local parts [])
@@ -116,7 +169,9 @@
     (local entries (fs.list-dir root false))
     (local names (list-names entries))
     (assert (contains? names "visible.txt") "visible entry missing")
-    (assert (not (contains? names ".secret")) "hidden entry should be filtered"))))
+    (assert (not (contains? names ".secret")) "hidden entry should be filtered")
+    (assert (contains? (list-names (fs.list-dir root)) ".secret") "default includes hidden entries")
+    (assert (contains? (list-names (fs.list-dir root true)) ".secret") "explicit true includes hidden entries"))))
 
 (fn fs-copy-rename-remove []
   (with-temp-dir (fn [root]
@@ -344,8 +399,202 @@
     (assert-atomic-replace-segment-error "sparse segment table should fail" replace-with-sparse-segment-table file token)
     (assert (= (fs.read-file file) "abcdef")))))
 
+(fn with-publication-dir [f]
+  (if (not= (string.sub package.config 1 1) "/")
+      (with-temp-dir f)
+      (do
+        (set temp-counter (+ temp-counter 1))
+        (local dir (fs.join-path "/tmp" (.. "space-publication-" (os.time) "-" temp-counter)))
+        (assert (fs.create-dir dir) "publication fixture must be exclusive")
+        (local (ok result)
+          (pcall (fn run-private-fixture []
+                   (chmod! dir "700")
+                   (f dir))))
+        (fs.remove-all dir)
+        (if ok result (error result)))))
+
+(fn publish-json-value [path value]
+  (local data {:value value})
+  (fn publish! [target payload]
+    (collectgarbage :collect)
+    (local result (fs.publish-record target payload))
+    (values result.committed result.cleanup-error))
+  (local (ok cleanup) (JsonUtils.write-json! path data {:publish! publish!}))
+  (assert ok)
+  (assert (= cleanup nil))
+  (assert (= (fs.read-file path) (json.dumps data)))
+  (assert (= (length (fs.list-dir (fs.join-path (fs.parent path) ".space-publication"))) 0)))
+
+(fn publication-stage [root]
+  (local anchor (fs.join-path root ".space-publication"))
+  (local entries (fs.list-dir anchor))
+  (assert (= (length entries) 1) "exactly one native attempt")
+  (fs.join-path anchor (. entries 1 :name) "record"))
+
+(fn assert-publication-clean [root]
+  (local entries (fs.list-dir root))
+  (assert (= (length entries) 2) "exact entries: record and persistent anchor")
+  (assert (contains? (list-names entries) ".space-publication"))
+  (assert (= (length (fs.list-dir (fs.join-path root ".space-publication"))) 0) "no owned attempt residue"))
+
+(fn payload-api-fixture [root]
+  (local path (fs.join-path root "native-payload"))
+  (local payload (.. "雪" (string.char 0) "tail"))
+  (assert (. (fs.publish-record path payload) :committed))
+  (assert (= (fs.read-file path) payload)))
+
+(fn fs-publish-record-payload-api []
+  (with-publication-dir payload-api-fixture))
+
+(fn json-publisher-fixture [root]
+  (local path (fs.join-path root "custom.json"))
+  (local calls {:count 0})
+  (fn publish! [target payload]
+    (set calls.count (+ calls.count 1))
+    (assert (= target path))
+    (assert (= (. (json.loads payload) :value) "雪"))
+    (values true "cleanup diagnostic"))
+  (local (ok cleanup) (JsonUtils.write-json! path {:value "雪"} {:publish! publish!}))
+  (assert ok)
+  (assert (= cleanup "cleanup diagnostic"))
+  (assert (= calls.count 1))
+  (assert (not (fs.exists path)) "custom publisher, not default path, owns publication")
+  (local (default-ok default-cleanup) (JsonUtils.write-json! path {:value "default"}))
+  (assert (= default-ok true))
+  (assert (= default-cleanup nil))
+  (assert (= (. (json.loads (fs.read-file path)) :value) "default"))
+  (assert (not (fs.exists (.. path ".tmp")))))
+
+(fn json-publisher-api [] (with-publication-dir json-publisher-fixture))
+
+(fn publish-json-fixture [root]
+  (local path (fs.join-path root (string.rep "r" 220)))
+  (each [_ value (ipairs ["before" "after 雪"])]
+    (publish-json-value path value)))
+
+(fn fs-publish-record-json []
+  (assert (= (type fs.publish-record) :function) "fs.publish-record native API must exist")
+  (with-publication-dir publish-json-fixture))
+
+(fn publish-failures-fixture [root]
+  (local path (fs.join-path root "record"))
+  (fs.write-file path "old")
+  (fn must-fail! [opts]
+    (local (ok err) (pcall fs.publish-record path "new" opts))
+    (assert (not ok) "precommit failure must raise")
+    (assert err)
+    (assert (= (fs.read-file path) "old"))
+    (when (fs.exists (fs.join-path root ".space-publication")) (assert-publication-clean root)))
+  (fn false-hook [] false)
+  (fn nil-hook [] nil)
+  (fn throwing-hook [] (error "hook fault"))
+  (fn true-hook [] true)
+  (fn cleanup-hook [] (error "cleanup fault"))
+  (each [_ key (ipairs [:test-before-write :test-before-security :test-before-commit])]
+    (each [_ hook (ipairs [false-hook nil-hook throwing-hook])]
+      (local opts {})
+      (tset opts key hook)
+      (must-fail! opts)))
+  (must-fail! {:unknown true-hook})
+  (must-fail! {:test-before-security true})
+  (local result (fs.publish-record path "new" {:test-before-cleanup cleanup-hook}))
+  (assert result.committed)
+  (assert (string-contains? result.cleanup-error "cleanup fault"))
+  (assert (= (fs.read-file path) "new"))
+  (assert-publication-clean root))
+
+(fn fs-publish-record-failures []
+  (with-publication-dir publish-failures-fixture))
+
+(fn publish-privacy-fixture [root]
+  (local path (fs.join-path root "private"))
+  (local bytes (json.dumps {:secret "private 雪"}))
+  (fn private-hook! []
+    (local stage (publication-stage root))
+    (assert (= (fs.read-file stage) bytes))
+    (when (= (string.sub package.config 1 1) "/")
+      (assert (= (permission-mode (fs.parent stage)) "700"))
+      (assert (= (permission-mode stage) "600")))
+    true)
+  (fs.publish-record path bytes {:test-before-security private-hook!})
+  (when (= (string.sub package.config 1 1) "/")
+    (assert (= (permission-mode path) "600"))))
+
+(fn fs-publish-record-intermediate-privacy []
+  (with-publication-dir publish-privacy-fixture))
+
+(fn publish-final-validation-fixture [root]
+  (local path (fs.join-path root "record"))
+  (fs.write-file path "old")
+  (var staged nil)
+  (var hook-ran false)
+  (fn alter-bytes! []
+    (set staged (publication-stage root))
+    (set hook-ran true)
+    (fs.write-file staged "bad")
+    true)
+  (local (ok err) (pcall fs.publish-record path "new" {:test-before-commit alter-bytes!}))
+  (assert hook-ran "final fault callback must actually execute")
+  (assert (not ok) "validation must run after the final arbitrary callback")
+  (assert err)
+  (assert (= (fs.read-file path) "old"))
+  (assert (not (fs.exists (fs.parent staged)))))
+
+(fn fs-publish-record-final-validation []
+  (with-publication-dir publish-final-validation-fixture))
+
+(fn publish-options-fixture [root]
+  (local path (fs.join-path root "record"))
+  (fs.write-file path "old")
+  (each [_ opts (ipairs [false 42 "not-options" (fn old-stage [_] true)])]
+    (local (ok err) (pcall fs.publish-record path "new" opts))
+    (assert (not ok) "non-table options must not be silently ignored")
+    (assert err)
+    (assert (= (fs.read-file path) "old")))
+  (each [_ opts (ipairs [{:atomic? false} {:unknown true} {:publish! true} false 42])]
+    (local (ok err) (pcall JsonUtils.write-json! path {:value "new"} opts))
+    (assert (not ok) "JSONUtils must reject old/unknown or invalid publisher options")
+    (assert err)
+    (assert (= (fs.read-file path) "old"))))
+
+(fn fs-publish-record-options []
+  (with-publication-dir publish-options-fixture))
+
+(fn publish-gc-fixture [root]
+  (local weak (setmetatable {} {:__mode :v}))
+  (local path (fs.join-path root "record"))
+  (fn publish-with-marker! []
+    (local marker {})
+    (tset weak 1 marker)
+    (fn marker-hook! []
+      (collectgarbage :collect)
+      (assert (= (. weak 1) marker) "hook references remain live during native operation")
+      true)
+    (local opts {:test-before-write marker-hook!
+                 :test-before-security marker-hook!
+                 :test-before-commit marker-hook!
+                 :test-before-cleanup marker-hook!})
+    (assert (. (fs.publish-record path "new" opts) :committed)))
+  (publish-with-marker!)
+  (collectgarbage :collect)
+  (assert (= (. weak 1) nil) "native operation must not retain callbacks after return")
+  (assert-publication-clean root)
+  (assert (= (fs.read-file path) "new")))
+
+(fn fs-publish-record-gc []
+  (with-publication-dir publish-gc-fixture))
+
+(table.insert tests {:name "fs publish-record native payload API" :fn fs-publish-record-payload-api})
+(table.insert tests {:name "JSONUtils publisher forwards serialized payload and both returns" :fn json-publisher-api})
+(table.insert tests {:name "fs publish-record real JSONUtils new and overwrite" :fn fs-publish-record-json})
+(table.insert tests {:name "fs publish-record protected callbacks and outcomes" :fn fs-publish-record-failures})
+(table.insert tests {:name "fs publish-record effective intermediate privacy" :fn fs-publish-record-intermediate-privacy})
+(table.insert tests {:name "fs publish-record validates after final fault callback" :fn fs-publish-record-final-validation})
+(table.insert tests {:name "fs publish-record rejects non-table options" :fn fs-publish-record-options})
+(table.insert tests {:name "fs publish-record owns callbacks synchronously without retention" :fn fs-publish-record-gc})
 (table.insert tests {:name "fs write/read/stat" :fn fs-write-read-stat})
 (table.insert tests {:name "fs list_dir filters hidden files" :fn fs-list-dir-hidden-filter})
+(table.insert tests {:name "fs list_dir always reports enumeration errors" :fn fs-list-dir-errors})
 (table.insert tests {:name "fs copy and rename" :fn fs-copy-rename-remove})
 (table.insert tests {:name "fs read-text-window reads bounded range" :fn fs-read-text-window-bounded-range})
 (table.insert tests {:name "fs read-text-window caps max bytes" :fn fs-read-text-window-caps-max-bytes})
@@ -371,6 +620,7 @@
 {:name "fs"
   :tests tests
   :main main
+  :with-denied-directory with-denied-directory
   :invalid-argument-main invalid-argument-main
   :read-byte-range-invalid-argument-main read-byte-range-invalid-argument-main
   :atomic-replace-stale-token-main atomic-replace-stale-token-main

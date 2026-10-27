@@ -1,6 +1,6 @@
 (local glm (require :glm))
 (local Graph (require :graph/init))
-(local GraphMap (require :graph/map))
+(local BuiltinGraphTestHelpers (require :tests/graph-builtin-extension-helpers))
 (local GraphView (require :graph/view))
 (local BuildContext (require :build-context))
 (local {: Layout : LayoutRoot} (require :layout))
@@ -46,14 +46,7 @@
   ctx)
 
 (fn make-test-graph-map []
-  (local graph (Graph {:with-start false}))
-  (local original-has-key-loader graph.has-key-loader-for-key)
-  (set graph.has-key-loader-for-key
-       (fn [self key]
-         (if (and original-has-key-loader (original-has-key-loader self key))
-             true
-             (if key true false))))
-  (GraphMap.GraphMap {:graph graph :id "preview-focus"}))
+  (BuiltinGraphTestHelpers.make-test-graph-map {:id "preview-focus"}))
 
 (fn preview-widget [state node preview-ctx]
   (set state.built-node node)

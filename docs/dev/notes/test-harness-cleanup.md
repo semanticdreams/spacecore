@@ -158,7 +158,58 @@ fragile:
 
 So the helper is a practical containment layer, not a fundamental redesign.
 
+## Per-Test Timeout Budgets
+
+A runner test descriptor may declare `:timeout-seconds` alongside `:name` and
+`:fn`. When present it must be a positive finite number; false, strings, zero,
+negative values, NaN and infinities are errors, not requests to inherit or disable
+the deadline. A nonempty explicit `SPACE_TEST_CASE_TIMEOUT_SECONDS` takes precedence
+over valid descriptor metadata, including 0 to disable deadlines. With an absent
+or empty environment value, valid descriptor metadata applies; an absent descriptor
+defaults to 120 seconds. Invalid metadata still fails even with an explicit
+environment override. Test filtering is unchanged.
+
+The three app-root reload integration descriptors use main's 300-second budget
+and explicit per-case root-fixture teardown. An explicit environment value still
+wins. Expiry remains one-shot, restores the exact prior debug hook before teardown,
+permits protected cleanup/rollback, and still fails a case that catches the timeout
+exception. Suite finalization captures the owned Engine before executing tests;
+replacing or clearing `app.engine` does not redirect its single shutdown attempt.
+
 ## What To Watch Out For
+
+### Readable bounded failures
+
+`tests.error-format.format-error(err)` is the shared base diagnostic formatter.
+It reads only raw `code`, `message`, `outcome`, and `current-revision` fields, in
+that priority order. Encoded field caps are respectively128,1536,96,192 bytes;
+the complete base description is at most2048 bytes. Plain strings use the same
+2048-byte encoded limit. Truncation is visible as `[truncated]`; controls,
+non-ASCII bytes, quotes and backslashes are escaped into printable ASCII. Work
+is bounded by the output budget, not by the size of an oversized input string.
+
+Nested values and unsupported objects have type-only descriptions. The formatter
+never walks `result`, invokes table getters/iteration/metamethods or stringifies
+arbitrary objects. This is a **metadata allowlist, not a PII redactor**:
+producer-supplied `message` text can still appear, bounded and escaped. Producers
+remain responsible for excluding credentials/private payloads from that field.
+Formatter failure falls back to the original error's type, not a new exception.
+
+The runner normalizes raw body/load/teardown errors **before** adding a traceback,
+and uses the same base description when traceback support is absent. Generated
+stacks are not escaped again when logged or combined with shutdown diagnostics.
+Shutdown failures are logged safely while original single-failure propagation,
+counts, timeout latches/hooks and the captured Engine finalizer remain intact.
+Runner regression cases that own an Engine continue to run in child processes;
+negative logs are captured rather than leaked into the successful parent suite.
+
+Windows private-publication refusals now identify the literal `anchor`, `attempt`
+or `record` role, owner-match/protection/DACL-match booleans, expected/actual DACL
+byte lengths and safe ACE counts. SID/ACL/descriptor bytes and payloads are never
+printed. This instrumentation does not change the owner/protection/raw-DACL
+equality predicate or subsequent owner-ACE checks. Linux checks do not execute
+that Windows branch; use the next actual guarded Windows/Wine evidence to decide
+what mismatched, rather than guessing a policy change from an opaque error.
 
 When writing or refactoring tests in this codebase:
 
@@ -167,6 +218,21 @@ When writing or refactoring tests in this codebase:
 - if a test replaces `app.states`, suspend the current active state first and resume it after restore
 - verify state-heavy cleanup with `tests.fast` or `make test`, not only a narrow module run
 - avoid asserting incidental global plumbing when the test can assert the owned behavior directly
+
+### Exception-Safe Second-Precision Clock Tests
+
+Session persistence uses zero-argument `os.time()` integer seconds. Its timestamp
+regression must not depend on a shell `sleep` command or polling: a missing command
+under Wine used to leave the ignored delay unsuccessful and the newer-time
+assertion racing the same second.
+
+The agent-layer test now scopes a test-only clock at1700000000, verifies a
+same-second save remains equal, then advances to1700000001 before update/save.
+It asserts exact creation/update/status values in memory and persisted JSON,
+without directly assigning session timestamps. The protected clock scope restores
+the original `os.time` before directory cleanup or rethrow; a throwing-body case
+also verifies restoration and original error identity. Production session APIs,
+second-precision semantics and test deadlines remain unchanged.
 
 ## Future Improvements
 
@@ -221,6 +287,57 @@ The remaining known compromise is:
 That is acceptable for now, but it is the first place to revisit if this harness area gets touched
 again.
 
+
+## List Operand Observations and Canonical Fixture Roots
+
+With the existing `SPACE_TEST_TIMINGS=1`, the List presentation fixture emits
+`[LIST-OPERANDS]` observations at its existing `JsonUtils.write-json!` seam for
+move, remove, selection, name-only edit, and resolver-error recovery scenarios.
+Each line contains only the generated fixture root, the intercepted write path,
+their `fs.absolute` equivalents, the exact intended canonical
+`entities/list/list.json` destination, the existing raw-prefix predicate result,
+and canonical destination equality. No record values, app-data paths, or session
+data are inspected or printed. The sink immediately flushes each line.
+
+Qualification uses equality with that fixture-owned canonical destination, not
+the raw-prefix predicate. Other leaf names and unrelated writes are excluded from
+diagnostic output; diagnostic observations never supply write-counter values.
+
+The guarded Task 7 Wine run established the original fixture defect: all nine
+observations across the five affected scenarios had `raw-prefix=false` and
+`intended-equal=true`. The fixture retained a raw mixed-separator temporary root
+while the real store/writer used its canonical Windows absolute spelling. Only
+the write counter was zero; expected signal counts and existing disk assertions
+were consistent with the real writes. Native passes alone had not proven this.
+
+The fixture now returns `fs.absolute` from `make-temp-dir` before directory
+creation, store construction, observation, snapshots, or cleanup. All share that
+one canonical root. Counting canonicalizes each intercepted write path using the
+same lexical `fs.absolute` contract and requires the root plus its native path
+separator, so a sibling sharing only the textual root prefix is not counted.
+This adds no symlink, case-folding, or trailing-separator policy and changes no
+production List persistence or filesystem API.
+
+Real-writer regressions exercise absolute, relative, and dot-component spellings
+of the same canonical List leaf, check exact JSON disk bytes, and reject a real
+sibling-prefix write. The five existing counter arrays and all passive/error,
+signal, view, and cleanup oracles remain intact. Recovery additionally compares
+the final held record with a fresh disk readback after its successful name edit.
+
+Output is capped at two observations per scenario and twelve lines per module,
+with at most 1024 encoded bytes per line. Each path is byte-escaped to printable
+ASCII and independently bounded to 128 encoded bytes plus quotes; truncation is
+marked `[truncated]`. Disabled observations resolve no extra paths and emit no
+output. In-module controls exercise escaping, caps, unrelated writes, and a
+canonical destination whose raw prefix differs. Native timings on/off runs
+check outcomes, caps, and parity. When this repair was documented, the actual
+Wine cause was established by the earlier guarded operands, but repair success
+still required the next guarded combined run. The bounded observations retained
+their original raw operands and predicates for that verification, rather than
+assuming success. That pending status is historical: the
+[2026-10-26 measured result](windows-wine-build-and-test.md#current-publication-contract-measured-wine-acceptance-below)
+at `fa4fc4b2` subsequently recorded full Wine acceptance **4867/4867 PASS**, capture
+`20261026T192428846633Z-2fbf968e2a3543808e0f8f3889cdb0d0`.
 
 ## See also
 

@@ -294,4 +294,38 @@
   (local intent (plan s service.owners {:kind "delete" :source-key "string-entity:s"}))
   (same intent.runtime-state [capture])
   (assert (= (. (service:delete! "string-entity:s") :status) "deleted"))))
+(add "diagnostics use raw scalar causes without trusting status or private results" (fn diagnostic-causes [s]
+  (local held (s.string-store:create-entity {:id "diagnostic" :value "unchanged"}))
+  (local before (s.string-store:snapshot-entity held.id))
+  (local service (H.ready s))
+  (fn forbidden [...] (error "diagnostic metamethod invoked"))
+  (local hostile {:__index forbidden :__tostring forbidden :__pairs forbidden})
+  (local private (setmetatable {:marker "PRIVATE-DIAGNOSTIC-RESULT"} hostile))
+  (each [_ spec (ipairs [{:message "structured diagnostic cause" :expected "structured diagnostic cause"}
+                         {:message 17 :expected "17"} {:message false :expected "false"}
+                         {:expected "unknown error (table)"}])]
+    (local cause (setmetatable {:message spec.message :code :private-code :outcome :committed :result private} hostile))
+    (var attempts 0)
+    (fn reject [_store id]
+      (assert (= id held.id))
+      (set attempts (+ attempts 1))
+      (error cause))
+    (fn command [] (service:delete! "string-entity:diagnostic"))
+    (fn inspect [] (H.assert-error spec.expected command))
+    (local message (H.with-fields s.string-store {:retire-entity! reject} inspect))
+    (assert (= (string.sub message (- (# spec.expected))) spec.expected) "cause text must be the rendered diagnostic suffix")
+    (assert (string.find message "delete string-entity:diagnostic" 1 true))
+    (assert (string.find message "owner entities at string-entity:diagnostic" 1 true))
+    (assert (string.find message before.path 1 true))
+    (assert (not (string.find message "PRIVATE-DIAGNOSTIC-RESULT" 1 true)))
+    (assert (= attempts 1) "rendering must not retry the owning operation")
+    (assert (= (rawget cause :code) :private-code))
+    (assert (= (rawget cause :outcome) :committed))
+    (assert (= (rawget cause :result) private))
+    (assert (= (s.string-store:get-entity held.id) held))
+    (assert (= (fs.read-file before.path) before.bytes) "declared committed error is not authority to retire data")
+    (assert (: ((require :reference-lifecycle/pending) s.base-dir) :read)))
+  (service:delete! "string-entity:diagnostic")
+  (assert (not (fs.exists before.path)))))
+
 {:tests tests}

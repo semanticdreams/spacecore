@@ -1,6 +1,6 @@
 (local {: Flex : FlexChild} (require :flex))
 (local Button (require :button))
-(local Input (require :input))
+(local StringEntityEditor (require :graph/view/string-entity-editor))
 (local gl (require :gl))
 (local Utils (require :graph/view/utils))
 
@@ -16,8 +16,10 @@
   (fn build [ctx]
     (local build-ctx (or ctx options.ctx (and target target.graph target.graph.ctx)))
     (assert build-ctx "StringEntityNodeView requires a build context")
-    (local view {})
-    (local entity (and target target.get-entity (target:get-entity)))
+
+    ;; The owning read must succeed before any action widgets acquire resources.
+    (local editor
+      ((StringEntityEditor target {:placeholder "Enter value..." :min-lines 3 :max-lines 20}) build-ctx))
 
     (local copy-value-button
       ((Button {:icon "content_copy"
@@ -57,47 +59,15 @@
                          (FlexChild (fn [_] delete-button) 0)]})
        build-ctx))
 
-    (local input
-      ((Input {:text ""
-               :placeholder "Enter value..."
-               :multiline? true
-               :min-lines 3
-               :max-lines 20
-               :on-change (fn [_input new-value]
-                            (when (and target target.update-value)
-                              (target:update-value new-value)))})
-       build-ctx))
-    (local initial-value (or (and entity entity.value) ""))
-    (when (and input input.set-text (> (string.len initial-value) 0))
-      (input:set-text initial-value {:reset-cursor? false}))
-
     (local flex
       ((Flex {:axis 2
               :xalign :stretch
               :yspacing 0.5
               :children [(FlexChild (fn [_] action-row) 0)
-                         (FlexChild (fn [_] input) 1)]})
+                          (FlexChild (fn [_] editor) 1)]})
        build-ctx))
 
-    (set view.input input)
-    (set view.action-row action-row)
-    (set view.layout flex.layout)
-
-    (var deleted-handler nil)
-    (local deleted-signal (and target target.entity-deleted))
-    (when deleted-signal
-      (set deleted-handler
-           (deleted-signal:connect
-             (fn [_deleted]
-               nil))))
-
-    (set view.drop
-         (fn [_self]
-           (when (and deleted-signal deleted-handler)
-             (deleted-signal:disconnect deleted-handler true)
-             (set deleted-handler nil))
-           (flex:drop)))
-
-    view))
+    {:input editor.input :editor editor :action-row action-row :layout flex.layout
+     :drop (fn drop-view [_self] (flex:drop))}))
 
 StringEntityNodeView

@@ -64,7 +64,9 @@ path, retaining that adapter's configured content provider, root and lifecycle.
 The notebook's identity owner and its StringStore for explicit creation are not
 substitute preview providers. The graph/map owns adapters; rows own only their
 preview widgets. Passive String preview initialization does not author content;
-genuine inline edits still submit value-only updates through the concrete owner.
+the shared StringEntityEditor submits genuine edits with its displayed revision
+through the concrete owner's `replace-text` boundary. The preview owns and drops
+the complete editor aggregate, not only its Input.
 Unresolved/missing targets remain explicit nonauthoring text, while resolution,
 read, loader and required-preview failures propagate rather than becoming absence.
 
@@ -186,12 +188,32 @@ exact bytes for strings/Markdown). Absent records have `bytes=value=check=false`
 Required malformed/unreadable records error with their path.
 
 Prepared persistence decodes frozen `after-bytes` with the store's pure decoder,
-then verifies reserialization against after-check before atomic persistence.
+then verifies the requested ID and frozen after-check before atomic persistence.
+String/Link verification uses the supplied frozen image (or the original
+before-check image for retirement), not reserialization that could insert legacy
+defaults. String checks are byte-exact; Link checks use stable parsed JSON. Other
+owning codecs retain their existing serialized-format roundtrip checks.
+String/link frozen writes publish the exact supplied bytes through RecordFiles,
+without normalizing endpoints or allocating identity, timestamp or revision.
+They do not publish cache objects/signals until reconciliation verifies the durable
+after-image; ordinary authoring still publishes its cache and committed result
+before disclosing cleanup/notification errors. Legacy String records with no
+revision keep that field absent in decoded owning records and frozen bytes.
+Only detached text reads synthesize the effective `legacy:<id>` precondition;
+reconciliation also clears a formerly held revision absent in the after-image.
+EntitiesOwner reconciles each live String/Link after successful prepared persistence
+and before lifecycle completion. Other stores' already-publishing persistence
+and ordinary physical retirement are unchanged; standalone frozen persistence
+still defers cache/signals. A failed persist remains failed/pending, including a
+committed cleanup error; the existing after-image replay path reconciles on retry.
 No new timestamps, references or payloads may be generated on replay. Workflow
 JSON timestamps are ISO strings; decoded in-memory workflow timestamps are numeric.
 Checks always use serialized bytes, never the in-memory numeric form. Publication
 updates held cached records only after successful persistence, preserving their
 identity. Failed writes leave caches unchanged; failed publication remains pending.
+String node deletion remains a logical lifecycle action. Its separate Create child
+action reports child/link/reveal outcomes and never rolls back already committed
+child/link records merely because reveal or notification failed.
 
 ## String → code morph and frontend compatibility
 

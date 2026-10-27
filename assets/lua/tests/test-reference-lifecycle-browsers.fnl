@@ -1,8 +1,4 @@
 (local H (require :tests/test-reference-lifecycle-helpers))
-(local Graph (require :graph/core))
-(local {: GraphMap} (require :graph/map))
-(local Entities (require :graph/extensions/builtins/entities))
-(local {: EntityTypeCatalog} (require :entities/type-catalog))
 (local BuildContext (require :build-context))
 (local tests [])
 
@@ -26,18 +22,8 @@
 
 (fn with-native [s f]
   (local lifecycle (H.ready s))
-  (local options (collect [key value (pairs s)] key value))
-  (set options.lifecycle lifecycle)
-  (set options.entity-events? false)
-  (set options.morphs {})
-  (set options.entity-type-catalog (EntityTypeCatalog {:types (Entities.entity-types)}))
-  (local graph (Graph options))
-  (local descriptor (. (Entities.descriptors options) 1))
-  (descriptor.install-loaders graph {:owner-id descriptor.unit-id :extension-id descriptor.id})
-  (local map (GraphMap {:graph graph :lifecycle lifecycle}))
-  (local (ok result) (pcall f map lifecycle))
-  (local (drop-ok drop-error) (pcall (fn cleanup [] (map:drop) (graph:drop))))
-  (if (not ok) (error result) (not drop-ok) (error drop-error) result))
+  (H.with-graph s (fn native [_graph map] (f map lifecycle))
+                {:lifecycle lifecycle :entity-events? false :morphs {}}))
 
 (fn create-subject [s kind]
   (local store (. s (.. kind "-store")))

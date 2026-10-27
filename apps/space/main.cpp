@@ -33,6 +33,9 @@
 #include "resource_manager.h"
 #include "space_log_path.h"
 #include "cef_runtime.h"
+#ifdef _WIN32
+#include "record_publication_wine.h"
+#endif
 
 LogConfig LOG_CONFIG = {};
 
@@ -131,6 +134,15 @@ void report_top_level_error(const std::string& message)
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
+    try {
+        record_publication::wine::initialize_process_environment();
+    }
+    catch (const std::exception& e) {
+        report_top_level_error(std::string("error: failed to initialize Wine environment: ") + e.what());
+        return 1;
+    }
+#endif
     const std::filesystem::path executablePath = executable_path::resolve(argc > 0 ? argv[0] : nullptr);
     const auto launch = live_dev::capture_launch(argc, argv, executablePath);
     // Pre-scan CLI for dotenv flags so SPACE_LOG_DIR from dotenv files

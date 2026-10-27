@@ -27,7 +27,7 @@
       (include! entry.id nil)
       (tset seen entry.id true)))
   (when (fs.exists root)
-    (each [_ entry (ipairs (fs.list-dir root true true))]
+    (each [_ entry (ipairs (fs.list-dir root true))]
       (assert (not entry.error) (.. entry.path ": " (tostring entry.error)))
       (assert (not entry.is-symlink) (.. "WorldManager world symlink unsupported: " entry.path))
       (when entry.is-dir (include! entry.name nil))))

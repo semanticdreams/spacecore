@@ -599,23 +599,46 @@
    Exported for testing R1-2 corrected-child-span coverage."
   (fix-enclosing-fn-by-span source definitions recovered-parents))
 
-(fn M.extract [file-records]
+(fn observe-file [observer edge subphase file index file-facts]
+  (when observer
+    (observer {:edge edge :phase :facts :subphase subphase :file file :index index
+               :definitions (when file-facts (# file-facts.definitions))
+               :calls (when file-facts (# file-facts.calls))})))
+
+(fn M.extract [file-records observer]
   "Extract static facts from a list of file records.
+   Optional observer receives scalar facts extract/recover/span edges.
   Returns a fact-db:
   {:files [file-facts ...]
    :by-file {path file-facts}}"
   (local by-file {})
   (local files [])
-  (each [_ record (ipairs file-records)]
-      (local file-facts (extract-file-facts record))
-      (local recovered (recover-error-root record.source record.root
-                                           file-facts.definitions
-                                           file-facts.calls))
+  (each [index record (ipairs file-records)]
+       ;; Only the existing relative projection may be observed; never path.
+       (local file (when (and observer (= (type record.relative-path) :string))
+                     record.relative-path))
+       (local safe-file (and file (not= file "")
+                             (not (file:find "^/"))
+                             (not (file:find "[%c:\\]"))
+                             (not (file:find "//" 1 true))
+                             (not (file:find "/$"))
+                             (not (string.find (.. "/" file "/") "/%.%.?/"))))
+       (local event-file (if safe-file file nil))
+       (observe-file observer :begin :extract event-file index nil)
+       (local file-facts (extract-file-facts record))
+       (observe-file observer :end :extract event-file index file-facts)
+       (observe-file observer :begin :recover event-file index nil)
+       (local recovered (recover-error-root record.source record.root
+                                            file-facts.definitions
+                                            file-facts.calls))
+       (observe-file observer :end :recover event-file index file-facts)
       (when (> (length recovered) 0)
         (tset file-facts :recovered-parents recovered))
-      ;; Fix enclosing-fn using smallest containing span (byte containment
-      ;; is more reliable than fn-stack when tree-sitter produces ERROR)
-      (fix-enclosing-fn-by-span record.source file-facts.definitions recovered)
+       ;; Fix enclosing-fn using smallest containing span (byte containment
+       ;; is more reliable than fn-stack when tree-sitter produces ERROR)
+       (observe-file observer :begin :span event-file index nil)
+       (fix-enclosing-fn-by-span record.source file-facts.definitions recovered)
+       (observe-file observer :end :span event-file index file-facts)
       (table.insert files file-facts)
       (tset by-file record.path file-facts))
     {:files files

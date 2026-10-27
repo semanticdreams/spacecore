@@ -18,7 +18,7 @@
 
 ## API Summary
 
-- `write-json!(path data [opts])` serializes `data` with `json.dumps` and writes it to `path`. By default it writes to `path .. ".tmp"` and renames the temporary file into place. Pass `{:atomic? false}` to write directly.
+- `write-json!(path data [opts])` serializes `data` once with `json.dumps` and returns `true, cleanup-error?`. With no options it writes to `path .. ".tmp"` and renames the temporary file into place, returning `true`. The only optional key is `publish!`, a function `(path serialized-payload) -> true, cleanup-error?` that owns publication instead of the default path. Both publisher return values are forwarded unchanged. Unknown/obsolete options (including `atomic?`) and nonfunction publishers raise explicitly; there are no legacy aliases.
 - `stable-json(value)` returns deterministic compact JSON text by sorting table keys lexicographically and preserving array order.
 
 ## Examples
@@ -28,6 +28,16 @@
 
 (json-utils.write-json! "/tmp/space-settings.json"
                         {:theme "dark" :recent ["alpha" "beta"]})
+
+;; An owning system can select native private record publication without
+;; serializing again or replacing the shared/default JSON writer.
+(local fs (require :fs))
+(fn publish! [path payload]
+  (local result (fs.publish-record path payload))
+  (values result.committed result.cleanup-error))
+(local (ok cleanup-error)
+  (json-utils.write-json! "/tmp/space-record.json" {:value "雪"}
+                         {:publish! publish!}))
 
 (print (json-utils.stable-json {:b 2 :a 1}))
 ```

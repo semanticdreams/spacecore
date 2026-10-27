@@ -96,7 +96,7 @@
   (when (fs.exists directory)
     (local status (fs.stat directory))
     (assert (and (not status.error) status.is-dir) (.. "invalid maps directory: " directory))
-    (each [_ child (ipairs (fs.list-dir directory true true))]
+    (each [_ child (ipairs (fs.list-dir directory true))]
       (assert (not child.error) (.. child.path ": " (tostring child.error)))
       (assert (and child.is-dir (not child.is-symlink)) (.. "unsupported map directory: " child.path))
       (R.require-id child.name)

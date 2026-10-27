@@ -2,6 +2,7 @@
 ;; Three rules: no-setters-in-layouters, owned-child-drop, interactive-context-assertion.
 
 (local Diagnostics (require :constraints.diagnostics))
+(local AssertCalls (require :constraints.rules.layout-assert-calls))
 (local M {})
 
 ;; ---------------------------------------------------------------------------
@@ -633,7 +634,7 @@
           (set found true))))
     found))
 
-(fn fn-def-has-assert-call? [calls def cleaned-form interactive-access-patterns interactive-access-texts]
+(fn fn-def-has-assert-call? [calls def cleaned-form interactive-access-patterns named-calls]
   "Return a table of interactive keywords covered by assert calls in this
   function, or nil when no assert coverage exists.
   For anonymous functions, conservatively marks all keywords as covered
@@ -663,7 +664,7 @@
       (do
         (local covered {})
         (var call-fact-found false)
-        (each [_ call (ipairs calls)]
+        (each [_ call (ipairs (named-calls def))]
           (when (and (= call.callee "assert")
                      (= (or call.enclosing-fn "") (or def.name "")))
             (set call-fact-found true)
@@ -977,11 +978,26 @@
        (string.find def.name "restore" 1 true)
        (string.find form (.. "(set app." kw " saved." kw ")") 1 true)))
 
+(fn interactive-definitions [ff]
+  ;; Copy into a fresh array: other rules retain the canonical definitions.
+  (local all-defs [])
+  (local definitions ff.definitions)
+  (each [_ def (ipairs (if definitions definitions []))]
+    (table.insert all-defs def))
+  ;; Keep both recovered-parent field reads and their original order.
+  (when ff.recovered-parents
+    (each [_ parent (ipairs ff.recovered-parents)]
+      (table.insert all-defs parent)))
+  all-defs)
+(var make-interactive-observation nil)
 (fn interactive-context-assertion-rule-run [ctx]
   "Rule: flag interactive widgets using clickables or hoverables without
   an actual assert call in the same enclosing function."
+  (local observer (when (= (type ctx) :table) (rawget ctx :observer)))
+  (local observe (when observer (make-interactive-observation observer)))
   (var diagnostics [])
-  (each [_ ff (ipairs (or (. ctx.facts :files) []))]
+  (each [file-index ff (ipairs (or (. ctx.facts :files) []))]
+    (when observe (observe :begin :interactive-file file-index))
     (var interactive-access-texts [])
     ;; Check whether this file is the interaction-router module — its
     ;; router.clickables / router.hoverables are internally owned arrays,
@@ -1007,23 +1023,18 @@
               (when (= t text) (set already true)))
             (when (not already)
               (table.insert interactive-access-texts text))))))
-     (let [calls (or ff.calls [])
-           all-defs []]
-       ;; Copy ff.definitions into a fresh table to avoid mutating
-       ;; the canonical definitions used by structure rules.
-       (each [_ d (ipairs (or ff.definitions []))]
-         (table.insert all-defs d))
-       ;; Merge recovered synthetic parents (from ERROR recovery)
-       ;; so the closure-helper bypass can find the parent definition.
-       (when ff.recovered-parents
-         (each [_ rp (ipairs ff.recovered-parents)]
-           (table.insert all-defs rp)))
-       (each [_ def (ipairs all-defs)]
+      (let [calls (or ff.calls [])
+            all-defs (interactive-definitions ff)]
+       (local named-calls (AssertCalls.create {:file-fact ff :definitions all-defs :calls calls}))
+       (each [definition-index def (ipairs (AssertCalls.select-definitions ff all-defs calls))]
         (var skip-because-param false)
         ;; Build a form that excludes nested named function definitions,
         ;; so accesses inside nested functions are not attributed to the
         ;; outer enclosing function (e.g., Button containing an asserted build).
-        (local cleaned (outer-only-form def all-defs))
+         (when observe (observe :begin :interactive-mask file-index definition-index (# all-defs)))
+         (local cleaned (outer-only-form def all-defs))
+         (when observe (observe :end :interactive-mask file-index definition-index))
+         (when observe (observe :begin :interactive-analysis file-index definition-index))
         (when def.form
           (local params (extract-fn-params def.form))
           (when params
@@ -1038,7 +1049,7 @@
          (when (not skip-because-param)
            (let [has-access (fn-def-has-interactive-access? interactive-access-texts def cleaned)
                  has-bare (fn-def-has-bare-interactive? def cleaned)
-                 assert-covered (fn-def-has-assert-call? calls def cleaned interactive-access-patterns interactive-access-texts)]
+                 assert-covered (fn-def-has-assert-call? calls def cleaned interactive-access-patterns named-calls)]
               (var bare-covered {})
               ;; Seed bare-covered with assert-covered keywords so the per-keyword
               ;; gate below treats them as covered.
@@ -1096,8 +1107,18 @@
                      :evidence {:function-name (or def.name "<anonymous>")
                                 :interactive-access (or access-used "clickables/hoverables")}
                      :hint (.. "Assert that " (or access-used "the interactive context")
-                                " is available before using it")}))))))))
-   (if (> (length diagnostics) 0) diagnostics nil))
+                                 " is available before using it")})))))
+         (when observe (observe :end :interactive-analysis file-index definition-index)))
+       (when observe (observe :end :interactive-file file-index nil (# all-defs)))))
+    (if (> (length diagnostics) 0) diagnostics nil))
+
+(set make-interactive-observation
+     (fn [observer]
+       (fn notify [edge subphase index definition-index definitions]
+         (observer {:phase :rule :rule-id "layout.interactive-context-assertion"
+                    : edge : subphase : index : definition-index : definitions})
+         nil)
+       notify))
 
 ;; ---------------------------------------------------------------------------
 ;; Rule registry

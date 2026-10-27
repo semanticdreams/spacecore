@@ -190,6 +190,22 @@
       {:required-rule-ids applicable-rule-ids
        :entries []}))
 
+(fn make-rule-observer [observer]
+  ;; Only callback delivery is protected here; rule work retains its original guard.
+  (var failed? false)
+  (var first-error nil)
+  (fn notify [event]
+    (local (ok err) (pcall observer event))
+    (when (not ok)
+      (when (not failed?)
+        (set failed? true)
+        (set first-error err))
+      (error err 0)))
+  (fn raise-observer-error []
+    ;; Presence is separate from the value: false and nil are valid raw errors.
+    (when failed? (error first-error 0)))
+  (values notify raise-observer-error))
+
 (fn M.run-target [target opts]
   "Execute the full constraint pipeline for a target:
    1. Discover source files
@@ -197,16 +213,23 @@
    3. Select applicable rules from the registry
    4. Execute each rule independently with fact context
    5. Apply baseline policy
-  opts: {:baseline-data <table|nil|false> :timeout-seconds <int|nil>}
+   opts: {:baseline-data <table|nil|false> :timeout-seconds <int|nil>
+          :observer <(event) -> nil|nil>}
   Returns {:status :pass|:violations|:fail|:interrupted
            :counts {:total <int> :by-family <table> :by-severity <table>}
            :diagnostics []}"
   (local o (or opts {}))
+  (local observer o.observer)
   ;; 1. Discover source files
-  (local file-records (Source.discover target))
+  (when observer (observer {:edge :begin :phase :discover}))
+  (local file-records (Source.discover target observer))
+  (when observer (observer {:edge :end :phase :discover :count (# file-records)}))
   ;; 2. Extract static facts
-  (local fact-db (Facts.extract file-records))
+  (when observer (observer {:edge :begin :phase :facts}))
+  (local fact-db (Facts.extract file-records observer))
+  (when observer (observer {:edge :end :phase :facts :count (# fact-db.files)}))
   ;; 3. Get all rules from registry and filter by target kind & suite
+  (when observer (observer {:edge :begin :phase :select}))
   (local all-rules (RuleRegistry.all-rules))
   (local target-suites (or target.suites []))
   (local applicable-rules [])
@@ -215,52 +238,65 @@
     (when (rule-applicable-to-target? rule target target-suites)
       (table.insert applicable-rules rule)
       (table.insert applicable-rule-ids (or rule.id rule.constraint-id "unknown-rule"))))
+  (when observer (observer {:edge :end :phase :select :count (# applicable-rules)}))
   ;; 4. Execute each applicable rule with fact context
   (local all-diagnostics [])
   (local present-rule-ids [])
   (local ctx {:facts fact-db})
-  (each [_ rule (ipairs applicable-rules)]
+  (local raise-observer-error
+    (when observer
+      (local (notify raise-error) (make-rule-observer observer))
+      (tset ctx :observer notify)
+      raise-error))
+  (each [index rule (ipairs applicable-rules)]
     (let [rule-id (or rule.id rule.constraint-id "unknown-rule")
           rule-fn (or rule.run rule.fn)]
       (table.insert present-rule-ids rule-id)
       ;; Wrap rule-fn so it discards the target arg that run-rule passes
       ;; and calls the real rule function with the fact context instead.
+      (when observer (observer {:edge :begin :phase :rule :rule-id rule-id :index index}))
       (let [result (M.run-rule (fn [_ignored-target] (rule-fn ctx))
                                 target
                                 o.timeout-seconds
                                 rule-id)]
+        ;; run-rule has restored its hook; callback errors escape outside its guard.
+        (when raise-observer-error (raise-observer-error))
         (when result
           (each [_ d (ipairs result)]
             ;; Ensure every diagnostic identifies the target
             (when (not (. d :target))
               (tset d :target target))
-            (table.insert all-diagnostics d))))))
+            (table.insert all-diagnostics d)))
+        (when observer
+          (observer {:edge :end :phase :rule :rule-id rule-id :index index
+                     :count (if result (# result) 0)})))))
   ;; 5. Apply baseline policy
+  (when observer (observer {:edge :begin :phase :baseline}))
   (let [baseline-data (if (= false o.baseline-data)
-                         nil
-                         (or o.baseline-data (Baseline.load)))]
-    (if baseline-data
-        (let [scoped-baseline-data (target-baseline-data baseline-data target applicable-rule-ids)
-              baseline-result (Baseline.apply all-diagnostics
-                                               scoped-baseline-data
-                                               present-rule-ids)
-              filtered-diagnostics baseline-result.diagnostics]
+                          nil
+                          (or o.baseline-data (Baseline.load)))]
+    (local final-diagnostics
+      (if baseline-data
+        (do
+          (local scoped-baseline-data (target-baseline-data baseline-data target applicable-rule-ids))
+          (local baseline-result (Baseline.apply all-diagnostics
+                                                 scoped-baseline-data
+                                                 present-rule-ids))
+          (local filtered-diagnostics baseline-result.diagnostics)
           ;; Append baseline diagnostics (worsened, stale, missing-required)
           (each [_ bd (ipairs baseline-result.baseline-diagnostics)]
             (when (not (. bd :target))
               (tset bd :target target))
             (table.insert filtered-diagnostics bd))
-          (let [final-status (compute-status filtered-diagnostics)
-                counts (Diagnostics.summary final-status filtered-diagnostics)]
-            {:status final-status
-             :counts counts
-             :diagnostics filtered-diagnostics}))
-        ;; No baseline data — compute status from unfiltered diagnostics
-        (let [final-status (compute-status all-diagnostics)
-              counts (Diagnostics.summary final-status all-diagnostics)]
-          {:status final-status
-           :counts counts
-           :diagnostics all-diagnostics}))))
+           filtered-diagnostics)
+        all-diagnostics))
+    (when observer (observer {:edge :end :phase :baseline :count (# final-diagnostics)}))
+    (when observer (observer {:edge :begin :phase :summarize}))
+    (local final-status (compute-status final-diagnostics))
+    (local counts (Diagnostics.summary final-status final-diagnostics))
+    (local result {:status final-status :counts counts :diagnostics final-diagnostics})
+    (when observer (observer {:edge :end :phase :summarize :count counts.total}))
+    result))
 
 (local Output (require :tools/validation-output))
 

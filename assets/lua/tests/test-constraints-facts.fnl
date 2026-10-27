@@ -447,6 +447,100 @@
   (assert (= (. definitions 2 :top-level?) false)
           "inner should not be top-level"))
 
+(fn assert-fact-parity [expected actual]
+  (assert (= (type expected) (type actual)) "observer changed fact type")
+  (if (= (type expected) :table)
+      (do
+        (each [key value (pairs expected)] (assert-fact-parity value (. actual key)))
+        (each [key _ (pairs actual)] (assert (not= (. expected key) nil) "observer added a fact")))
+      (assert (= expected actual) "observer changed a fact")))
+
+(fn assert-fact-events [events files]
+  (assert (= (# events) (* 6 (# files))) "expected extract/recover/span per file")
+  (each [i file (ipairs files)]
+    (each [j subphase (ipairs [:extract :recover :span])]
+      (local offset (+ (* (- i 1) 6) (* (- j 1) 2)))
+      (local begin (. events (+ offset 1)))
+      (local end (. events (+ offset 2)))
+      (assert (= begin.edge :begin))
+      (assert (= end.edge :end))
+      (assert (= begin.phase :facts end.phase))
+      (assert (= begin.subphase subphase end.subphase))
+      (assert (= begin.index i end.index))
+      (assert (= end.definitions (# file.definitions)))
+      (assert (= end.calls (# file.calls))))))
+
+(fn facts-observer-parity-including-error-recovery []
+  (local Source (require :constraints.source))
+  (local Facts (require :constraints.facts))
+  (local assets (assert (os.getenv "SPACE_ASSETS_PATH")))
+  (local records (Source.discover {:kind :files
+                                  :files [(fs.join-path assets "lua/scroll-view.fnl")]
+                                  :module-roots [(fs.join-path assets "lua")]}))
+  (local root (. records 1 :root))
+  (assert (= (root:type) "ERROR") "fixture must exercise ERROR recovery")
+  (local expected (Facts.extract records))
+  (local events [])
+  (fn record-event [event] (table.insert events event))
+  (local actual (Facts.extract records record-event))
+  (assert-fact-parity expected (Facts.extract records nil))
+  (assert-fact-parity expected actual)
+  (assert (> (# (. actual.files 1 :recovered-parents)) 0) "must compare recovered parents")
+  (assert-fact-events events actual.files)
+  (each [_ event (ipairs events)]
+    (assert (= event.file "scroll-view.fnl"))
+    (each [key value (pairs event)]
+      (assert (. {:edge true :phase true :subphase true :file true :index true
+                  :definitions true :calls true} key) "unexpected fact event payload")
+      (assert (or (= (type value) :string) (= (type value) :number))))))
+
+(fn facts-observer-rejects-unsafe-file-metadata []
+  (fn check [dir]
+    (make-file dir "safe.fnl" "(fn outer [x] (fn inner [] (print x)))")
+    (local Source (require :constraints.source))
+    (local Facts (require :constraints.facts))
+    (local records (Source.discover {:roots [dir]}))
+    (local record (. records 1))
+    (each [_ unsafe (ipairs ["/private/x.fnl" "C:/private/x.fnl" "C:\\private\\x.fnl"
+                            "\\\\server\\x.fnl" "../private.fnl" "a/../x.fnl" "a/./x.fnl"
+                            "a//x.fnl" "a\nx.fnl" ""])]
+      (set record.relative-path unsafe)
+      (local events [])
+      (fn record-event [event] (table.insert events event))
+      (local actual (Facts.extract records record-event))
+      (assert-fact-events events actual.files)
+      (each [_ event (ipairs events)] (assert (= event.file nil) "unsafe file must use index")))
+    (set record.relative-path nil)
+    (local events [])
+    (fn record-event [event] (table.insert events event))
+    (Facts.extract records record-event)
+    (each [_ event (ipairs events)] (assert (= event.file nil) "never fall back to record.path")))
+  (with-temp-dir check))
+
+(fn facts-observer-failed-extract-stays-open []
+  (local Facts (require :constraints.facts))
+  (local sentinel {})
+  (fn fail-index [...] (error sentinel 0))
+  (local broken-source (setmetatable {} {:__index fail-index}))
+  (local records [{:path "/private/error.fnl" :source broken-source :root {}}])
+  (local events [])
+  (fn record-event [event] (table.insert events event))
+  (local (plain-ok plain-err) (pcall Facts.extract records))
+  (local (ok err) (pcall Facts.extract records record-event))
+  (assert (not plain-ok))
+  (assert (not ok))
+  (assert (= plain-err sentinel err) "fact extraction must preserve error identity")
+  (assert (= (# events) 1) "failed extract must not emit an end")
+  (assert (= (. events 1 :edge) :begin))
+  (assert (= (. events 1 :subphase) :extract)))
+
+(table.insert tests {:name "facts observer preserves all projections including ERROR recovery"
+                     :fn facts-observer-parity-including-error-recovery})
+(table.insert tests {:name "facts observer uses indices for unsafe file metadata"
+                     :fn facts-observer-rejects-unsafe-file-metadata})
+(table.insert tests {:name "facts observer retains unmatched extract begin on error"
+                     :fn facts-observer-failed-extract-stays-open})
+
 ;; Register all tests
 (table.insert tests {:name "facts extracts require module"
                      :fn extracts-require-module})

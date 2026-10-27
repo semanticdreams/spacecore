@@ -148,7 +148,10 @@
   (if (= change.after-bytes false)
       (if (= (. domain 1) "notebook") (store:retire-notebook! id) (store:retire-entity! id))
       (= (. domain 1) "notebook") (store:persist-notebook! id change.after-bytes change.after-check)
-      (store:persist-entity! id change.after-bytes change.after-check))
+      (do
+        (store:persist-entity! id change.after-bytes change.after-check)
+        (when (or (= (. domain 1) "string-entity") (= (. domain 1) "link-entity"))
+          (store:reconcile-entity! id change.after-bytes change.before-check change.after-check))))
   nil)
 (fn reconcile! [self intent]
   (each [_ change (ipairs intent.changes)]

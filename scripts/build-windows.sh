@@ -338,4 +338,4 @@ fi
 
 cmake "${cmake_args[@]}"
 BUILD_JOBS="$(resolve_build_jobs)"
-cmake --build "${BUILD_DIR}" --config Release --parallel "${BUILD_JOBS}" --target space space-cli
+cmake --build "${BUILD_DIR}" --config Release --parallel "${BUILD_JOBS}" --target space space-cli test_record_publication

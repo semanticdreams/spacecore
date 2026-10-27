@@ -246,6 +246,97 @@
           "refresh result should include refreshed scheme")
   (runtime:drop))
 
+(fn capability-access [version]
+  (local object-ref {:key "registry-meter:one"})
+  (local shape {:type "integer" :min 0 :max 100})
+  (fn describe-meter [_ref]
+    {:ok true :value {:ref object-ref :summary "Registry meter"
+                     :capabilities [{:id "meter.read" :description "Read version" :effect "read" :revision "none"
+                                     :arguments {:type "record" :fields {} :optional []} :result shape}]}})
+  (fn read-meter [_ref _args _pre] {:ok true :value version})
+  {:entry-points [{:ref object-ref :summary "Registry meter"}]
+   :describe describe-meter :handlers {"meter.read" read-meter}})
+
+(fn capability-descriptor [version fail-on record-before-throw?]
+  (var installs 0)
+  (fn visual-loader [_key] (error "Capability installation must not load visual adapters"))
+  (fn install [graph ctx]
+    (set installs (+ installs 1))
+    (local handle (graph:register-key-loader "registry-meter" visual-loader
+                                            {:owner-id ctx.owner-id :extension-id ctx.extension-id
+                                             :access (capability-access version)}))
+    (when record-before-throw? (ctx:record-handle handle))
+    (when (and fail-on (= installs fail-on))
+      (error "intentional capability install failure"))
+    [handle])
+  {:id "capability-extension" :unit-id "test-capability-unit" :schemes ["registry-meter"] :install-loaders install})
+
+(fn assert-meter-version [runtime expected]
+  (local page (runtime.graph:discover {}))
+  (assert page.ok)
+  (assert (= (length page.value.items) 1))
+  (local object-ref (. page.value.items 1 :ref))
+  (local described (runtime.graph:describe object-ref))
+  (assert described.ok)
+  (local result (runtime.graph:invoke object-ref (. described.value.capabilities 1 :id) {} {}))
+  (assert result.ok)
+  (assert (= result.value expected)))
+
+(fn assert-no-meter [runtime]
+  (local result (runtime.graph:describe {:key "registry-meter:one"}))
+  (assert (= result.ok false))
+  (assert (= result.error.code "unavailable"))
+  (assert (= (length (. (runtime.graph:discover {}) :value :items)) 0)))
+
+(fn capabilities-follow-live-future-unload-and-replacement []
+  (local registry (GraphExtensionRegistry.GraphExtensionRegistry {}))
+  (local runtime-a (make-runtime))
+  (registry:install-runtime runtime-a)
+  (local old (registry:register-extension (capability-descriptor 1)))
+  (local runtime-b (make-runtime))
+  (registry:install-runtime runtime-b)
+  (assert-meter-version runtime-a 1)
+  (assert-meter-version runtime-b 1)
+  (old:unregister)
+  (assert-no-meter runtime-a)
+  (assert-no-meter runtime-b)
+  (local replacement (registry:register-extension (capability-descriptor 2)))
+  (local (ok _err) (pcall #(old:unregister)))
+  (assert (not ok) "stale extension handle must not remove replacement access")
+  (assert-meter-version runtime-a 2)
+  (assert-meter-version runtime-b 2)
+  (registry:uninstall-runtime runtime-a)
+  (assert-no-meter runtime-a)
+  (assert-meter-version runtime-b 2)
+  (replacement:unregister)
+  (assert-no-meter runtime-b)
+  (runtime-a:drop)
+  (runtime-b:drop))
+
+(fn capabilities-rollback-recorded-installer-and-two-runtimes []
+  (each [_ fail-on (ipairs [1 2])]
+    (local registry (GraphExtensionRegistry.GraphExtensionRegistry {}))
+    (local runtime-a (make-runtime))
+    (local runtime-b (make-runtime))
+    (registry:install-runtime runtime-a)
+    (registry:install-runtime runtime-b)
+    (local descriptor (capability-descriptor 1 fail-on true))
+    (local (ok _err) (pcall #(registry:register-extension descriptor)))
+    (assert (not ok))
+    (assert-no-meter runtime-a)
+    (assert-no-meter runtime-b)
+    (local successful (registry:register-extension (capability-descriptor 3)))
+    (assert-meter-version runtime-a 3)
+    (assert-meter-version runtime-b 3)
+    (successful:unregister)
+    (runtime-a:drop)
+    (runtime-b:drop)))
+
+(table.insert tests {:name "capabilities follow live/future runtime ownership and replacement"
+                     :fn capabilities-follow-live-future-unload-and-replacement})
+(table.insert tests {:name "capabilities roll back recorded installer handles across runtimes"
+                     :fn capabilities-rollback-recorded-installer-and-two-runtimes})
+
 (table.insert tests {:name "extension-registry-installs-into-live-and-future-runtime"
                      :fn extension-registry-installs-into-live-and-future-runtime})
 (table.insert tests {:name "extension-registry-unregister-cleans-loaders-and-morphs"

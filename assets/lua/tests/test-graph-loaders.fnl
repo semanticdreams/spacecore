@@ -408,7 +408,7 @@
       (result:drop)
       (graph:drop))))
 
-(fn link-entity-integration-loads-endpoints-via-load-by-key []
+(fn link-entity-integration-only-reconciles-visible-endpoints []
   (with-temp-dir
     (fn [dir]
       (local StringEntityStore (require :entities/string))
@@ -424,9 +424,12 @@
       (local {:register-loader string-register} (require :graph/nodes/string-entity))
       (string-register graph {:store string-store})
       (link-store:create-entity {:source-key left-key :target-key right-key})
-      (assert (graph:lookup left-key) "link integration should load source node via load-by-key")
-      (assert (graph:lookup right-key) "link integration should load target node via load-by-key")
-      (assert (= (graph:edge-count) 1) "link integration should add edge after loading endpoints")
+      (assert (= (graph:node-count) 0) "link event must not load unseen endpoints")
+      (assert (= (graph:edge-count) 0))
+      (graph:load-by-key left-key)
+      (assert (= (graph:node-count) 1) "explicit load must not expand hidden neighbors")
+      (graph:load-by-key right-key)
+      (assert (= (graph:edge-count) 1) "explicitly visible endpoints should derive an edge")
       (graph:drop))))
 
 (fn link-entity-integration-readds-edge-after-node-removal []
@@ -444,9 +447,11 @@
       (local graph (Graph {:with-start false :link-store link-store :identity-store link-store.identity-store}))
       (local {:register-loader string-register} (require :graph/nodes/string-entity))
       (string-register graph {:store string-store})
+      (graph:load-by-key left-key)
+      (graph:load-by-key right-key)
       (link-store:create-entity {:source-key left-key :target-key right-key})
       (local right-node (graph:lookup right-key))
-      (assert right-node "right node should exist after link-driven loading")
+      (assert right-node "right node should exist after explicit loading")
       (assert (= (graph:edge-count) 1) "graph should have one edge before removal")
       (graph:remove-nodes [right-node])
       (assert (= (graph:edge-count) 0) "removing endpoint should remove link edge")
@@ -741,8 +746,8 @@
                      :fn notebook-loader-loads-existing-notebook})
 (table.insert tests {:name "identity loader loads existing identity"
                      :fn identity-loader-loads-existing-identity})
-(table.insert tests {:name "link entity integration loads endpoints via load-by-key"
-                     :fn link-entity-integration-loads-endpoints-via-load-by-key})
+(table.insert tests {:name "link entity integration only reconciles visible endpoints"
+                     :fn link-entity-integration-only-reconciles-visible-endpoints})
 (table.insert tests {:name "link entity integration readds edge after node removal"
                      :fn link-entity-integration-readds-edge-after-node-removal})
 (table.insert tests {:name "list entity node loads items via load-by-key"

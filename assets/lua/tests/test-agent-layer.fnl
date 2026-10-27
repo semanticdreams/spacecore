@@ -76,17 +76,54 @@
   (assert (string.match (tostring err) "failed to parse agent session") "error should mention parse failure")
   (clean-dir dir))
 
+(fn with-session-clock [body]
+  (local previous-time os.time)
+  (var second 1700000000)
+  (fn clock [...]
+    (assert (= (select "#" ...) 0) "session test clock accepts only zero-argument os.time")
+    second)
+  (fn advance [] (set second 1700000001))
+  (set os.time clock)
+  (local (ok result) (pcall body advance))
+  (set os.time previous-time)
+  (if ok result (error result 0)))
+
 (fn test-session-save-updates-timestamp []
   (local SessionMod (require :llm/agent/session))
   (local dir (temp-dir))
-  (local session (SessionMod.create-session "test-agent" dir))
-  (local original-updated-at session.updated-at)
-  (os.execute "sleep 1")  ;; ensure timestamp changes
-  (SessionMod.update-session session {:status :busy})
-  (SessionMod.save-session session dir)
-  (assert (> (or session.updated-at 0) (or original-updated-at 0))
-          "updated-at should be newer after save")
-  (clean-dir dir))
+  (local previous-time os.time)
+  (fn exercise [advance]
+    (local session (SessionMod.create-session "test-agent" dir))
+    (local path (fs.join-path dir (.. session.id ".json")))
+    (fn assert-records [updated status]
+      (each [_ record (ipairs [session (assert (json.loads (fs.read-file path)))])]
+        (assert (= record.created-at 1700000000) "creation time must remain the original integer second")
+        (assert (= record.updated-at updated) "update time must equal the exact test second")
+        (assert (= record.status status) "status must agree in memory and persisted JSON")))
+    (assert-records 1700000000 :idle)
+    (SessionMod.save-session session dir)
+    (assert-records 1700000000 :idle)
+    (advance)
+    (SessionMod.update-session session {:status :busy})
+    (SessionMod.save-session session dir)
+    (assert-records 1700000001 :busy))
+  (local (ok result) (pcall with-session-clock exercise))
+  (assert (= os.time previous-time) "clock must be restored before directory cleanup")
+  (clean-dir dir)
+  (when (not ok) (error result 0)))
+
+(fn test-session-clock-restores-after-throw []
+  (local previous-time os.time)
+  (local sentinel {})
+  (fn fail [advance]
+    (assert (= (os.time) 1700000000))
+    (advance)
+    (assert (= (os.time) 1700000001))
+    (error sentinel 0))
+  (local (ok result) (pcall with-session-clock fail))
+  (assert (= os.time previous-time) "throwing body must restore the original clock before rethrow")
+  (assert (not ok) "throwing body must not be suppressed")
+  (assert (= result sentinel) "clock scope must preserve original error identity"))
 
 (fn test-session-delete []
   (local SessionMod (require :llm/agent/session))
@@ -2733,6 +2770,7 @@
 (table.insert tests {:name "session load missing" :fn test-session-load-missing})
 (table.insert tests {:name "session load corrupt errors" :fn test-session-load-corrupt-errors})
 (table.insert tests {:name "session save updates timestamp" :fn test-session-save-updates-timestamp})
+(table.insert tests {:name "session test clock restores after throwing body" :fn test-session-clock-restores-after-throw})
 (table.insert tests {:name "session delete" :fn test-session-delete})
 (table.insert tests {:name "session list" :fn test-session-list})
 (table.insert tests {:name "session list empty dir" :fn test-session-list-empty-dir})

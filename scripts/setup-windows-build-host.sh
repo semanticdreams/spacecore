@@ -5,6 +5,16 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VCPKG_ROOT="${VCPKG_ROOT:-${ROOT_DIR}/vcpkg}"
 RUST_TARGET="${RUST_TARGET:-x86_64-pc-windows-gnu}"
 
+# Each fixed APT transaction is simulated with exact Wine pins before elevation.
+# The first guard also precedes apt-get update and all legacy bootstrap work.
+install_host_packages() {
+    local selected
+    selected="$(python3 "${ROOT_DIR}/scripts/wine/publication_toolchain.py" setup-packages "$1")" || exit 2
+    local -a packages
+    mapfile -t packages <<< "${selected}"
+    sudo apt-get install -y --no-remove "${packages[@]}"
+}
+
 install_powershell_core() {
     if command -v pwsh >/dev/null 2>&1; then
         return 0
@@ -37,7 +47,7 @@ install_powershell_core() {
     sudo dpkg -i "${microsoft_package}"
     rm -f "${microsoft_package}"
     sudo apt-get update
-    sudo apt-get install -y powershell
+    install_host_packages powershell
 
     if ! command -v pwsh >/dev/null 2>&1; then
         echo "PowerShell Core (pwsh) is required by vcpkg." >&2
@@ -46,31 +56,11 @@ install_powershell_core() {
     fi
 }
 
+python3 "${ROOT_DIR}/scripts/wine/publication_toolchain.py" setup-packages main >/dev/null
 sudo apt-get update
-sudo apt-get install -y \
-    mingw-w64 \
-    gcc-mingw-w64-x86-64-posix \
-    g++-mingw-w64-x86-64-posix \
-    binutils-mingw-w64-x86-64 \
-    wine64 \
-    winbind \
-    cmake \
-    ninja-build \
-    ccache \
-    git \
-    pkg-config \
-    nasm \
-    llvm-14 \
-    curl \
-    autoconf \
-    automake \
-    libtool \
-    python3 \
-    python3-pil \
-    ripgrep \
-    zip
+install_host_packages main
 
-sudo apt-get install -y sccache || true
+install_host_packages sccache || true
 install_powershell_core
 
 if command -v ninja >/dev/null 2>&1 && [ ! -x /usr/local/bin/ninja ]; then
@@ -133,5 +123,8 @@ fi
 cat <<'EOF'
 Windows build host setup complete.
 Next step (no sudo): scripts/build-windows-from-linux.sh
-Then run Windows tests under Wine: scripts/test-windows-under-wine.sh
+Then package and admit the Wine overlay before testing:
+  scripts/package-windows-runtime.sh
+  scripts/prepare-windows-wine-runtime.sh
+  scripts/test-windows-under-wine.sh
 EOF

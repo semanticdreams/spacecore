@@ -489,6 +489,117 @@
   (assert (= result.kind :files) "kind should be :files")
   (assert (= (# result.files) 2) (.. "expected 2 files, got " (# result.files))))
 
+(fn assert-record-parity [expected actual]
+  (assert (= (# expected) (# actual)) "observer changed discovery count")
+  (each [i record (ipairs expected)]
+    (local observed (. actual i))
+    (each [_ key (ipairs [:target :path :module :relative-path :source])]
+      (assert (= (. record key) (. observed key)) (.. "observer changed " key)))
+    (assert (= (record.root:type) (observed.root:type)))
+    (assert (= (record.root:sexpr) (observed.root:sexpr)))))
+
+(fn assert-source-event-schema [events]
+  (local allowed {:edge true :phase true :subphase true :file true :index true :count true})
+  (each [_ event (ipairs events)]
+    (assert (= event.phase :discover))
+    (each [key value (pairs event)]
+      (assert (. allowed key))
+      (assert (or (= (type value) :string) (= (type value) :number))))))
+
+(fn source-observer-preserves-discovery-and-order []
+  (fn check [dir]
+    (local z (make-file dir "z.fnl" "(print :private-source)"))
+    (make-file dir "a.fnl" "(+ 1 2)")
+    (local Source (require :constraints.source))
+    (local target {:kind :files :roots [dir] :files [z] :module-roots [dir]})
+    (local expected (Source.discover target))
+    (local events [])
+    (fn record-event [event] (table.insert events event))
+    (local actual (Source.discover target record-event))
+    (assert-record-parity expected (Source.discover target nil))
+    (assert-record-parity expected actual)
+    (assert (= (# events) 10) "expected scan and two read/parse pairs")
+    (assert (= (. events 1 :edge) :begin))
+    (assert (= (. events 1 :subphase) :scan))
+    (assert (= (. events 2 :edge) :end))
+    (assert (= (. events 2 :count) 2))
+    (each [i file (ipairs ["a.fnl" "z.fnl"])]
+      (each [j subphase (ipairs [:read :parse])]
+        (local offset (+ 2 (* (- i 1) 4) (* (- j 1) 2)))
+        (local begin (. events (+ offset 1)))
+        (local end (. events (+ offset 2)))
+        (assert (= begin.edge :begin))
+        (assert (= end.edge :end))
+        (assert (= begin.subphase subphase end.subphase))
+        (assert (= begin.file file end.file))
+        (assert (= begin.index i end.index))))
+    (assert-source-event-schema events))
+  (with-temp-dir check))
+
+(fn source-observer-hides-absolute-fallback []
+  (fn check [dir]
+    (local path (make-file dir "private.fnl" "(print :private-source)"))
+    (local Source (require :constraints.source))
+    (local events [])
+    (fn record-event [event] (table.insert events event))
+    (local records (Source.discover {:kind :files :files [path] :module-roots []} record-event))
+    (assert (= (. records 1 :relative-path) (fs.absolute path)))
+    (assert (= (# events) 6) "expected scan/read/parse events")
+    (each [i event (ipairs events)]
+      (assert (= event.file nil) "absolute fallback must not escape")
+      (when (> i 2) (assert (= event.index 1)))))
+  (with-temp-dir check))
+
+(fn source-observer-leaves-failed-operation-open [operation subphase]
+  (fn check [dir]
+    (local path (make-file dir "error.fnl" "(+ 1 2)"))
+    (local Source (require :constraints.source))
+    (local ts (require :tree-sitter))
+    (local owner (if (= operation :read-file) fs ts))
+    (local previous (. owner operation))
+    (local sentinel {})
+    (local events [])
+    (fn fail [...] (error sentinel 0))
+    (fn record-event [event] (table.insert events event))
+    (tset owner operation fail)
+    (local (ok err) (pcall Source.discover {:kind :files :files [path] :module-roots [dir]}
+                           record-event))
+    (tset owner operation previous)
+    (assert (not ok))
+    (assert (= err sentinel) "workload error identity must be preserved")
+    (local last (. events (# events)))
+    (assert last "failure must retain its begin event")
+    (assert (= last.edge :begin))
+    (assert (= last.subphase subphase)))
+  (with-temp-dir check))
+
+(fn source-observer-scan-failure-stays-open []
+  (fn check [dir]
+    (local Source (require :constraints.source))
+    (local target {:roots [(fs.join-path dir "missing")]})
+    (local events [])
+    (fn record-event [event] (table.insert events event))
+    (local (plain-ok plain-err) (pcall Source.discover target))
+    (local (ok err) (pcall Source.discover target record-event))
+    (assert (not plain-ok))
+    (assert (not ok))
+    (assert (= err plain-err) "scan errors must be unchanged")
+    (assert (= (# events) 1) "failed scan must not emit an end")
+    (assert (= (. events 1 :edge) :begin))
+    (assert (= (. events 1 :subphase) :scan)))
+  (with-temp-dir check))
+
+(table.insert tests {:name "source observer preserves discovery and order"
+                     :fn source-observer-preserves-discovery-and-order})
+(table.insert tests {:name "source observer hides absolute fallback"
+                     :fn source-observer-hides-absolute-fallback})
+(table.insert tests {:name "source observer retains unmatched read begin on error"
+                     :fn #(source-observer-leaves-failed-operation-open :read-file :read)})
+(table.insert tests {:name "source observer retains unmatched parse begin on error"
+                     :fn #(source-observer-leaves-failed-operation-open :parse :parse)})
+(table.insert tests {:name "source observer retains unmatched scan begin on error"
+                     :fn source-observer-scan-failure-stays-open})
+
 ;; Register all tests
 (table.insert tests {:name "targets resolve defaults to repo"
                      :fn targets-resolve-defaults-to-repo})

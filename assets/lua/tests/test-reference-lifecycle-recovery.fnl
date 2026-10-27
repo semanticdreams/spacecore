@@ -159,7 +159,7 @@
   (seed s)
   (local service (H.ready s))
   (local path (. (s.string-store:snapshot-entity "s") :path))
-  (H.with-fs-failure "remove" path (fn fail-retire []
+  (H.with-record-failure s.string-store :remove! path (fn fail-retire []
     (H.assert-error "s.md" (fn delete [] (service:delete! "string-entity:s")))))
   (source-alive s)
   (local cold (H.stores s.base-dir))
@@ -187,7 +187,7 @@
   (each [_ c (ipairs intent.changes)] (when (= c.address "list-entity:l") (set incoming c)))
   (fs.write-file path incoming.after-bytes)
   (local source-path (. (s.string-store:snapshot-entity "s") :path))
-  (H.with-fs-failure "remove" source-path (fn fail-source []
+  (H.with-record-failure s.string-store :remove! source-path (fn fail-source []
     (H.assert-error "s.md" (fn delete [] (service:delete! "string-entity:s")))))
   (H.raw-list s "l" ["external:after-edit"])
   (H.assert-error "conflict" (fn after-conflict [] (: (H.lifecycle (H.stores s.base-dir)) :start!)))
@@ -315,6 +315,9 @@
   (cold.string-store.string-entity-deleted:clear)
   (assert (= deleted.id "s"))
   (assert (= deleted.value " source \n\n"))
+  (assert (= deleted.created-at 1))
+  (assert (= deleted.updated-at 2))
+  (assert (= deleted.revision nil) "cold legacy deletion must not invent a revision")
   (done cold)))
 (add "new morph reservation cold restart" (fn new-reservation [s]
   (s.string-store:create-entity {:id "s" :value "source"})
@@ -368,9 +371,11 @@
   ;; Retain its journal at source removal instead of expecting a list write.
   (local path (if morph? (. (s.string-store:snapshot-entity "s") :path)
                   (.. (. (s.list-store:snapshot-entity "incoming") :path) ".tmp")))
-  (H.with-fs-failure (if morph? "remove" "write-file") path (fn fail-incoming []
+  (fn fail-incoming []
     (H.assert-error (if morph? "s.md" "incoming.json") (fn command []
-      (if morph? (service:replace! key (payload)) (service:delete! key))))))
+      (if morph? (service:replace! key (payload)) (service:delete! key)))))
+  (if morph? (H.with-record-failure s.string-store :remove! path fail-incoming)
+      (H.with-fs-failure :write-file path fail-incoming))
   (: (pending s) :read))
 (fn change-at [intent address]
   (var found nil)
@@ -610,5 +615,129 @@
   (H.with-root rooted))
 (add "deferred strict table matching" (fn strict [_s]
   (strict-deferred true) (strict-deferred false)))
+
+(add "frozen original String persistence verifies exact bytes before publication" (fn frozen-persistence [s]
+  (local store s.string-store)
+  (local held (store:create-entity {:id "held" :value "ordinary"}))
+  (local before (store:snapshot-entity held.id))
+  (local held-check (J.stable-json held))
+  (local tree (H.snapshot-tree s.base-dir))
+  (local bytes "---\nupdated-at: 2\nid: held\ncreated-at: 1\n---\n\n\t legacy\r\n\n ")
+  (assert (not (= bytes (store:serialize-entity (store:decode-entity bytes)))))
+  (var updates 0)
+  (local handler (store.string-entity-updated:connect (fn count-update [_] (set updates (+ updates 1)))))
+  (fn unchanged []
+    (assert (= (. store.cache held.id) held))
+    (assert (= (J.stable-json held) held-check))
+    (assert (= updates 0)))
+  (fn bad-check [] (store:persist-entity! held.id bytes (.. bytes "tampered check")))
+  (fn bad-bytes [] (store:persist-entity! held.id (.. bytes "tampered body") bytes))
+  (fn bad-id [] (store:persist-entity! "other" bytes bytes))
+  (fn bad-after-image [] (store:reconcile-entity! held.id bytes before.check bytes))
+  (each [_ spec (ipairs [["after-check mismatch" bad-check] ["after-check mismatch" bad-bytes]
+                         ["record id does not match persistence target" bad-id]
+                         ["reconciliation after-image mismatch" bad-after-image]])]
+    (H.assert-error (. spec 1) (. spec 2))
+    (unchanged)
+    (same (H.snapshot-tree s.base-dir) tree))
+  (fn bad-after-bytes [] (store:reconcile-entity! held.id (.. bytes "tampered body") before.check bytes))
+  (fn replay []
+    (store:persist-entity! held.id bytes bytes)
+    (assert (= (fs.read-file before.path) bytes))
+    (unchanged)
+    (H.assert-error "frozen after-check mismatch" bad-after-bytes)
+    (assert (= (fs.read-file before.path) bytes))
+    (unchanged)
+    (store:reconcile-entity! held.id bytes before.check bytes))
+  (fn forbidden [...] (error "frozen replay must not allocate a timestamp or revision"))
+  (fn without-uuids [] (H.with-fields (require :uuid) {:v4 forbidden} replay))
+  (H.with-fields os {:time forbidden} without-uuids)
+  (store.string-entity-updated:disconnect handler true)
+  (assert (= (. store.cache held.id) held))
+  (assert (= updates 1))
+  (assert (= held.value "\t legacy\r\n\n "))
+  (assert (= held.created-at 1))
+  (assert (= held.updated-at 2))
+  (assert (= held.revision nil))
+  (assert (= (fs.read-file before.path) bytes))))
+
+(add "frozen original String retirement rejects bad guards before held-cache notification" (fn frozen-retirement [s]
+  (local store s.string-store)
+  (local bytes "---\nupdated-at: 2\nid: retired\ncreated-at: 1\n---\n\n\t retired\r\n\n ")
+  (local path (fs.join-path store.entities-dir "retired.md"))
+  (fs.write-file path bytes)
+  (local held (store:get-entity "retired"))
+  (local held-check (J.stable-json held))
+  ((. (require :entities/record-files) :remove!) path)
+  (var deleted nil)
+  (local handler (store.string-entity-deleted:connect (fn observe [record] (set deleted record))))
+  (local (wrong-id-bytes replacements) (string.gsub bytes "id: retired" "id: other" 1))
+  (assert (= replacements 1))
+  (fn bad-after-check [] (store:reconcile-entity! held.id false bytes "tampered check"))
+  (fn bad-after-bytes [] (store:reconcile-entity! held.id bytes bytes false))
+  (fn bad-before-id [] (store:reconcile-entity! held.id false wrong-id-bytes false))
+  (each [_ spec (ipairs [["reconciliation after-image mismatch" bad-after-check]
+                         ["frozen after-check mismatch" bad-after-bytes]
+                         ["record id does not match persistence target" bad-before-id]])]
+    (H.assert-error (. spec 1) (. spec 2))
+    (assert (= (. store.cache held.id) held))
+    (assert (= (J.stable-json held) held-check))
+    (assert (= deleted nil))
+    (assert (not (fs.exists path))))
+  (assert (= (store:reconcile-entity! held.id false bytes false) held))
+  (store.string-entity-deleted:disconnect handler true)
+  (assert (= (. store.cache held.id) nil))
+  (assert (= deleted held))
+  (assert (= deleted.id "retired"))
+  (assert (= deleted.value "\t retired\r\n\n "))
+  (assert (= deleted.revision nil))
+  (assert (not (fs.exists path)))))
+
+(add "round1 absent-default Link cold retirement resumes retained completion" (fn legacy-link-retirement [s]
+  (local store s.link-store)
+  (local path (fs.join-path store.entities-dir "legacy.json"))
+  (local bytes "{\n \"id\": \"legacy\"\n}\n")
+  ((. (require :entities/record-files) :write-text!) path bytes)
+  (local held (store:get-entity "legacy"))
+  (local service (. (H.cold-lifecycle s) :service))
+  (service:start!)
+  (assert (= (fs.read-file path) bytes))
+  (var first-deleted 0)
+  (fn observe-first-delete [record]
+    (assert (= record held))
+    (set first-deleted (+ first-deleted 1)))
+  (fn retain-completion [_] (error "round1 retained Link completion"))
+  (local deleted-handler (store.link-entity-deleted:connect observe-first-delete))
+  (local retain-handler (service.committed:connect retain-completion))
+  (H.assert-error "round1 retained Link completion" #(service:delete! "link-entity:legacy"))
+  (service.committed:disconnect retain-handler true)
+  (store.link-entity-deleted:disconnect deleted-handler true)
+  (assert (= first-deleted 1))
+  (assert (not (fs.exists path)))
+  (local intent (: (pending s) :read))
+  (assert (= (. intent.changes 1 :before-check) (R.check-bytes bytes "json")))
+  (local cold (H.stores s.base-dir))
+  (local restarted (. (H.cold-lifecycle cold) :service))
+  (var cold-deleted 0)
+  (var observed nil)
+  (fn observe-cold-delete [record]
+    (set cold-deleted (+ cold-deleted 1))
+    (set observed record))
+  (local handler (cold.link-store.link-entity-deleted:connect observe-cold-delete))
+  (fn forbidden [...] (error "cold Link retirement must not rewrite or allocate"))
+  (fn replay [] (restarted:start!))
+  (fn no-writes [] (H.with-fields cold.link-store.files {:write-text! forbidden :write-json! forbidden} replay))
+  (fn no-uuids [] (H.with-fields (require :uuid) {:v4 forbidden} no-writes))
+  (H.with-fields os {:time forbidden} no-uuids)
+  (cold.link-store.link-entity-deleted:disconnect handler true)
+  (assert (= cold-deleted 1))
+  (same observed held)
+  (assert (= observed.id "legacy"))
+  (assert (= observed.source-key ""))
+  (assert (= observed.target-key ""))
+  (assert (= observed.created-at 0))
+  (assert (= (restarted._pending:read) nil))
+  (assert restarted._state.ready?)
+  (assert (not (fs.exists path)))))
 
 {:tests tests}
