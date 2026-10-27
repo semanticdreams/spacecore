@@ -203,7 +203,7 @@ below are unchanged: missing mode metadata remains unknown, not evidence of high
 No model reevaluation was performed for this setting change. Restart OpenCode to
 load the updated roles; already-running sessions retain their loaded settings.
 
-The canonical [AGENTS.md](../../../AGENTS.md#glm-default-consultation-contract)
+The canonical [AGENTS.md](https://github.com/semanticdreams/spacecore/blob/main/AGENTS.md#glm-default-consultation-contract)
 contract requires both models on **every architecture/software-design/system-
 contract decision before dependent implementation**, even when confident and no
 failure has occurred. Responsibilities, boundaries, abstractions, ownership,
@@ -377,7 +377,7 @@ The actual GLM proposal and GPT critique/reconciliation are recorded in the
 before dependent implementation. No model/permission change or extra GPT full-review
 tax follows from delivery repair.
 
-The canonical rule is [AGENTS.md#fail-closed-handoff-delivery](../../../AGENTS.md#fail-closed-handoff-delivery).
+The canonical rule is [AGENTS.md#fail-closed-handoff-delivery](https://github.com/semanticdreams/spacecore/blob/main/AGENTS.md#fail-closed-handoff-delivery).
 Every receiving controller (supervisor, selected fast-dev/live-dev) applies it
 **before** consultation, verdict, finding/fix, cap/adjudication or completion handling.
 Use the declared JSON or Markdown role contract, required fields, assignment identity

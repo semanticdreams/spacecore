@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-26
+[Code runs](/dev/features/code-runs) turn execution into durable, searchable graph history, preserving source snapshots, output, results and artifact references beyond source changes. Internal Fennel runs stream progress, and execution outlives view teardown, making work inspectable independently of its presentation. Alongside this visibility, new [agent role configuration](/dev/features/opencode-agent-workflow#glm-default-roles-and-bounded-expert-consultation) puts ordinary project roles on GLM high for cost-conscious iteration, with bounded read-only GPT consultation required before architecture, design or contract implementation. Fail-closed handoff correction preserves independent review and publication gates rather than treating valid formatting as approval, advancing cheaper-worker adoption beyond the pilot without claiming proven savings or reliability.
+
 ## 2026-10-25
 The [static model pilot](/dev/notes/opencode-model-pilot) used actual Space Fennel tasks and independent review of selected, author-blinded excerpts to probe responsible delegation without weakening architecture or review gates. Mixed completions, an invalid answer and timeouts offer qualitative screening, not a model ranking or proof of hybrid success; candidate code was not executed. Strong-model architecture and review authority remain in place and production routing is unchanged, keeping any cheaper-worker adoption contingent on separately authorized trials rather than presumed cost or reliability gains.
 
