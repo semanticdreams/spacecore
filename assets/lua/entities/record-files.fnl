@@ -20,6 +20,10 @@
   (assert (= (type open) :function) "RecordFiles open must be a read function")
 
   (fn read! [path max-bytes]
+    (local (stat-ok status) (pcall fs.stat path))
+    (when (not stat-ok) (fail status))
+    (when status.error (fail status.error))
+    (when (not status.is-file) (fail "record must be a regular file"))
     (local handle (checked (open path "rb")))
     (local (ok content err) (pcall handle.read handle (if max-bytes (+ max-bytes 1) "a")))
     (local (close-ok closed close-err) (pcall handle.close handle))
@@ -56,7 +60,8 @@
     (local ids [])
     (each [_ entry (ipairs entries)]
       (when entry.error (fail (.. "directory entry stat failed: " (tostring entry.error))))
-      (when (and entry.is-file (= (string.sub entry.name (- (length suffix))) suffix))
+      (when (= (string.sub entry.name (- (length suffix))) suffix)
+        (when (not entry.is-file) (fail (.. "record must be a regular file: " entry.name)))
         (table.insert ids (string.sub entry.name 1 (- (- (length suffix)) 1)))))
     (table.sort ids)
     ids)

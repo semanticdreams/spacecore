@@ -1186,6 +1186,8 @@
     (assert (= (H.assert-error "field context" (fn structured [] (error err))) "raw field context"))
     (assert (= (H.assert-error "plain scalar" (fn scalar [] (error "plain scalar" 0))) "plain scalar"))))
 
+(each [_ record-test (ipairs (. (require :tests/test-record-file-types) :tests))]
+  (table.insert tests record-test))
 (fn main [] (runner.run-tests {:name "entity-record-persistence" :tests tests}))
 {:name "entity-record-persistence" :tests tests :main main
  :privacy-child-main privacy-child-main :ordinary-default-child-main ordinary-default-child-main}
