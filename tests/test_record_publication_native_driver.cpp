@@ -188,8 +188,8 @@ void native_driver_allocation_tests()
         child_check([=] { native_one_shot(mode, count); }, 0);
     for (unsigned mode = 0; mode < 3; ++mode)
         child_check([=] { alive_finalization(mode); }, 0);
-    child_check([] {
-        Fixture fixture;
+    Fixture fixture; // Parent owns cleanup even when the child fail-stops via _exit.
+    child_check([&] {
         rp::Hooks hooks;
         hooks.before_cleanup = [] { allocation_test::disabled = true; };
         // Force a postcommit diagnostic with an allocation-free exception copy.
