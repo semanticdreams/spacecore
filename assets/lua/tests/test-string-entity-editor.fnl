@@ -12,6 +12,7 @@
 (local Uuid (require :uuid))
 (local json (require :json))
 (local glm (require :glm))
+(local with-record-clock (require :tests/record-clock))
 (local tests [])
 
 (fn registrations []
@@ -38,37 +39,65 @@
           (assert (= created.exit-code 0) created.stderr))
         {:path path :drop (fn drop-directory [_self] (fs.remove-all path))})))
 
+(fn error-text [err] (if (= (type err) :table) (json.dumps err) (tostring err)))
+
+(fn assert-view-dropped [view]
+  (assert view.input.__dropped "owning composite must drop Input"))
+
 (fn with-editor [surface f]
-  (local dir (editor-directory))
-  (local files (collect [k v (pairs RecordFiles)] (values k v)))
-  (local store (Strings.StringEntityStore {:base-dir dir.path :files files}))
-  (local links (Links.LinkEntityStore {:base-dir dir.path}))
-  (local graph (Graph {:with-start false :entity-events? false :string-store store :link-store links :morphs {}}))
-  (local access ((. (require :graph/capabilities/entities) :access-by-scheme) {:string-store store :link-store links}))
-  (each [scheme provider (pairs access)]
-    (graph:register-key-loader scheme (fn no-visual [] (error "must not materialize")) {:access provider}))
-  (local entity (store:create-entity {:value "initial"}))
-  (local node (StringEntityNode {:entity-id entity.id :store store}))
-  (local ctx (BuildContext {:clickables app.clickables :hoverables app.hoverables
-                           :icons {:resolve (fn no-icon [] nil)}}))
-  (local before (store:read-text entity.id))
-  (local registered-before (registrations))
-  (local view ((surface node) ctx))
-  (local (ok err) (pcall f {:store store :files files :node node :view view :ctx ctx
-                           :graph graph :ref {:key node.key} :before before :surface surface}))
-  (view:drop)
-  (when ok
-    (assert view.input.__dropped "owning composite must drop Input")
-    (assert (= (json.dumps (registrations)) (json.dumps registered-before)) "widget registrations leaked")
-    (assert (= (draw-count ctx) 0) "text render entries leaked"))
-  (node:drop)
-  (when ok
-    (local label node.label)
-    (store:update-entity entity.id {:value "after node drop"})
-    (assert (= node.label label) "node store subscription leaked after drop"))
-  (graph:drop)
-  (dir:drop)
-  (when (not ok) (error (if (= (type err) :table) (json.dumps err) err))))
+  (local cleanup [])
+  (local errors [])
+  (fn own [label action resource]
+    (table.insert cleanup {:label label :action action :resource resource}))
+  (fn exercise []
+    (local dir (editor-directory))
+    (own "directory drop" dir.drop dir)
+    (local files (collect [k v (pairs RecordFiles)] (values k v)))
+    (local store (Strings.StringEntityStore {:base-dir dir.path :files files}))
+    (local links (Links.LinkEntityStore {:base-dir dir.path}))
+    (local graph (Graph {:with-start false :entity-events? false :string-store store :link-store links :morphs {}}))
+    (own "graph drop" graph.drop graph)
+    (local access ((. (require :graph/capabilities/entities) :access-by-scheme) {:string-store store :link-store links}))
+    (each [scheme provider (pairs access)]
+      (graph:register-key-loader scheme (fn no-visual [] (error "must not materialize")) {:access provider}))
+    (local entity (store:create-entity {:value "initial"}))
+    (local node (StringEntityNode {:entity-id entity.id :store store}))
+    (fn check-node-subscription []
+      (local label node.label)
+      (store:update-entity entity.id {:value "after node drop"})
+      (assert (= node.label label) "node store subscription leaked after drop"))
+    (own "node subscription" check-node-subscription)
+    (own "node drop" node.drop node)
+    (local ctx (BuildContext {:clickables app.clickables :hoverables app.hoverables
+                             :icons {:resolve (fn no-icon [] nil)}}))
+    (local before (store:read-text entity.id))
+    (local registered-before (json.dumps (registrations)))
+    (fn check-registrations []
+      (assert (= (json.dumps (registrations)) registered-before) "widget registrations leaked"))
+    (fn check-draws [] (assert (= (draw-count ctx) 0) "text render entries leaked"))
+    (own "widget registrations" check-registrations)
+    (own "render entries" check-draws)
+    (fn open-view [build]
+      (local view ((build node) ctx))
+      (own "Input teardown" assert-view-dropped view)
+      (own "editor view drop" view.drop view)
+      view)
+    (local view (open-view surface))
+    (f {:store store :files files :node node :view view :ctx ctx :open-view open-view
+        :graph graph :ref {:key node.key} :before before :surface surface}))
+  (local (ok err) (pcall exercise))
+  (when (not ok) (table.insert errors {:label "assertion" :error err}))
+  ;; Each release AND teardown assertion is independent; neither can prevent
+  ;; subsequent view/node/graph/directory cleanup on success or failure.
+  (for [index (length cleanup) 1 -1]
+    (local entry (. cleanup index))
+    (local (cleaned cleanup-error) (pcall entry.action entry.resource))
+    (when (not cleaned)
+      (table.insert errors {:label entry.label :error cleanup-error})))
+  ;; Format only after every release, so error rendering cannot skip cleanup.
+  (when (> (length errors) 0)
+    (local messages (icollect [_ entry (ipairs errors)] (.. entry.label ": " (error-text entry.error))))
+    (error (table.concat messages "\n") 0)))
 
 (fn value! [result]
   (assert result.ok (json.dumps result))
@@ -102,12 +131,11 @@
 (fn empty-opening [c]
   (c.store:update-entity c.node.entity-id {:value ""})
   (local before (c.node:read-text))
-  (local other ((c.surface c.node) c.ctx))
+  (local other (c.open-view c.surface))
   (assert (= (other.input:get-text) ""))
   (assert (= (. (c.node:read-text) :revision) before.revision) "opening empty text must not save")
   (local placeholder (table.concat (icollect [_ cp (ipairs (other.input.placeholder:get-codepoints))] (utf8.char cp))))
-  (assert (= placeholder (if (= c.surface Full) "Enter value..." "Value...")))
-  (other:drop))
+  (assert (= placeholder (if (= c.surface Full) "Enter value..." "Value..."))))
 
 (fn failed-opening-is-nonallocating [c]
   (local registered-before (json.dumps (registrations)))
@@ -117,9 +145,7 @@
     (local failure {:code code :message (.. "injected initial read: " code) :outcome :not-committed})
     (set c.files.read! (fn fail-initial-read [] (error failure 0)))
     (for [_ 1 3]
-      (local builder (c.surface c.node))
-      (local (ok err) (pcall builder c.ctx))
-      (when ok (err:drop))
+      (local (ok err) (pcall c.open-view c.surface))
       (assert (not ok) "failed initial read must prevent opening")
       (assert (= err failure) "failed opening must preserve the original structured owning error")))
   (set c.files.read! original-read)
@@ -151,29 +177,28 @@
   (assert (= (. (c.node:read-text) :value) "agent")))
 
 (fn legacy-aba [c]
-  ;; Exercise real timestamp-equal ABA writes without rebinding the global clock.
-  (var saw-same-second false)
-  (for [_ 1 5]
-    (local other ((Preview c.node) c.ctx))
-    (local baseline (c.node:read-text))
-    (local start (. (c.node:get-entity) :updated-at))
-    (c.store:update-entity c.node.entity-id {:value "B"})
-    (local middle (. (c.node:get-entity) :updated-at))
+  (with-record-clock (fn timestamp-equal-aba []
+    (var saw-same-second false)
+    (for [_ 1 5]
+      (local other (c.open-view Preview))
+      (local baseline (c.node:read-text))
+      (local start (. (c.node:get-entity) :updated-at))
+      (c.store:update-entity c.node.entity-id {:value "B"})
+      (local middle (. (c.node:get-entity) :updated-at))
+      (c.store:update-entity c.node.entity-id {:value "initial"})
+      (when (= start middle (. (c.node:get-entity) :updated-at)) (set saw-same-second true))
+      (assert (not= (. (c.node:read-text) :revision) baseline.revision))
+      (other.input:set-text "ABA attempt")
+      (assert (= other.editor.last-error.code :conflict))
+      (assert (= (other.input:get-text) "ABA attempt")))
+    (assert saw-same-second "must exercise same-second ABA writes")
+    (assert-conflict c "after ABA")
     (c.store:update-entity c.node.entity-id {:value "initial"})
-    (when (= start middle (. (c.node:get-entity) :updated-at)) (set saw-same-second true))
-    (assert (not= (. (c.node:read-text) :revision) baseline.revision))
-    (other.input:set-text "ABA attempt")
-    (assert (= other.editor.last-error.code :conflict))
-    (assert (= (other.input:get-text) "ABA attempt"))
-    (other:drop))
-  (assert saw-same-second "must exercise same-second ABA writes")
-  (assert-conflict c "after ABA")
-  (c.store:update-entity c.node.entity-id {:value "initial"})
-  (assert-conflict c "after unconditional same-value write")
-  (assert (= (. (c.node:read-text) :value) "initial")))
+    (assert-conflict c "after unconditional same-value write")
+    (assert (= (. (c.node:read-text) :value) "initial")))))
 
 (fn simultaneous [c]
-  (local other ((Preview c.node) c.ctx))
+  (local other (c.open-view Preview))
   (c.view.input:set-text "first editor")
   (other.input:set-text "second editor")
   (assert (= other.editor.last-error.code :conflict))
@@ -182,8 +207,7 @@
   (c.view.input:set-text "first editor again")
   (assert (= (. (c.node:read-text) :value) "first editor again") "successful save advances only its own baseline")
   (other.input:set-text "still stale")
-  (assert (= other.editor.last-error.code :conflict))
-  (other:drop))
+  (assert (= other.editor.last-error.code :conflict)))
 
 (fn render-and-drop [c]
   (c.view.layout:measurer)
@@ -269,6 +293,62 @@
                                       (fn check-surface [c]
                                         (assert (= c.view.input.max-lines surface.max-lines))
                                         (scenario.run c))))})))
+
+(fn secondary-failure-control [surface cleanup-fault?]
+  (local before (json.dumps (registrations)))
+  (local held {})
+  (fn fail-with-secondary [c]
+    (set held.ctx c.ctx)
+    (fn failing-surface [node]
+      (local builder (surface node))
+      (fn build-secondary [ctx]
+        (local view (builder ctx))
+        (set held.view view)
+        (local drop view.drop)
+        (fn drop-secondary [self]
+          (drop self)
+          (when cleanup-fault? (error "secondary cleanup fault")))
+        (fn fail-secondary-assertion [_]
+          (view.layout:measurer)
+          (set view.layout.size (+ view.layout.measure (glm.vec3 20 0 0)))
+          (view.layout:layouter)
+          (assert (> (draw-count ctx) 0) "control must allocate render entries")
+          (error "secondary assertion fault"))
+        (set view.drop drop-secondary)
+        (set view.input.get-text fail-secondary-assertion)
+        view))
+    (set c.surface failing-surface)
+    (empty-opening c))
+  (local (ok err) (pcall with-editor surface fail-with-secondary))
+  (local after (json.dumps (registrations)))
+  (local drawn (draw-count (assert held.ctx)))
+  ;; RED must not leak its deliberately stranded secondary into other tests.
+  ;; Snapshot before this emergency fixture cleanup so it cannot hide the leak.
+  (when (and held.view (not held.view.input.__dropped))
+    (local (dropped drop-error) (pcall held.view.drop held.view))
+    (assert (or dropped (and cleanup-fault? (string.find drop-error "secondary cleanup fault" 1 true)))))
+  (assert (not ok))
+  (assert (string.find err "secondary assertion fault" 1 true) "original assertion must survive teardown")
+  (when cleanup-fault?
+    (assert (string.find err "secondary cleanup fault" 1 true) "cleanup failure must be retained alongside assertion"))
+  (assert (= before after) "secondary assertion failure leaked widget registrations")
+  (assert (= drawn 0) "secondary assertion failure leaked render entries"))
+
+(each [_ surface (ipairs [{:name "full" :build Full} {:name "preview" :build Preview}])]
+  (each [_ cleanup-fault? (ipairs [false true])]
+    (table.insert tests {:name (.. surface.name " secondary assertion cleanup control " (tostring cleanup-fault?))
+                         :fn (fn cleanup-control [] (secondary-failure-control surface.build cleanup-fault?))})))
+
+(fn clock-restoration-control []
+  (local original os.time)
+  (with-record-clock (fn fixed-time [] (assert (= (os.time) 1700000000))))
+  (assert (= os.time original) "successful scope must restore clock identity")
+  (local sentinel {})
+  (fn throw-in-clock [] (error sentinel 0))
+  (local (ok err) (pcall with-record-clock throw-in-clock))
+  (assert (and (not ok) (= err sentinel)) "clock scope must preserve the original thrown object")
+  (assert (= os.time original) "throwing scope must restore clock identity"))
+(table.insert tests {:name "record clock restores after success and assertion failure" :fn clock-restoration-control})
 
 (fn main [] ((. (require :tests/runner) :run-tests) {:name "string-entity-editor" :tests tests}))
 {:name "string-entity-editor" :tests tests :main main}

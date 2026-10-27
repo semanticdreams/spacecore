@@ -6,6 +6,7 @@
 (local runner (require :tests/runner))
 (local FsTests (require :tests/test-fs))
 (local process (require :process))
+(local with-record-clock (require :tests/record-clock))
 (local tests [])
 
 (fn test [name f] (table.insert tests {:name name :fn f}))
@@ -573,17 +574,18 @@
 
 (test "same-second writes still receive distinct persisted revisions"
   (fn same-second []
-    (with-root (fn [root]
-      (local store (string-store root))
-      (local entity (store:create-entity {:value "A"}))
-      (var saw-same-second false)
-      (for [_ 1 5]
-        (local time entity.updated-at)
-        (local revision entity.revision)
-        (store:update-entity entity.id {:value "A"})
-        (when (= entity.updated-at time) (set saw-same-second true))
-        (assert (not= revision entity.revision)))
-      (assert saw-same-second "fixture must exercise timestamp-equal writes, without rebinding os.time")))))
+    (with-record-clock (fn timestamp-equal-writes []
+      (with-root (fn same-second-root [root]
+        (local store (string-store root))
+        (local entity (store:create-entity {:value "A"}))
+        (var saw-same-second false)
+        (for [_ 1 5]
+          (local time entity.updated-at)
+          (local revision entity.revision)
+          (store:update-entity entity.id {:value "A"})
+          (when (= entity.updated-at time) (set saw-same-second true))
+          (assert (not= revision entity.revision)))
+        (assert saw-same-second "scoped clock must exercise timestamp-equal writes")))))))
 
 (test "invalid required link fields fail before publication"
   (fn invalid-link-data []
