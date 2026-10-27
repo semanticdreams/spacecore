@@ -1748,6 +1748,217 @@ while True: time.sleep(1)
                 pass
 
 
+SIGNAL_BUILDER_HARNESS = r'''
+import errno, json, os, pathlib, signal, subprocess, sys, time
+from wine import build_publication as b
+root = pathlib.Path(os.environ['SIGNAL_CONTROL'])
+window = os.environ['SIGNAL_WINDOW']
+compiler = os.environ['SIGNAL_COMPILER']
+root.joinpath('builder.pid').write_text(str(os.getpid()))
+previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+states = []
+if hasattr(b, '_SignalLatch'):
+    class ObservedLatch(b._SignalLatch):
+        def __init__(self):
+            super().__init__()
+            states.append(self)
+    b._SignalLatch = ObservedLatch
+teardown_latch = []
+def gate(name):
+    root.joinpath(name + '.ready').touch()
+    until = time.monotonic() + 15
+    while not root.joinpath(name + '.go').exists():
+        if time.monotonic() >= until: raise RuntimeError('fixture gate deadline: ' + name)
+        time.sleep(.005)
+real_popen = subprocess.Popen
+processes, logs = [], []
+class Compiler(real_popen):
+    def __init__(self, args, **kwargs):
+        super().__init__(args, **kwargs)
+        self.compiler = args[0] == compiler and '-o' in args
+        if self.compiler:
+            processes.append(self)
+            logs.append(kwargs['stdout'])
+            if window == 'acquisition': gate('acquisition')
+    def wait(self, timeout=None):
+        if self.compiler and window in ('waiting', 'teardown', 'wrapper'):
+            root.joinpath('waiting.ready').touch()
+        result = super().wait(timeout=timeout)
+        if self.compiler and window == 'leader-exit' and not root.joinpath('leader-exit.ready').exists():
+            gate('leader-exit')
+        return result
+b.subprocess.Popen = Compiler
+killpg = os.killpg
+def observed_killpg(pgid, sig):
+    result = killpg(pgid, sig)
+    if window == 'teardown' and sig == signal.SIGTERM and any(p.pid == pgid for p in processes):
+        teardown_latch.append(states[-1].received)
+        gate('teardown')
+    return result
+b.os.killpg = observed_killpg
+flock = b.fcntl.flock
+def observed_flock(fd, operation):
+    if window == 'lock': root.joinpath('lock.ready').touch()
+    return flock(fd, operation)
+b.fcntl.flock = observed_flock
+rename = pathlib.Path.rename
+def observed_rename(path, target):
+    if window == 'replacement-rollback' and path.name == 'new' and target.name == 'wine-publication':
+        raise OSError(errno.EIO, 'fixture replacement failure after signal')
+    result = rename(path, target)
+    if window in ('replacement', 'replacement-rollback') and path.name == 'wine-publication': gate(window)
+    return result
+pathlib.Path.rename = observed_rename
+b._capture_launch_metadata = lambda *args: json.loads(os.environ['SIGNAL_LAUNCH'])
+sys.argv = [b.__file__]
+code = b.main()
+reaped = []
+for process in processes:
+    try: os.waitpid(process.pid, os.WNOHANG)
+    except ChildProcessError: reaped.append(True)
+    else: reaped.append(False)
+root.joinpath('result.json').write_text(json.dumps(dict(
+    code=code, received=[states[-1].received], teardown_latch=teardown_latch,
+    reaped=reaped, logs_closed=all(log.closed for log in logs),
+    handlers_restored=all(signal.getsignal(sig) is handler for sig, handler in previous.items()),
+    finished=time.monotonic())))
+sys.exit(code)
+'''
+
+
+def wait_signal_fixture(path, process, timeout=20):
+    deadline = time.monotonic() + timeout
+    while not path.exists():
+        assert process.poll() is None, f'builder exited before fixture checkpoint {path.name}: {process.returncode}'
+        assert time.monotonic() < deadline, f'fixture checkpoint deadline: {path.name}'
+        time.sleep(.01)
+
+
+@pytest.mark.parametrize('signum', [signal.SIGTERM, signal.SIGINT], ids=['SIGTERM', 'SIGINT'])
+@pytest.mark.parametrize('delivery', ['pid', 'group'])
+@pytest.mark.parametrize('window', ['acquisition', 'waiting', 'teardown', 'lock', 'replacement', 'replacement-rollback', 'leader-exit'])
+def test_builder_real_signal_owns_compiler_through_unwind(support_builder_fixture, tmp_path, window, delivery, signum):
+    run_builder_signal_fixture(support_builder_fixture, tmp_path, window, delivery, signum)
+
+
+@pytest.mark.parametrize('signum', [signal.SIGTERM, signal.SIGINT], ids=['SIGTERM', 'SIGINT'])
+def test_builder_real_timeout_wrapper_retires_detached_compilers(support_builder_fixture, tmp_path, signum):
+    run_builder_signal_fixture(support_builder_fixture, tmp_path, 'wrapper', 'timeout', signum)
+
+
+def run_builder_signal_fixture(support_builder_fixture, tmp_path, window, delivery, signum):
+    fixture, session = support_builder_fixture
+    module = builder_module()
+    old = module.build_publication(fixture.root, session)
+    output = fixture.root / 'build/wine-publication'
+    control = tmp_path / 'signal-control'
+    control.mkdir()
+    compiler = fixture.bin / 'g++'
+    fork = '''
+import signal, time
+if os.environ.get('SIGNAL_CONTROL'):
+ signal.signal(signal.SIGTERM, signal.SIG_IGN)
+ signal.signal(signal.SIGINT, signal.SIG_IGN)
+ child = os.fork()
+ if not child:
+  pathlib.Path(os.environ['SIGNAL_CONTROL'], 'descendant.ready').touch()
+  while True: time.sleep(1)
+ pathlib.Path(os.environ['SIGNAL_CONTROL'], 'compiler.json').write_text(json.dumps([os.getpid(), child]))
+ if os.environ['SIGNAL_WINDOW'] == 'leader-exit': sys.exit(17)
+ if os.environ['SIGNAL_WINDOW'] not in ('lock', 'replacement', 'replacement-rollback'):
+  while True: time.sleep(1)
+'''
+    source = compiler.read_text()
+    assert source.count('import struct') == 1
+    compiler.write_text(source.replace('import struct', fork + '\nimport struct'))
+    harness = control / 'builder.py'
+    harness.write_text(SIGNAL_BUILDER_HARNESS)
+    env = dict(fixture.env, SPACE_WINE_SESSION_ID=session.id, SIGNAL_CONTROL=str(control),
+               SIGNAL_WINDOW=window, SIGNAL_COMPILER=str(compiler), SIGNAL_LAUNCH=json.dumps(fixture.launch_metadata),
+               PYTHONPATH=str(fixture.root / 'scripts') + os.pathsep + fixture.env['PYTHONPATH'])
+    lock = os.open(fixture.root / 'build', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    if window == 'lock': fcntl.flock(lock, fcntl.LOCK_EX)
+    args = [sys.executable, str(harness)]
+    if delivery in ('group', 'timeout'):
+        # Actual GNU timeout and its supervising POSIX group, not a synthetic
+        # exception. Compiler sessions are deliberately outside this group.
+        args = ['timeout', '--kill-after=5s', f'--signal={signum}', '10s' if delivery == 'timeout' else '60s', *args]
+    compiler_pids = []
+    with (control / 'stdout.log').open('wb') as stdout, (control / 'stderr.log').open('wb') as stderr:
+        process = subprocess.Popen(args, cwd=fixture.root, env=env, stdout=stdout, stderr=stderr, start_new_session=True)
+        try:
+            wait_signal_fixture(control / 'compiler.json', process)
+            compiler_pids = json.loads((control / 'compiler.json').read_text())
+            wait_signal_fixture(control / 'descendant.ready', process)
+            checkpoint = 'waiting' if window in ('teardown', 'wrapper') else window
+            wait_signal_fixture(control / (checkpoint + '.ready'), process)
+            builder = int((control / 'builder.pid').read_text())
+            sent = time.monotonic()
+            if delivery != 'timeout':
+                (os.killpg if delivery == 'group' else os.kill)(process.pid if delivery == 'group' else builder, signum)
+                if window == 'teardown':
+                    wait_signal_fixture(control / 'teardown.ready', process, timeout=2)
+                    # A different duplicate cannot replace first signal/status
+                    # or restart the first signal's cleanup budget.
+                    os.kill(builder, signal.SIGINT if signum == signal.SIGTERM else signal.SIGTERM)
+                    (control / 'teardown.go').touch()
+                else:
+                    (control / (window + '.go')).touch()
+            status = process.wait(timeout=15 if delivery == 'timeout' else 4.5)
+            elapsed = time.monotonic() - sent
+            assert status == (124 if delivery == 'timeout' else 128 + signum), 'builder must unwind before reporting signal-specific status'
+            result = json.loads((control / 'result.json').read_text())
+            assert result['code'] == 128 + signum
+            assert result['received'][0][0] == signum and len(result['received']) == 1
+            if window == 'teardown': assert result['teardown_latch'] == result['received'], 'duplicate signal restarted or replaced first latch'
+            assert result['finished'] - result['received'][0][1] < 4
+            if delivery != 'timeout': assert elapsed < 4.5
+            assert result['reaped'] == [True], 'compiler leader must be reaped before CLI return'
+            assert result['logs_closed'] and result['handlers_restored']
+            deadline = time.monotonic() + .5
+            def running(pid):
+                path = Path(f'/proc/{pid}/stat')
+                return path.exists() and path.read_text().split()[2] not in ('Z', 'X')
+            while any(running(pid) for pid in compiler_pids) and time.monotonic() < deadline:
+                time.sleep(.01)
+            assert not any(running(pid) for pid in compiler_pids), 'detached compiler group survived real signal'
+            assert not list((fixture.root / 'build').glob('.wine-publication-*')), 'staging/log ownership leaked'
+            manifest = module._recognized_output(output)[1]
+            if window != 'replacement': assert manifest == old
+            else: assert manifest['build_id'] != old['build_id'], 'replacement must finish coherently before cancellation'
+        finally:
+            for path in control.glob('*.ready'): path.with_suffix('.go').touch()
+            for pid in compiler_pids:
+                try: os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError: pass
+            try: os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+            process.wait(timeout=5)
+            os.close(lock)
+    fd = os.open(fixture.root / 'build', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    try: fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    finally: os.close(fd)
+
+
+def test_compiler_retirement_surfaces_errors_and_still_attempts_kill_and_reap(monkeypatch):
+    module = builder_module()
+    steps = []
+    def failed_term(group, sig):
+        steps.append(('signal', group, sig))
+        if sig == signal.SIGTERM:
+            raise OSError('fixture TERM failure')
+    class Process:
+        def wait(self, timeout):
+            steps.append(('wait', timeout))
+            raise OSError('fixture wait failure')
+    monkeypatch.setattr(module.os, 'killpg', failed_term)
+    errors = module._retire_compiler(Process(), 123)
+    assert [step for step, _ in errors] == ['TERM', 'TERM wait', 'reap']
+    assert [step for step in steps if step[0] == 'signal'] == [
+        ('signal', 123, signal.SIGTERM), ('signal', 123, signal.SIGKILL)]
+    assert len([step for step in steps if step[0] == 'wait']) == 2
+
+
 @pytest.mark.parametrize('damage', ['extra', 'symlink-root', 'symlink-file', 'unrecognized', 'tamper', 'unowned'])
 def test_publication_builder_refuses_unsafe_existing_output_without_compiling(publication_fixture, monkeypatch, damage):
     fixture, session = publication_fixture

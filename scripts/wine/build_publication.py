@@ -1,8 +1,14 @@
-"""Fixed operation/identity Wine builtin pair builder. Never execute Wine or PE here."""
+"""Fixed operation/identity Wine builtin pair builder. Never execute Wine or PE here.
+
+Cancellation is cooperative: catchable signals, responsive host operations and
+compiler descendants staying in their owned POSIX group are required. The outer
+timeout signals the supervising group, NOT the detached compiler session. Builder
+death or descendants escaping that session require external containment.
+"""
 from __future__ import annotations
 
 import hashlib
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 import fcntl
 import json
 import os
@@ -14,6 +20,8 @@ import struct
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -54,6 +62,99 @@ MAX_LAUNCH_PATH = 4095
 
 class BuildError(ValueError):
     pass
+
+
+class _Cancelled(BaseException):
+    """Synchronous checkpoint cancellation; never map this to BuildError."""
+
+
+class _SignalLatch:
+    def __init__(self):
+        self.received = None
+        self.cleanup_errors = []
+
+    def record(self, signum, _frame):
+        if self.received is None:
+            self.received = (signum, time.monotonic())
+
+
+_signals = None  # CLI-scoped; direct builder APIs do not install process handlers.
+
+
+@contextmanager
+def _signal_scope():
+    global _signals
+    previous_scope = _signals
+    state = _SignalLatch()
+    previous_handlers = {}
+    try:
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            previous_handlers[sig] = signal.signal(sig, state.record)
+        _signals = state
+        yield state
+    finally:
+        for sig, handler in previous_handlers.items():
+            signal.signal(sig, handler)
+        _signals = previous_scope
+
+
+def _checkpoint():
+    if _signals is not None and _signals.received is not None:
+        raise _Cancelled()
+
+
+def _wait_compiler(process):
+    deadline = time.monotonic() + 120
+    while True:
+        _checkpoint()
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(process.args, 120)
+        try:
+            return process.wait(timeout=min(.05, remaining) if _signals is not None else remaining)
+        except subprocess.TimeoutExpired:
+            if _signals is None:
+                raise
+
+
+def _retire_compiler(process, group):
+    """One retirement, including after normal/nonzero leader exit. Never raise.
+
+    All waits share one deadline, at most three seconds from first signal receipt
+    (or retirement entry without a signal), leaving margin below kill-after=5s.
+    Errors are returned to the owner, never mistaken for successful quiescence.
+    """
+    received = _signals.received if _signals is not None else None
+    deadline = (received[1] if received else time.monotonic()) + 3
+    errors = []
+    # A CLI latch keeps recording even during teardown. Embedded API cleanup has
+    # no latch; use the existing guard against asynchronous raising handlers.
+    guard = (nullcontext() if _signals is not None or threading.current_thread() is not threading.main_thread()
+             else prefix.cleanup_signals())
+    with guard:
+        try:
+            os.killpg(group, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        except BaseException as error:
+            errors.append(('TERM', error))
+        try:
+            process.wait(timeout=min(.2, max(0, deadline - time.monotonic())))
+        except subprocess.TimeoutExpired:
+            pass
+        except BaseException as error:
+            errors.append(('TERM wait', error))
+        try:
+            os.killpg(group, signal.SIGKILL)  # Unconditional: the leader may have exited first.
+        except ProcessLookupError:
+            pass
+        except BaseException as error:
+            errors.append(('KILL', error))
+        try:
+            process.wait(timeout=max(0, deadline - time.monotonic()))
+        except BaseException as error:
+            errors.append(('reap', error))
+    return errors
 
 
 def _sha(raw):
@@ -202,6 +303,7 @@ def _headers(identity):
 
 
 def _compile(args, stage):
+    _checkpoint()
     # Fixed argv only. Do not inherit compiler search-path/loader injection knobs.
     env = {key: value for key, value in os.environ.items()
            if not key.startswith('LD_') and key not in ('CPATH', 'C_INCLUDE_PATH', 'CPLUS_INCLUDE_PATH',
@@ -209,31 +311,23 @@ def _compile(args, stage):
     env.update(PATH='/usr/bin:/bin', LC_ALL='C')
     with tempfile.TemporaryFile(dir=stage) as log:
         try:
+            _checkpoint()
+            # Nonraising handlers make construction, assignment and registration
+            # one non-cancellable acquisition region. Only now may we checkpoint.
             process = subprocess.Popen(args, cwd=stage, env=env, stdin=subprocess.DEVNULL,
                                        stdout=log, stderr=log, close_fds=True, start_new_session=True)
+            group = process.pid
             try:
-                code = process.wait(timeout=120)
-            except BaseException:
-                # Keep staging/log ownership until our entire POSIX group has
-                # received bounded termination and the direct child is reaped.
-                with prefix.cleanup_signals():
-                    try:
-                        os.killpg(process.pid, signal.SIGTERM)
-                    except ProcessLookupError:
-                        pass
-                    try:
-                        process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        pass
-                    finally:
-                        # The leader may exit before descendants. Always kill
-                        # the remaining owned group, not just a live leader.
-                        try:
-                            os.killpg(process.pid, signal.SIGKILL)
-                        except ProcessLookupError:
-                            pass
-                        process.wait(timeout=5)
-                raise
+                _checkpoint()
+                code = _wait_compiler(process)
+                _checkpoint()
+            finally:
+                errors = _retire_compiler(process, group)
+                if _signals is not None:
+                    _signals.cleanup_errors.extend(errors)
+                _checkpoint()
+                if errors:
+                    raise BuildError('Compiler cleanup failed: ' + '; '.join(f'{step}: {error}' for step, error in errors))
         except (OSError, subprocess.SubprocessError) as error:
             raise BuildError(f'Publication build command failed: {Path(args[0]).name}: {error}') from error
         if code:
@@ -251,10 +345,18 @@ def _locked_build(build):
     prefix.real_directory(build)
     fd = os.open(build, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
     try:
-        fcntl.flock(fd, fcntl.LOCK_EX)
+        while True:
+            _checkpoint()
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                time.sleep(.05)
+        _checkpoint()
         yield
     finally:
         os.close(fd)
+    _checkpoint()
 
 
 def _remove_recognized(output):
@@ -315,6 +417,9 @@ def build_publication(repo: Path, session: prefix.Session) -> dict:
         with _locked_build(build):
             if _recognized_output(output) != previous:
                 raise BuildError('Publication output changed during build')
+            _checkpoint()
+            # No cancellation checkpoint until new is coherently installed or
+            # old is restored. Staging cleanup must never destroy the sole old output.
             backup = stage / 'old'
             if previous is not None:
                 output.rename(backup)
@@ -595,6 +700,8 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
         with _locked_build(build):
             if _recognized_test_output(output, for_replacement=True) != previous:
                 raise BuildError('Test support output changed during build')
+            _checkpoint()
+            # Same deferred-cancellation replacement transaction as production.
             backup = stage / 'old'
             if previous is not None:
                 output.rename(backup)
@@ -614,7 +721,8 @@ def build_test_support(repo: Path, session: prefix.Session) -> dict:
     return manifest
 
 
-def main():
+def _main():
+    _checkpoint()
     if len(sys.argv) != 1:
         raise BuildError('Fixed publication builder takes no arguments')
     identifier = os.environ.get('SPACE_WINE_SESSION_ID')
@@ -622,14 +730,35 @@ def main():
         raise BuildError('SPACE_WINE_SESSION_ID owned handoff is required')
     repo = Path(__file__).resolve().parents[2]
     session = prefix.load_session(repo, identifier)
+    _checkpoint()
     manifest = build_publication(repo, session)
+    _checkpoint()
     build_test_support(repo, session)
+    _checkpoint()
     print(json.dumps(dict(version=1, abi=1, build_id=manifest['build_id'], files=list(PAIR)), sort_keys=True))
+
+
+def main():
+    # Embedded invocations restore handlers. Decide status only after every owned
+    # context has unwound, also catching a first signal during final unwinding.
+    with _signal_scope() as state:
+        try:
+            _main()
+            _checkpoint()
+        except _Cancelled:
+            pass
+        except BaseException as error:
+            if state.received is None:
+                raise
+            print(f'Publication interrupted while unwinding: {error}', file=sys.stderr, flush=True)
+    for step, error in state.cleanup_errors:
+        print(f'Publication compiler cleanup failed ({step}): {error}', file=sys.stderr, flush=True)
+    return 128 + state.received[0] if state.received else 0
 
 
 if __name__ == '__main__':
     try:
-        main()
+        sys.exit(main())
     except (ValueError, OSError, subprocess.SubprocessError) as error:
         message = str(error)
         print('Publication build refused: ' + message[:1024] + (' [truncated]' if len(message) > 1024 else ''),
