@@ -21,7 +21,8 @@ const origin = 'https://docs.invalid'
 
 function route_key(url)
 {
-    return url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/') + url.hash
+    const path = url.pathname.split('/').map((part) => encodeURIComponent(decodeURIComponent(part))).join('/')
+    return path.replace(/\.html$/, '').replace(/\/index$/, '/') + url.hash
 }
 
 function links_in(html, source)

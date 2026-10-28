@@ -13,12 +13,14 @@ async function fixture(run)
     const sidebar = `<aside class="VPSidebar">${links}</aside>`
     const files = {
         'plans/plan.md': '# Plan\n',
+        'plans/odd) name(.md': '# Parentheses\n',
         'specs/spec.md': '# Spec\n',
         'dist/dev/index.html': links,
         'dist/dev/development-records.html': links,
-        'dist/plans/index.html': sidebar + '<h2 id="progress-ledgers">Progress</h2><a href="./plan.html">Plan</a>',
+        'dist/plans/index.html': sidebar + '<h2 id="progress-ledgers">Progress</h2><a href="./plan.html">Plan</a><a href="./odd%29%20name%28.html">Parentheses</a>',
         'dist/specs/index.html': sidebar + '<a href="./spec.html">Spec</a>',
         'dist/plans/plan.html': sidebar,
+        'dist/plans/odd) name(.html': sidebar,
         'dist/specs/spec.html': sidebar,
     }
     try {
@@ -33,7 +35,7 @@ async function fixture(run)
 }
 
 test('built navigation covers the independently inventoried records and common sidebars', async () => {
-    await fixture(async (options) => assert.deepEqual(await check_record_navigation(options), { plans: 1, specs: 1 }))
+    await fixture(async (options) => assert.deepEqual(await check_record_navigation(options), { plans: 2, specs: 1 }))
 })
 
 test('missing anchor fails even when its page exists', async () => {

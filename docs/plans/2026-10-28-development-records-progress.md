@@ -307,3 +307,34 @@ is restricted to read/search tools and retained Git metadata/diff packages, with
 no terminal commands, tests, builds or other operations. Its base remains the
 last integration point above; the new committed head is recorded from Git in the
 assignment after this coordination checkpoint.
+
+Replacement delivery: project `fast-dev-reviewer` session
+`ses_e7b805c16ffe7G9otFNT15Ok8l`, assignment
+`development-records-postincident-wrapup`, read-only full-batch/post-incident
+mode, base `6dfada36c24cb93ae3adc09a2c2416724a2de93e`, head
+`20be2b9a98b7eee645155dad68c7b5b1e920deba`; `correction_used=0`. Raw JSON
+format, required fields and source/range match; original retained unchanged in
+the tool transcript. The author used no commands/operations and read both complete
+controller-generated Git packages and ref files. Normal semantic handling:
+**pass**, no material defects, two optional low-severity suggestions.
+
+Accepted one small follow-through fix: percent-encode Markdown path parentheses
+and test them through both generation and built navigation. This preserves the
+already-reconciled render-safe URL contract, not a new relationship policy.
+The other suggestion concerns pinned repository-source URLs: pinning to an
+immutable commit intentionally preserves those targets across later file moves;
+the referenced files were verified in that Git commit, so no change is needed.
+
+Before the follow-through edit, rediscovery found no app and a manual command
+returned `no-instance`. The CLI then started the sole verified replacement with
+normal settings; manual mode was reestablished and status was ready/non-faulted,
+generation 1. No duplicate or uncertain instance was bypassed. Docs-only edits
+still require a fresh docs build, not a Space app-root reload.
+
+Follow-through validation: added parentheses cases reproduced three failures
+before the mechanical URL fix (generation plus canonical route comparison).
+After fixing Markdown-target escaping and equivalent percent-encoded route keys,
+`npm test` passed **56 tests** and locked `npm run docs:build` passed, including
+actual built navigation for 184 plans/progress and 164 specs. Existing advisory
+warnings remain unchanged. Direct self-review and `git diff --check` passed;
+the wrap-up exception requires no second independent review for this small fix.

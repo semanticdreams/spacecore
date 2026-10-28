@@ -44,7 +44,8 @@ function section(title, records)
         const date = dateOf(record.path)
         const group = date.slice(0, 7) || 'Undated'
         if (month !== group) { lines.push(`### ${group}`, ''); month = group }
-        const href = record.path.split('/').map(encodeURIComponent).join('/')
+        const href = record.path.split('/').map((part) => encodeURIComponent(part)
+            .replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)).join('/')
         lines.push(`- ${date ? `${date} — ` : ''}[${literal_label(record.title)}](./${href})`)
     }
     return lines.join('\n') + '\n'

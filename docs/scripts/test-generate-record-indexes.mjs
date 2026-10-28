@@ -71,6 +71,11 @@ test('generation includes every regular Markdown path, preserves sources and is 
     }
 })
 
+test('unbalanced filename parentheses cannot terminate Markdown link targets', () => {
+    const output = format_record_index([{ path: 'nested/a) b(.md', title: 'Parentheses' }], 'specs')
+    assert.match(output, /\.\/nested\/a%29%20b%28\.md/)
+})
+
 test('source read errors fail before publishing any generated index', async () => {
     const root = await mkdtemp(join(tmpdir(), 'space-record-index-error-'))
     try {
