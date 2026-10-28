@@ -7,9 +7,11 @@
     "journal:index": "node scripts/generate-journal-index.mjs",
     "devlog:index": "node scripts/generate-devlog-index.mjs",
     "devlog:indices": "npm run journal:index && npm run devlog:index",
+    "records:indices": "node scripts/generate-record-indexes.mjs",
+    "records:check": "node scripts/check-record-navigation.mjs",
     "test:scripts": "node --test scripts/test-*.mjs",
-    "docs:dev": "npm run devlog:indices && node scripts/sync-space-icon.mjs && vitepress dev",
-    "docs:build": "npm run devlog:indices && node scripts/sync-space-icon.mjs && vitepress build",
+    "docs:dev": "npm run devlog:indices && npm run records:indices && node scripts/sync-space-icon.mjs && vitepress dev",
+    "docs:build": "npm run devlog:indices && npm run records:indices && node scripts/sync-space-icon.mjs && vitepress build && npm run records:check",
     "docs:preview": "vitepress preview"
   },
   "keywords": [],

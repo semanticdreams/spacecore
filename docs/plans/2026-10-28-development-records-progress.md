@@ -1,5 +1,8 @@
 # Development-record preservation progress
 
+[Browse development records](/dev/development-records) ·
+[Preservation workflow](/dev/features/live-dev#development-records)
+
 ## Scope and source
 
 The user requested preserving design specs, implementation plans and progress
@@ -100,7 +103,7 @@ for these records themselves.
 - Kept both private ignore mechanisms intentionally; clarified root `.gitignore`
   rationale rather than exposing scratch. No spec/plan ignore rule was found.
 - Added a privacy-reviewed historical summary at
-  `2026-10-28-opencode-session-graph-review-progress.md`, with source provenance,
+  [OpenCode session-graph review progress](./2026-10-28-opencode-session-graph-review-progress.md), with source provenance,
   decisions, checkpoint/review identities, failures/recoveries and integration.
   The original private ledger SHA256 remains
   `269df3110ddc71e67b5944e03cab51391010d1262092e604388efc483af7f788`.
@@ -163,3 +166,97 @@ is indicated for this tooling/documentation-only change.
 `.opencode/**` changed: quit and restart OpenCode to load the corrected workflows.
 The running session keeps its previously loaded rules. Local checkpoint only;
 no push or new integration is authorized by this follow-up.
+
+## Built-docs navigation follow-up
+
+The user then asked whether these records are easily browsable and cross-linked
+in the built docs UI. This had not been validated by the preservation fix.
+
+- Source HEAD: `cc66018f705cd31eb6dd52084abe76862e529d99`, controller/workflow and
+  branch still `live-dev`.
+- Investigation task `docs-records-navigation`, project explorer
+  `ses_e7bcec90affeJ25FQXUXPT8tX3`, read-only investigation. Raw JSON delivery
+  matched task/role/branch/source/mode, `correction_used=0`; original retained in
+  the tool transcript. Evidence, not approval.
+- Found no `docs/plans/index.md` or `docs/specs/index.md`, no matching sidebar
+  routes, and no developer landing links. Records were searchable/build inputs,
+  but not directory-browsable. Existing journal/devlog generators demonstrate
+  an automatic index pattern. The new ledgers had outbound links, but one sibling
+  reference was only inline code and related feature/spec pages lacked backlinks.
+- Initial `npm run docs:build` used an inherited VitePress 2 alpha installation
+  rather than the docs lockfile's 1.6 line, and failed parsing the session-graph
+  spec as Vue/HTML. A mistaken root-directory `npm ci` attempt failed without a
+  lockfile; running it in `docs/` installed the locked dependencies successfully.
+  No dependency version/lockfile change or audit remediation was requested.
+- Automatic indexes/navigation and related-record link design require the usual
+  bounded GLM proposal/GPT critique before implementation. Existing historical
+  prose must not be rewritten into new decisions merely to add navigation.
+
+Bounded GLM proposal `docs-records-navigation-design` from the same original
+explorer/session at unchanged source HEAD: valid raw JSON, matching identity and
+mode, `correction_used=0`; original payload retained. Proposal: deterministic
+automatic Markdown indexes, a Records overview, VitePress-native sidebar/navigation,
+explicit related-record links, and strict build/dead-link validation.
+
+Corrections before consultation: the plans index must list non-progress records
+and progress records in disjoint sections (not literally "all records" in the
+implementation section). Only the generated root index is excluded; nested
+regular Markdown remains discoverable. The generator must not rewrite historical
+records, while explicit link/markup fixes may edit them without changing their
+recorded decisions. The report's parser uncertainty is superseded by a second
+baseline build with locked VitePress 1.6.4: it reproduced the same missing-end-tag
+failure. The original spec's unquoted `opencode-messages:<sid>` and
+`opencode-parts:<sid>/<mid>` examples are inspectable raw angle-bracket markup;
+render-safe formatting, not a different design interpretation, is required.
+
+Expert `ses_e7bc7b906ffeUIaNqa1pqMUo5H` answered after original-source inspection.
+Reconciliation before dependent edits: accept exhaustive per-path discovery,
+basename date keys with locale-independent relative-path ordering, no title
+deduplication, and literal/render-safe titles extracted outside frontmatter and
+fences. Generation errors must surface, and repeat output must be byte-stable.
+Keep explicit links relationship-specific, not an inferred all-to-all companion
+graph. Validate generated targets against an independent record inventory.
+VitePress's page-existence check strips fragments and does not verify config
+navigation; separately inspect emitted navigation, record links and the actual
+progress-section anchor. Fix only formatting of the raw angle identifiers and
+describe index refresh as explicit startup/build generation, not a new watcher.
+This is reconciled design advice, not approval or successful-build evidence.
+
+### Docs UI implementation and validation
+
+- Added a Records overview/navigation entry, developer landing links and common
+  `/plans/` and `/specs/` sidebars. Automatic indexes include all 348 current
+  regular Markdown records (184 plans/progress, 164 specs), separate progress by
+  the documented filename suffix, and group dated entries newest-first by month.
+  Undated and nested records remain included; duplicate titles do not lose paths.
+- Index generation runs on explicit docs dev-server startup/build and can be
+  invoked with `npm run records:indices`; no new watcher or fuzzy relationship
+  inference. Generated indexes are tracked with the records.
+- Added evidenced reciprocal links among preservation progress, preserved review
+  history, its OpenCode design, SELinux contract and the live-dev record workflow.
+  This does not claim every historical semantic relationship has been curated.
+- Fixed the session-graph spec's raw angle placeholders with code formatting.
+  The next build reached strict link checking and exposed two source-file links
+  outside the docs root. Replaced them with repository links pinned to the merged
+  commit containing the license/patch; did not disable checks or exclude records.
+- Initial new-generator and built-checker tests were RED before their modules
+  existed. The broader docs test run additionally exposed three stale JavaScript
+  workflow assertions (topic-suffixed branches and obsolete wording), separate
+  from the earlier Python assertions. Updated those tests mechanically to the
+  already-established exact long-term-branch contract, not the workflow itself.
+- `npm test`: **55 passed**. Includes recursive exhaustive inventory, literal
+  labels/encoded paths, stable ordering and repeat generation, original-source
+  preservation, read errors, omitted built records, absent sidebars and invalid
+  anchors. No generated index/title content overwrites historical decisions.
+- Locked `npm run docs:build`: **PASS**, with default dead-link validation intact.
+  New `records:check` is part of that command and independently checks source-path
+  inventories against built index links, every record page's actual sidebar,
+  the real `progress-ledgers` anchor, overview/developer navigation and evidenced
+  backlinks. Result: `{ plans: 184, specs: 164 }`.
+- Existing non-blocking build warnings remain: Fennel syntax highlighting falls
+  back to text and some bundles exceed the advisory size. Locked dependency
+  installation reported nine existing audit findings (two moderate/seven high);
+  no dependency upgrade or audit remediation was bundled into this docs task.
+- No Space runtime source changed; rebuilding the docs updates their output and
+  does not require a Space app reload. Changes remain local until a new explicit
+  wrap-up/integration authorization.

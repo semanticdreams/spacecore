@@ -22,6 +22,11 @@ If you want to build with Space rather than maintain Space itself, start with th
 
 ## Work Tracking
 
+- [Development Records](/dev/development-records) — browse preserved plans,
+  design decisions and progress
+- [Design Specs](/specs/)
+- [Implementation Plans](/plans/)
+- [Progress Ledgers](/plans/#progress-ledgers)
 - [Bugs](/dev/project/bugs/)
 - [Technical Debt](/dev/project/tech-debt/)
 - [Lifecycle Hardening Plan](/dev/lifecycle-hardening-plan)

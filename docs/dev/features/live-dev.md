@@ -50,7 +50,9 @@ does not change an ongoing strict supervisor implementation/integration workflow
 
 Development records belong in tracked documentation: design specs in
 `docs/specs/`, implementation plans and associated progress ledgers in
-`docs/plans/`. For an existing plan, `sdd-workspace --progress PLAN_FILE` resolves
+`docs/plans/`. [Browse all development records](/dev/development-records), or read
+the [preservation investigation and validation ledger](/plans/2026-10-28-development-records-progress).
+For an existing plan, `sdd-workspace --progress PLAN_FILE` resolves
 the adjacent ledger path without writing anything; a planless live batch can
 use `docs/plans/<date>-<task>-progress.md`. Include safe progress in checkpoints.
 `.superpowers/sdd/` remains ignored for private scratch and raw payloads, not

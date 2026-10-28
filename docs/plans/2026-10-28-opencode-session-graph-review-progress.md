@@ -1,5 +1,8 @@
 # OpenCode session-graph review and integration progress
 
+[Browse development records](/dev/development-records) ·
+[How this history was preserved](./2026-10-28-development-records-progress.md)
+
 ## Provenance and limits
 
 This is a privacy-reviewed development-history summary, not a new review or a
