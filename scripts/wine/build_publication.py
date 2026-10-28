@@ -39,8 +39,9 @@ UNIX_ADAPTER_SOURCE = 'src/record_publication_unix.cpp'
 OPERATION_HEADER = 'src/record_publication_operation.h'
 PUBLICATION_HEADER = 'src/record_publication.h'
 PUBLICATION_SOURCE = 'src/record_publication.cpp'
+SELINUX_HEADER = 'src/record_publication_selinux.h'
 INPUTS = (ABI_HEADER, AUTHORITY_HEADER, UNIX_HEADER, UNIX_ADAPTER_SOURCE, OPERATION_HEADER,
-          PUBLICATION_HEADER, PUBLICATION_SOURCE, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE)
+          PUBLICATION_HEADER, PUBLICATION_SOURCE, SELINUX_HEADER, PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE)
 DIRECTORIES = ('modules', 'modules/x86_64-windows', 'modules/x86_64-unix')
 MAX_ARTIFACT = 64 * 1024 * 1024
 

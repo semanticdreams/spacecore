@@ -1,5 +1,8 @@
 #include "record_publication.h"
 #include "record_publication_operation.h"
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+#include "record_publication_selinux.h"
+#endif
 #ifdef _WIN32
 #include "record_publication_wine.h"
 #endif
@@ -9,6 +12,7 @@
 #include <chrono>
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <cstring>
 #include <exception>
 #include <stdexcept>
@@ -161,6 +165,9 @@ bool snapshot(const struct stat& left, const struct stat& right)
 
 void mode_only(int fd)
 {
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+    selinux::validate_metadata(fd);
+#else
 #ifdef __APPLE__
     acl_t acl = ::acl_get_fd_np(fd, ACL_TYPE_EXTENDED);
     if (acl) {
@@ -193,6 +200,31 @@ void mode_only(int fd)
     // ENOTSUP means this filesystem cannot store such metadata, not that access
     // was denied. Every other inspection failure, including EACCES, is fatal.
     if (count < 0 && errno != ENOTSUP && errno != EOPNOTSUPP) os_error("inspect xattrs");
+#endif
+}
+
+using Label = std::optional<std::string>;
+Label security_label(int fd)
+{
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+    return selinux::inspect(fd);
+#else
+    mode_only(fd);
+    return std::nullopt;
+#endif
+}
+struct DestinationPolicy {
+    struct stat info;
+    Label label;
+};
+void require_label(int fd, const Label& expected)
+{
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+    selinux::validate_metadata(fd, &expected);
+#else
+    (void)expected;
+    mode_only(fd);
+#endif
 }
 
 void regular_private_owner(const struct stat& value)
@@ -227,8 +259,12 @@ public:
         // Writable ancestors therefore cannot redirect private payload bytes.
         parent_ = Handle(::open(absolute.parent_path().c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
         if (parent_.get() < 0) os_error("pin target parent");
-        mode_only(parent());
+        parent_policy_ = metadata(parent());
+        parent_label_ = security_label(parent());
         name_ = absolute.filename().native();
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+        if (parent_label_) canonical_destination_ = fs::canonical(absolute.parent_path()) / absolute.filename();
+#endif
         destination_ = read_destination();
     }
 
@@ -245,6 +281,7 @@ public:
         if (::mkdirat(parent(), ".space-publication", 0700) != 0 && errno != EEXIST)
             os_error("create persistent private anchor");
         anchor_ = acquire_directory(parent(), ".space-publication", anchor_id_);
+        anchor_label_ = security_label(anchor_.get());
         for (int tries = 0; tries < 64; ++tries) {
             workspace_name_ = workspace_name();
             if (::mkdirat(anchor_.get(), workspace_name_.c_str(), 0700) == 0) {
@@ -255,11 +292,18 @@ public:
         }
         if (!owned_) fail("cannot allocate exclusive workspace");
         workspace_ = acquire_directory(anchor_.get(), workspace_name_.c_str(), workspace_id_);
+        workspace_label_ = security_label(workspace_.get());
         validate_workspace();
         record_ = Handle(::openat(workspace_.get(), "record",
             O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600));
         if (record_.get() < 0) os_error("create private record");
         record_id_ = metadata(record_.get());
+        record_label_ = security_label(record_.get());
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+        if (!destination_ && (record_label_ || parent_label_)) {
+            label_authority_ = std::make_unique<selinux::NewLabelAuthority>(parent(), canonical_destination_);
+        }
+#endif
         validate_private_record();
     }
 
@@ -300,9 +344,9 @@ public:
         if (!record_id_ || !identity(*record_id_, value) || !identity(named, value)) fail("stage identity changed");
         verify_bytes(bytes);
         mode_only(record_.get());
-        const uid_t uid = destination_ ? destination_->st_uid : ::geteuid();
-        const gid_t gid = destination_ ? destination_->st_gid : value.st_gid;
-        const mode_t mode = destination_ ? destination_->st_mode & 0777 : 0600;
+        const uid_t uid = destination_ ? destination_->info.st_uid : ::geteuid();
+        const gid_t gid = destination_ ? destination_->info.st_gid : value.st_gid;
+        const mode_t mode = destination_ ? destination_->info.st_mode & 0777 : 0600;
         if ((value.st_uid != uid || value.st_gid != gid)
             && ::fchown(record_.get(), uid, gid) != 0) os_error("reproduce owner/group");
         if (::fchmod(record_.get(), mode) != 0) os_error("prepare final mode");
@@ -310,6 +354,7 @@ public:
         if (final_->st_uid != uid || final_->st_gid != gid || (final_->st_mode & 07777) != mode)
             fail("final owner/group/mode reproduction failed");
         mode_only(record_.get());
+        validate_label_policy();
     }
 
     void validate(std::string_view bytes)
@@ -326,7 +371,9 @@ public:
         if (::fsync(record_.get()) != 0) os_error("flush final record policy");
         const auto current = read_destination();
         if (current.has_value() != destination_.has_value()
-            || (current && !snapshot(*destination_, *current))) fail("destination identity/security changed");
+            || (current && (!snapshot(destination_->info, current->info)
+                            || destination_->label != current->label))) fail("destination identity/security changed");
+        validate_label_policy();
     }
 
     void commit()
@@ -358,6 +405,8 @@ private:
         try {
             private_directory(anchor_.get());
             private_directory(workspace_.get());
+            require_label(anchor_.get(), anchor_label_);
+            require_label(workspace_.get(), workspace_label_);
             if (!anchor_id_ || !identity(metadata(anchor_.get()), *anchor_id_)
                 || !identity(metadata(workspace_.get()), *workspace_id_))
                 fail("private cleanup namespace identity changed");
@@ -392,6 +441,11 @@ private:
 
     void validate_workspace()
     {
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+        const auto parent_value = metadata(parent());
+        if (!identity(parent_value, parent_policy_) || !security(parent_value, parent_policy_)
+            || security_label(parent()) != parent_label_) fail("target parent security changed");
+#endif
         // Identity is device/inode, not volatile timestamps or directory link
         // counts: independent attempts may add/remove children concurrently.
         struct stat named {};
@@ -407,9 +461,11 @@ private:
             || !S_ISDIR(value.st_mode) || value.st_uid != ::geteuid()
             || (value.st_mode & 07777) != 0700) fail("workspace identity/privacy changed");
         private_directory(workspace_.get());
+        require_label(anchor_.get(), anchor_label_);
+        require_label(workspace_.get(), workspace_label_);
     }
 
-    std::optional<struct stat> read_destination()
+    std::optional<DestinationPolicy> read_destination()
     {
         Handle fd(::openat(parent(), name_.c_str(), O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC));
         if (fd.get() < 0) {
@@ -419,8 +475,9 @@ private:
         const auto value = metadata(fd.get());
         if (!S_ISREG(value.st_mode) || value.st_nlink != 1 || (value.st_mode & 07000))
             fail("destination must be a single-link regular mode-only file without special bits");
-        mode_only(fd.get());
-        return value;
+        const auto label = security_label(fd.get());
+        if (!snapshot(value, metadata(fd.get()))) fail("destination changed during policy inspection");
+        return DestinationPolicy {value, label};
     }
 
     void verify_bytes(std::string_view bytes)
@@ -468,11 +525,28 @@ private:
         if (!record_id_ || !identity(value, *record_id_) || !identity(named, value)
             || (value.st_mode & 07777) != 0600) fail("private record identity/privacy changed");
         mode_only(record_.get());
+        validate_label_policy();
+    }
+
+    void validate_label_policy()
+    {
+        const auto expected = destination_ ? destination_->label : record_label_;
+        if (security_label(record_.get()) != expected) fail("stage label cannot preserve destination policy");
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+        if (label_authority_) label_authority_->validate(record_.get());
+#endif
     }
 
     std::string name_, workspace_name_;
     Handle parent_, anchor_, workspace_, record_;
-    std::optional<struct stat> destination_, anchor_id_, workspace_id_, record_id_, final_;
+    std::optional<DestinationPolicy> destination_;
+    std::optional<struct stat> anchor_id_, workspace_id_, record_id_, final_;
+    struct stat parent_policy_ {};
+    Label parent_label_, anchor_label_, workspace_label_, record_label_;
+    fs::path canonical_destination_;
+#ifdef SPACE_RECORD_PUBLICATION_SELINUX
+    std::unique_ptr<selinux::NewLabelAuthority> label_authority_;
+#endif
     bool owned_ = false, cleaned_ = false;
 };
 

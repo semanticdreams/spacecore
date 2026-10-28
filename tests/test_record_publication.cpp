@@ -777,6 +777,9 @@ void namespace_attacks()
     const auto parent = fixture.root / "parent";
     const auto moved = fixture.root / "moved-parent";
     check(fs::create_directory(parent), "parent fixture");
+    // Existing-target preservation is handle-relative even when the public
+    // parent moves. New labeled targets additionally bind a default-policy path.
+    write(parent / "record", "old");
     rp::Hooks hooks;
     hooks.before_write = [&] {
         fs::rename(parent, moved);

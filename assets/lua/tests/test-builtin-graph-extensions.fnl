@@ -21,7 +21,7 @@
     "kernel" "kernel-instance" "kernels" "link-entity" "link-entity-list" "list-entity" "dict-entity"
     "list-entity-list" "dict-entity-list" "llm" "llm-conversation" "llm-conversations" "llm-message"
    "llm-model" "llm-provider" "llm-tool" "llm-tool-call" "llm-tool-result"
-   "llm-tools" "notebook" "notebooks" "quit" "start" "string-entity"
+   "llm-tools" "notebook" "notebooks" "opencode-config" "opencode-session" "opencode-session-message" "opencode-session-messages" "opencode-session-message-part" "opencode-session-message-parts" "opencode-session-message-info" "opencode-sessions" "quit" "start" "string-entity"
     "string-entity-list" "string-entity-search" "table" "text-module" "workflow-definition" "workflow-run"
    "workflow-run-event" "workflow-run-explorer" "workflow-run-step" "workflow-run-timeline"
    "workflow-step" "workflow-step-explorer" "workflows" "world" "world-activities"

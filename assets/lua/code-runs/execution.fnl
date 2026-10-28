@@ -71,8 +71,16 @@
     (assert (and (= (type key) :string) (string.find key "%S")) "artifact requires a graph key")
     (assert (or (= label nil) (= (type label) :string)) "artifact label must be text")
     (options.artifact {:key key :label (if label label key)}))
+  (fn attach-opencode-session [_self id label]
+    ;; Records the run's OpenCode session as a graph-addressable artifact
+    ;; reference. The session itself stays owned by the OpenCode server.
+    (live!)
+    (assert (and (= (type id) :string) (string.match id "^[%w%-_]+$"))
+            "opencode session id must be a non-empty url-safe identifier")
+    (attach-artifact _self (.. "opencode-session:" id) (or label "OpenCode session")))
   (local context {:id options.id :code-entity-id options.code-entity-id
-                  :defer defer :wrap wrap :write write :attach-artifact attach-artifact})
+                  :defer defer :wrap wrap :write write :attach-artifact attach-artifact
+                  :attach-opencode-session attach-opencode-session})
   (fn evaluate [_self callback]
     ;; The initial evaluation shares the boundary discipline but keeps the
     ;; stack alive until its return is recorded, so a deferred run's

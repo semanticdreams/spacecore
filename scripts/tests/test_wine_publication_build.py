@@ -1352,7 +1352,7 @@ ADAPTER_SOURCE = 'src/record_publication_unix.cpp'
 PUBLICATION_SOURCE = 'src/record_publication.cpp'
 BUILD_INPUTS = (ABI_HEADER, AUTHORITY_HEADER, 'src/record_publication_unix.h', ADAPTER_SOURCE,
                 'src/record_publication_operation.h', 'src/record_publication.h', PUBLICATION_SOURCE,
-                PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE)
+                'src/record_publication_selinux.h', PE_SOURCE, UNIX_SOURCE, BUILDER_SOURCE)
 
 
 def builder_module():

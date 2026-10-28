@@ -12,12 +12,16 @@ starts with fast-dev. Do not switch primaries to use it, even under deadline pre
 
 | Selected primary | Required branch |
 | --- | --- |
-| `fast-dev` | `fast-dev/<topic>` |
-| `live-dev` | `live-dev/<topic>` |
+| `fast-dev` | `fast-dev` (long-term branch, exactly this name) |
+| `live-dev` | `live-dev` (long-term branch, exactly this name) |
 
-Verify the exact selected caller and its corresponding branch: prefixes are not interchangeable.
-An unknown caller or caller/branch mismatch blocks this path; report the mismatch
-and clarify ownership rather than silently renaming, switching, or adopting unrelated work.
+Verify the exact selected caller and its corresponding long-term branch: the
+branches are named exactly `fast-dev` and `live-dev` with no topic suffix and
+are not interchangeable. The branch accumulates batches of successive tasks
+between integrations by design; review scope is the accumulated batch range,
+not the branch's full history. An unknown caller or caller/branch mismatch
+blocks this path; report the mismatch and clarify ownership rather than
+silently renaming, switching, or adopting unrelated work.
 
 Own finishing directly with raw `git` and `gh`. No direct main push, rebase,
 force-push, branch deletion, or worktree cleanup.
@@ -58,21 +62,25 @@ precedes edits and explicit refresh follows validated code changes, not advice a
 
 ## Prepare and review
 
-- Confirm the selected caller's matching branch, intended scope, and ownership of dirty state.
-  Inspect status and staged/unstaged diffs; commit only intended pending work.
-- `git fetch origin`; use current `origin/main`, never local `main`. If behind,
-  `git merge origin/main` safely; resolve conflicts directly, commit, and inspect
-  the result. Do not overwrite unrelated work.
-- Inspect **all commits** with `git log origin/main..HEAD` (including each
-  commit's diff) and the final diff with `git diff origin/main...HEAD`.
-  Run proportional checks and record commands/results. Follow `AGENTS.md` and
-  relevant technical skills, including `space-testing-runtime`: build first if
-  the runtime is missing/stale or host code changed; for Fennel, compile check,
-  constraints, focused tests, then broader checks only when risk requires them.
-  Prompt/docs-only work needs no engine build.
-- Record base/head SHAs (`git rev-parse origin/main HEAD`), user intent, and
-  validation evidence. Request one independent review from `fast-dev-reviewer`
-  covering every accumulated commit and final diff at those SHAs.
+- Confirm the selected caller's matching long-term branch, intended scope
+  (the accumulated batch since the last integration point), and ownership of
+  dirty state. Inspect status and staged/unstaged diffs; commit only intended
+  pending work.
+- `git fetch origin`; use current `origin/main`, never local `main`. If the
+  branch is behind, `git merge origin/main` safely; resolve conflicts directly,
+  commit, and inspect the result. Do not overwrite unrelated work.
+- Inspect **all commits** in the batch range with `git log origin/main..HEAD`
+  (including each commit's diff) and the final diff with
+  `git diff origin/main...HEAD`. Run proportional checks and record
+  commands/results. Follow `AGENTS.md` and relevant technical skills, including
+  `space-testing-runtime`: build first if the runtime is missing/stale or host
+  code changed; for Fennel, compile check, constraints, focused tests, then
+  broader checks only when risk requires them. Prompt/docs-only work needs no
+  engine build.
+- Record base/head SHAs (`git rev-parse origin/main HEAD`; base is the last
+  integration point), user intent, and validation evidence. Request one
+  independent review from `fast-dev-reviewer` covering every accumulated commit
+  and the final diff at those SHAs.
 - Fix findings and failing checks directly after evidence-based diagnosis;
   commit fixes, self-review the resulting commits/diff, and revalidate affected
   behavior. There is no mandatory independent re-review per fix. Do not integrate
@@ -88,10 +96,17 @@ active main rules (`gh api repos/<owner>/<repo>/rules/branches/main` and branch
 protection as needed): require merge queue and required `test` protection for
 merge-group candidates. Missing/unverifiable settings need an admin, not bypass.
 
-Push only the topic branch (`git push -u origin <topic-branch>`). Create with
-`gh pr create --base main --head <topic-branch>` or reuse the matching open PR.
-Verify repository, base `main`, head branch and SHA; do not reuse a closed or
-stale merged PR. Enable auto-merge with `gh pr merge <pr> --auto --squash`.
+Push only the long-term branch (`git push origin <branch>`; `-u` on first
+push). Because the branch accumulates batches, reuse the matching open PR for
+that branch when one exists — pushing updates it — and create
+`gh pr create --base main --head <branch>` only when no open PR for the branch
+exists. Verify repository, base `main`, head branch and SHA; do not reuse a
+closed or stale merged PR. Enable auto-merge with
+`gh pr merge <pr> --auto --squash`.
+
+While the PR is open or queued, the primary keeps committing successive tasks
+on the same branch by design; the next push updates the open PR, and wrap-up
+merges whatever the batch contains at that moment.
 
 Poll PR and relevant merge-group checks at **100-second cadence**:
 
@@ -115,3 +130,8 @@ Require PR `mergedAt` and `mergeCommit.oid` (the merge SHA), then run a fresh
 `git fetch origin` and `git merge-base --is-ancestor <merge-sha> origin/main`.
 Only success proves the merge is in fetched main. Report PR URL, merge SHA,
 validation/review summary, and ancestry evidence. Preserve branch and worktree.
+
+After the proof, sync the long-term branch for the next batch: safe-merge
+`origin/main` into the branch locally (`git merge origin/main`, resolve
+conflicts directly if any) and push it, so the branch starts the next batch
+current. Never rebase.

@@ -28,7 +28,8 @@ NATIVE_HELPER_BASENAMES = ('BCryptPrimitives.DLL', 'SpAcE_ReCoRd_PuBlIcAtIoN.DlL
 PUBLICATION_INPUTS = ('src/record_publication_wine_abi.h', 'src/record_publication_wine_authority.h',
                       'src/record_publication_unix.h', 'src/record_publication_unix.cpp',
                       'src/record_publication_operation.h', 'src/record_publication.h',
-                      'src/record_publication.cpp', 'scripts/wine/record_publication_bridge.c',
+                      'src/record_publication.cpp', 'src/record_publication_selinux.h',
+                      'scripts/wine/record_publication_bridge.c',
                       'scripts/wine/record_publication_unix_entry.cpp', 'scripts/wine/build_publication.py')
 
 # Inert host implementation of the two fixed builtin setup utilities. Every call

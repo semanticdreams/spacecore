@@ -39,12 +39,21 @@ Use project `explorer` for optional exploration, not built-in model fallback.
 Consultation alone requires no lifecycle action: manual mode precedes edits and
 explicit refresh follows validated code changes as specified below.
 
-- Use `live-dev/<topic>` before edits. Start new topics from freshly fetched `origin/main`.
-  Deliberately reuse an unmerged branch only when all its commits belong to this
-  work; never develop on local `main` or carry unrelated commits. Preserve unrelated
-  dirty state; clarify ambiguous ownership rather than discard or automatically stash.
-- Small intent-focused checkpoints are local only. A commit request and ordinary
-  task completion do not authorize pushing, PR creation, or auto-merge. Only
+- Work on the single long-term `live-dev` branch (exactly that name, no topic
+  suffix) before edits. It exists to accumulate batches of successive tasks
+  between integrations. Start batches from freshly fetched `origin/main`; when
+  the branch is behind `origin/main` or a batch just merged, bring it current
+  with a safe merge from `origin/main` (never rebase). Deliberately continue
+  existing unmerged work only when its commits belong to the current batch.
+  Never develop on local `main` or carry unrelated commits into a batch.
+  Preserve unrelated dirty
+  state; clarify ambiguous ownership rather than discard or automatically stash.
+- Proactively create small intent-focused local checkpoints: after each
+  validated coherent change — including ad-hoc requests during a live session —
+  commit it with a short intent-focused subject without waiting for an explicit
+  commit request, so successive unrelated tasks never pile up as mixed dirty
+  state. Checkpoints are local only; a commit and ordinary task completion do
+  not authorize pushing, PR creation, or auto-merge. Only
   explicit user wrap-up/integration authorization triggers `fast-dev-wrap-up`,
   the shared skill with `fast-dev-reviewer`; stay live-dev on your own branch.
   Never push main, rebase, or force-push.

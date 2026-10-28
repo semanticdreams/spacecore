@@ -53,6 +53,23 @@ struct LuaHttp
         }
     }
 
+    bool enqueue_stream_terminal(const HttpResponse& response, std::vector<uint64_t>& completed)
+    {
+        auto it = stream_callback_ids.find(response.id);
+        if (it == stream_callback_ids.end()) {
+            return false;
+        }
+        // Chunks and the terminal item share the same ordered callback queue.
+        // Keep registration alive until dispatch has delivered all of them.
+        lua_callbacks_enqueue(it->second, [response](sol::state_view lua) {
+            sol::table item = make_response_table(lua, response);
+            item["done"] = true;
+            return sol::make_object(lua, item);
+        });
+        completed.push_back(response.id);
+        return true;
+    }
+
     uint64_t request(sol::table opts)
     {
         HttpRequest req;
@@ -104,9 +121,14 @@ struct LuaHttp
                         return sol::make_object(l, item);
                     });
             };
-            uint64_t id = client->submit(req);
-            stream_callback_ids[id] = stream_cb_id;
-            return id;
+            try {
+                uint64_t id = client->submit(req);
+                stream_callback_ids[id] = stream_cb_id;
+                return id;
+            } catch (...) {
+                lua_callbacks_unregister(stream_cb_id);
+                throw;
+            }
         }
 
         uint64_t id = client->submit(req);
@@ -125,6 +147,7 @@ struct LuaHttp
     sol::table poll(sol::state_view lua, sol::optional<uint64_t> max_results)
     {
         std::vector<HttpResponse> responses;
+        std::vector<uint64_t> completed_streams;
         // consume buffered first
         std::size_t max = max_results.value_or(0);
         if (!buffered.empty()) {
@@ -141,15 +164,7 @@ struct LuaHttp
 
         std::vector<HttpResponse> polled = client->poll(max);
         for (auto& r : polled) {
-            auto stream_it = stream_callback_ids.find(r.id);
-            if (stream_it != stream_callback_ids.end()) {
-                lua_callbacks_enqueue(stream_it->second, [](sol::state_view l) {
-                    sol::table item = l.create_table();
-                    item["done"] = true;
-                    return sol::make_object(l, item);
-                });
-            }
-            cleanup_stream_callback(r.id);
+            enqueue_stream_terminal(r, completed_streams);
             auto it = callback_ids.find(r.id);
             if (it != callback_ids.end()) {
                 uint64_t cb_id = it->second;
@@ -168,6 +183,9 @@ struct LuaHttp
             out[idx++] = make_response_table(lua, res);
         }
         lua_callbacks_dispatch(lua);
+        for (uint64_t id : completed_streams) {
+            cleanup_stream_callback(id);
+        }
         return out;
     }
 
@@ -197,17 +215,10 @@ struct LuaHttp
 
     void dispatch(sol::state_view lua)
     {
+        std::vector<uint64_t> completed_streams;
         std::vector<HttpResponse> responses = client->poll(0);
         for (auto& res : responses) {
-            auto stream_it = stream_callback_ids.find(res.id);
-            if (stream_it != stream_callback_ids.end()) {
-                lua_callbacks_enqueue(stream_it->second, [](sol::state_view l) {
-                    sol::table item = l.create_table();
-                    item["done"] = true;
-                    return sol::make_object(l, item);
-                });
-            }
-            cleanup_stream_callback(res.id);
+            enqueue_stream_terminal(res, completed_streams);
             char detail[192];
             std::snprintf(detail, sizeof(detail),
                           "callback=%s status=%ld body=%zu error=%s",
@@ -229,6 +240,9 @@ struct LuaHttp
             }
         }
         lua_callbacks_dispatch(lua);
+        for (uint64_t id : completed_streams) {
+            cleanup_stream_callback(id);
+        }
     }
 };
 

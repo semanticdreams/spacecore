@@ -39,8 +39,8 @@
                             :atlas {:width 1 :height 1}}
                  :glyph-map {65533 glyph 4242 glyph}})
     (local stub {:font font
-                 :codepoints {:open_in_new 4242
-                               :content_copy 4242
+                  :codepoints {:open_in_new 4242
+                                :content_copy 4242 :tag 4242 :delete 4242
                                :open_in_full 4242
                                :close_fullscreen 4242
                                :more_vert 4242}})

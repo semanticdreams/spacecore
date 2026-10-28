@@ -323,6 +323,26 @@
   (each [_ handle (ipairs handles)] (handle:unregister))
   (when (not ok) (error err)))
 
+(add "opencode session attachment records a validated graph artifact"
+  (fn [] (with-fixture (fn [f]
+    (local run (run-source f "(local done (execution:defer)) (set capture.cb (execution:wrap (fn [] (execution:attach-opencode-session \"ses_demo-1\" \"Books import\") (done:succeed :ok)))) :started"))
+    (f.capture.cb)
+    (local final (f.store:get-run run.id))
+    (assert (= final.status "succeeded"))
+    (local artifact (. final.artifacts 1))
+    (assert (= artifact.key "opencode-session:ses_demo-1"))
+    (assert (= artifact.label "Books import"))))))
+
+(add "opencode session attachment uses the default label and rejects unsafe ids"
+  (fn [] (with-fixture (fn [f]
+    (local run (run-source f "(execution:attach-opencode-session \"ses_abc-123\") 42"))
+    (local artifact (. (f.store:get-run run.id) :artifacts 1))
+    (assert (= artifact.key "opencode-session:ses_abc-123"))
+    (assert (= artifact.label "OpenCode session"))
+    (local rejected (run-source f "(execution:attach-opencode-session \"../etc\") 1"))
+    (assert (= rejected.status "failed"))
+    (assert (has? rejected.error.message "url-safe"))))))
+
 (add "graph exposes runs and artifacts only in the requesting map"
   (fn [] (with-fixture (fn [f]
     (fn exercise [map-a map-b _graph]

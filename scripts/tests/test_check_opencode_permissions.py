@@ -449,13 +449,18 @@ def test_fast_dev_reviewer_requires_subagent_mode(tmp_path: Path):
     assert "role-boundary" in violation_codes(repo)
 
 
+def flat(text: str) -> str:
+    """Whitespace-normalized text so wrapped contract phrases stay assertable."""
+    return " ".join(text.split())
+
+
 def test_fast_dev_primary_contract_is_direct_branch_scoped_and_local_only():
     text = (REPO_ROOT / ".opencode/agents/fast-dev.md").read_text(encoding="utf-8")
     keys, _ = load_checker()._frontmatter(text)
     assert keys["permission"] == "allow"
     assert keys["mode"] == "primary"
-    for term in ["fast-dev/<topic>", "origin/main", "before edits", "unmerged", "dirty", "local only", "explicit", "fast-dev-wrap-up", "space-fennel", "space-graph-doctrine"]:
-        assert term in text
+    for term in ["long-term `fast-dev` branch", "origin/main", "before edits", "unmerged", "dirty", "local only", "explicit", "fast-dev-wrap-up", "space-fennel", "space-graph-doctrine"]:
+        assert term in flat(text)
     for term in ["supervisor", "micro-design", "dispatch `implementer`", "capability agents", "vertical slice handoff"]:
         assert term not in text.lower()
 
@@ -478,7 +483,7 @@ def test_fast_dev_wrap_up_contract_requires_review_direct_fixes_and_fetched_main
         "git merge-base --is-ancestor <merge-sha> origin/main", "merge queue", "required `test`",
         "space-testing-runtime", "unresolved material", "required validation failures",
     ]:
-        assert term in text
+        assert term in flat(text)
     assert "supervisor" not in text.lower()
 
 
@@ -504,13 +509,13 @@ def test_live_dev_primary_is_exact_direct_local_only_profile():
     }
     assert keys["variant"] == "high"
     for term in [
-        "live-dev/<topic>", "before edits", "freshly fetched `origin/main`", "unmerged",
+        "long-term `live-dev` branch", "before edits", "freshly fetched `origin/main`", "unmerged",
         "dirty", "local only", "task completion", "commit request", "PR creation",
         "explicit user wrap-up/integration", "fast-dev-wrap-up", "space-fennel",
         "space-fennel-ui", "space-graph-doctrine", "space-testing-runtime",
         "quit and restart OpenCode",
     ]:
-        assert term in text
+        assert term in flat(text)
 
 
 def test_live_dev_loop_establishes_manual_mode_before_edits_and_validates_before_refresh():
@@ -534,12 +539,12 @@ def test_live_dev_scoped_exception_preserves_default_and_other_agent_contracts()
     text = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
     exception = text.split("## Fast-dev workflow exception", 1)[1].split("## Branch Convention", 1)[0]
     for term in [
-        "selected `fast-dev` primary", "selected `live-dev` primary", "`live-dev/<topic>`",
+        "selected `fast-dev` primary", "selected `live-dev` primary", "`live-dev` branch",
         "exact identities", "default `supervisor`", "local only", "explicit user wrap-up",
         "imported by domain skills", "technical", "no filesystem watching",
         "all other agents", "already-running agent",
     ]:
-        assert term in exception
+        assert term in flat(exception)
     config = json.loads((REPO_ROOT / ".opencode/opencode.json").read_text(encoding="utf-8"))
     assert config["default_agent"] == "supervisor"
 
@@ -551,11 +556,12 @@ def test_shared_wrap_up_matches_selected_caller_to_its_own_branch_only():
         "Use ONLY when the selected fast-dev or live-dev primary receives explicit user wrap-up/integration authorization."
     )
     for term in [
-        "| `fast-dev` | `fast-dev/<topic>` |", "| `live-dev` | `live-dev/<topic>` |",
+        "| `fast-dev` | `fast-dev` (long-term branch, exactly this name) |",
+        "| `live-dev` | `live-dev` (long-term branch, exactly this name) |",
         "selected caller", "mismatch", "Do not switch primaries", "not interchangeable",
         "ordinary task completion", "commit request", "do not authorize publishing",
     ]:
-        assert term in text
+        assert term in flat(text)
     assert not (REPO_ROOT / ".opencode/skills/live-dev-wrap-up").exists()
     reviewer = (REPO_ROOT / ".opencode/agents/fast-dev-reviewer.md").read_text(encoding="utf-8")
     assert "fast-dev and live-dev" in reviewer
@@ -565,12 +571,12 @@ def test_shared_wrap_up_matches_selected_caller_to_its_own_branch_only():
 def test_live_dev_documented_local_loop_and_shared_explicit_wrap_up(path: str):
     text = (REPO_ROOT / path).read_text(encoding="utf-8")
     for term in [
-        "live-dev/<topic>", "local only", "fast-dev-wrap-up", "fast-dev-reviewer",
+        "long-term `live-dev` branch", "local only", "fast-dev-wrap-up", "fast-dev-reviewer",
         "manual", "before editing", "validated", "more than one", "select",
         "no filesystem watching", "confirmation", "failed reload", "recovery",
         "Restart OpenCode", "origin/main",
     ]:
-        assert term in text
+        assert term in flat(text)
 
 
 def test_finishing_skill_does_not_recommend_branch_deletion():

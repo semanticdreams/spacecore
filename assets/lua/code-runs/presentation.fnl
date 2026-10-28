@@ -16,12 +16,14 @@
   (when run.error (table.insert parts (.. "Error: " run.error.message)))
   (if (= (length parts) 0) "(no output yet)" (table.concat parts "\n")))
 
-(fn payload [run output-text]
+(fn metadata-text [run]
   (.. "Run: " run.id "\nCode: code-entity:" run.code-entity-id
       "\nKernel: " (tostring run.snapshot.kernel) " (" run.snapshot.language ")"
       "\nElapsed: " (if (= run.status "running") "in progress" (string.format "%.0f ms" run.elapsed-ms))
-      "\nCompletion: " run.completion-mode
-      "\n\nOutput\n" output-text
+      "\nCompletion: " run.completion-mode))
+
+(fn payload [run output-text]
+  (.. (metadata-text run) "\n\nOutput\n" output-text
       "\n\nInitial return\n" run.initial-result
       "\n\nResult (" run.result-type ")\n" run.result
       "\n\nError\n" (if run.error (.. run.error.message "\n" run.error.traceback) "(none)")))
@@ -45,5 +47,25 @@
         "(no output)"))
   (.. (summary run) "\n" detail))
 
-{:summary summary :payload full-payload :preview-payload preview-payload
+(fn output-text [run]
+  (if (and run.output (> (length run.output) 0))
+      run.output
+      "(no output)"))
+
+(fn result-text [run]
+  (local result-type (if run.result-type (tostring run.result-type) "nil"))
+  (local result (if run.result run.result "(none)"))
+  (local initial-head
+    (if (and run.initial-result (> (length run.initial-result) 0))
+        (.. "Initial return: " run.initial-result "\n")
+        ""))
+  (.. initial-head "Result (" result-type ")\n" result))
+
+(fn error-text [run]
+  (if run.error
+      (.. run.error.message "\n" run.error.traceback)
+      "(no error)"))
+
+{:summary summary :metadata-text metadata-text :payload full-payload :preview-payload preview-payload
+ :output-text output-text :result-text result-text :error-text error-text
  :output-tail output-tail :progress progress}

@@ -7,9 +7,11 @@ below. It never scans processes or probes legacy endpoints.
 ## User-selected live-dev primary
 
 `supervisor` remains the default. Select the exact `live-dev` primary to edit,
-debug, validate, refresh, and checkpoint directly on `live-dev/<topic>`. New topics
-start from freshly fetched `origin/main`; preserve unrelated dirty work and do not
-adopt unrelated commits. The exact fast-dev primary remains on `fast-dev/<topic>`.
+debug, validate, refresh, and checkpoint directly on its long-term `live-dev`
+branch (exactly that name, no topic suffix). New batches start from freshly
+fetched `origin/main`; preserve unrelated dirty work and do not
+adopt unrelated commits. The exact fast-dev primary remains on its long-term
+`fast-dev` branch.
 Both have scalar `permission: allow` for appropriately isolated environments, not
 a security sandbox; no other agent's permissions or process boundaries change.
 
@@ -32,8 +34,9 @@ Fennel, without imported mandatory planning/worker/advisor/per-change review gat
 Ordinary completion and commit requests are **local only**: no push, PR, or
 auto-merge until explicit user wrap-up/integration authorization. That authorization
 loads the existing shared `fast-dev-wrap-up` skill and observational `fast-dev-reviewer`,
-without switching primary or duplicating the lifecycle. Caller-prefix matching is
-exact: live-dev uses only `live-dev/<topic>`, fast-dev only `fast-dev/<topic>`.
+without switching primary or duplicating the lifecycle. Caller-branch matching is
+exact: live-dev uses only its long-term `live-dev` branch, fast-dev only its
+long-term `fast-dev` branch.
 Wrap-up reviews every accumulated commit and final diff, fixes directly, revalidates,
 then uses the protected PR/merge queue. Completion requires actual PR merge and
 proof that its merge SHA is in freshly fetched `origin/main`; queue entry is not done.

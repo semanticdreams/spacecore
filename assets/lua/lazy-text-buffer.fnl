@@ -1036,6 +1036,27 @@
       (read-composed-range buffer buffer.selection.start-byte (- buffer.selection.end-byte buffer.selection.start-byte))
       ""))
 
+(fn get-text [buffer]
+  ;; The full composed content, regardless of the visible viewport.
+  (if (<= buffer.size 0)
+      ""
+      (read-composed-range buffer 0 buffer.size)))
+
+(fn replace-all [buffer text]
+  ;; Whole-buffer replacement (external-editor write-back): the previous
+  ;; content is fully superseded by a single add piece.
+  (when (not (valid-utf8? text))
+    (error "LazyTextBuffer replace-all requires valid UTF-8"))
+  (local insert-offset (# buffer.add-buffer))
+  (set buffer.add-buffer (.. buffer.add-buffer text))
+  (set buffer.pieces [(make-piece :add insert-offset (# text))])
+  (set buffer.size (# text))
+  (set buffer.cursor-byte (math.min (or buffer.cursor-byte 0) buffer.size))
+  (set buffer.selection nil)
+  (set buffer.dirty? true)
+  (set buffer.line-anchors [{:line 0 :byte 0}])
+  true)
+
 (fn build-save-segments [buffer]
   (local segments [])
   (each [_ piece (ipairs buffer.pieces)]
@@ -1194,6 +1215,8 @@
    :set-selection set-selection
    :clear-selection clear-selection
    :get-selected-text get-selected-text
+   :get-text get-text
+   :replace-all replace-all
    :save save})
 
 LazyTextBuffer

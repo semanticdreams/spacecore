@@ -1,0 +1,95 @@
+(local Common (require :graph/nodes/opencode-common))
+(local {:OpenCodeSessionMessageNode MessageNode} (require :graph/nodes/opencode-session-message))
+(local {:OpenCodeSessionMessageInfoNode InfoNode} (require :graph/nodes/opencode-session-message-info))
+(local Views (require :graph/view/views/opencode-session-message))
+(local InfoViews (require :graph/view/views/opencode-session-message-info))
+(local Extension (require :graph/extensions/builtins/opencode-sessions))
+(local Signal (require :signal))
+(local H (require :tests/opencode-graph-helpers))
+(local tests [])
+
+(fn fixture [info]
+  (local parent {:state :ready :messages [{:info info :parts []}] :changed (Signal)})
+  (local graph (H.fake-parent-graph))
+  (tset graph.nodes "opencode-session:s1" parent)
+  (local node (MessageNode {:session-id "s1" :message-id "m1"}))
+  (tset graph.nodes node.key node)
+  (node:mount graph)
+  {:node node :parent parent :graph graph})
+
+(fn complete-partition []
+  (local f (fixture {:id "m1" :role "assistant" :newFlag false :zero 0 :empty "" :future "visible"
+                    :tokens {:input 3} :model {:id "future-model"} :parts {:value "info-parts"}
+                    :system ["structured system"] "" {:value "empty-name"}}))
+  (local built ((Views.View f.node {}) (H.make-view-ctx)))
+  (local header ((built:header-text)))
+  (each [_ expected (ipairs ["newFlag: false" "zero: 0" "empty: " "future: visible"])]
+    (assert (string.find header expected 1 true) (.. "missing scalar: " expected)))
+  (local seen {})
+  (local fields {})
+  (each [_ row (ipairs (f.node:info-item-rows))]
+    (assert (not (. seen row.id)) "Parts and info.parts must have separate identities")
+    (tset seen row.id true)
+    (when (= row.action :info) (tset fields row.field true)))
+  (each [_ field (ipairs ["system" "tokens" "model" "parts" ""])]
+    (assert (. fields field) (.. "missing complex field: " field)))
+  (local projection (Common.info-projection (. f.parent.messages 1 :info)))
+  (each [i field (ipairs ["system" "" "model" "parts" "tokens"])]
+    (assert (= (. projection.complex i) field) "complex order must be deterministic"))
+  (f.node:open-info-field "parts")
+  (f.node:open-info-field "parts")
+  (assert (= (length f.graph.edges) 1) "repeat info opens deduplicate")
+  (assert (= (. f.graph.resolved (length f.graph.resolved)) "opencode-session-message-info:s1/m1/parts"))
+  (built:drop)
+  (f.node:drop))
+
+(fn canonical-field-keys []
+  (local graph (H.make-recording-graph))
+  (local handles (H.install-descriptor (Extension.descriptors {}) graph))
+  (local loader (H.loader-for handles "opencode-session-message-info"))
+  (each [_ field (ipairs ["system" "tokens" "" "a/b" "a b" "%2F" "~" "under_score" "日本語" "\0"])]
+    (local encoded (Common.encode-info-field field))
+    (assert (= (Common.decode-info-field encoded) field))
+    (local key (.. "opencode-session-message-info:s1/m1/" encoded))
+    (local node (assert (loader key) (.. "must hydrate " key)))
+    (assert (= node.key key))
+    (assert (= node.field field))
+    (node:drop))
+  (each [_ invalid (ipairs ["%" "%GG" "%2f" "%73ystem" "%7e" "%FF" "literal~" "" "a/b"])]
+    (assert (= (loader (.. "opencode-session-message-info:s1/m1/" invalid)) nil)
+            (.. "malformed/noncanonical key must prune: " invalid))))
+
+(fn generic-info-lifetime-and-rendering []
+  (local f (fixture {:id "m1" :system {:text "structured, not a table pointer"} :future false}))
+  (local node (InfoNode {:session-id "s1" :message-id "m1" :field "future"}))
+  (node:mount f.graph)
+  (assert node.present?)
+  (assert (= node.value false))
+  (local system (InfoNode {:session-id "s1" :message-id "m1" :field "system"}))
+  (system:mount f.graph)
+  (local ctx (H.make-view-ctx))
+  (var input nil)
+  (set ctx.clickables.register (fn [_self object] (when object.buffer (set input object))))
+  (local built ((InfoViews.View system {}) ctx))
+  (assert (string.find (input.buffer:get-text) "structured, not a table pointer" 1 true))
+  (local false-view ((InfoViews.View node {}) ctx))
+  (assert (= (input.buffer:get-text) "false") "false must render as data, not absence")
+  (false-view:drop)
+  (set f.parent.messages [{:info {:id "m1"} :parts []}])
+  (f.parent.changed:emit f.parent)
+  (assert (= node.state :ready))
+  (assert (not node.present?))
+  (set f.parent.messages [{:info {:id "m1" :future "returned"} :parts []}])
+  (f.parent.changed:emit f.parent)
+  (assert node.present?)
+  (assert (= node.value "returned"))
+  (built:drop)
+  (system:drop)
+  (node:drop)
+  (f.node:drop))
+
+(table.insert tests {:name "message hub exhaustively partitions future scalar and complex info" :fn complete-partition})
+(table.insert tests {:name "info fields hydrate through a canonical lossless field codec" :fn canonical-field-keys})
+(table.insert tests {:name "generic info preserves false absence reappearance and structured system" :fn generic-info-lifetime-and-rendering})
+(fn main [] ((. (require :tests/runner) :run-tests) {:name "opencode-info-metadata" :tests tests}))
+{:name "opencode-info-metadata" :tests tests :main main}
