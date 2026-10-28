@@ -41,8 +41,10 @@ Use project `explorer` for optional exploration, not built-in model fallback.
   suffix) before edits. It exists to accumulate batches of successive tasks
   between integrations. Start batches from freshly fetched `origin/main`; when
   the branch is behind `origin/main` or a batch just merged, bring it current
-  with a safe merge from `origin/main` (never rebase). Never develop on local
-  `main` or silently carry unrelated commits into a batch. Preserve unrelated
+  with a safe merge from `origin/main` (never rebase). Deliberately continue
+  existing unmerged work only when its commits belong to the current batch.
+  Never develop on local `main` or silently carry unrelated commits into a
+  batch. Preserve unrelated
   dirty state; ask a short ownership question rather than discard or
   automatically stash ambiguous work.
 - Proactively make small coherent local checkpoints with short, intent-focused

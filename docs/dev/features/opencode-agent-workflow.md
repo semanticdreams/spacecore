@@ -504,8 +504,9 @@ environment isolation, not narrow command permissions or operational workers,
 bounds their authority. Use these agents only in an appropriately isolated
 environment; this is not a security sandbox.
 
-- Before edits, fast-dev uses `fast-dev/<topic>` and live-dev uses `live-dev/<topic>`.
-  These are caller-specific, not interchangeable prefixes. New topics start from
+- Before edits, fast-dev works on its long-term `fast-dev` branch and live-dev
+  on its long-term `live-dev` branch (each exactly that name, no topic suffix).
+  These are caller-specific, not interchangeable branches. New batches start from
   freshly fetched `origin/main`; deliberately continue existing unmerged work
   only when its commits belong to the current task. Preserve unrelated dirty
   state and clarify ownership rather than discard or automatically stash it.
@@ -547,8 +548,9 @@ terminal evidence, privacy boundaries and the preserved-module restart list.
 
 Only explicit wrap-up/integration authorization loads `fast-dev-wrap-up`.
 This is one shared skill, not a second live-dev finishing workflow. It accepts
-selected fast-dev only on `fast-dev/<topic>` and selected live-dev only on
-`live-dev/<topic>`; a mismatch blocks integration, not an invitation to switch
+selected fast-dev only on its long-term `fast-dev` branch and selected live-dev
+only on its long-term `live-dev` branch; a mismatch blocks integration, not an
+invitation to switch
 primaries. The selected caller commits intended pending work, fetches current
 `origin/main`, safely merges when needed, and validates proportionally. One observational
 `fast-dev-reviewer` inspects every accumulated commit and the final diff using

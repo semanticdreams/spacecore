@@ -43,8 +43,10 @@ explicit refresh follows validated code changes as specified below.
   suffix) before edits. It exists to accumulate batches of successive tasks
   between integrations. Start batches from freshly fetched `origin/main`; when
   the branch is behind `origin/main` or a batch just merged, bring it current
-  with a safe merge from `origin/main` (never rebase). Never develop on local
-  `main` or carry unrelated commits into a batch. Preserve unrelated dirty
+  with a safe merge from `origin/main` (never rebase). Deliberately continue
+  existing unmerged work only when its commits belong to the current batch.
+  Never develop on local `main` or carry unrelated commits into a batch.
+  Preserve unrelated dirty
   state; clarify ambiguous ownership rather than discard or automatically stash.
 - Proactively create small intent-focused local checkpoints: after each
   validated coherent change — including ad-hoc requests during a live session —
