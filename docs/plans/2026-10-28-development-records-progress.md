@@ -338,3 +338,14 @@ After fixing Markdown-target escaping and equivalent percent-encoded route keys,
 actual built navigation for 184 plans/progress and 164 specs. Existing advisory
 warnings remain unchanged. Direct self-review and `git diff --check` passed;
 the wrap-up exception requires no second independent review for this small fix.
+
+### Integration tracking
+
+Published [PR #287 — Preserve development records and expose them in docs
+navigation](https://github.com/semanticdreams/spacecore/pull/287), targeting `main`
+from `live-dev`. The implementation/fix checkpoint was `9f3899e4`; this final
+coordination entry adds the durable integration link. Active protection requires
+the GitHub Actions `test` check and merge queue; neither is bypassed. The PR's
+recorded `mergedAt` and merge commit are the canonical final integration outcome,
+not a speculative hash embedded before merge. The controller must wait for actual
+merge, fresh-fetch/verify ancestry, then safely sync the long-term branch.
