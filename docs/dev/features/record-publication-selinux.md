@@ -1,5 +1,8 @@
 # Linux record-publication SELinux subset
 
+For the development decisions, validation failures/recoveries and integration,
+see the [session-graph review and publication ledger](../../plans/2026-10-28-opencode-session-graph-review-progress.md).
+
 This is a read-only extension of [record publication](record-publication.md),
 not a relabeling service. Space never writes a SELinux xattr, sets a task creation
 context, disables enforcement, repairs directory policy, or loads kernel policy.
@@ -55,9 +58,9 @@ Linux CMake builds use a private, pinned public-domain libselinux 3.9 archive:
 
 - Source: `https://github.com/SELinuxProject/selinux/releases/download/3.9/libselinux-3.9.tar.gz`
 - SHA256: `e7ee2c01dba64a0c35c9d7c9c0e06209d8186b325b0638a0d83f915cc3c101e8`
-- License: [`cmake/libselinux-LICENSE`](../../../cmake/libselinux-LICENSE).
+- License: [`cmake/libselinux-LICENSE`](https://github.com/semanticdreams/spacecore/blob/6dfada36c24cb93ae3adc09a2c2416724a2de93e/cmake/libselinux-LICENSE).
 - Exact idempotent failure-propagation patch:
-  [`cmake/patch-private-selinux.py`](../../../cmake/patch-private-selinux.py).
+  [`cmake/patch-private-selinux.py`](https://github.com/semanticdreams/spacecore/blob/6dfada36c24cb93ae3adc09a2c2416724a2de93e/cmake/patch-private-selinux.py).
 
 The upstream file backend conflates regex execution failure and no-match as
 `ENOENT`. Our pinned patch preserves regex compilation/execution, context

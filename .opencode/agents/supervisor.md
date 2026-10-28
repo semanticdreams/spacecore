@@ -204,7 +204,7 @@ skill explicitly instructs you to:
 |---|---|
 | `docs/specs/**` | During brainstorming (step 5), or when the user asks |
 | `docs/plans/**` | During writing-plans, or when the user asks |
-| `.superpowers/sdd/**/progress.md` | During subagent-driven-development (ledger entries) |
+| `docs/plans/**/*-progress.md` | Controller-owned durable ledger entries during subagent-driven-development, including reconciled privacy-reviewed legacy summaries |
 
 **Everything else** — skill files, agent configs, `opencode.json`, workflow
 files, source code, tests, scripts, CI config, package files, generated files,

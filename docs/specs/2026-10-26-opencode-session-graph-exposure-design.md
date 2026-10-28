@@ -1,5 +1,8 @@
 # OpenCode session exposure through the graph — full roadmap design
 
+Implementation, review and integration history is recorded in the
+[session-graph progress ledger](../plans/2026-10-28-opencode-session-graph-review-progress.md).
+
 ## Status
 
 Reviewed by the expert (2026-10-26, consultation recorded in-session); the
@@ -343,8 +346,8 @@ node owns an island of message nodes; the parts node owns an island of
 part nodes.
 
 **Proposed contract (GLM):** projection turns :ready with >=1 valid entry →
-upsert deterministic island ("opencode-messages:<sid>",
-"opencode-parts:<sid>/<mid>"); recompute re-syncs members; empty/drop/
+upsert deterministic island (`opencode-messages:<sid>`,
+`opencode-parts:<sid>/<mid>`); recompute re-syncs members; empty/drop/
 parent-removal tears down; members are keys hydrated by the map.
 
 **Expert reconciliation (answered); corrections adopted:**

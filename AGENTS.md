@@ -41,6 +41,23 @@ Environment isolation, not narrow tool permissions, bounds these primaries' auth
 For all other agents, retain their existing process and permission contracts; this
 exception does not change an already-running agent's rules.
 
+## Preserve development records
+
+Design specs, implementation specs/plans, and development-progress ledgers are
+project history: preserve them as tracked repository documentation and include
+them in the relevant task checkpoints. Use `docs/specs/` for design specs,
+`docs/plans/` for implementation specs/plans, and keep progress ledgers alongside
+the related tracked documentation. Do not keep the only durable record in an
+ignored scratch directory such as `.superpowers/sdd/`.
+
+Cleanup must not delete these records merely because a task or integration is
+complete. Preserve decisions, rationale, implementation progress, validation
+results, and meaningful failures/recoveries. Keep secrets, private runtime data,
+and raw session dumps out of tracked documentation; required immutable original
+handoff payloads may remain private, with safe progress summaries tracked.
+This applies to every workflow, including fast-dev/live-dev, but does not make
+extra design/planning documents mandatory for otherwise small changes.
+
 ## GLM-default consultation contract
 
 All sixteen existing project roles use `opencode-go/glm-5.3-flash`, with

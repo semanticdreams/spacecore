@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Resolve and ensure the working-tree directory SDD uses for one plan's
-# short-lived artifacts: task briefs, implementer reports, review packages,
-# and the progress ledger. Print the plan directory's absolute path.
+# private artifacts: task briefs, implementer reports, and review packages.
+# Default stdout is the scratch directory; --progress only resolves a candidate
+# public ledger path beside the plan, without creating or modifying anything.
 #
 # The workspace name is derived from the plan's repo-relative path (hashed) so
 # two plans with the same filename in different directories get distinct
@@ -14,22 +15,63 @@
 # .gitignore at .superpowers/sdd/ keeps every plan's workspace out of
 # `git status` and out of accidental commits without modifying any tracked file.
 #
-# Usage: sdd-workspace PLAN_FILE
+# Usage: sdd-workspace [--progress] PLAN_FILE
 set -euo pipefail
 
-if [ $# -ne 1 ]; then
-  echo "usage: sdd-workspace PLAN_FILE" >&2
+progress=0
+if [ $# -eq 2 ] && [ "$1" = "--progress" ]; then
+  progress=1
+  shift
+elif [ $# -ne 1 ] || [[ "${1:-}" = --* ]]; then
+  echo "usage: sdd-workspace [--progress] PLAN_FILE" >&2
   exit 2
 fi
 
 plan=$1
 [ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
 
+root=$(git rev-parse --show-toplevel)
+if [ "$progress" -eq 1 ]; then
+  # Branch before all scratch mkdir/ignore/marker writes. A candidate path is
+  # not proof of ownership or tracking: the controller must check both before
+  # appending and include the safe ledger in the relevant checkpoint.
+  exec python3 - "$root" "$plan" <<'PY'
+from pathlib import Path
+import subprocess
+import sys
+
+try:
+    root = Path(sys.argv[1]).resolve(strict=True)
+    public = root / "docs/plans"
+    if public.resolve(strict=True) != public:
+        raise ValueError("docs/plans must be a canonical repository directory")
+    plan = Path(sys.argv[2]).resolve(strict=True)
+    plan.relative_to(public)
+    if plan.suffix != ".md" or plan.stem in ("", ".", "..") or "\n" in plan.name or "\r" in plan.name:
+        raise ValueError("plan must have a safe Markdown filename under docs/plans")
+    ledger = plan.with_name(plan.stem + "-progress.md")
+    if ledger.is_symlink() or (ledger.exists() and not ledger.is_file()):
+        raise ValueError("progress destination must be a regular file or absent, not a symlink")
+    ledger.resolve(strict=False).relative_to(public)
+    ignored = subprocess.run(["git", "check-ignore", "--no-index", "--",
+                              str(ledger.relative_to(root))], cwd=root,
+                             capture_output=True, text=True, check=False)
+    if ignored.returncode == 0:
+        raise ValueError("progress destination is ignored: " + ignored.stdout.strip())
+    if ignored.returncode != 1:
+        raise RuntimeError("cannot inspect progress ignore rules: " +
+                           (ignored.stderr.strip() or f"git exited {ignored.returncode}"))
+    print(ledger)
+except (OSError, ValueError, RuntimeError) as error:
+    print(f"cannot resolve tracked progress: {error}", file=sys.stderr)
+    sys.exit(2)
+PY
+fi
+
 slug=$(basename "$plan" .md)
 [ -n "$slug" ] && [ "$slug" != "." ] && [ "$slug" != ".." ] \
   || { echo "cannot derive a workspace name from: $plan" >&2; exit 2; }
 
-root=$(git rev-parse --show-toplevel)
 rel=$(realpath --relative-to="$root" "$plan" 2>/dev/null || echo "$plan")
 hash=$(echo "$rel" | sha256sum | cut -c1-8)
 base="$root/.superpowers/sdd"
@@ -47,7 +89,7 @@ fi
 recorded=$(cat "$marker" 2>/dev/null || true)
 if [ -n "$recorded" ] && [ "$recorded" != "$rel" ]; then
   echo "workspace $dir is bound to plan '$recorded', not '$rel'" >&2
-  echo "create a workspace for the correct plan or remove $dir" >&2
+  echo "use the correct plan; preserve this workspace's existing records" >&2
   exit 5
 fi
 

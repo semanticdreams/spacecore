@@ -40,6 +40,13 @@ restart OpenCode before relying on updated permissions or workflow text.
 
 ## Step 0: Verify Clean Working Tree
 
+First confirm that any durable progress record for this task is in tracked
+`docs/specs/` or `docs/plans/` and included in its checkpoint. An ignored scratch
+ledger does not appear in porcelain status. For legacy private-only progress,
+reconcile identity/ranges and retained bookkeeping, preserve the original and
+prepare a privacy-reviewed tracked summary before finishing; never auto-copy raw
+reports. Keep design specs, implementation plans and durable ledgers after merge.
+
 ```bash
 git status --porcelain
 ```
@@ -80,12 +87,14 @@ If the current branch is not `main`, continue to Step 1.
 > These must be resolved before finishing the branch. Would you like me to help commit them, or would you prefer to handle them yourself?
 
 If they want help committing:
-- Committable directly: `docs/specs/**`, `docs/plans/**`, and `.superpowers/sdd/**/progress.md`. Commit these and re-run the porcelain check from the top.
+- Committable directly: `docs/specs/**` and `docs/plans/**`, including the controller-owned durable progress ledger. Commit these and re-run the porcelain check from the top. Private `.superpowers/sdd/` reports and raw handoffs remain ignored.
 - Any other dirty file: stop and tell the user these must go through `implementer` → `reviewer` → pass first. The branch cannot be finished with uncommitted code changes that haven't been reviewed.
 
 If they want to handle it themselves: stop and exit the skill. The branch is not finished.
 
-Never auto-stage or auto-discard. Only allowlisted coordination-artifact files may be committed or discarded here; code changes always go through `implementer` → `reviewer` → pass.
+Never auto-stage or auto-discard. Only allowlisted coordination-artifact files may
+be committed here; retain development records rather than discarding them as
+cleanup. Code changes always go through `implementer` → `reviewer` → pass.
 
 ## Step 1: Verify Current Base and Tests
 

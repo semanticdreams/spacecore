@@ -1,5 +1,15 @@
 import { defineConfig } from 'vitepress'
 
+const recordsSidebar = [{
+  text: 'Development records',
+  items: [
+    { text: 'Records overview', link: '/dev/development-records' },
+    { text: 'Design specs', link: '/specs/' },
+    { text: 'Implementation plans', link: '/plans/' },
+    { text: 'Progress ledgers', link: '/plans/#progress-ledgers' }
+  ]
+}]
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "space",
@@ -23,10 +33,13 @@ export default defineConfig({
       { text: 'Quick Start', link: '/user/quick-start' },
       { text: 'User', link: '/user/' },
       { text: 'SDK', link: '/sdk/' },
-      { text: 'Developer', link: '/dev/' }
+      { text: 'Developer', link: '/dev/' },
+      { text: 'Records', link: '/dev/development-records' }
     ],
 
     sidebar: {
+      '/plans/': recordsSidebar,
+      '/specs/': recordsSidebar,
       '/sdk/': [
         {
           text: 'Overview',
@@ -199,6 +212,7 @@ export default defineConfig({
         }
       ],
       '/dev/': [
+        ...recordsSidebar,
         {
           text: 'Overview',
           items: [
