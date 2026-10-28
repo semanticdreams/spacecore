@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-27
+[Nonvisual graph capabilities](/dev/features/graph-capabilities) expose stored texts and directed relationships without opening views or changing map membership, while shared revision-aware editors reject stale saves and preserve attempted input. [Record publication](/dev/features/record-publication) strengthens the shared persistence boundary with explicit committed outcomes and a Wine bridge to the POSIX core, keeping recovery separate from presentation. Native hashing, constraint-selection improvements and portable test fixtures support this broader access; [recorded Wine validation](/dev/notes/windows-wine-build-and-test#current-publication-contract-measured-wine-acceptance-below) reached 4,867 passing tests at its measured revision, without claiming native Windows security certification.
+
 ## 2026-10-26
 [Code runs](/dev/features/code-runs) turn execution into durable, searchable graph history, preserving source snapshots, output, results and artifact references beyond source changes. Internal Fennel runs stream progress, and execution outlives view teardown, making work inspectable independently of its presentation. Alongside this visibility, new [agent role configuration](/dev/features/opencode-agent-workflow#glm-default-roles-and-bounded-expert-consultation) puts ordinary project roles on GLM high for cost-conscious iteration, with bounded read-only GPT consultation required before architecture, design or contract implementation. Fail-closed handoff correction preserves independent review and publication gates rather than treating valid formatting as approval, advancing cheaper-worker adoption beyond the pilot without claiming proven savings or reliability.
 
