@@ -46,6 +46,18 @@ Restart OpenCode after `.opencode/**` changes to load the updated agents/skill.
 Already-running sessions keep their loaded rules; this future live-dev exception
 does not change an ongoing strict supervisor implementation/integration workflow.
 
+## Development records
+
+Development records belong in tracked documentation: design specs in
+`docs/specs/`, implementation plans and associated progress ledgers in
+`docs/plans/`. For an existing plan, `sdd-workspace --progress PLAN_FILE` resolves
+the adjacent ledger path without writing anything; a planless live batch can
+use `docs/plans/<date>-<task>-progress.md`. Include safe progress in checkpoints.
+`.superpowers/sdd/` remains ignored for private scratch and raw payloads, not
+the only copy of durable progress. Reconcile legacy/private state before resume,
+and retain original payloads privately and documentation after cleanup. This
+does not require extra planning documents for tiny changes.
+
 ## Checkout lifecycle CLI (Linux)
 
 Run from the checkout/worktree you intend to develop, or supply its path:

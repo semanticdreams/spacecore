@@ -58,11 +58,13 @@ Capability wrappers retain verbatim JSON/refusals; advice cannot grant authority
 
 ## Setup
 
-1. **Isolated workspace:** use `.opencode/skills/subagent-driven-development/scripts/sdd-workspace PLAN_FILE` to resolve/create the plan's scratch directory. If a ledger (`progress.md`) exists and names this plan, resume from the last uncompleted task. Redirect to a fresh workspace if the ledger names a different plan.
+1. **Durable ledger:** use `.opencode/skills/subagent-driven-development/scripts/sdd-workspace --progress PLAN_FILE` to resolve `<plan-stem>-progress.md` beside a canonical plan under `docs/plans/`. This mode is read-only: it returns a non-ignored candidate path, not a created or tracked file. The controller verifies plan/task identity, branch, source/review ranges and existing ownership before creating or appending; a filename is not identity. Stop on an unrelated existing document or ambiguous ownership instead of overwriting it.
 
-2. **Read the plan once** and create a todo per task.
+2. **Private workspace and resume:** the existing `sdd-workspace PLAN_FILE` invocation still resolves/creates ignored scratch for briefs, reports, raw handoffs and diffs, not durable ledgers. Before resuming, reconcile the public ledger with any retained legacy scratch `progress.md`: verify unchanged assignment/range facts and retain later progress and spent `correction_used` allowances. Never blindly prefer a stale public ledger, merge contradictory verdicts, or reset an allowance. If only a legacy ledger exists, retain its original unchanged and prepare an explicitly privacy-reviewed summary in the public ledger with source provenance. Do not automatically copy private content or mutate originals. Missing/untrusted facts or divergent ownership block dependent work; ask for context rather than manufacturing a verdict. All new durable updates go to the reconciled public ledger.
 
-3. **Pre-flight scan:** check for tasks that contradict each other or the plan's Global Constraints. Present findings as a batched question before execution.
+3. **Read the plan once** and create a todo per task.
+
+4. **Pre-flight scan:** check for tasks that contradict each other or the plan's Global Constraints. Present findings as a batched question before execution.
 
 ## The Task Loop
 
@@ -225,7 +227,11 @@ with the reviewer's status recorded:
 - `Task <N>: complete (commits <base>..<head>, reviewer: pass)`
 - `Task <N>: complete (commits <base>..<head>, K parked, adjudicator: accept)`
 
-Mark the todo complete only after the ledger entry is written.
+Mark the todo complete only after the durable ledger entry is written and included
+in the relevant checkpoint. Confirm the safe `docs/plans/` ledger is actually
+tracked; a clean status alone does not prove that an ignored record was preserved.
+Keep private original/corrected payloads unchanged in private storage. Do not
+delete specs, plans or progress ledgers at task completion or cleanup.
 
 ## Single-Task Low-Risk Path
 

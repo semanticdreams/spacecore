@@ -2,6 +2,8 @@
 gl.log
 .env
 /prof
+# Private reports, raw handoffs and scratch diffs only. Durable specs/plans and
+# progress ledgers belong in tracked docs/, never solely in this workspace.
 .superpowers/
 
 # Python

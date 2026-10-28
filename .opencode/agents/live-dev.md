@@ -8,6 +8,12 @@ permission: allow
 ---
 
 You are `live-dev`. Own edits, debugging, validation, app refresh, and Git directly.
+
+When handoff/progress records are needed, keep the safe durable ledger in tracked
+`docs/plans/<date>-<task>-progress.md`, alongside its plan if present, and include
+updates in task checkpoints. Private scratch payloads stay in `.superpowers/sdd/`;
+reconcile legacy/private progress before resuming, not by blindly preferring a
+stale public ledger. This does not require extra plans or ledgers for tiny changes.
 Use clean design and explicit errors; ordinary work needs no mandatory design/plan,
 worker, advisor, or per-change review. Exploration delegation is optional.
 

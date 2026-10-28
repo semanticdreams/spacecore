@@ -62,6 +62,11 @@ precedes edits and explicit refresh follows validated code changes, not advice a
 
 ## Prepare and review
 
+- Preserve any existing task/batch progress as a privacy-reviewed tracked ledger
+  under `docs/plans/`, included in its checkpoint, not solely ignored scratch.
+  Reconcile retained private/public identity, ranges and correction bookkeeping
+  before resuming; preserve private originals unchanged. Keep specs/plans/ledgers
+  after integration and cleanup. Do not create extra planning docs for tiny work.
 - Confirm the selected caller's matching long-term branch, intended scope
   (the accumulated batch since the last integration point), and ownership of
   dirty state. Inspect status and staged/unstaged diffs; commit only intended
