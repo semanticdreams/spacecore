@@ -10,6 +10,7 @@
 (local FocusPolicy (require :text-input-focus-policy))
 (local CaretPolicy (require :text-input-caret-policy))
 (local KeyPolicy (require :text-input-key-policy))
+(local InputEditor (require :virtual-input-external-editor))
 (local Geometry (require :text-input-geometry))
 (local {: fallback-glyph} (require :text-utils))
 (local {: resolve-input-colors : resolve-padding} (require :widget-theme-utils))
@@ -1004,6 +1005,26 @@
 (fn on-state-disconnected [self _event]
   (FocusPolicy.handle-state-disconnected self))
 
+(fn set-buffer! [self new-buffer]
+  ;; Swap the buffer and reset every buffer-derived cache: stale viewport
+  ;; anchors from the previous content would otherwise render garbage rows
+  ;; (observed as a repeated first line) until the caches happened to refresh.
+  (assert new-buffer "VirtualInput set-buffer! requires a buffer")
+  (set self.buffer-generation (+ self.buffer-generation 1))
+  (set self.buffer new-buffer)
+  (set self.scroll-line (math.max 0 (or new-buffer.scroll-line 0)))
+  (set self.scroll-column 0)
+  (set self.viewport nil)
+  (set self.viewport-anchor-cache {})
+  (set self.viewport-row-anchor-cache {})
+  (set self.model {})
+  (set self.lines [])
+  (set self.cursor-index 0)
+  (set self.cursor-line 0)
+  (set self.cursor-column 0)
+  (set self.selection-anchor-byte (or new-buffer.cursor-byte 0))
+  (self:refresh-viewport))
+
 (fn initialize-cached-state! [input]
   (local (_line _column known?) (refresh-logical-caret-state input))
   (when known?
@@ -1017,6 +1038,7 @@
   (FocusPolicy.handle-drop self)
   (FocusPolicy.disconnect-focus-listeners self)
   (self.clickables:unregister self)
+  (self.clickables:unregister-double-click self)
   (when self.focus-node
     (self.focus-node:drop)
     (set self.focus-node nil))
@@ -1025,6 +1047,25 @@
   (self.background:drop)
   (self.caret:drop)
   (self.layout:drop))
+
+(fn install-readonly-guards! [input]
+  (set input.insert-text (fn [_self _text] false))
+  (set input.delete-before-cursor (fn [_self] false))
+  (set input.delete-at-cursor (fn [_self] false))
+  (set input.enter-insert-mode (fn [_self] true))
+  (set input.save (fn [_self] false)))
+
+(fn make-row-widgets [ctx text-style line-count]
+  (local row-widgets [])
+  (for [_ 1 line-count]
+    (table.insert row-widgets ((Text {:codepoints [] :style text-style}) ctx)))
+  row-widgets)
+
+(fn collect-child-layouts [background caret row-widgets]
+  (local child-layouts [background.layout caret.layout])
+  (each [_ row-widget (ipairs row-widgets)]
+    (table.insert child-layouts row-widget.layout))
+  child-layouts)
 
 (fn VirtualInput [opts]
   (local options (or opts {}))
@@ -1049,17 +1090,13 @@
                                                   "virtual-input")})))
     (local focus-manager (and focus-node focus-node.manager))
     (local text-style (or options.text-style (TextStyle {:color colors.foreground})))
-    (local row-widgets [])
-    (for [_ 1 line-count]
-      (table.insert row-widgets ((Text {:codepoints [] :style text-style}) ctx)))
+    (local row-widgets (make-row-widgets ctx text-style line-count))
     (local background ((Rectangle {:color colors.background}) ctx))
     (local caret ((Rectangle {:color colors.caret-normal}) ctx))
     (caret:set-visible false {:mark-layout-dirty? false})
     (local computed-line-height (CaretPolicy.resolve-line-height text-style 1.6))
     (local computed-column-width (CaretPolicy.resolve-column-width text-style caret-width))
-    (local child-layouts [background.layout caret.layout])
-    (each [_ row-widget (ipairs row-widgets)]
-      (table.insert child-layouts row-widget.layout))
+    (local child-layouts (collect-child-layouts background caret row-widgets))
     (local layout
       (Layout {:name (or options.name "virtual-input")
                :measurer measure-layout
@@ -1068,7 +1105,7 @@
     (local input
       {:__dropped false
        :layout layout
-       :buffer buffer
+       :buffer buffer :buffer-generation 0
        :rows row-widgets
         :background background
         :caret caret
@@ -1105,10 +1142,11 @@
         :multiline? true
         :bounded-logical-navigation? true
         :selection-anchor-byte (or buffer.cursor-byte 0)
-       :on-change options.on-change
-       :on-save options.on-save
+       :on-change options.on-change :on-save options.on-save
        :on-submit options.on-submit
+       :editable? (not (= options.editable? false))
        :refresh-viewport refresh-viewport
+       :set-buffer! set-buffer!
        :insert-text insert-text
         :delete-before-cursor delete-before-cursor
          :delete-at-cursor delete-at-cursor
@@ -1138,11 +1176,15 @@
        :on-state-disconnected on-state-disconnected
        :intersect intersect-virtual-input
        :drop drop})
+    (InputEditor.install! input options.external-editor notify-change)
+    (when (not input.editable?)
+      (install-readonly-guards! input))
     (set layout.virtual-input input)
     (when (and focus-node focus-context layout)
       (focus-context:attach-bounds focus-node {:layout layout}))
     (FocusPolicy.connect-focus-listeners input)
     (clickables:register input)
+    (clickables:register-double-click input)
     (initialize-cached-state! input)
     (input:refresh-viewport {:mark-layout-dirty? false})
     input))

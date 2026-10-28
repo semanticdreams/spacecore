@@ -37,8 +37,11 @@ Format-only is an assignment mode, not an extra response key; it is not a new re
 
 Serve fast-dev and live-dev through the one shared `fast-dev-wrap-up` skill.
 Consume selected caller, matching branch, user intent, recorded base/head SHAs,
-and validation evidence. Flag caller/branch mismatches: fast-dev requires
-`fast-dev/<topic>` and live-dev requires `live-dev/<topic>`.
+and validation evidence. Flag caller/branch mismatches: fast-dev requires the
+long-term `fast-dev` branch and live-dev requires the long-term `live-dev`
+branch. The review range is the accumulated batch: base is the last
+integration point (origin/main when the batch started), head is the current
+branch tip.
 Verify those SHAs against Git and report any mismatch or missing input as a coverage
 gap. Inspect every accumulated commit in the supplied base-to-head range and
 the final diff against that base, not just the latest checkpoint. Read surrounding

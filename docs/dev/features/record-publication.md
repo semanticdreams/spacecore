@@ -1,5 +1,10 @@
 # Record publication
 
+Native Linux builds additionally support a deliberately bounded, read-only
+[SELinux metadata/default-authority subset](record-publication-selinux.md).
+That section defines the exception to blanket extended-metadata refusal; other
+platforms and capability-absent Wine host builds retain their existing policy.
+
 The public `publish(destination, payload, hooks) -> Result` contract and the
 Fennel store/editor outcomes are unchanged. Native POSIX uses the host filesystem
 backend; native Windows uses its strict NT descriptor/handle backend. Wine selects

@@ -7,8 +7,9 @@
 (local Workflows (require :graph/extensions/builtins/workflows))
 (local Worlds (require :graph/extensions/builtins/worlds))
 (local CodeRuns (require :graph/extensions/builtins/code-runs))
+(local OpencodeSessions (require :graph/extensions/builtins/opencode-sessions))
 
-(local family-modules [Entities Workflows CodeRuns Filesystem HostedApps Llm HackerNews Kernels Worlds])
+(local family-modules [Entities Workflows CodeRuns Filesystem HostedApps Llm HackerNews Kernels Worlds OpencodeSessions])
 
 (fn descriptors [opts]
   (local all [])

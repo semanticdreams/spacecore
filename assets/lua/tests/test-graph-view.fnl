@@ -1220,11 +1220,11 @@
                           :constrained-measure (glm.vec3 70 32 0)})
             (var full-view-called? false)
             (local node (Graph.GraphNode {:key "preview-card"
-                                          :view (fn [_node _opts]
-                                                    (set full-view-called? true)
-                                                    (fn [_ctx]
-                                                        (error "Expanded card should use preview, not full view")))
-                                          :preview (tracked-preview state)}))
+                                          :view (tracked-preview state)
+                                          :preview (fn [_node _opts]
+                                                     (set full-view-called? true)
+                                                     (fn [_ctx]
+                                                       (error "Expanded card should use view, not preview")))}))
             (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local point (. view.points node))
             (point:on-double-click {:mod 256})
@@ -1235,8 +1235,8 @@
             (assert card._card-size "Plain double-click should expand node inline")
             (assert (= card.layout.depth-offset-index 2)
                     "Expanded card should render above graph edges")
-            (assert (= state.built-node node) "Expanded card should build the node preview")
-            (assert (not full-view-called?) "Expanded card should not build the full node view")
+            (assert (= state.built-node node) "Expanded card should build the node view")
+            (assert (not full-view-called?) "Expanded card should not build the node preview")
             (assert card.header-bar "Expanded card should have a header bar") (assert (= card.header-title.style.scale 1.6) "Expanded card header title should use the normal default text scale")
             (ctx.layout-root:update)
             (assert state.constrained "Expanded card should measure child with constraints")
@@ -1298,8 +1298,8 @@
             (local card (. view.points node))
             (assert (not (= card point)) "Enter should replace compact point with expanded card")
             (assert card._card-size "Enter should expand the inline preview card")
-            (assert (= state.built-node node) "Enter expansion should build the node preview")
-            (assert (= full-view-state.opened 0) "Enter should not open the full node view")
+            (assert (= full-view-state.opened 1) "Enter expansion should build the node view")
+            (assert (= state.built-node nil) "Enter expansion should not build the preview")
             (assert (= (. view.focus-nodes node) focus-node)
                     "Graph node focus association should survive point-to-card replacement")
             (local focused (ctx.focus.manager:get-focused-node))
@@ -1309,12 +1309,12 @@
             (assert (= (. view.points node) card)
                     "Second Enter should leave the existing card expanded")
             (assert card._card-size "Second Enter should not collapse the expanded card")
-            (assert (= full-view-state.opened 0)
-                    "Second Enter should still not open the full node view")
+            (assert (= full-view-state.opened 1)
+                    "Second Enter should keep the expanded node view")
             (local open-button (. card.header-bar.children 4 :element))
             (open-button:on-click {})
-            (assert (= full-view-state.opened 1)
-                    "Card header open button should still open the full node view")
+            (assert (= full-view-state.opened 2)
+                    "Card header open button should rebuild the node view")
             (view:drop)
             (graph:drop))))
 
@@ -1561,12 +1561,12 @@
             (local card (. view.points second))
             (assert card._card-size
                     "Replacement focus activation should expand replacement preview")
-            (assert (= second-state.built-node second)
-                    "Replacement focus activation should build replacement preview")
+            (assert (= second-state.opened 1)
+                    "Replacement focus activation should build replacement view")
             (assert (= first-state.opened 0)
                     "Replacement focus activation should not open stale original node")
-            (assert (= second-state.opened 0)
-                    "Replacement focus activation should not open replacement full view")
+            (assert (= second-state.built-node nil)
+                    "Replacement focus activation should not build the preview")
             (view:drop)
             (graph:drop))))
 
@@ -2175,9 +2175,9 @@
             (local node (Graph.GraphNode {:key "n"
                                            :view (fn [_node]
                                                      (fn [_ctx]
-                                                         {:layout {:position (glm.vec3 0 0 0)
-                                                                   :size (glm.vec2 0 0)
-                                                                   :rotation (glm.quat 1 0 0 0)}}))
+                                                         (local layout (Layout {:name "fake-node-view"}))
+                                                         {:layout layout
+                                                          :drop (fn [_self] (layout:drop))}))
                                            :preview (tracked-preview {})}))
             (graph:add-node node {:position (glm.vec3 0 0 0)})
             (local point (. view-controller.points node))

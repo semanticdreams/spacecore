@@ -192,8 +192,19 @@
     :tests.test-text-editing-port
     :tests.test-text-normal-commands
     :tests.test-lazy-text-buffer
+    :tests.test-code-run-view
+    :tests.test-opencode-sessions-graph
+    :tests.test-http-stream-lifecycle
+    :tests.test-opencode-stream-protocol
+    :tests.test-opencode-adapter-contracts
+    :tests.test-opencode-live-lifecycle
+    :tests.test-opencode-info-metadata
+    :tests.test-opencode-view-refresh
+    :tests.test-opencode-map-lifecycle
+    :tests.test-opencode-message-graph
     :tests.test-runtime-bin
     :tests.test-virtual-input
+    :tests.test-virtual-input-editor
     :tests.test-dial-type
     :tests.test-input-dial-type
     :tests.test-input

@@ -9,7 +9,7 @@
 (local R (require :reference-lifecycle/record-utils))
 (local ReferenceState (require :graph/reference-state))
 (local J (require :json-utils))
-
+(local TopologyInstallation (require :graph/topology-installation))
 (local GraphEdge Edge.GraphEdge)
 (local node-id NodeBase.node-id)
 
@@ -402,7 +402,7 @@
 
     (fn replace-node [_self existing node]
         (when existing.unmount
-            (existing:unmount))
+            (existing:unmount {:cause "replacement" :replacement node}))
         (when existing.drop
             (existing:drop))
         (when node.mount
@@ -1134,6 +1134,6 @@
              (view-mode-changed:clear)
              (outline-roots-changed:clear)))
 
-    self)
+    (TopologyInstallation.install self))
 
 {:GraphMap create-graph-map}

@@ -754,7 +754,48 @@
     (fn [target-buffer] (target-buffer:byte-for-codepoint-position nil))
     buffer))
 
+(fn string-source-serves-bounded-byte-ranges []
+  (local source (LazyTextSource.string "abcdef" {:chunk-bytes 4}))
+  (local range (source:read-range 2 3))
+  (assert (= range.bytes "cde"))
+  (assert (= range.bytes-read 3))
+  (local tail (source:read-range 4 8))
+  (assert (= tail.bytes "ef"))
+  (assert (= tail.bytes-read 2))
+  (local empty (source:read-range 6 4))
+  (assert (= empty.bytes-read 0)))
+
+(fn string-source-token-is-stable []
+  (local source (LazyTextSource.string "abcdef"))
+  (assert (= source.size 6))
+  (assert source.baseline-token "string source should have a baseline token")
+  (assert (= (source:current-token) source.baseline-token))
+  (assert (= (source:refresh-token source) source.baseline-token)))
+
+(fn string-buffer-viewport-reads-rows []
+  (local buffer (LazyTextBuffer {:source (LazyTextSource.string "line-0\nline-1\nline-2\n")}))
+  (local snapshot (buffer:get-viewport {:line 1 :column 0 :lines 2 :columns 20}))
+  (assert (= (length snapshot.rows) 2))
+  (assert (= (. snapshot.rows 1 :text) "line-1"))
+  (assert (= (. snapshot.rows 2 :text) "line-2")))
+
+(fn string-buffer-get-text-and-replace-all []
+  (local buffer (LazyTextBuffer {:source (LazyTextSource.string "first\nsecond\n")}))
+  (assert (= (buffer:get-text) "first\nsecond\n"))
+  (buffer:move-caret-to-byte 4)
+  (assert (buffer:replace-all "edited\ncontent here\nthird line\n"))
+  (assert (= (buffer:get-text) "edited\ncontent here\nthird line\n"))
+  (assert (= (buffer:get-line-count) 4))
+  (assert (<= buffer.cursor-byte buffer.size) "caret must stay clamped after replace-all")
+  (local snapshot (buffer:get-viewport {:line 1 :column 0 :lines 1 :columns 20}))
+  (assert (= (. snapshot.rows 1 :text) "content here")))
+
+(table.insert tests {:name "string buffer get text and replace all" :fn string-buffer-get-text-and-replace-all})
+
 (table.insert tests {:name "lazy text source reads bounded byte ranges" :fn lazy-text-source-reads-bounded-byte-ranges})
+(table.insert tests {:name "string source serves bounded byte ranges" :fn string-source-serves-bounded-byte-ranges})
+(table.insert tests {:name "string source token is stable" :fn string-source-token-is-stable})
+(table.insert tests {:name "string buffer viewport reads rows" :fn string-buffer-viewport-reads-rows})
 (table.insert tests {:name "lazy text source records baseline token" :fn lazy-text-source-records-baseline-token})
 (table.insert tests {:name "lazy text buffer viewport reads only requested rows" :fn lazy-text-buffer-viewport-reads-only-requested-rows})
 (table.insert tests {:name "lazy text buffer indexes LF and CRLF across chunks" :fn lazy-text-buffer-indexes-lf-and-crlf-across-chunks})

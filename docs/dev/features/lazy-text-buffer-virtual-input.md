@@ -32,6 +32,17 @@ Viewport construction reads composed ranges in bounded chunks and marks long row
 
 ## VirtualInput widget
 
+Double-click opens the input's complete composed text in the external editor.
+Read-only launches are viewer-only even if editability later changes. Editable
+completion applies only to its original, still-attached buffer with unchanged
+launch text; a newer editor launch or any `set-buffer!` call invalidates an older
+completion (including swapping away and back). Conflicting, errored and post-drop
+completions are refused without mutation or notification. The completion callback
+returns an explicit success/rejection result and reason. An unchanged result is a
+no-op; an empty string is valid edited content. Accepted changes reset buffer and
+viewport/caret caches before notifying the owner exactly once, so document dirty
+tracking observes external edits and may synchronously replace/drop the input.
+
 `VirtualInput` is the file-scale text widget. It renders a bounded set of visible rows by feeding each visible row's codepoints to child `Text` widgets, routes keyboard editing to `LazyTextBuffer`, tracks viewport scroll, handles selection/copy, and exposes save handling for buffers that support saving.
 
 `VirtualInput` exposes a deliberately bounded `Input`-compatible surface to the shared text interaction engine and `InsertState` modal routes. Shared normal-mode commands are implemented through the Text-editing port rather than through a separate `VirtualInput` command path. File-scale editors should rely on this bounded port-backed surface instead of converting the document into an `InputModel`.

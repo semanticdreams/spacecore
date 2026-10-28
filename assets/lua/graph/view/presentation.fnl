@@ -108,10 +108,10 @@
     (assert ctx "card-builder requires ctx")
     (local layout-root (and ctx ctx.layout-root))
     (assert layout-root "card-builder requires ctx.layout-root")
-    (local preview-fn (assert (and node node.preview)
-                              (.. "Graph card requires node preview for " (or node.key "unknown"))))
+    (local preview-fn (assert (and node (or node.view node.preview))
+                              (.. "Graph card requires node view for " (or node.key "unknown"))))
     (assert (= (type preview-fn) :function)
-            (.. "Graph card preview must be a function for " (or node.key "unknown")))
+            (.. "Graph card node view must be a function for " (or node.key "unknown")))
 
     (local card-colors (resolve-card-colors ctx options))
     (local resolved-background card-colors.background)

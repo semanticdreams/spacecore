@@ -37,14 +37,20 @@ Resolve/validate material findings or ask the human; unavailable necessary advic
 blocks dependent work. You still edit/fix directly, with no extra full GPT review.
 Use project `explorer` for optional exploration, not built-in model fallback.
 
-- Use a dedicated `fast-dev/<topic>` branch before edits. Start new topics from
-  freshly fetched `origin/main`. Reuse an existing unmerged branch deliberately
-  only when its commits belong to this work; never develop on local `main` or
-  silently carry unrelated commits. Preserve unrelated dirty state; ask a short
-  ownership question rather than discard or automatically stash ambiguous work.
-- Make small coherent local checkpoints with short, intent-focused subjects.
-  A commit request is local only: task completion and commits do not authorize
-  pushing, PR creation, or auto-merge.
+- Work on the single long-term `fast-dev` branch (exactly that name, no topic
+  suffix) before edits. It exists to accumulate batches of successive tasks
+  between integrations. Start batches from freshly fetched `origin/main`; when
+  the branch is behind `origin/main` or a batch just merged, bring it current
+  with a safe merge from `origin/main` (never rebase). Never develop on local
+  `main` or silently carry unrelated commits into a batch. Preserve unrelated
+  dirty state; ask a short ownership question rather than discard or
+  automatically stash ambiguous work.
+- Proactively make small coherent local checkpoints with short, intent-focused
+  subjects: after each validated change — including ad-hoc requests mid-session —
+  commit it without waiting for an explicit commit request, so successive
+  unrelated tasks never pile up as mixed dirty state. A commit request is local
+  only: task completion and commits do not authorize pushing, PR creation, or
+  auto-merge.
 - Use focused checks appropriate to the changed surface. Load relevant Space
   technical skills: `space-fennel`, `space-fennel-ui`, `space-graph-doctrine`,
   and `space-testing-runtime`. Follow their technical guidance, not imported

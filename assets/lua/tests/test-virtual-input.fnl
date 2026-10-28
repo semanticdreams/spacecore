@@ -1160,7 +1160,6 @@
       (assert (= buffer.cursor-byte 100006) "G should move buffer cursor to final logical line end")
       (assert-input-cursor input buffer 1 5 "G")
       (input:drop))))
-
 (table.insert tests {:name "VirtualInput requires explicit build context" :fn virtual-input-requires-explicit-build-context}) (table.insert tests {:name "VirtualInput renders only visible viewport rows" :fn virtual-input-renders-only-visible-viewport-rows})
 (table.insert tests {:name "VirtualInput caret navigation loads lazy rows" :fn virtual-input-caret-navigation-loads-lazy-rows}) (table.insert tests {:name "VirtualInput PageDown keeps subsequent vertical navigation valid" :fn virtual-input-page-down-keeps-subsequent-vertical-navigation-valid})
 (table.insert tests {:name "VirtualInput Shift+PageDown extends selection" :fn virtual-input-shift-page-down-extends-selection}) (table.insert tests {:name "VirtualInput Shift+PageUp extends selection" :fn virtual-input-shift-page-up-extends-selection})
@@ -1187,6 +1186,7 @@
 (table.insert tests {:name "VirtualInput TextState l stops at cached line end" :fn virtual-input-text-state-l-stops-at-cached-line-end})
 (table.insert tests {:name "VirtualInput refresh after far horizontal scroll uses cached viewport anchor" :fn virtual-input-refresh-after-far-horizontal-scroll-uses-cached-viewport-anchor})
 (table.insert tests {:name "VirtualInput exact dollar A G still work with anchor cache" :fn virtual-input-exact-dollar-A-G-still-work-with-anchor-cache})
+(each [_ test (ipairs (require :tests/virtual-input-readonly))] (table.insert tests test))
 (each [_ test (ipairs (require :tests/virtual-input-parity))] (table.insert tests test))
 (each [_ test (ipairs (require :tests/virtual-input-word-motion))] (table.insert tests test))
 (local main

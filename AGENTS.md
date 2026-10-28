@@ -9,13 +9,18 @@ Clean design is important, refactor when reasonable.
 For the user-selected `fast-dev` primary and user-selected `live-dev` primary only,
 their prompts and the shared `fast-dev-wrap-up` skill override conflicting process
 rules below and those imported by domain skills. These exact identities edit,
-debug, validate, and commit directly: fast-dev on `fast-dev/<topic>`, live-dev on
-`live-dev/<topic>`. Checkpoints are local only; no
+debug, validate, and commit directly: fast-dev on its long-term `fast-dev`
+branch, live-dev on its long-term `live-dev` branch. These branches are
+single long-term branches (exactly those names, no topic suffix) because the
+primaries build and fix multiple things in quick succession: batches of
+successive tasks accumulate on the branch between integrations, and after each
+merged batch the branch is synced with a safe merge from `origin/main`.
+Checkpoints are local only; no
 mandatory design/planning docs, implementation or capability workers, advisor
 gates, per-change review, or verbose commit templates. Short intent-focused
 local commits are sufficient. Ordinary completion or a commit request does not
 authorize publishing; integration requires explicit user wrap-up authorization.
-The selected caller must use its own corresponding branch prefix, not the other's.
+The selected caller must use its own corresponding branch, not the other's.
 Live-dev establishes manual mode before editing and explicitly refreshes after
 validated changes, with no filesystem watching or lifecycle confirmation prompts.
 The default `supervisor` is unchanged.

@@ -209,6 +209,9 @@ include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/external/sol2)
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/external/cgltf)
 include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/external/cppzmq)
 find_package(PkgConfig REQUIRED)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include(cmake/private-selinux.cmake)
+endif()
 set(SPACE_HAS_VTERM OFF)
 set(SPACE_HAS_LIBSSH OFF)
 if(SPACE_ENABLE_SSH)
@@ -439,6 +442,7 @@ find_package(Boost CONFIG REQUIRED)
 file( GLOB SOURCES src/*.cpp src/*.c src/realtime/*.cpp )
 # The private native operation adapter is not an engine/PE entry on any platform.
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_unix.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_selinux.cpp)
 if(NOT WIN32)
     list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/record_publication_wine.cpp)
 endif()
@@ -888,6 +892,35 @@ if(WIN32)
 endif()
 add_test(NAME test_record_publication COMMAND test_record_publication)
 set_tests_properties(test_record_publication PROPERTIES TIMEOUT 120)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_executable(test_selinux_lookup tests/test_selinux_lookup.cpp)
+    target_compile_definitions(test_selinux_lookup PRIVATE PCRE2_CODE_UNIT_WIDTH=8)
+    target_link_libraries(test_selinux_lookup PRIVATE space_private_selinux)
+    target_link_options(test_selinux_lookup PRIVATE "-Wl,--wrap=pcre2_match_8")
+    add_test(NAME test_selinux_lookup COMMAND test_selinux_lookup)
+    add_test(NAME test_selinux_lookup_system_first COMMAND test_selinux_lookup system-first)
+    add_library(test_selinux_lookup_shared SHARED tests/test_selinux_lookup.cpp)
+    target_compile_definitions(test_selinux_lookup_shared PRIVATE PCRE2_CODE_UNIT_WIDTH=8 SPACE_SELINUX_SHARED_PROBE=1)
+    target_link_libraries(test_selinux_lookup_shared PRIVATE space_private_selinux)
+    target_link_options(test_selinux_lookup_shared PRIVATE "-Wl,--wrap=pcre2_match_8")
+    add_executable(test_selinux_lookup_loader tests/test_selinux_lookup_loader.cpp)
+    target_link_libraries(test_selinux_lookup_loader PRIVATE ${CMAKE_DL_LIBS})
+    add_test(NAME test_selinux_lookup_shared
+        COMMAND test_selinux_lookup_loader $<TARGET_FILE:test_selinux_lookup_shared>)
+    add_test(NAME test_selinux_lookup_shared_system_first
+        COMMAND test_selinux_lookup_loader $<TARGET_FILE:test_selinux_lookup_shared> system-first)
+    add_executable(test_record_publication_selinux tests/test_record_publication_selinux.cpp)
+    target_include_directories(test_record_publication_selinux PRIVATE src)
+    target_link_libraries(test_record_publication_selinux PRIVATE space_record_selinux)
+    target_link_options(test_record_publication_selinux PRIVATE "-Wl,--wrap=fsetxattr"
+        "-Wl,--wrap=setxattr" "-Wl,--wrap=lsetxattr" "-Wl,--wrap=read"
+        "-Wl,--wrap=selinux_status_policyload"
+        "-Wl,--wrap=security_compute_create_name_raw")
+    add_test(NAME test_record_publication_selinux COMMAND test_record_publication_selinux)
+    add_executable(test_record_publication_no_selinux tests/test_record_publication_no_selinux.cpp)
+    target_include_directories(test_record_publication_no_selinux PRIVATE src)
+    add_test(NAME test_record_publication_no_selinux COMMAND test_record_publication_no_selinux)
+endif()
 # Test support is built/staged only by the private Wine builder, never as a
 # runtime dependency or an install target. The fixed PE test is likewise not
 # included in SPACE_INSTALL_TARGETS/native release packages.
@@ -925,6 +958,28 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 8
     target_link_options(test_record_publication_bridge_driver PRIVATE "-Wl,--wrap=close")
     add_test(NAME test_record_publication_bridge_driver COMMAND test_record_publication_bridge_driver)
     set_tests_properties(test_record_publication_bridge_driver PROPERTIES TIMEOUT 60)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(_publication_elf_consumers "$<TARGET_FILE:space>" "$<TARGET_FILE:test_selinux_lookup>"
+        "$<TARGET_FILE:test_selinux_lookup_shared>" "$<TARGET_FILE:test_record_publication_selinux>")
+    foreach(_publication_consumer space_lib test_record_publication test_record_publication_operation
+            test_record_publication_abi test_record_publication_bridge_driver)
+        if(TARGET ${_publication_consumer})
+            get_target_property(_publication_consumer_type ${_publication_consumer} TYPE)
+            if(NOT _publication_consumer_type STREQUAL "STATIC_LIBRARY")
+                list(APPEND _publication_elf_consumers "$<TARGET_FILE:${_publication_consumer}>")
+            endif()
+            if(_publication_consumer STREQUAL "space_lib")
+                target_link_libraries(${_publication_consumer} space_record_selinux)
+            else()
+                target_link_libraries(${_publication_consumer} PRIVATE space_record_selinux)
+            endif()
+        endif()
+    endforeach()
+    add_test(NAME test_private_selinux_symbols
+        COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/check_private_selinux_symbols.py
+        $<TARGET_FILE:space_private_selinux> ${_publication_elf_consumers})
 endif()
 
 add_executable(test_vector_buffer

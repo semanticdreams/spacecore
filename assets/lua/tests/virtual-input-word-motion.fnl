@@ -26,7 +26,11 @@
 
 (fn make-ctx []
   (BuildContext {:clickables {:register noop-register
-                              :unregister noop-register}
+                              :unregister noop-register
+                              :register-right-click noop-register
+                              :unregister-right-click noop-register
+                              :register-double-click noop-register
+                              :unregister-double-click noop-register}
                  :hoverables {:register noop-register
                               :unregister noop-register}}))
 

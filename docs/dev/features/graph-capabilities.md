@@ -256,9 +256,16 @@ Supported/refused security policies:
   the native file with mode0600, **before** bytes. Group ownership need not be the
   effective user's primary group. New records are verified mode0600
   before publication; existing owner/group/mode restrictions are reproduced and
-  checked before replacement. Only inspectable mode-only policy is supported:
+  checked before replacement. Inspectable mode-only policy is supported:
   extended ACLs, xattrs/extended security metadata, special bits, unsafe links,
   or uninspectable policy fail closed rather than being silently dropped.
+  Native Linux additionally accepts exactly `security.selinux` under the
+  [read-only SELinux subset](record-publication-selinux.md): full existing labels
+  are preserved; new labeled records require already-matching fixed defaults or
+  authenticated kernel-default prediction on ordinary seclabel tmpfs. No labels
+  are written and no other xattr/ACL exception is introduced. New labeled targets
+  also require canonical final-parent association; changed association refuses
+  without redirecting bytes. Capability-absent Wine helpers retain blanket refusal.
 - **POSIX namespaces:** creation, writes, commit and cleanup use retained handles
   (`mkdirat`/`openat`/`fstatat`/`renameat`/`unlinkat`), not reconstructed paths.
   Writable ancestors are not a blanket refusal condition. Public-name changes
