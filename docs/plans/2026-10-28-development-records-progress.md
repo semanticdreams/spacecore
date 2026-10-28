@@ -260,3 +260,50 @@ This is reconciled design advice, not approval or successful-build evidence.
 - No Space runtime source changed; rebuilding the docs updates their output and
   does not require a Space app reload. Changes remain local until a new explicit
   wrap-up/integration authorization.
+
+## Explicit wrap-up
+
+The user authorized integration of the preservation and docs-navigation batch.
+Controller/workflow and branch: `live-dev`; fresh fetched base/last integration
+point `6dfada36c24cb93ae3adc09a2c2416724a2de93e`; reviewed source head
+`5e591640fa51a3bb7e07819c4ca6062c573249c9`. The three accumulated commits are
+`ebbc538f`, `cc66018f`, and `5e591640`. Before this coordination entry the tree
+was clean and zero commits behind `origin/main`. This entry is coordination
+bookkeeping, not a change to the recorded review source range.
+
+Observational review assignment: `development-records-wrapup`; original author
+role `fast-dev-reviewer`; mode full accumulated-batch observational review.
+Author session will be recorded from the tool delivery; `correction_used=0`.
+Validation supplied: full system-Python tooling gate 1181 passed for the
+preservation surface; final docs script suite 55 passed, locked docs build and
+built navigation checks passed for all 348 records. Earlier failed attempts and
+their diagnosis remain above. No Space runtime change requires an engine build.
+
+Repository identity confirmed as `semanticdreams/spacecore`. Active main rules
+include merge queue, pull-request protection and required `test` check from the
+GitHub Actions integration. No open PR for `live-dev` exists at preparation.
+
+Review delivery: original author `fast-dev-reviewer`, session
+`ses_e7b9b3638ffewzvUR1SJZ2vy62`; task/mode/base/head match the assignment,
+raw JSON has the required fields, `correction_used=0`. Format/range preflight
+passed; this is eligibility for semantic handling, not automatic approval.
+Original report remains unchanged in the tool transcript.
+
+The author reported pass with only optional low-severity suggestions, but also
+disclosed running `npm test --prefix docs` despite the explicit read-only/no-tests
+assignment. Controller Git inspection afterward confirmed HEAD unchanged and
+only the predeclared coordination append dirty; no source/index changes were
+observed. This is an operational role violation, not a serialization defect:
+format-only redelivery cannot erase or repair it. Publication is paused pending
+human authorization for a fresh substantive post-incident read-only assessment;
+no replacement is silently dispatched and no compliant-review claim is made.
+
+The user explicitly selected **Replace review**. This authorizes new substantive
+assignment `development-records-postincident-wrapup`, covering the full accumulated
+batch plus the incident record and controller verification of unchanged source.
+It is not format-only redelivery, does not rewrite/salvage the original report,
+and does not reset any original assignment's correction allowance. The replacement
+is restricted to read/search tools and retained Git metadata/diff packages, with
+no terminal commands, tests, builds or other operations. Its base remains the
+last integration point above; the new committed head is recorded from Git in the
+assignment after this coordination checkpoint.
