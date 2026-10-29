@@ -133,3 +133,9 @@ bounded design direction, not implementation correctness or integration approval
   confirmed retained operation success. No failed reload or restart occurred.
 - Self-reviewed the complete diff and scoped staging. Local checkpoint only;
   publication/integration and whole-branch wrap-up review are not authorized.
+- Fix checkpoint: `b5591b2f`. The checkout's existing `.git/hooks/pre-commit`
+  copies `scripts/remote-control-debug.fixed.sh` over the diagnostic script and
+  stages it. As a result, the temporary inspection query was automatically
+  restored to the checked-in baseline and is not included in the six-file fix
+  commit. Verified the hook source and clean tree; did not alter/bypass it.
+  The live counts above were observed before that hook reset the query.
