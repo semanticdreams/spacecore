@@ -462,3 +462,38 @@ no push/PR/integration/amend/destructive Git.
   concern identified. Source/tests plus this preserved safe coordination record
   form the local Task 3 checkpoint; independent full BASE..HEAD review is still
   required. No approval, publication, integration or remote evidence claimed.
+
+### Task 3 accepted review fixes — round 1
+
+- Assignment `REQ-IMPL-3`, implementer `ses_e7692d05fffemZDLntM01IAdHc`,
+  supervisor/strict SDD, branch `juicyrebel/scoter`; verified FIX_BASE
+  `7672344c8d0b244e82ae78125e4b5e0580cb2215`, original BASE unchanged
+  `0eabab68cbe13f2b2ca8e4ff3b78e279778bd547`. Independent reviewer
+  `ses_e7678c0e1ffeB8TudbXSvlf15a` reported accepted critical R1-1 and important
+  R1-2. This is substantive fix round 1, not delivery repair;
+  implementer `correction_used=1` remains spent, reviewer `correction_used=0`.
+- R1-1: canonical and fixed projection destinations now compare resolved,
+  platform-case-normalized paths before apply's canonical replacement and before
+  ordinary render's projection replacement, under the existing writer lock.
+  Collisions fail explicitly with `ledger-projection-collision` and no claimed
+  request revision; canonical bytes/revision stay unchanged and loadable. Tests
+  cover direct/dot/absolute paths, ledger and projection symlink aliases, and
+  symlinked parent directories, using real custom-ledger CLI apply/render calls.
+- R1-2: Unicode encoding failures now use the existing committed-revision /
+  `projection-stale` contract, including ordinary render and read-only check.
+  A real escaped lone-surrogate apply regression confirms safely escaped JSON
+  commits, the old projection remains intact, revision/staleness are reported
+  nonzero without traceback, and retries/check-only preserve canonical bytes.
+- Actual TDD RED: `rtk proxy python3 -m pytest
+  scripts/tests/test_requirements_render.py -k 'collision or lone_surrogate'
+  -q --tb=short` — **13 failed/7 deselected**. Colliding writers incorrectly
+  returned success; the encoding failure incorrectly returned internal-error.
+  GREEN: same selection **13 passed/7 deselected**; graph/render **100 passed**;
+  full focused graph/render/store/evidence selection **251 passed**, no warnings.
+- Compile/build/Space constraints are not applicable to this bounded pure-Python
+  fix; constraint impact **not applicable**. Diff whitespace check passed.
+  Self-review confirmed the checks precede replacements and projection errors
+  distinguish committed state from precommit rejection. Reused the already-
+  reconciled transaction/projection boundary; no redesign or unrelated changes.
+  The local fix checkpoint containing this entry requires independent targeted
+  verification; no approval or integration is claimed.

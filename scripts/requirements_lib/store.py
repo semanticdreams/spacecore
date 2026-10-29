@@ -227,9 +227,10 @@ def apply(repo_root, request, ledger_path=None):
                 _OPERATIONS[spec["op"]](state, spec["args"], request["actor"], root))
         state["revision"] = committed + 1
         schema.validate_ledger(state, root)
-        _atomic_write(path, state)
-        from .render import refresh_committed
+        from .render import refresh_committed, validate_distinct_destinations
 
+        validate_distinct_destinations(root, path)
+        _atomic_write(path, state)
         refresh_committed(root, state)
     return {"status": "ok", "revision": state["revision"], "result": {"ops": results}}
 

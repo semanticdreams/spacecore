@@ -101,3 +101,67 @@ def test_stale_write_does_not_claim_a_committed_request_revision(tmp_path):
     assert result.error_code() == "expected-revision-stale"
     assert result.json["revision"] is None
     assert result.json["error"]["details"]["committed_revision"] == 1
+
+
+@pytest.mark.parametrize("verb", ["apply", "render"])
+@pytest.mark.parametrize("alias", ["direct", "dot", "absolute", "ledger-symlink", "parent-symlink", "projection-symlink"])
+def test_custom_ledger_projection_collision_preserves_canonical_bytes(tmp_path, verb, alias):
+    projection = tmp_path / "docs/requirements/index.md"
+    canonical = "docs/requirements/custom.json" if alias == "projection-symlink" else "docs/requirements/index.md"
+    initialized = run_cli(tmp_path, "init", "--ledger", canonical)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    path = tmp_path / canonical
+    before = path.read_bytes()
+    selected = canonical
+    if alias == "dot":
+        selected = "docs/requirements/./index.md"
+    elif alias == "absolute":
+        selected = str(projection)
+    elif alias == "ledger-symlink":
+        link = projection.with_name("alias.json")
+        link.symlink_to(projection.name)
+        selected = "docs/requirements/alias.json"
+    elif alias == "parent-symlink":
+        (tmp_path / "docs/alias").symlink_to("requirements", target_is_directory=True)
+        selected = "docs/alias/index.md"
+    elif alias == "projection-symlink":
+        projection.symlink_to(path.name)
+    request = apply_request(create_op(), expected_revision=0) if verb == "apply" else None
+    result = run_cli(tmp_path, verb, "--ledger", selected, request=request)
+    assert result.returncode == 1
+    assert result.error_code() == "ledger-projection-collision"
+    assert result.json["revision"] is None
+    assert not result.stderr
+    assert path.read_bytes() == before
+    assert requirements_lib().load_ledger(tmp_path, selected)["revision"] == 0
+
+
+def test_lone_surrogate_postcommit_projection_failure_is_honest(tmp_path):
+    init_ok(tmp_path)
+    assert run_cli(tmp_path, "render").returncode == 0
+    index = tmp_path / "docs/requirements/index.md"
+    projection_before = index.read_bytes()
+    canonical_before = read_ledger_bytes(tmp_path)
+    statement = "Escaped lone surrogate: \ud800"
+    result = run_cli(tmp_path, "apply", request=apply_request(create_op(statement=statement)))
+    assert result.returncode == 1
+    assert result.error_code() == "projection-stale"
+    assert result.json["revision"] == 1
+    assert result.json["error"]["details"]["committed_revision"] == 1
+    assert result.json["error"]["details"]["projection_stale"] is True
+    assert not result.stderr
+    committed = read_ledger_bytes(tmp_path)
+    assert committed != canonical_before and b"\\ud800" in committed
+    ledger = requirements_lib().load_ledger(tmp_path)
+    assert ledger["revision"] == 1
+    assert next(iter(ledger["requirements"].values()))["statement"] == statement
+    assert index.read_bytes() == projection_before
+    for flags in ((), ("--check",)):
+        retry = run_cli(tmp_path, "render", *flags)
+        assert retry.returncode == 1
+        assert retry.error_code() == "projection-stale"
+        assert retry.json["revision"] == 1
+        assert not retry.stderr
+        assert read_ledger_bytes(tmp_path) == committed
+        assert index.read_bytes() == projection_before
+    assert not list(index.parent.glob(".index.md.*.tmp"))
