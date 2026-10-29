@@ -338,3 +338,18 @@ no push/PR/integration/amend/destructive Git.
 - Self-review found no unresolved assigned defect. Reused the existing history/
   lifecycle contract; no redesign or unrelated changes. The checkpoint containing
   this entry is ready for independent targeted verification, not approved.
+- Controller resumption review gate: `REQ-IMPL-2`, implementer session
+  `ses_e76a7bc9dffeyuWyCKQEjsOzxg`, supervisor/strict SDD, branch
+  `juicyrebel/scoter`, source BASE `02c5f0ad062898d00ce63469251a8134b4440f4f`.
+  Substantive continuation preserved all six interrupted files; no cancelled-worker
+  test evidence or report was invented. Delivery `correction_used=0`.
+- Independent reviewer `ses_e769bb5c8ffeMHnOkWyvAW28Zp`, full range
+  `02c5f0ad..f14f6771`, valid raw JSON, `correction_used=0`, found important
+  R1-1 revision-history identity and R1-2 missing authorized supersession history.
+  Fix round 1 used `FIX_BASE=f14f6771` and checkpoint `901c2a41`.
+- Same reviewer returned valid targeted `verified` for
+  `f14f6771..901c2a41`: both findings verified fixed, no new breakage. All original
+  payloads remain in the private controller tool session. Final focused evidence:
+  151 store/evidence tests passing. Controller verified exact HEAD and clean tree.
+- Task 2: complete (commits `02c5f0ad..901c2a41`, reviewer: verified after full
+  review and one accepted fix round). This is not branch completion or publication.
