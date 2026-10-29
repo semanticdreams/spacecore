@@ -1,7 +1,7 @@
 ---
 description: Validates candidate review findings against the plan and codebase, rejecting premature improvements and escalating real design ambiguity
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 40
 permission:
@@ -94,16 +94,17 @@ can record it for the final whole-branch review.
 
 Return only one valid JSON object, with no Markdown fence:
 
-Before ordinary adjudication, apply the `AGENTS.md` consultation contract. New or
-materially changed architecture/software-design/system-contract decisions need a
-GLM proposal and GPT critique, including local/UI decisions; reuse unchanged
-reconciled decisions. Persistent material failure after one focused repair,
-critical unresolved boundaries and evidenced technical conflicts also trigger it.
+Before ordinary adjudication, apply the `AGENTS.md` expert consultation contract.
+Ordinary design decisions need evidence-backed rationale, not expert dispatch,
+including local/UI decisions; reuse unchanged
+reconciled decisions. The same material failure after one focused repair
+(evidenced by reproduction, validation or a violated invariant), critical
+unresolved boundaries and evidenced technical conflicts also trigger it.
 Delegation remains denied: return `needs_consultation` with a request, not an
 accept/park ruling, blanket blocker or invented finding. The controller dispatches
 `expert-advisor`, reconciles, and returns evidence so you can finish adjudication.
 Pending is not approval and does not bypass the cap. Unknown product/data policy
-still requires the human. `glm_proposal` must be nonempty for design/contract
+still requires the human. `proposal` must be nonempty for design/contract
 decisions, otherwise it may be null. Pending example:
 
 ```json
@@ -118,7 +119,7 @@ decisions, otherwise it may be null. Pending example:
     "invariant": "Failed saves leave current content attached",
     "evidence": ["The proposed correction changes detach ordering"],
     "attempted_fix": null,
-    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "proposal": "Save and validate first; transfer ownership only on success.",
     "decision_needed": "Reconcile ownership and failure guarantees"
   }
 }

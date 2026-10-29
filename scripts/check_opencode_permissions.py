@@ -18,7 +18,6 @@ class PolicyViolation:
     message: str
 
 
-REQUIRED_AGENT_KEYS = {"description", "mode", "model", "permission"}
 REQUIRED_SKILL_KEYS = {"name", "description"}
 DIRECT_DEVELOPMENT_PRIMARIES = {"fast-dev", "live-dev"}
 CAPABILITY_AGENTS = {"git-integrator", "github-operator", "config-auditor", "pr-recovery-operator", "windows-ci-reproducer"}
@@ -61,7 +60,15 @@ REQUIRED_CAPABILITY_FILES = (
     "scripts/verify_opencode_home_config.py",
 )
 SECRET_EXTERNAL_PATTERNS = ("auth.json", "auth.jsonc", "secret", "token")
-ORDINARY_MODEL = "opencode-go/glm-5.3-flash"
+# Explicit required inventory of every existing project role. This is
+# deliberately separate from routing configuration: no tier table, ordering
+# constraint or model/variant pin is encoded here.
+REQUIRED_ROLES = (
+    "adjudicator", "config-auditor", "debug-advisor", "explorer", "expert-advisor",
+    "fast-dev-reviewer", "fast-dev", "git-integrator", "github-operator",
+    "implementer", "live-dev", "planner", "pr-recovery-operator", "reviewer",
+    "supervisor", "web-researcher", "windows-ci-reproducer",
+)
 EXPERT_READ_RULES = [
     ("*", "allow"), ("*.env", "deny"), ("*.env.*", "deny"),
     ("*.env.example", "allow"), ("*auth*", "deny"), ("*secret*", "deny"),
@@ -69,6 +76,9 @@ EXPERT_READ_RULES = [
 ]
 BLOCKED_ACTIONS = {"allow", "ask"}
 WRAPPER_REFERENCE_RE = re.compile(r"(?<![\w/.-])(scripts/[A-Za-z0-9_.-]+\.py)(?![\w/.-])")
+NON_SCALAR_ROUTING_PREFIXES = ("[", "{")
+NULL_ROUTING_TOKENS = {"true", "false", "null", "none", "~"}
+REQUIRED_AGENT_KEYS = {"description", "mode", "model", "variant", "permission"}
 
 
 def _rel(repo_root: Path, path: Path) -> str:
@@ -418,12 +428,50 @@ def _check_capability_boundary(path: Path, repo_root: Path, name: str, raw: str)
     return violations
 
 
+def _routing_problem(key: str, value: str | None) -> str | None:
+    """Syntax-only routing validation.
+
+    Both `model:` and `variant:` frontmatter lines are authoritative
+    configuration that may be edited independently. This never validates
+    provider or variant availability and never compares values to a pin.
+    """
+    if not isinstance(value, str):
+        return f"missing required frontmatter key ({key})"
+    text = value.strip()
+    if not text:
+        return f"must be a nonempty explicit scalar ({key})"
+    if text.startswith(NON_SCALAR_ROUTING_PREFIXES) or any(character.isspace() for character in text):
+        return f"must be a single plain scalar token, got {text!r}"
+    if text.lower() in NULL_ROUTING_TOKENS or text.replace(".", "", 1).isdigit():
+        return f"must be a nonempty string token, got {text!r}"
+    if key == "model":
+        provider, separator, model = text.partition("/")
+        if not separator or not provider or not model or "/" in model:
+            return f"must reference one provider and one model as provider/model, got {text!r}"
+    return None
+
+
+def _check_agent_routing(path: Path, repo_root: Path, name: str, keys: dict[str, str]) -> list[PolicyViolation]:
+    violations: list[PolicyViolation] = []
+    for key in ("model", "variant"):
+        problem = _routing_problem(key, keys.get(key))
+        if problem:
+            violations.append(
+                _violation(path, repo_root, "agent-model", f"`{name}` {key} routing configuration is malformed: {problem}")
+            )
+    return violations
+
+
 def _check_agents(repo_root: Path) -> list[PolicyViolation]:
     agents_dir = repo_root / ".opencode" / "agents"
     violations: list[PolicyViolation] = []
     expert = agents_dir / "expert-advisor.md"
     if not expert.is_file():
         violations.append(_violation(expert, repo_root, "expert-profile", "missing required expert-advisor"))
+    for name in REQUIRED_ROLES:
+        path = agents_dir / f"{name}.md"
+        if not path.is_file():
+            violations.append(_violation(path, repo_root, "required-role", f"missing required project role: {name}"))
     for path in sorted(agents_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8")
         keys, raw = _frontmatter(text)
@@ -434,10 +482,9 @@ def _check_agents(repo_root: Path) -> list[PolicyViolation]:
         missing = REQUIRED_AGENT_KEYS - set(keys)
         if missing:
             violations.append(_violation(path, repo_root, "agent-frontmatter", f"agent frontmatter missing: {', '.join(sorted(missing))}"))
+        violations.extend(_check_agent_routing(path, repo_root, name, keys))
         if name == "expert-advisor":
             violations.extend(_check_expert_profile(path, repo_root, keys, raw))
-        elif keys.get("model") != ORDINARY_MODEL or keys.get("variant") != "high":
-            violations.append(_violation(path, repo_root, "agent-model", f"ordinary project agents must use {ORDINARY_MODEL} with variant high"))
         violations.extend(_check_permission_profile(path, repo_root, keys))
         violations.extend(_check_no_ask_actions(path, repo_root, raw))
         violations.extend(_check_unsafe_text(path, repo_root, raw))
@@ -454,9 +501,7 @@ def _check_expert_profile(path: Path, repo_root: Path, keys: dict[str, str], raw
     expected = {"*", "read", *deny, *inspect}
     permission_keys = re.findall(r'^  ["\']?([^\s:"\']+)["\']?:', raw, re.M)
     safe = (
-        keys.get("model") == "openai/gpt-6.1-sol"
-        and keys.get("variant") == "high"
-        and keys.get("mode") == "subagent"
+        keys.get("mode") == "subagent"
         and keys.get("permission") == ""
         and len(permission_keys) == len(expected)
         and set(permission_keys) == expected
@@ -468,7 +513,7 @@ def _check_expert_profile(path: Path, repo_root: Path, keys: dict[str, str], raw
     )
     if safe:
         return []
-    return [_violation(path, repo_root, "expert-profile", "expert-advisor requires exact GPT/high/subagent pins and bounded repository read-only permissions")]
+    return [_violation(path, repo_root, "expert-profile", "expert-advisor requires subagent mode and exact bounded repository read-only permissions")]
 
 
 def _check_skills(repo_root: Path) -> list[PolicyViolation]:
