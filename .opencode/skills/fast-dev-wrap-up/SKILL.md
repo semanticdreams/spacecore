@@ -43,27 +43,28 @@ shopping or approval.
 
 ## Bounded consultation, not another full review
 
-The `AGENTS.md` consultation contract applies before dependent implementation and
-before direct fixes: every architecture/software-design/system-contract decision,
-including confident local/UI design, needs GLM proposal, GPT critique of original
-sources and evidenced reconciliation. Reuse unchanged reconciled decisions;
-material design/contract/assumption changes reopen them. Also consult for the same
-material failure after one focused repair, critical unresolved boundaries or
-evidenced material technical conflicts. Initial syntax fixes, expected TDD RED and
-unchanged-design follow-through stay GLM. Unknown product/API/data policy is human.
+The `AGENTS.md` targeted expert consultation contract applies
+before dependent implementation and before direct fixes: mandatory triggers are evidenced — the
+same material failure after one focused repair, an evidenced unresolved material
+technical conflict, and a critical unresolved security/permissions or
+irreversible-data technical boundary. Ordinary design decisions need
+evidence-backed rationale, not expert dispatch, including local/UI design. Reuse
+unchanged reconciled decisions; material design/contract/assumption changes
+reopen them. Initial syntax fixes, expected TDD RED and unchanged-design
+follow-through stay routine. Unknown product/API/data policy is human.
 
 Handle `fast-dev-reviewer` `status: needs_consultation` with `consultation_request`
 and base/head SHAs before accepting its verdict or proceeding to fixes/publication.
 The selected caller dispatches `expert-advisor` for one bounded question using
-canonical fields (nonempty `glm_proposal` for design/contract) and original evidence,
+canonical fields (nonempty `proposal` for design/contract) and original evidence,
 records evidenced reconciliation in existing handoff/progress, resolves/validates
 material findings or escalates to the human, then returns the evidence to finish
-that same observational GLM review. Denied delegation is not a finding or blanket
+that same observational review. Denied delegation is not a finding or blanket
 blocker. Unavailable advice or unanswered necessary decisions block dependent work;
 reconsult only for new material evidence. No approval or permission bypass.
 
-Keep direct edits/fixes, local checkpoints and one observational GLM whole-branch
-review. No second mandatory full GPT review or worker pipeline. Live-dev manual mode
+Keep direct edits/fixes, local checkpoints and one observational whole-branch
+review. No second mandatory full review or worker pipeline. Live-dev manual mode
 precedes edits and explicit refresh follows validated code changes, not advice alone.
 
 ## Prepare and review

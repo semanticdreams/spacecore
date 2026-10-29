@@ -1,7 +1,7 @@
 ---
 description: Independently validates root-cause diagnoses and proposed fixes before implementation begins
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 35
 permission:
@@ -69,11 +69,12 @@ For each, check:
 
 ## Verdicts
 
-Apply the `AGENTS.md` consultation contract before confirmation: every new or
-materially changed architecture/software-design/system-contract decision needs
-GLM proposal plus GPT critique, including local/UI design. Reuse unchanged
-reconciled decisions. Same material failure after one focused repair, critical
-unresolved boundaries or material technical conflicts also trigger advice.
+Apply the `AGENTS.md` expert consultation contract before confirmation. Ordinary
+design decisions need evidence-backed rationale, not expert dispatch, including
+local/UI design. Reuse unchanged
+reconciled decisions. The same material failure after one focused repair
+(evidenced by reproduction, validation or a violated invariant), critical
+unresolved boundaries or evidenced material technical conflicts also trigger advice.
 You cannot delegate: return `verdict: needs_consultation` with the canonical
 `consultation_request`; the controller dispatches `expert-advisor`, reconciles,
 and returns evidence for your own diagnostic verdict. This is not `confirmed`,
@@ -108,7 +109,7 @@ Return one verdict and a brief rationale:
 
 Return only a single JSON object, no Markdown fence:
 
-Pending example (`glm_proposal` is nonempty for design/contract, otherwise nullable):
+Pending example (`proposal` is nonempty for design/contract, otherwise nullable):
 
 ```json
 {
@@ -122,7 +123,7 @@ Pending example (`glm_proposal` is nonempty for design/contract, otherwise nulla
     "invariant": "Failed saves leave current content attached",
     "evidence": ["The proposed fix changes detach ordering"],
     "attempted_fix": null,
-    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "proposal": "Save and validate first; transfer ownership only on success.",
     "decision_needed": "Reconcile ownership and failure guarantees"
   }
 }

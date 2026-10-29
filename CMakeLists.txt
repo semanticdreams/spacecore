@@ -1021,6 +1021,27 @@ set_tests_properties(test_ssh_service PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND SPACE_HAS_LIBSSH)
+    add_executable(test_ssh_sftp_finalization
+        tests/test_ssh_sftp_finalization.cpp
+        src/ssh_service.cpp
+        src/ssh_backend_unavailable.cpp
+        src/ssh_backend_libssh.cpp
+    )
+    target_include_directories(test_ssh_sftp_finalization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_compile_definitions(test_ssh_sftp_finalization PRIVATE SPACE_HAS_LIBSSH=1)
+    target_link_libraries(test_ssh_sftp_finalization PRIVATE PkgConfig::LIBSSH)
+    target_link_options(test_ssh_sftp_finalization PRIVATE
+        -Wl,--wrap=sftp_open -Wl,--wrap=sftp_close -Wl,--wrap=sftp_free
+        -Wl,--wrap=sftp_read -Wl,--wrap=sftp_write -Wl,--wrap=ssh_free)
+    add_test(NAME space_ssh_sftp_finalization
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/ssh_fixture.py
+            --space $<TARGET_FILE:test_ssh_sftp_finalization>
+            --assets ${CMAKE_SOURCE_DIR}/assets --module ssh-sftp-finalization)
+    set_tests_properties(space_ssh_sftp_finalization PROPERTIES
+        TIMEOUT 180 ENVIRONMENT "SPACE_TEST_REQUIRE_SSH_FIXTURE=1")
+endif()
+
 add_executable(test_lua_sha256_binding
     tests/test_lua_sha256_binding.cpp
     src/lua_sha256.cpp

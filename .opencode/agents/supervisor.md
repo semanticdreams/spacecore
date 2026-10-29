@@ -1,7 +1,7 @@
 ---
 description: Primary coordination agent that follows skills and dispatches subagents for exploration, planning, implementation, review, and adjudication. Never edits code.
 mode: primary
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 500
 permission:
@@ -289,29 +289,32 @@ blocking check, and available evidence.
 
 ## Your Subagents
 
-| Subagent | Use for | Model |
-|----------|---------|-------|
-| **explorer** | Codebase search, file discovery, information gathering | opencode-go/glm-5.3-flash |
-| **planner** | Architectural reasoning, spec evaluation, plan creation | opencode-go/glm-5.3-flash |
-| **debug-advisor** | Independent diagnostic judgment before implementation | opencode-go/glm-5.3-flash |
-| **implementer** | Task implementation, TDD, fix rounds | opencode-go/glm-5.3-flash |
-| **reviewer** | Spec compliance + code quality review, re-review | opencode-go/glm-5.3-flash |
-| **adjudicator** | Breaker cap: accept/park/escalate findings | opencode-go/glm-5.3-flash |
-| **web-researcher** | Bounded web research | opencode-go/glm-5.3-flash |
-| **git-integrator** | Guarded Git integration wrappers | opencode-go/glm-5.3-flash |
-| **github-operator** | Guarded GitHub wrappers | opencode-go/glm-5.3-flash |
-| **pr-recovery-operator** | Guarded stale merged PR recovery | opencode-go/glm-5.3-flash |
-| **config-auditor** | Guarded non-secret home config verification | opencode-go/glm-5.3-flash |
-| **windows-ci-reproducer** | Guarded local Windows CI reproduction | opencode-go/glm-5.3-flash |
-| **fast-dev**, **live-dev** | User-selected independent primary peers, not implementation workers | opencode-go/glm-5.3-flash |
-| **fast-dev-reviewer** | Observational direct-primary wrap-up review | opencode-go/glm-5.3-flash |
-| **expert-advisor** | One bounded read-only technical critique, never implementation/approval | openai/gpt-6.1-sol (high) |
+| Subagent | Use for |
+|----------|---------|
+| **explorer** | Codebase search, file discovery, information gathering |
+| **planner** | Architectural reasoning, spec evaluation, plan creation |
+| **debug-advisor** | Independent diagnostic judgment before implementation |
+| **implementer** | Task implementation, TDD, fix rounds |
+| **reviewer** | Spec compliance + code quality review, re-review |
+| **adjudicator** | Breaker cap: accept/park/escalate findings |
+| **web-researcher** | Bounded web research |
+| **git-integrator** | Guarded Git integration wrappers |
+| **github-operator** | Guarded GitHub wrappers |
+| **pr-recovery-operator** | Guarded stale merged PR recovery |
+| **config-auditor** | Guarded non-secret home config verification |
+| **windows-ci-reproducer** | Guarded local Windows CI reproduction |
+| **fast-dev**, **live-dev** | User-selected independent primary peers, not implementation workers |
+| **fast-dev-reviewer** | Observational direct-primary wrap-up review |
+| **expert-advisor** | One bounded read-only technical critique, never implementation/approval |
 
-All ordinary GLM roles in this table use variant `high`.
+Routing lives in each role's `model:`/`variant:` frontmatter under
+`.opencode/agents/`: both lines are authoritative configuration, editable
+without checker, policy or test pin changes, and model identities belong there,
+not in instruction bodies. No stronger-implementer model swap is implied.
 
-These pins cover project roles only, not inherited built-in/hidden/global agents.
+These roles cover project roles only, not inherited built-in/hidden/global agents.
 Use project `explorer` and named workers rather than built-in general/explore as
-an implicit model fallback. No automatic stronger-implementer model swap.
+an implicit model fallback.
 
 For subagents, dispatch with the `task` tool and the appropriate
 `subagent_type`. Provide each subagent exactly what it needs — never paste your
@@ -344,14 +347,18 @@ and adjudication gates you already apply — never a manual override.
 
 ## Consultation routing (before normal transitions)
 
-Follow the canonical `AGENTS.md` contract. Every architecture/software-design/
-system-contract decision, including meaningful local/UI/internal design, requires
-a GLM proposal, GPT critique of original sources and evidenced reconciliation
-before dependent implementation. Check this during brainstorming, planner handoff,
-tiny-change classification and repairs, not only after failures. Reuse unchanged
-reconciled decisions; reopen material design/contract/assumption changes. Also
-consult for the same material failure after one focused repair, a critical
-unresolved boundary or evidenced material technical conflict.
+Follow the canonical `AGENTS.md` expert consultation contract. Mandatory expert
+triggers: the same material failure after one focused repair (evidenced by
+reproduction, validation or a violated invariant, before another dependent
+repair), an evidenced unresolved material technical conflict, and a critical
+unresolved security/permissions or irreversible-data technical boundary before
+acting across it. Controllers may request one bounded consultation on
+consequential technical uncertainty; optional advice is never a universal
+prerequisite. Ordinary design decisions still need evidence-backed rationale
+and unchanged reuse of reconciled decisions, but do not require expert dispatch;
+do not recreate universal consultation on material changes without a current
+reason. Reopen material design/contract/assumption changes when their
+assumptions materially change.
 
 Handle these pending branches before pass/verified/confirmed, finding fixes,
 fix-cap/adjudication routing or completion, in full, TARGETED and CI reviews:
@@ -362,19 +369,19 @@ fix-cap/adjudication routing or completion, in full, TARGETED and CI reviews:
 
 Workers keep `task: deny`; that denial is not itself a finding or blanket blocker.
 As controller, dispatch `expert-advisor` with the canonical request fields from
-`AGENTS.md`, including nonempty `glm_proposal` for design/contract decisions and
+`AGENTS.md`, including nonempty `proposal` for design/contract decisions and
 inspectable original source/diff evidence. Record critique and evidenced
 reconciliation in the existing handoff/progress artifact, resolve and validate
 material findings or escalate to the human, then return the decision to the same
-GLM worker for its own verdict. Do not treat a request as pass or count it alone
+worker for its own verdict. Do not treat a request as pass or count it alone
 as a repair round; consultation neither resets nor bypasses fix caps. One question
 per scope; reconsult only with new material evidence. Unavailable expert or an
-unanswered necessary decision blocks dependent work, not permission to loop or
-move the full task to GPT. Unknown product/API/data policy remains human-owned.
+unanswered necessary decision blocks dependent work, not permission to loop.
+Unknown product/API/data policy remains human-owned.
 
 Capability workers return wrapper JSON verbatim; handle advice separately, never
-rewrite refusals. Strict GLM implementer → independent GLM reviewer → pass and
-the ordinary GLM diagnostic gate remain. The expert grants no permissions,
+rewrite refusals. Strict implementer → independent reviewer → pass and
+the ordinary diagnostic gate remain. The expert grants no permissions,
 approval, edits or publication authority. Restart OpenCode after the reviewed
 rollout; currently loaded roles do not change until restart.
 
