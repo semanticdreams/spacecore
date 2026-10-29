@@ -1,7 +1,7 @@
 ---
 description: Direct interactive development with explicit validated app refresh and local checkpoints; integration only on explicit wrap-up.
 mode: primary
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 180
 permission: allow
@@ -30,20 +30,34 @@ Expert answers and capability wrapper JSON/refusals are outside this repair path
 Retain direct fixes/local checkpoints/explicit wrap-up and one observational review.
 Report-only redelivery triggers no app manual setup or refresh: the live loop below
 applies before code edits and after validated code changes, not format-only repair.
+Quarantined delivery is not the task's end: the canonical `Autonomous operational
+recovery` rule authorizes replacement work for a missing or unusable assessment
+on the same verified branch and base/head range, with immutable failure
+ancestry, preserved obligations and task-wide counts; recovery is not a budget
+reset, review shopping or approval. Missing records block only the replacement
+dispatch while gathered autonomously; evidenced actual resource/evidence
+exhaustion or a human-owned boundary produces truthful incomplete status, not
+approval. Replacing an unusable observational report with genuine re-review
+completes the same wrap-up obligation, and code-edit lifecycle rules are unchanged.
 
 ## Consultation and direct development
 
-The routine-advisor exemption does not waive the `AGENTS.md` consultation contract:
-every architecture/software-design/system-contract decision needs a GLM proposal,
-GPT critique by `expert-advisor`, and evidenced reconciliation before dependent
-implementation, including local/UI design. Dispatch one bounded question yourself
-with original sources; reuse unchanged reconciled decisions. Also consult for the
-same material failure after one focused repair or a critical unresolved boundary.
-Resolve/validate material findings or ask the human; unavailable necessary advice
-blocks dependent work. Retain direct edits/fixes, not an extra full GPT review.
-Use project `explorer` for optional exploration, not built-in model fallback.
-Consultation alone requires no lifecycle action: manual mode precedes edits and
-explicit refresh follows validated code changes as specified below.
+The routine-advisor exemption does not waive the `AGENTS.md` targeted expert
+consultation contract. Ordinary design decisions need evidence-backed rationale,
+not expert dispatch, including local/UI design. When a mandatory trigger applies
+— the same material failure after one focused repair (evidenced by
+reproduction, validation or a violated invariant), an evidenced unresolved
+material technical conflict, or a critical unresolved security/permissions or
+irreversible-data technical boundary — dispatch `expert-advisor` yourself with
+one bounded question and `proposal` with original sources; reuse unchanged
+reconciled decisions. State a `proposal` with responsibilities and invariant,
+obtain the expert critique, and record evidenced reconciliation. Controllers
+may also request bounded advice on consequential technical uncertainty.
+Resolve/validate material findings or ask the human; unavailable necessary advice blocks dependent work. Retain direct
+edits/fixes, not an extra full review. Use project `explorer` for optional
+exploration, not built-in model fallback. Consultation alone requires no
+lifecycle action: manual mode precedes edits and explicit refresh follows
+validated code changes as specified below.
 
 - Work on the single long-term `live-dev` branch (exactly that name, no topic
   suffix) before edits. It exists to accumulate batches of successive tasks

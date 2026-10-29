@@ -182,48 +182,58 @@ Once your agent environment is connected to a Space checkout, these repository c
 - **PR CI** is the full integration gate. Do not claim ready-to-merge until the applicable PR CI gate is green.
 - **Required validation failures**: see [Validation continuation and current base](#validation-continuation-and-current-base) for the full contract.
 
-### GLM-default roles and bounded expert consultation
+### Model-neutral role routing and targeted expert consultation
 
-The sixteen ordinary project roles are pinned to `opencode-go/glm-5.3-flash`
-with variant `high`: supervisor, planner, implementer, reviewer, debug-advisor,
-adjudicator, explorer, web-researcher, config-auditor, git-integrator,
-github-operator, pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev,
-and fast-dev-reviewer. Only new `expert-advisor` uses `openai/gpt-6.1-sol`, variant
-`high`, mode `subagent`. This covers project definitions, **not** inherited
+**Active policy supersession note.** This is the current routing and consultation
+policy. It supersedes the earlier pinned dual-model rollout and its `glm_proposal`
+request field. The historical protocol/evidence sections below (Bounded
+routing-pressure evidence, Fail-closed delivery: prospective acceptance) remain
+byte-for-byte records of that superseded protocol: they are not rescored, and no
+review-quality equivalence or equal-defect-detection claim is made relative to
+them. They are not an oracle for the current policy.
+
+Every project role's `model:` and `variant:` frontmatter lines in `.opencode/agents/`
+are authoritative routing configuration. Both lines are required,
+syntax-validated by `scripts/check_opencode_permissions.py`, independently
+editable without checker, policy or test pin changes, and never duplicated in
+instruction bodies. The checker maintains an explicit required inventory of the
+17 existing project roles (`REQUIRED_ROLES`) separately from configurable pins;
+no provider/model allowlist, role-tier table or equality relationship between
+roles is enforced. This covers project definitions, **not** inherited
 built-in/hidden/global agents or installation-wide routing. Use project `explorer`
 and named workers, not built-in general/explore as implicit model fallback.
-Root/project OpenCode JSON and home configuration are unchanged by this rollout.
+Root/project OpenCode JSON and home configuration are unchanged.
 
-The user-selected high-mode follow-up supersedes the original no-variant setting
-for future GLM use only. Agent frontmatter and newly prepared evaluation profiles
-request `high`; generation CLI calls (including same-author continuations) pass
-`--variant high`. Old frozen no-high runs remain readable but cannot generate
-without new high-mode preparation. Historical captures, scores and observations
-below are unchanged: missing mode metadata remains unknown, not evidence of high.
-No model reevaluation was performed for this setting change. Restart OpenCode to
-load the updated roles; already-running sessions retain their loaded settings.
+Restart OpenCode to load the new instruction snapshot and routing schema;
+already-running sessions retain their loaded roles and must not claim they
+already use the new routing. A routing syntax check does not prove provider or
+variant availability.
 
-The canonical [AGENTS.md](https://github.com/semanticdreams/spacecore/blob/main/AGENTS.md#glm-default-consultation-contract)
-contract requires both models on **every architecture/software-design/system-
-contract decision before dependent implementation**, even when confident and no
-failure has occurred. Responsibilities, boundaries, abstractions, ownership,
-interfaces, data flow, failure/lifetime guarantees and persistence semantics are
-design/contract decisions, including meaningful local/internal/UI design. Pilot
-ownership/fallible-transition defects are examples, not the limit of the rule.
-Also consult for critical unresolved permissions/security or irreversible-data
-questions, material technical conflicts supported by evidence, or the same material
-failure after one focused repair, before another repair.
+The canonical [AGENTS.md](https://github.com/semanticdreams/spacecore/blob/main/AGENTS.md#targeted-expert-consultation-contract)
+contract requires targeted `expert-advisor` consultation for evidenced triggers:
+the same material failure after one focused repair, an evidenced unresolved
+material technical conflict, and a critical unresolved permissions/security or
+irreversible-data technical boundary before acting across it. Ordinary design
+decisions — including meaningful local/internal/UI design — still need
+evidence-backed rationale but no expert dispatch, even when confident.
+Controllers may request one bounded consultation for consequential technical
+uncertainty; optional advice is never a universal prerequisite. Reuse unchanged
+reconciled decisions; material design/contract/assumption changes reopen them.
+Independent review is a separate assessment of untrusted changes, not a
+guarantee supplied by using different model families.
 
 Routine execution/review/diagnosis, expected TDD RED, initial syntax/typo repair,
 cosmetic naming and mechanical follow-through on an unchanged reconciled decision
-stay GLM. Missing evidence can be collected directly when permitted. Unknown
-product/API/data policy remains **HUMAN_DECISION_REQUIRED**, not GPT policy fiat.
+need no request. Missing evidence can be collected directly when permitted.
+Unknown product/API/data policy remains **HUMAN_DECISION_REQUIRED**; the expert
+does not set policy.
 
-GLM first states proposal, responsibilities/contracts, invariant and rationale.
-Only task-capable controllers (supervisor or selected fast-dev/live-dev) dispatch
-the expert with one bounded technical question and inspectable original sources,
-diffs/excerpts and validation evidence, not just the GLM summary. Workers keep
-delegation denied. A `consultation_request` has exactly these fields:
+The requesting worker first states its proposal, responsibilities/contracts,
+invariant and rationale. Only task-capable controllers (supervisor or selected
+fast-dev/live-dev) dispatch the expert with one bounded technical question and
+inspectable original sources, diffs/excerpts and validation evidence, not just
+summary conclusions. Workers keep delegation denied. A `consultation_request` has
+exactly these fields:
 
 ```json
 {
@@ -234,12 +244,12 @@ delegation denied. A `consultation_request` has exactly these fields:
   "invariant": "Failed saves leave current content attached",
   "evidence": ["Current detach precedes the fallible save"],
   "attempted_fix": null,
-  "glm_proposal": "Save and validate first; transfer ownership only on success.",
+  "proposal": "Save and validate first; transfer ownership only on success.",
   "decision_needed": "Reconcile ownership and failure guarantees"
 }
 ```
 
-`attempted_fix` is nullable; `glm_proposal` is required and nonempty for design/
+`attempted_fix` is nullable; `proposal` is required and nonempty for design/
 architecture/contract decisions, otherwise nullable. Expert JSON contains
 `decision_scope`, `status` (`answered`, `insufficient_evidence`, `requires_human`),
 `finding`, `evidence`, `action`. Expert inspects original evidence with repository
@@ -247,14 +257,15 @@ read/glob/grep/list/LSP and sensitive-read exclusions. Edit, shell, delegation,
 external directories, web access and direct questions to the user are denied.
 It cannot implement, approve, publish or override capabilities/permissions.
 
-Record scope, proposal, original evidence, GPT critique and **evidenced
+Record scope, proposal, original evidence, expert critique and **evidenced
 reconciliation before dependent implementation** in existing handoff/progress
 artifacts. Resolve and validate material findings or escalate to the human, not
 dismiss them by preference. One consultation per scope; reuse unchanged reconciled
-decisions without repeat GPT tax. Material design/contract/assumption changes
-reopen the decision. Otherwise reconsult only with genuinely new material evidence,
-not another try for approval. Unavailable expert or unanswered necessary decisions
-block dependent work; gather permitted evidence or ask the human, not a call loop.
+decisions without a repeat consultation tax. Material design/contract/assumption
+changes reopen the decision. Otherwise reconsult only with genuinely new material
+evidence, not another try for approval. Unavailable expert or unanswered necessary
+decisions block dependent work; gather permitted evidence or ask the human, not a
+call loop.
 
 | Worker | Non-approving pending branch |
 | --- | --- |
@@ -266,13 +277,14 @@ block dependent work; gather permitted evidence or ask the human, not a call loo
 
 Controllers handle pending branches before pass/verified/confirmed, findings/fixes,
 fix-cap/adjudication or completion. They dispatch the expert, reconcile with
-evidence, and return the result to the original GLM worker for its own verdict.
+evidence, and return the result to the original worker for its own verdict.
 Delegation denial is not itself a code finding or blanket role blocker. Requests
 alone do not consume repair rounds or bypass caps. Capability workers keep verbatim
-wrapper JSON/refusals; controllers handle advice separately. Strict GLM implementer
-→ independent GLM reviewer → pass remains, including the ordinary mandatory GLM
-diagnostic-advisor gate, not GPT on every fix. Fast/live retain direct work and
-one observational GLM whole-branch review, not a second mandatory full GPT review.
+wrapper JSON/refusals; controllers handle advice separately. Strict implementer
+→ independent reviewer → pass remains, including the ordinary mandatory
+diagnostic-advisor gate, not expert advice on every fix. Fast/live retain direct
+work and one observational whole-branch review, not a second mandatory full
+review.
 
 #### Bounded routing-pressure evidence and limits
 
@@ -495,6 +507,86 @@ current-base/final local checks and PR CI/integration gates remain **PENDING**;
 neither merged nor ready-to-PR status is claimed. Quit/restart OpenCode **only after
 the complete reviewed rollout**, not now; loaded sessions still retain old roles.
 
+#### Autonomous handoff recovery: controller-owned replacement
+
+The same [canonical rule](https://github.com/semanticdreams/spacecore/blob/main/AGENTS.md#fail-closed-handoff-delivery)
+now defines autonomous operational recovery: **Reject the unusable delivery,
+not the overall task.** An exhausted-correction, changed-fact, stale-snapshot,
+untrusted-scope or unavailable-author delivery is quarantined with immutable
+failure ancestry, and the receiving controller continues the task inside
+existing permissions. The controller authorizes explicit replacement work —
+typically a fresh worker, never impersonation — to complete a missing or
+unusable assessment on the same verified branch and base/head range; no
+artificial commit or range change is required. Before replacement dispatch the
+controller records, in existing handoff/progress artifacts: predecessor
+identity and immutable failure ancestry, verified current local snapshot and
+complete assigned range, original requirements and global constraints, observed
+failure with diagnosis and a concrete changed strategy, trusted source/diff
+references requiring independent investigation, established findings plus
+pending consultations/adjudications, separately labelled untrusted leads from
+unusable reports for later verification, and continuing task-wide failure
+counts with fix/consultation/resource accounting.
+
+Safeguards stay intact. Usable adverse assessments are not replaceable for
+review shopping: they keep the ordinary fixes, consultation and adjudication
+route, replacement work must cover the same complete range, and passing
+fragments never substitute for whole-range review. At two task-wide failures
+with the same signature — a format-only correction is not a substantive attempt —
+the controller records a concrete changed strategy (gather evidence, narrower
+output, decomposition, or a different inspection method) before another
+dispatch; unchanged blind retries are refused, and the task continues. Missing
+obligation records or facts block only the replacement dispatch while they are
+gathered autonomously — evidence gathering, not a human permission question.
+Evidenced actual resource/tool exhaustion, evidence unavailable after permitted
+diagnosis, or no permitted productive next step produce truthful incomplete
+status, not approval, with the concrete blocker, attempted strategies, retained
+state and unfinished obligations stated. Genuine product/API/data-policy,
+credential, safety, permission or unsafe-history decisions remain human-owned.
+Recovered replacements pass the same delivery validation and semantic gates;
+usable verdicts are still not automatic approval.
+
+**Evidence status.** Five baseline probes ran before any skill edits and
+established inconsistent routing, not a success rate: under deadline, sunk-cost
+and unavailable-user pressure, baseline 2 reproduced unwanted escalation ("until
+the human re-opens the scope"), baseline 5 called a same-scope redo ineligible
+and human-owned, baseline 1 disclosed incomplete source access, and other
+samples exposed same-range authority ambiguity. Every output was read manually
+and snapshot verification was controller-owned. Guided set 1 then ran on the
+implemented recovery checkpoint with the same four-scenario and pressure
+structure: five fresh explorer reports were read manually, and the set is
+**not a clean pass**. Autonomous same-range replacement, adverse-shopping
+refusal and human boundaries held in every sample, but one sample still stopped
+after a bare attempt count without exhaustion evidence, and another flagged
+stale supervisor core-workflow plan-approval wording as a residual escape
+hatch. Both residuals were diagnosed and resolved by the scoped canonical
+clarifications in this update — the attempt-count sentence and the supervisor
+core-workflow alignment — with no broad rewrite. Confirmation set 1 after
+FIX-1 then read the updated sources with the same four scenarios and pressure:
+all five fresh samples chose autonomous same-range replacement rather than
+asking permission to retry or replan, but the bundle is **not uniformly
+compliant** — one sample unnecessarily framed routine maintainer informing as
+a user question, one mixed adverse-review handling with delivery failure
+counts and wrap-up authorization, and one used imprecise ownership/
+reconstruction language. No failed sample is discarded, replaced or
+score-selected, and no "5/5 complete compliance" claim is made. Unlike set 1,
+these samples read the full supervisor Core Workflow under a word cap on
+snapshot `1c537883`, so causal comparison between the sets is not valid. The
+same debug-diagnosis session confirmed the set-1 source contradictions fixed
+and not reproduced, with no additional source defect found; the residuals are
+sample fidelity variance, not task approval or proof of runtime reliability.
+The design record
+[spec](../../specs/2026-10-29-autonomous-handoff-recovery-design.md#alternatives-and-reconciled-decision)
+carries the GLM proposal, expert critique and reconciled decision.
+
+**Limits.** The update ships source-contract guards, a labelled **test-only**
+offline fixture model and prompt/skill guidance. Source guards, fixtures and
+virtual probes are **not runtime enforcement**, an OpenCode hook, a report
+parser or completion proof; they illustrate policy. Valid recovered
+deliveries remain eligibility, never approval, and quarantined replacements
+consume the ordinary handling routes. OpenCode must restart after the complete
+reviewed rollout for the updated agent/skill instructions to take effect;
+running sessions retain the previously loaded policy until then.
+
 ### Fast interactive development flow
 
 `supervisor` remains the default and retains its strict workflow. Users may select
@@ -513,14 +605,14 @@ environment; this is not a security sandbox.
 - Edit, debug, validate, and make short intent-focused local commits directly.
   Exploration delegation is optional. No mandatory design/plan documents, worker
   pipeline, routine advisor gate/review, or verbose commit template applies.
-  This exemption does not waive the narrow dual-model design/triggered consultation
-  contract above; advice alone adds no live-dev lifecycle actions.
+  This exemption does not waive the targeted expert consultation contract above;
+  advice alone adds no live-dev lifecycle actions.
 - A commit request and ordinary task completion are **local only**. Neither
   authorizes push, PR creation, or auto-merge.
 - Load relevant Space domain skills and retain their technical standards,
   validation commands, and evidence-based debugging. The identity-scoped
   `AGENTS.md` exception overrides imported planning/delegation/review process,
-  not technical guidance or mandatory dual-model consultation. Other agents and
+  not technical guidance or mandatory targeted consultation. Other agents and
   shared skills retain their contracts.
 
 #### Live-dev explicit refresh
@@ -769,9 +861,10 @@ authoritative integration gate:
 - Removing or weakening the required Windows installer path remains
   `HUMAN_DECISION_REQUIRED`.
 
-All ordinary roles, including deterministic/search/wrapper agents, use the exact
-GLM pin above; only the bounded expert uses GPT. Shorthand model names are not
-valid OpenCode config values. No stronger-implementer fallback is implied.
+Every project role's `model:` and `variant:` frontmatter lines under
+`.opencode/agents/` are the authoritative routing configuration; instruction
+bodies carry no model identities. Shorthand model names are not valid OpenCode
+config values. No stronger-implementer fallback is implied.
 
 ### Stale merged PR follow-up recovery
 

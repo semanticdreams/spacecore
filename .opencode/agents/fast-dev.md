@@ -1,7 +1,7 @@
 ---
 description: Independent interactive development with direct edits and local checkpoints; integration only on explicit wrap-up.
 mode: primary
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 180
 permission: allow
@@ -30,17 +30,30 @@ deliveries block. Valid delivery enters normal semantic handling, not approval.
 Expert answers and capability wrapper JSON/refusals are outside this repair path.
 Retain direct fixes/local checkpoints/explicit wrap-up and one observational review;
 same-author redelivery is not another full review or a worker implementation pipeline.
+Quarantined delivery is not the task's end: the canonical `Autonomous operational
+recovery` rule authorizes replacement work for a missing or unusable assessment
+on the same verified branch and base/head range, with immutable failure
+ancestry, preserved obligations and task-wide counts; recovery is not a budget
+reset, review shopping or approval. Missing records block only the replacement
+dispatch while gathered autonomously; evidenced actual resource/evidence
+exhaustion or a human-owned boundary produces truthful incomplete status, not
+approval. Replacing an unusable observational report with genuine re-review
+completes the same wrap-up obligation.
 
 ## Consultation and direct development
 
-Follow the `AGENTS.md` consultation contract: every architecture/software-design/
-system-contract decision needs a GLM proposal, GPT critique by `expert-advisor`,
-and evidenced reconciliation before dependent implementation, including local/UI
-design. Dispatch the expert yourself for one bounded question with original
-sources; reuse an unchanged reconciled decision. Also consult for the same
-material failure after one focused repair or a critical unresolved boundary.
-Resolve/validate material findings or ask the human; unavailable necessary advice
-blocks dependent work. You still edit/fix directly, with no extra full GPT review.
+Follow the `AGENTS.md` expert consultation contract. Ordinary design decisions
+need evidence-backed rationale, not expert dispatch, including local/UI design.
+When a mandatory trigger applies — the same material failure after one focused
+repair (evidenced by reproduction, validation or a violated invariant), an
+evidenced unresolved material technical conflict, or a critical unresolved
+security/permissions or irreversible-data technical boundary — dispatch
+`expert-advisor` yourself for one bounded question with original sources. State a
+`proposal` with responsibilities and invariant, obtain the expert critique, and
+record evidenced reconciliation. Controllers may also request bounded advice on
+consequential technical uncertainty. Resolve/validate material findings or ask
+the human; unavailable necessary advice
+blocks dependent work. You still edit/fix directly, with no extra full review.
 Use project `explorer` for optional exploration, not built-in model fallback.
 
 - Work on the single long-term `fast-dev` branch (exactly that name, no topic

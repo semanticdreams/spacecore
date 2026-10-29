@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -33,7 +34,7 @@ def agent(name: str, permission_text: str) -> str:
     return f"""---
 description: Test {name} agent
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: example-provider/model-a
 variant: high
 permission:
 {permission_text}
@@ -113,11 +114,47 @@ def write_capability_files(root: Path) -> None:
         write_file(root / "scripts" / script, "#!/usr/bin/env python3\n")
 
 
+# Fixture permission blocks for the complete required role inventory. These
+# are safety-profile-exact: every role keeps the boundary predicates the
+# checker enforces, only routing values are synthetic.
+FIXTURE_ROLE_PERMISSIONS = {
+    "supervisor": "  bash: deny\n",
+    "adjudicator": "  bash: deny\n",
+    "debug-advisor": "  bash: deny\n",
+    "explorer": "  bash: deny\n",
+    "planner": "  bash: deny\n",
+    "reviewer": (
+        "  edit: deny\n  task: deny\n  external_directory: deny\n"
+        "  webfetch: deny\n  websearch: deny\n  question: deny\n  bash: deny\n"
+    ),
+    "implementer": "  external_directory: deny\n  bash:\n    \"git push*\": deny\n",
+    "web-researcher": (
+        "  read: deny\n  glob: deny\n  grep: deny\n  list: deny\n  lsp: deny\n"
+        "  edit: deny\n  task: deny\n  external_directory: deny\n  question: deny\n"
+        "  bash: deny\n  webfetch: allow\n  websearch: allow\n"
+    ),
+}
+
+
+def write_required_role_files(root: Path) -> None:
+    """Write every required project role except the capability-ready five."""
+    for name, permission_text in FIXTURE_ROLE_PERMISSIONS.items():
+        write_file(root / ".opencode" / "agents" / f"{name}.md", agent(name, permission_text))
+    for name in ("fast-dev", "live-dev"):
+        write_file(root / ".opencode" / "agents" / f"{name}.md", scalar_agent(name, "primary", "allow"))
+    write_file(
+        root / ".opencode" / "agents" / "fast-dev-reviewer.md",
+        agent("fast-dev-reviewer", FAST_DEV_REVIEWER_PERMISSIONS),
+    )
+    write_file(root / ".opencode" / "agents" / "expert-advisor.md", expert_agent())
+
+
 def make_repo(tmp_path: Path, *, agent_name: str = "example-agent", permission_text: str = "  bash: deny\n") -> Path:
     root = tmp_path / "repo"
     write_file(root / ".opencode" / "opencode.json", json.dumps({"default_agent": "supervisor"}))
     write_capability_files(root)
     write_file(root / ".opencode/agents/expert-advisor.md", expert_agent())
+    write_required_role_files(root)
     write_file(root / ".opencode" / "agents" / f"{agent_name}.md", agent(agent_name, permission_text))
     write_file(root / ".opencode" / "skills" / "example" / "SKILL.md", skill("example"))
     return root
@@ -503,11 +540,12 @@ def live_dev_prompt() -> str:
 def test_live_dev_primary_is_exact_direct_local_only_profile():
     text = live_dev_prompt()
     keys, _ = load_checker()._frontmatter(text)
-    assert {key: keys[key] for key in ("mode", "model", "steps", "permission")} == {
-        "mode": "primary", "model": "opencode-go/glm-5.3-flash",
-        "steps": "180", "permission": "allow",
+    assert {key: keys[key] for key in ("mode", "steps", "permission")} == {
+        "mode": "primary", "steps": "180", "permission": "allow",
     }
-    assert keys["variant"] == "high"
+    checker = load_checker()
+    assert checker._routing_problem("model", keys.get("model")) is None
+    assert checker._routing_problem("variant", keys.get("variant")) is None
     for term in [
         "long-term `live-dev` branch", "before edits", "freshly fetched `origin/main`", "unmerged",
         "dirty", "local only", "task completion", "commit request", "PR creation",
@@ -935,29 +973,196 @@ EXPERT_PERMISSIONS = '''  "*": deny
 
 def expert_agent():
     return agent("expert-advisor", EXPERT_PERMISSIONS).replace(
-        "model: opencode-go/glm-5.3-flash", "model: openai/gpt-6.1-sol"
+        "model: example-provider/model-a", "model: critique-provider/model-e"
     )
 
 
-@pytest.mark.parametrize("name", ORDINARY_ROLES)
-def test_ordinary_model(name):
-    keys, _ = load_checker()._frontmatter((REPO_ROOT / f".opencode/agents/{name}.md").read_text())
-    assert keys["model"] == "opencode-go/glm-5.3-flash"
-    assert keys["variant"] == "high"
+REQUIRED_ROLE_NAMES = (
+    "adjudicator", "config-auditor", "debug-advisor", "explorer", "expert-advisor",
+    "fast-dev-reviewer", "fast-dev", "git-integrator", "github-operator",
+    "implementer", "live-dev", "planner", "pr-recovery-operator", "reviewer",
+    "supervisor", "web-researcher", "windows-ci-reproducer",
+)
+
+# Synthetic routing inputs. No permanent test may pin the requested production
+# model or the initial effort table.
+VALID_ROUTING = [
+    ("example-provider/model-a", "medium"),
+    ("other-provider/model-b", "high"),
+    ("third-provider/model-c", "custom-effort"),
+]
+INVALID_MODELS = ["", "model-only", "/model", "provider/", "a/b/c", "a /b", "[]", "{}"]
+INVALID_VARIANTS = ["", "high medium", "[]", "{}", "true", "null", "123"]
 
 
-@pytest.mark.parametrize("name", [*ORDINARY_ROLES, "future-worker"])
-@pytest.mark.parametrize("drift", ["model", "missing", "low", "max"])
-def test_checker_rejects_ordinary_and_future_role_model_drift(tmp_path, name, drift):
+def routing_agent_text(name: str, model: str, variant: str = "high") -> str:
+    text = agent(name, FIXTURE_ROLE_PERMISSIONS.get(name, "  bash: deny\n"))
+    return text.replace("model: example-provider/model-a", f"model: {model}").replace(
+        "variant: high", f"variant: {variant}"
+    )
+
+
+def patch_routing(path: Path, model: str, variant: str) -> None:
+    """Repoint only the routing lines of an existing agent file, in place."""
+    text = path.read_text(encoding="utf-8")
+    text = re.sub(r"(?m)^model: .*$", f"model: {model}", text)
+    text = re.sub(r"(?m)^variant: .*$", f"variant: {variant}", text)
+    path.write_text(text, encoding="utf-8")
+
+
+@pytest.mark.parametrize("model,variant", VALID_ROUTING)
+def test_alternate_valid_routing_is_accepted_without_policy_changes(tmp_path, model, variant):
     repo = make_repo(tmp_path)
-    text = agent(name, "  bash: deny\n").replace("openai/gpt-6.1-sol", "opencode-go/glm-5.3-flash")
-    if name in {"fast-dev", "live-dev"}:
-        text = text.replace("mode: subagent", "mode: primary").replace("permission:\n  bash: deny", "permission: allow")
-    if drift == "model":
-        text = text.replace("opencode-go/glm-5.3-flash", "openai/gpt-6.1-sol")
+    write_file(repo / ".opencode/agents/example-agent.md", routing_agent_text("example-agent", model, variant))
+    assert load_checker().check_repo(repo) == []
+
+
+def test_quoted_valid_scalar_routing_is_accepted(tmp_path):
+    repo = make_repo(tmp_path)
+    text = agent("example-agent", "  bash: deny\n").replace(
+        "model: example-provider/model-a", 'model: "quoted-provider/model-q"'
+    )
+    write_file(repo / ".opencode/agents/example-agent.md", text)
+    assert load_checker().check_repo(repo) == []
+
+
+YAML_NUMERIC_ROUTING = [
+    "-1", "+1", "123", "-1.5", "+.5", "1.", "1e3", "-2E-4",
+    "0x10", "0o17", "0b10", "1_000", ".inf", "-.Inf", ".NaN", "1:20",
+]
+
+
+@pytest.mark.parametrize("value", YAML_NUMERIC_ROUTING)
+def test_unquoted_numeric_variant_is_rejected(tmp_path, value):
+    repo = make_repo(tmp_path)
+    path = repo / ".opencode/agents/example-agent.md"
+    patch_routing(path, "example-provider/model-a", value)
+    issues = load_checker().check_repo(repo)
+    assert any(
+        issue.code == "agent-model" and issue.path == ".opencode/agents/example-agent.md"
+        and "variant routing configuration is malformed" in issue.message
+        and "string token" in issue.message
+        for issue in issues
+    )
+
+
+@pytest.mark.parametrize("value", YAML_NUMERIC_ROUTING + ["custom-effort", "true", "null"])
+@pytest.mark.parametrize("quote", ["'", '"'])
+def test_quoted_string_variant_is_accepted(tmp_path, value, quote):
+    repo = make_repo(tmp_path)
+    patch_routing(repo / ".opencode/agents/example-agent.md", "example-provider/model-a", f"{quote}{value}{quote}")
+    assert load_checker().check_repo(repo) == []
+
+
+@pytest.mark.parametrize("value", ['"high', "'high", 'high"', "'high\""])
+def test_unbalanced_quoted_variant_is_rejected(tmp_path, value):
+    repo = make_repo(tmp_path)
+    patch_routing(repo / ".opencode/agents/example-agent.md", "example-provider/model-a", value)
+    assert "agent-model" in violation_codes(repo)
+
+
+@pytest.mark.parametrize("value", INVALID_MODELS)
+def test_malformed_model_values_are_rejected_with_explicit_diagnostics(tmp_path, value):
+    repo = make_repo(tmp_path)
+    write_file(
+        repo / ".opencode/agents/example-agent.md",
+        routing_agent_text("example-agent", value),
+    )
+    codes = violation_codes(repo)
+    assert "agent-model" in codes
+    issues = load_checker().check_repo(repo)
+    assert any("example-agent" in issue.message and "model" in issue.message for issue in issues)
+
+
+@pytest.mark.parametrize("value", INVALID_VARIANTS)
+def test_malformed_variant_values_are_rejected_with_explicit_diagnostics(tmp_path, value):
+    repo = make_repo(tmp_path)
+    write_file(
+        repo / ".opencode/agents/example-agent.md",
+        routing_agent_text("example-agent", VALID_ROUTING[0][0], value),
+    )
+    codes = violation_codes(repo)
+    assert "agent-model" in codes
+    issues = load_checker().check_repo(repo)
+    assert any("example-agent" in issue.message and "variant" in issue.message for issue in issues)
+
+
+@pytest.mark.parametrize("key,replacement", [
+    ("model", "variant: high"),
+    ("variant", "model: example-provider/model-a"),
+])
+def test_missing_routing_fields_are_rejected(tmp_path, key, replacement):
+    repo = make_repo(tmp_path)
+    text = agent("example-agent", "  bash: deny\n")
+    if key == "model":
+        text = text.replace("model: example-provider/model-a\n", "")
     else:
-        text = text.replace("variant: high\n", "" if drift == "missing" else f"variant: {drift}\n")
-    write_file(repo / f".opencode/agents/{name}.md", text)
+        text = text.replace("variant: high\n", "")
+    write_file(repo / ".opencode/agents/example-agent.md", text)
+    assert "agent-model" in violation_codes(repo)
+
+
+@pytest.mark.parametrize("field,raw_field_text", [
+    ("model", "model:\n  - a/b\n"),
+    ("model", "model:\n  provider: a/b\n"),
+    ("variant", "variant:\n  - high\n"),
+    ("variant", "variant:\n  effort: high\n"),
+])
+def test_yaml_list_and_map_shapes_are_not_valid_routing(tmp_path, field, raw_field_text):
+    repo = make_repo(tmp_path)
+    text = agent("example-agent", "  bash: deny\n")
+    if field == "model":
+        text = text.replace("model: example-provider/model-a\n", raw_field_text)
+    else:
+        text = text.replace("variant: high\n", raw_field_text)
+    write_file(repo / ".opencode/agents/example-agent.md", text)
+    assert "agent-model" in violation_codes(repo)
+
+
+@pytest.mark.parametrize("name", REQUIRED_ROLE_NAMES)
+def test_every_required_role_is_missing_role_diagnosed(tmp_path, name):
+    repo = make_repo(tmp_path)
+    (repo / ".opencode" / "agents" / f"{name}.md").unlink()
+    issues = load_checker().check_repo(repo)
+    assert any(
+        issue.code == "required-role" and f"missing required project role: {name}" in issue.message
+        for issue in issues
+    )
+
+
+def test_required_role_inventory_is_complete_and_explicit():
+    checker = load_checker()
+    assert len(checker.REQUIRED_ROLES) == 17
+    assert set(checker.REQUIRED_ROLES) == set(REQUIRED_ROLE_NAMES)
+
+
+@pytest.mark.parametrize("name", [*ORDINARY_ROLES, "expert-advisor"])
+def test_real_roles_have_explicit_scalar_routing_without_pins(name):
+    checker = load_checker()
+    keys, _ = checker._frontmatter((REPO_ROOT / f".opencode/agents/{name}.md").read_text())
+    assert checker._routing_problem("model", keys.get("model")) is None
+    assert checker._routing_problem("variant", keys.get("variant")) is None
+
+
+@pytest.mark.parametrize("name", [*ORDINARY_ROLES, "expert-advisor", "future-worker"])
+def test_independent_expert_ordinary_and_future_role_routing_changes_pass(tmp_path, name):
+    repo = make_repo(tmp_path)
+    # Flip this role's routing to alternate valid values while every other
+    # role, including the expert, keeps its own: no policy or pin is involved.
+    target = repo / f".opencode/agents/{name}.md"
+    if not target.exists():
+        write_file(target, agent(name, "  bash: deny\n"))
+    patch_routing(target, "alternate-provider/model-x", "custom-effort")
+    issues = load_checker().check_repo(repo)
+    assert not [issue for issue in issues if issue.code in {"agent-model", "expert-profile", "required-role"}]
+
+
+@pytest.mark.parametrize("drift", ["model", "variant"])
+@pytest.mark.parametrize("name", [*ORDINARY_ROLES, "expert-advisor", "future-worker"])
+def test_malformed_routing_is_rejected_for_any_role_including_future_roles(tmp_path, name, drift):
+    repo = make_repo(tmp_path)
+    value = "a /b" if drift == "model" else "true"
+    write_file(repo / f".opencode/agents/{name}.md", routing_agent_text(name, value if drift == "model" else VALID_ROUTING[0][0], value))
     assert "agent-model" in violation_codes(repo)
 
 
@@ -992,8 +1197,6 @@ def test_expert_rejects_default_deny_moved_after_inspection_grants(tmp_path):
 
 
 @pytest.mark.parametrize("old,new", [
-    ("model: openai/gpt-6.1-sol", "model: opencode-go/glm-5.3-flash"),
-    ("variant: high", "variant: medium"), ("variant: high\n", ""),
     ("mode: subagent", "mode: primary"),
     *[(f"  {key}: deny", f"  {key}: allow") for key in
       ("edit", "bash", "task", "external_directory", "webfetch", "websearch", "question")],
@@ -1005,12 +1208,21 @@ def test_expert_rejects_default_deny_moved_after_inspection_grants(tmp_path):
     ('    "*auth*": deny', '    "*auth*": deny\n    "*": allow'),
     ("  task: deny", '  task: deny\n  skill: allow'),
 ])
-def test_expert_rejects_pin_access_and_operational_drift(tmp_path, old, new):
+def test_expert_rejects_access_and_operational_drift(tmp_path, old, new):
     repo = make_repo(tmp_path)
     text = expert_agent()
     assert old in text
     write_file(repo / ".opencode/agents/expert-advisor.md", text.replace(old, new))
     assert "expert-profile" in violation_codes(repo)
+
+
+@pytest.mark.parametrize("model,variant", [("an-expert-provider/model-e", "high"), ("critique-provider/model-e", "medium")])
+def test_expert_routing_is_syntax_validated_not_pinned(tmp_path, model, variant):
+    # Expert safety separates from routing: alternate well-formed expert
+    # routing changes need no safety-policy or pin adjustment.
+    repo = make_repo(tmp_path)
+    patch_routing(repo / ".opencode/agents/expert-advisor.md", model, variant)
+    assert load_checker().check_repo(repo) == []
 
 
 @pytest.mark.parametrize("name", ORDINARY_ROLES)
@@ -1044,29 +1256,34 @@ def test_existing_permission_mode_and_budget_bytes_preserved(name):
 
 
 REQUEST_FIELDS = {"decision_scope", "trigger", "question", "sources", "invariant",
-                  "evidence", "attempted_fix", "glm_proposal", "decision_needed"}
+                  "evidence", "attempted_fix", "proposal", "decision_needed"}
 
 
 @pytest.mark.parametrize("name,key", [("reviewer", "status"), ("adjudicator", "status"),
                                       ("debug-advisor", "verdict"), ("fast-dev-reviewer", "status")])
 def test_pending_worker_examples_are_nonapproving_complete_json(name, key):
-    import re
     text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
     examples = [json.loads(body) for body in re.findall(r"```json\n(.*?)\n```", text, re.S)]
     pending = [item for item in examples if item.get(key) == "needs_consultation"]
     assert pending, "delegation denial requires explicit pending consultation, not own findings or approval"
     for item in pending:
         assert REQUEST_FIELDS == set(item["consultation_request"])
-        assert item["consultation_request"]["glm_proposal"]
+        assert item["consultation_request"]["proposal"]
         if name == "fast-dev-reviewer":
             assert item["base_sha"] and item["head_sha"]
+
+
+def test_lm_brand_schema_is_absent_from_active_examples():
+    for name in ("reviewer", "adjudicator", "debug-advisor", "fast-dev-reviewer", "supervisor", "implementer", "planner"):
+        text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
+        assert "glm_proposal" not in text, name
 
 
 def test_context_worker_and_controller_consultation_transitions():
     for name in ("implementer", "planner"):
         text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
         assert "NEEDS_CONTEXT" in text and "consultation_request" in text
-        assert "glm_proposal" in text
+        assert "proposal" in text
     supervisor = (REPO_ROOT / ".opencode/agents/supervisor.md").read_text()
     for term in ("needs_consultation", "NEEDS_CONTEXT", "expert-advisor", "planner", "adjudicator", "TARGETED", "confirmed"):
         assert term in supervisor
@@ -1075,30 +1292,33 @@ def test_context_worker_and_controller_consultation_transitions():
         assert term in sdd
     debugging = (REPO_ROOT / ".opencode/skills/systematic-debugging/SKILL.md").read_text()
     assert "needs_consultation" in debugging and "before `confirmed`" in debugging
-    assert "opencode-go/glm-5.3-flash" in debugging
-    assert "smarter model" not in debugging
+    # Targeted triggers, not universal model-family consultation.
+    assert "same material failure after one focused repair" in debugging
+    assert "dual-model" not in debugging and "glm" not in debugging.lower()
+    # Routing configuration belongs in frontmatter, not skill instructions.
+    assert "opencode-go/" not in debugging and "openai/" not in debugging
 
 
-def test_implementer_escalation_keeps_glm_implementation_without_model_fallback():
-    import re
+def test_implementer_escalation_keeps_named_work_without_model_fallback():
     text = (REPO_ROOT / ".opencode/agents/implementer.md").read_text()
     assert not re.search(r"(?:more capable|stronger|smarter)\s+model", text, re.I)
     escalation = text.split("**How to escalate:**", 1)[1].split("## Self-Review", 1)[0]
-    for term in ("context", "smaller pieces", "bounded consultation", "`AGENTS.md`", "GLM retains implementation"):
+    for term in ("context", "smaller pieces", "bounded consultation", "`AGENTS.md`", "retains implementation"):
         assert term in escalation
 
 
-def test_direct_exemption_does_not_waive_dual_design_input():
+def test_direct_exemption_does_not_waive_targeted_consultation_or_inventory():
     agents = (REPO_ROOT / "AGENTS.md").read_text()
     exception = agents.split("## Fast-dev workflow exception", 1)[1].split("## Branch Convention", 1)[0]
-    assert "does not waive" in exception and "dual-model" in exception
+    assert "does not waive" in exception and "targeted expert consultation" in exception
     for name in ("fast-dev", "live-dev"):
         text = (REPO_ROOT / f".opencode/agents/{name}.md").read_text()
-        for term in ("expert-advisor", "GLM proposal", "GPT critique", "reconciliation", "project `explorer`"):
-            assert term in text
+        for term in ("expert-advisor", "proposal", "expert critique", "reconciliation", "project `explorer`"):
+            assert term in text, (name, term)
     wrap = (REPO_ROOT / ".opencode/skills/fast-dev-wrap-up/SKILL.md").read_text()
     assert "needs_consultation" in wrap and "expert-advisor" in wrap
-    assert "before direct fixes" in wrap and "new material evidence" in wrap
+    assert "before dependent implementation" in wrap and "before direct fixes" in wrap
+    assert "new material evidence" in wrap
 
 
 def test_delivery_gate_is_canonical_and_wired_into_all_receiving_controllers():
