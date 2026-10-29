@@ -1,4 +1,5 @@
 ;; Shared plumbing for the read-only OpenCode session graph exposure.
+(local {:GraphEdge GraphEdge} (require :graph/edge))
 
 (fn get-request [on-response]
   ;; Explicit deadlines: the OpenCode client defaults to no timeout.
@@ -163,49 +164,81 @@
       [(+ position.x 24) position.y position.z]
       [24 0 0]))
 
-(fn publish-ordered-island [node island-id member-keys]
+(fn island-publication-current? [node graph member-keys]
+  (and node.projection-active? (= node.state :ready)
+       (= node.mounted-graph graph) (not graph.installing-topology?)
+       (not node.stale?) (not node.transcript-error)
+       (= (graph:lookup node.key) node)
+       (= node.desired-island-keys member-keys)))
+
+(fn publish-ordered-island [node island-id member-keys edge-label]
   ;; Publish an ordered-list island over the node's children. Islands do
   ;; not hydrate: every member is resolved into the mounted map BEFORE
   ;; publication, in snapshot order; resolution failure is explicit.
   ;; Existing islands (including ownerless restored ones) are adopted:
   ;; members re-sync, saved position/state preserved (state omitted).
-  ;; Empty membership removes the island.
+  ;; The enumeration owner authors ordinary display edges, independently of
+  ;; island membership. Resolve the full pass first; failures remain explicit,
+  ;; not transactional. Synchronous listeners may supersede or drop this pass.
   (local graph (assert node.mounted-graph "island sync requires a mounted graph"))
   (local resolved [])
+  (local targets [])
+  (var current? true)
   (each [_ key (ipairs member-keys)]
-    (local target (graph:resolve-node key))
-    (assert target (.. "island member failed to materialize: " (tostring key)))
-    (table.insert resolved key))
-  (local existing (graph:get-island island-id))
-  (if (> (length resolved) 0)
-      (if existing
-          (graph:upsert-island {:id island-id :kind "ordered-list" :members resolved})
-          (graph:upsert-island {:id island-id :kind "ordered-list"
-                                :members resolved
-                                :state {:list-key node.key
-                                        :interaction-policy "snap-back"
-                                        :spacing 24
-                                        :position (island-origin graph node)}}))
-      (when existing
-        (graph:remove-island island-id)))
+    (when current?
+      (local target (graph:resolve-node key))
+      (set current? (island-publication-current? node graph member-keys))
+      (when current?
+        (assert target (.. "island member failed to materialize: " (tostring key)))
+        (table.insert resolved key)
+        (table.insert targets target))))
+  (each [i target (ipairs targets)]
+    (when current?
+      (set current? (and (island-publication-current? node graph member-keys)
+                        (= (graph:lookup (. resolved i)) target)))
+      (when current?
+        ;; GraphMap explicit identity excludes the label. Preserve existing
+        ;; edges (including custom metadata) without redundant notifications.
+        (when (not (. graph.edge-map (.. node.key "->" target.key)))
+          (graph:add-edge (GraphEdge {:source node :target target :label edge-label})))
+        (set current? (island-publication-current? node graph member-keys)))))
+  (each [i target (ipairs targets)]
+    (when (not (= (graph:lookup (. resolved i)) target))
+      (set current? false)))
+  (when current?
+    (local existing (graph:get-island island-id))
+    (if (> (length resolved) 0)
+        (if existing
+            (graph:upsert-island {:id island-id :kind "ordered-list" :members resolved})
+            (graph:upsert-island {:id island-id :kind "ordered-list"
+                                  :members resolved
+                                  :state {:list-key node.key
+                                          :interaction-policy "snap-back"
+                                          :spacing 24
+                                          :position (island-origin graph node)}}))
+        (when existing
+          (graph:remove-island island-id))))
   resolved)
 
-(fn drain-island [node island-id]
-  (while (and node.island-dirty? node.projection-active?)
+(fn drain-island [node island-id edge-label]
+  (local graph node.mounted-graph)
+  (while (and node.island-dirty?
+              (island-publication-current? node graph node.desired-island-keys))
     (set node.island-dirty? false)
-    (publish-ordered-island node island-id node.desired-island-keys)))
+    (publish-ordered-island node island-id node.desired-island-keys edge-label)))
 
-(fn sync-ordered-island [node island-id member-keys]
+(fn sync-ordered-island [node island-id member-keys edge-label]
   (local graph (assert node.mounted-graph "island sync requires a mounted graph"))
+  (assert (and (= (type edge-label) :string) (> (length edge-label) 0))
+          "island enumeration requires a relationship edge label")
   (set node.desired-island-keys member-keys)
   (set node.island-dirty? true)
   ;; Mount happens before map publication. Saved topology is authoritative
   ;; until its installation barrier completes. Neither window may hydrate.
-  (when (and node.projection-active? (not graph.installing-topology?)
-             (not node.stale?) (not node.transcript-error)
-             (= (graph:lookup node.key) node) (not node.island-syncing?))
+  (when (and (island-publication-current? node graph member-keys)
+             (not node.island-syncing?))
     (set node.island-syncing? true)
-    (local (ok err) (pcall drain-island node island-id))
+    (local (ok err) (pcall drain-island node island-id edge-label))
     (set node.island-syncing? false)
     (when (not ok) (error err 0))))
 

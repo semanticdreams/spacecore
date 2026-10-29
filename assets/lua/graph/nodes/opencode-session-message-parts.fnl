@@ -57,7 +57,7 @@
 
   (fn sync-island! []
     (if (= self.state :ready)
-        (Common.sync-ordered-island self island-id (member-keys))
+        (Common.sync-ordered-island self island-id (member-keys) "part")
         (when (island-teardown?)
           (self:cleanup-island!))))
 
