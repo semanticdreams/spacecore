@@ -1026,6 +1026,41 @@ def test_quoted_valid_scalar_routing_is_accepted(tmp_path):
     assert load_checker().check_repo(repo) == []
 
 
+YAML_NUMERIC_ROUTING = [
+    "-1", "+1", "123", "-1.5", "+.5", "1.", "1e3", "-2E-4",
+    "0x10", "0o17", "0b10", "1_000", ".inf", "-.Inf", ".NaN", "1:20",
+]
+
+
+@pytest.mark.parametrize("value", YAML_NUMERIC_ROUTING)
+def test_unquoted_numeric_variant_is_rejected(tmp_path, value):
+    repo = make_repo(tmp_path)
+    path = repo / ".opencode/agents/example-agent.md"
+    patch_routing(path, "example-provider/model-a", value)
+    issues = load_checker().check_repo(repo)
+    assert any(
+        issue.code == "agent-model" and issue.path == ".opencode/agents/example-agent.md"
+        and "variant routing configuration is malformed" in issue.message
+        and "string token" in issue.message
+        for issue in issues
+    )
+
+
+@pytest.mark.parametrize("value", YAML_NUMERIC_ROUTING + ["custom-effort", "true", "null"])
+@pytest.mark.parametrize("quote", ["'", '"'])
+def test_quoted_string_variant_is_accepted(tmp_path, value, quote):
+    repo = make_repo(tmp_path)
+    patch_routing(repo / ".opencode/agents/example-agent.md", "example-provider/model-a", f"{quote}{value}{quote}")
+    assert load_checker().check_repo(repo) == []
+
+
+@pytest.mark.parametrize("value", ['"high', "'high", 'high"', "'high\""])
+def test_unbalanced_quoted_variant_is_rejected(tmp_path, value):
+    repo = make_repo(tmp_path)
+    patch_routing(repo / ".opencode/agents/example-agent.md", "example-provider/model-a", value)
+    assert "agent-model" in violation_codes(repo)
+
+
 @pytest.mark.parametrize("value", INVALID_MODELS)
 def test_malformed_model_values_are_rejected_with_explicit_diagnostics(tmp_path, value):
     repo = make_repo(tmp_path)

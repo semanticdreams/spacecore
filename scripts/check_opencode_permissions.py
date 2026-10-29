@@ -78,6 +78,16 @@ BLOCKED_ACTIONS = {"allow", "ask"}
 WRAPPER_REFERENCE_RE = re.compile(r"(?<![\w/.-])(scripts/[A-Za-z0-9_.-]+\.py)(?![\w/.-])")
 NON_SCALAR_ROUTING_PREFIXES = ("[", "{")
 NULL_ROUTING_TOKENS = {"true", "false", "null", "none", "~"}
+# Numeric scalar spellings (core YAML plus common legacy forms). Quoted
+# spellings are strings; do not apply this predicate after discarding quotes.
+NUMERIC_ROUTING_RE = re.compile(r"""
+    [+-]?(?:
+        0x[0-9a-fA-F_]+ | 0o[0-7_]+ | 0b[01_]+
+        | (?:[0-9][0-9_]*(?:\.[0-9_]*)?|\.[0-9][0-9_]*)(?:[eE][+-]?[0-9]+)?
+        | [0-9][0-9_]*(?::[0-5]?[0-9])+(?:\.[0-9_]*)?
+        | \.(?:inf|Inf|INF|nan|NaN|NAN)
+    )
+""", re.VERBOSE)
 REQUIRED_AGENT_KEYS = {"description", "mode", "model", "variant", "permission"}
 
 
@@ -100,7 +110,10 @@ def _frontmatter(text: str) -> tuple[dict[str, str], str | None]:
                 if line.startswith((" ", "\t")) or ":" not in line:
                     continue
                 key, value = line.split(":", 1)
-                keys[key.strip()] = value.strip().strip('"\'')
+                key = key.strip()
+                # Routing needs raw quotes to distinguish YAML numbers from
+                # explicit strings. Leave all permission/profile parsing alone.
+                keys[key] = value.strip() if key in {"model", "variant"} else value.strip().strip('"\'')
             return keys, raw
     return {}, None
 
@@ -438,11 +451,18 @@ def _routing_problem(key: str, value: str | None) -> str | None:
     if not isinstance(value, str):
         return f"missing required frontmatter key ({key})"
     text = value.strip()
+    quoted = text.startswith(('"', "'"))
+    if quoted:
+        if len(text) < 2 or text[-1] != text[0]:
+            return f"must have balanced scalar quotes, got {text!r}"
+        text = text[1:-1]
+    if any(character in text for character in ('"', "'", "\\")):
+        return f"must be a single plain scalar token, got {text!r}"
     if not text:
         return f"must be a nonempty explicit scalar ({key})"
     if text.startswith(NON_SCALAR_ROUTING_PREFIXES) or any(character.isspace() for character in text):
         return f"must be a single plain scalar token, got {text!r}"
-    if text.lower() in NULL_ROUTING_TOKENS or text.replace(".", "", 1).isdigit():
+    if not quoted and (text.lower() in NULL_ROUTING_TOKENS or NUMERIC_ROUTING_RE.fullmatch(text)):
         return f"must be a nonempty string token, got {text!r}"
     if key == "model":
         provider, separator, model = text.partition("/")
