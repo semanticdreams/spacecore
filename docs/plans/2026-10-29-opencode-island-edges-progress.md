@@ -139,3 +139,75 @@ bounded design direction, not implementation correctness or integration approval
   restored to the checked-in baseline and is not included in the six-file fix
   commit. Verified the hook source and clean tree; did not alter/bypass it.
   The live counts above were observed before that hook reset the query.
+
+## Follow-up: show JSON instead of part-view pointer placeholders
+
+- User explicitly requested actual JSON in inputs instead of `(see raw part)`.
+- Continuing the same unmerged `live-dev` batch from clean checkpoint
+  `f16fe3466e7591be2657b86b88482a933b8700c2`; fetched `origin/main` is unchanged.
+  Discovered the sole checkout app and confirmed manual, ready, not faulted,
+  generation 2 before edits (manual operation 3 succeeded).
+- Source evidence: `opencode-session-message-part.fnl:42,56` synthesizes two
+  fallback strings. The section pipeline already feeds read-only VirtualInputs;
+  the Raw section already uses `json.dumps part`. No new widget is needed.
+- Assignment identity: task `opencode-part-json-fallback`, author `debug-advisor`
+  session `ses_e7903189affego49prWnD0oTQ2`, controller `live-dev`, branch
+  `live-dev`, source base/head `f16fe3466e7591be2657b86b88482a933b8700c2`,
+  narrow read-only UI fallback assessment; `correction_used=0`.
+  Original single-JSON delivery validated against role schema and source range;
+  eligible for normal handling, `needs_consultation`, not approval. Original
+  payload retained in its author session; no format redelivery needed.
+- GLM proposal: replace only the two fallback expressions with `json.dumps part`,
+  preserving specialized rendering, all six read-only inputs, statuses, layout,
+  parent-snapshot data flow and teardown.
+- GPT expert session `ses_e79026264ffeCYpsygt1aBDC4V` inspected the original
+  view/shared-input/node/codec sources and answered this single bounded question.
+  It supported the scope, noting repeated JSON in Content/Detail/Raw costs extra
+  serialization/buffers but does not justify a redesign. It corrected the GLM
+  wording: existing `json.dumps` preserves the current Lua representation, not
+  original JSON bytes or object/array/null distinctions (`src/lua_json.cpp`).
+- Evidenced reconciliation before implementation: use the same serializer as
+  Raw, compare full input buffer content with `json.dumps part` (not hard-coded
+  empty-object syntax), do not change the codec or claim byte/type-perfect JSON
+  round-tripping. Existing specialized renderers and genuine loading/absence/
+  non-tool statuses remain unchanged. Test Preview and View, step-start/finish,
+  future/missing types with nested/false fields, patch Detail, read-only inputs,
+  parent updates and ready→absent→ready.
+- GLM follow-up delivery retained in the original author session but blocked at
+  format preflight: it included `suggested_direction: null` with `confirmed`,
+  whereas the declared ordinary schema restricts that field to wrong-root-cause/
+  too-broad verdicts. No semantic completion handling performed. Same assignment,
+  identity/source range unchanged; `correction_used=1` spent before requesting
+  the original author once for format-only redelivery. No code/tests/operations
+  are authorized in that redelivery.
+- Corrected payload received from the same author session: only the inapplicable
+  null field was omitted; verdict/rationale and all substantive facts unchanged.
+  Validated schema, identity/range and protected facts before normal handling.
+  Eligible for normal handling, then accepted `confirmed` as the diagnostic
+  assessment of the reconciled two-expression direction, not implementation
+  verification. Original/corrected payloads remain separately retained in that
+  author session. `correction_used=1` remains spent.
+- Implemented exactly the two fallback expression changes; specialized rendering,
+  genuine lifecycle/non-tool statuses, input ownership and layout are unchanged.
+- RED: new view tests compiled and passed explicit-file constraints, then the
+  message graph suite failed its two new direct-JSON tests on the old placeholders.
+- GREEN (standard isolated test environment described above):
+  - `./build/space -m tools.fennel-check:main -- --target files --file
+    assets/lua/graph/view/views/opencode-session-message-part.fnl --file
+    assets/lua/tests/test-opencode-message-graph.fnl`: pass, zero diagnostics.
+  - `./build/space -m constraints.runner:main -- --target files` with those same
+    two `--file` arguments: pass, zero diagnostics; constraints unchanged.
+  - `./build/space -m tests.test-opencode-message-graph:main`: 27 tests passed.
+  - `./build/space -m tests.test-opencode-view-refresh:main`: 8 tests passed.
+  - New regression coverage checks full JSON buffers (including beyond viewport
+    width), step-start/finish, unknown/missing type, nested/false data, patch Detail
+    and specialized patch Content, Preview/View, all inputs read-only, source
+    unchanged, snapshot refresh, identical-buffer retention, loading and
+    ready→absent→ready. Existing specialized tool coverage remains green.
+  - `git diff --check`: pass. Constraint impact: unchanged/pass; semantic coverage
+    is in focused view tests. Full suite/native rebuild unnecessary for two view
+    fallback expressions with no native, ownership or layout changes.
+- `python3 scripts/live_dev.py reload --repo-root .`: succeeded, request 4,
+  generation 2→3, no rollback/recovery. Both current `status` and retained
+  `status --request-id 4` confirmed success; ready/manual/not faulted.
+- Local checkpoint only, same batch; no push, PR or integration authorized.
