@@ -175,6 +175,40 @@ def check_self_edge(relation):
                     {"relation_id": relation["id"]})
 
 
+def check_supersession_coupling(ledger):
+    """Supersession edges cannot bypass the explicit lifecycle transition.
+
+    Every non-retracted ``supersedes`` edge must target a requirement recorded
+    terminal-superseded (the supersede operation sets both atomically), and a
+    superseded requirement must retain at least one ``supersedes`` lineage edge
+    (retracted lineage still counts, because terminal records never resurrect
+    and lineage is never silently erased).
+    """
+    all_targets = set()
+    for relation in ledger["relations"]:
+        if relation["type"] != "supersedes":
+            continue
+        all_targets.add(relation["target"])
+        if relation.get("retracted"):
+            continue
+        target = ledger["requirements"].get(relation["target"])
+        if target is not None and target["lifecycle"] != "superseded":
+            schema.fail("invalid-supersession",
+                        f"Supersedes edge {relation['id']} targets requirement "
+                        f"{relation['target']} that is "
+                        f"{target['lifecycle']!r}, not superseded.",
+                        {"relation_id": relation["id"],
+                         "target": relation["target"],
+                         "target_lifecycle": target["lifecycle"]})
+    for record_id, record in ledger["requirements"].items():
+        if (record["lifecycle"] == "superseded"
+                and record_id not in all_targets):
+            schema.fail("invalid-supersession",
+                        f"Requirement {record_id} is superseded but no "
+                        "supersedes relation targets it.",
+                        {"record_id": record_id})
+
+
 def validate_graph(ledger, repo_root):
     """Full graph-level validation of a structurally parsed ledger."""
     for artifact in ledger["artifacts"].values():
@@ -186,6 +220,7 @@ def validate_graph(ledger, repo_root):
     check_canonical_conflicts(ledger)
     check_acyclic(ledger, DECOMPOSITION_TYPES, "refinement/derivation decomposition")
     check_acyclic(ledger, (SUPERSSESSION_TYPE,), "supersession")
+    check_supersession_coupling(ledger)
 
 
 def _within(root, candidate):

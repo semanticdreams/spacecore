@@ -8,9 +8,10 @@ JSON keys, nonfinite numbers, unknown fields/versions and malformed records.
 
 import json
 import math
+import os
 import re
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from . import RequirementsError
 
@@ -22,6 +23,13 @@ ARTIFACT_KINDS = ("design", "implementation_spec", "code", "test", "evidence")
 CONFIDENCE_LEVELS = ("explicit", "inferred", "uncertain")
 APPLICABILITY = ("empirical", "analytical")
 ORIGINS = ("user_intent", "justified_interpretation", "descriptive_evidence")
+
+ASSESSMENT_STATES = ("unaddressed", "partial", "satisfied")
+EMPIRICAL_METHODS = ("empirical_measurement",)
+ANALYTICAL_METHODS = ("scenario", "automated_test", "audit", "analysis",
+                      "inspection")
+VERIFICATION_METHODS = EMPIRICAL_METHODS + ANALYTICAL_METHODS
+VERIFICATION_RESULTS = ("absent", "pending", "passed", "failed", "inconclusive")
 
 ALLOWED_TRANSITIONS = {
     "proposed": ("active", "rejected"),
@@ -46,19 +54,30 @@ RELATION_FIELDS = ("id", "type", "source", "target", "rationale", "provenance",
                    "confidence")
 RELATION_OPTIONAL = ("retracted", "history")
 
+ASSESSMENT_FIELDS = ("requirement_id", "requirement_revision", "state",
+                     "rationale", "actor", "date", "source_refs")
+VERIFICATION_FIELDS = ("requirement_id", "requirement_revision", "criterion_id",
+                       "method", "result", "procedure", "environment",
+                       "observation", "timestamp", "evidence_ref",
+                       "dependency_digests", "actor", "evidence_digest")
+CONFLICT_DISPOSITION_FIELDS = ("relation_id", "explanation", "authority",
+                               "actor", "date")
+REF_FIELDS = ("locator", "artifact_id")
+
 REVISION_HISTORY_FIELDS = ("kind", "from_revision", "to_revision", "reason",
                            "actor", "date", "prior")
 TRANSITION_HISTORY_FIELDS = ("kind", "from_lifecycle", "to_lifecycle", "reason",
                              "authority", "actor", "date")
 PRIOR_SNAPSHOT_FIELDS = ("statement", "classification", "acceptance_criteria",
                          "rationale", "provenance")
-PRIOR_SNAPSHOT_OPTIONAL = ("rationale", "provenance")
+PRIOR_SNAPSHOT_OPTIONAL = ()
 RELATION_HISTORY_FIELDS = ("action", "reason", "actor", "date", "prior")
 RELATION_PRIOR_FIELDS = ("rationale", "confidence")
 
 _ID_PATTERN = re.compile(
     r"^(REQ|ART|REL)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_TIMESTAMP_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
 def fail(code, message, details=None):
@@ -70,10 +89,21 @@ def is_uuid_id(value):
 
 
 def valid_date(value):
-    if not isinstance(value, str) or not _DATE_PATTERN.match(value):
+    if not isinstance(value, str) or not _DATE_PATTERN.fullmatch(value):
         return False
     try:
         date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def valid_timestamp(value):
+    """Strict UTC wall-clock stamp: 'YYYY-MM-DDTHH:MM:SSZ'."""
+    if not isinstance(value, str) or not _TIMESTAMP_PATTERN.fullmatch(value):
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError:
         return False
     return True
@@ -211,14 +241,15 @@ def validate_history(record, where):
                 fail("invalid-record",
                      f"{spot} revisions must be integers with from_revision <= to_revision.",
                      {"from_revision": from_rev, "to_revision": to_rev})
-            _check_keys(entry["prior"], PRIOR_SNAPSHOT_FIELDS, PRIOR_SNAPSHOT_OPTIONAL,
-                        f"{spot}.prior")
+            validate_prior_snapshot(entry["prior"], f"{spot}.prior")
         elif kind == "transition":
             _check_keys(entry, TRANSITION_HISTORY_FIELDS, (), spot)
             if entry["from_lifecycle"] not in LIFECYCLES or entry["to_lifecycle"] not in LIFECYCLES:
                 fail("invalid-record", f"{spot} lifecycle values are unknown.",
                      {"from_lifecycle": entry["from_lifecycle"],
-                      "to_lifecycle": entry["to_lifecycle"]})
+                       "to_lifecycle": entry["to_lifecycle"]})
+            if not _nonempty_string(entry["authority"], f"{spot}.authority"):
+                fail("invalid-record", f"{spot}.authority must be nonempty.", {})
         else:
             fail("invalid-record", f"{spot}.kind must be 'revision' or 'transition'.",
                  {"kind": kind})
@@ -310,6 +341,250 @@ def validate_relation(record, where):
                  {"confidence": entry["prior"]["confidence"]})
 
 
+def validate_prior_snapshot(prior, where):
+    """Validate retained pre-revision content with the live record rules."""
+    _check_keys(prior, PRIOR_SNAPSHOT_FIELDS, PRIOR_SNAPSHOT_OPTIONAL, where)
+    if not _nonempty_string(prior["statement"], f"{where}.statement"):
+        fail("invalid-record", f"{where}.statement must be a nonempty string.", {})
+    if prior["classification"] not in CLASSIFICATIONS:
+        fail("invalid-record",
+             f"{where}.classification must be one of {CLASSIFICATIONS}.", {})
+    validate_acceptance_criteria(prior["acceptance_criteria"],
+                                 f"{where}.acceptance_criteria")
+    if not _nonempty_string(prior["rationale"], where):
+        fail("invalid-record", f"{where}.rationale must be a nonempty string.", {})
+    validate_provenance(prior["provenance"], f"{where}.provenance")
+
+
+def validate_ref(ref, where, repo_root):
+    """Validate a source/evidence reference: locator on disk or ART identity.
+
+    Locator references must be safe repository-relative file paths (existence
+    is a record-time contract, not a load-time one); artifact references name
+    an existing registered artifact checked at ledger level.
+    """
+    _check_keys(ref, (), REF_FIELDS, where)
+    locator = ref.get("locator")
+    artifact_id = ref.get("artifact_id")
+    if len(ref) != 1:
+        fail("invalid-record",
+             f"{where} must name exactly one of 'locator' or 'artifact_id'.",
+             {"where": where})
+    if locator is not None:
+        validate_repo_locator(repo_root, locator)
+    elif not (is_uuid_id(artifact_id) and artifact_id.startswith("ART-")):
+        fail("invalid-record",
+             f"{where}.artifact_id must be a canonical ART-<uuid> identifier.",
+             {"artifact_id": artifact_id})
+
+
+def validate_dependency_digests(digests, where, repo_root):
+    if not isinstance(digests, dict):
+        fail("invalid-record", f"{where} must be an object.", {"where": where})
+    for key, value in digests.items():
+        if _nonempty_string(value, f"{where}[{key}]") and isinstance(key, str):
+            if is_uuid_id(key) and key.startswith("ART-"):
+                continue
+            validate_repo_locator(repo_root, key)
+        else:
+            fail("invalid-record",
+                 f"{where} values must be nonempty strings and keys artifact "
+                 "IDs or safe locators.",
+                 {"key": key, "value": value if isinstance(value, str) else None})
+
+
+def check_method_applicability(requirement, verification):
+    """A verification's method must match its criterion applicability.
+
+    Empirical criteria demand empirical observations: capability test and
+    scenario evidence can never establish an empirical verification.
+    """
+    criterion = criterion_at_revision(
+        requirement, verification["requirement_revision"],
+        verification["criterion_id"])
+    if criterion is None:
+        return
+    empirical = verification["method"] in EMPIRICAL_METHODS
+    required_empirical = criterion["applicability"] == "empirical"
+    if empirical != required_empirical:
+        fail("method-applicability",
+             f"Criterion {criterion['id']!r} declares {criterion['applicability']!r} "
+             f"applicability, incompatible with {verification['method']!r}.",
+             {"requirement_id": requirement["id"],
+              "requirement_revision": verification["requirement_revision"],
+              "criterion_id": verification["criterion_id"],
+              "applicability": criterion["applicability"],
+              "method": verification["method"]})
+
+
+def validate_assessment(record, where, repo_root):
+    _check_keys(record, ASSESSMENT_FIELDS, (), where)
+    if (not is_uuid_id(record["requirement_id"])
+            or not record["requirement_id"].startswith("REQ-")):
+        fail("invalid-record",
+             f"{where}.requirement_id must be a canonical REQ-<uuid> identifier.",
+             {"requirement_id": record["requirement_id"]})
+    if not _int(record["requirement_revision"], f"{where}.requirement_revision") \
+            or record["requirement_revision"] < 1:
+        fail("invalid-record",
+             f"{where}.requirement_revision must be a positive integer.",
+             {"requirement_revision": record["requirement_revision"]})
+    if record["state"] not in ASSESSMENT_STATES:
+        fail("invalid-record",
+             f"{where}.state must be one of {ASSESSMENT_STATES}.",
+             {"state": record["state"]})
+    for field in ("rationale", "actor"):
+        if not _nonempty_string(record[field], f"{where}.{field}"):
+            fail("invalid-record", f"{where}.{field} must be a nonempty string.",
+                 {"field": field})
+    if not valid_date(record["date"]):
+        fail("invalid-record", f"{where}.date must be an ISO 'YYYY-MM-DD' date.",
+             {"date": record["date"]})
+    if not isinstance(record["source_refs"], list) or not record["source_refs"]:
+        fail("invalid-record",
+             f"{where}.source_refs must be a nonempty list of references.",
+             {"where": where})
+    for index, ref in enumerate(record["source_refs"]):
+        validate_ref(ref, f"{where}.source_refs[{index}]", repo_root)
+
+
+def validate_verification(record, where, repo_root):
+    _check_keys(record, VERIFICATION_FIELDS, (), where)
+    if (not is_uuid_id(record["requirement_id"])
+            or not record["requirement_id"].startswith("REQ-")):
+        fail("invalid-record",
+             f"{where}.requirement_id must be a canonical REQ-<uuid> identifier.",
+             {"requirement_id": record["requirement_id"]})
+    if not _int(record["requirement_revision"], f"{where}.requirement_revision") \
+            or record["requirement_revision"] < 1:
+        fail("invalid-record",
+             f"{where}.requirement_revision must be a positive integer.",
+             {"requirement_revision": record["requirement_revision"]})
+    if not _nonempty_string(record["criterion_id"], f"{where}.criterion_id"):
+        fail("invalid-record", f"{where}.criterion_id must be a nonempty string.",
+             {"field": "criterion_id"})
+    if record["method"] not in VERIFICATION_METHODS:
+        fail("invalid-record",
+             f"{where}.method must be one of {VERIFICATION_METHODS}.",
+             {"method": record["method"]})
+    if record["result"] not in VERIFICATION_RESULTS:
+        fail("invalid-record",
+             f"{where}.result must be one of {VERIFICATION_RESULTS}.",
+             {"result": record["result"]})
+    for field in ("procedure", "environment", "observation", "actor"):
+        if not _nonempty_string(record[field], f"{where}.{field}"):
+            fail("invalid-record", f"{where}.{field} must be a nonempty string.",
+                 {"field": field})
+    if not valid_timestamp(record["timestamp"]):
+        fail("invalid-record",
+             f"{where}.timestamp must be a 'YYYY-MM-DDTHH:MM:SSZ' stamp.",
+             {"timestamp": record["timestamp"]})
+    validate_ref(record["evidence_ref"], f"{where}.evidence_ref", repo_root)
+    if not isinstance(record["evidence_digest"], str) or not re.fullmatch(
+            r"[0-9a-f]{64}", record["evidence_digest"]):
+        fail("invalid-record", f"{where}.evidence_digest must be a SHA-256 digest.", {})
+    validate_dependency_digests(record["dependency_digests"],
+                                f"{where}.dependency_digests", repo_root)
+
+
+def validate_conflict_disposition(record, where):
+    _check_keys(record, CONFLICT_DISPOSITION_FIELDS, (), where)
+    if (not is_uuid_id(record["relation_id"])
+            or not record["relation_id"].startswith("REL-")):
+        fail("invalid-record",
+             f"{where}.relation_id must be a canonical REL-<uuid> identifier.",
+             {"relation_id": record["relation_id"]})
+    for field in ("explanation", "authority", "actor"):
+        if not _nonempty_string(record[field], f"{where}.{field}"):
+            fail("invalid-record", f"{where}.{field} must be a nonempty string.",
+                 {"field": field})
+    if not valid_date(record["date"]):
+        fail("invalid-record", f"{where}.date must be an ISO 'YYYY-MM-DD' date.",
+             {"date": record["date"]})
+
+
+def criterion_at_revision(record, revision, criterion_id):
+    """Return the criterion dict at a historical requirement revision, or None.
+
+    Current revision reads live `acceptance_criteria`; earlier revisions are
+    reconstructed from the retained history prior snapshots.
+    """
+    if revision == record["revision"]:
+        criteria = record["acceptance_criteria"]
+    else:
+        snapshot = next((entry for entry in record["history"]
+                         if entry["kind"] == "revision"
+                         and entry["from_revision"] == revision), None)
+        if snapshot is None:
+            fail("invalid-record",
+                 f"Requirement {record['id']} has no retained snapshot for "
+                 f"revision {revision}.",
+                 {"requirement_id": record["id"], "revision": revision})
+        criteria = snapshot["prior"]["acceptance_criteria"]
+    return next((criterion for criterion in criteria
+                 if criterion["id"] == criterion_id), None)
+
+
+def validate_evidence_coupling(ledger):
+    """Ledger-level endpoint/reference coupling of assessments and verifications."""
+    requirements = ledger["requirements"]
+    for index, assessment in enumerate(ledger["assessments"]):
+        if assessment["requirement_id"] not in requirements:
+            fail("broken-reference",
+                 f"assessments[{index}] references unknown requirement "
+                 f"{assessment['requirement_id']!r}.",
+                 {"requirement_id": assessment["requirement_id"]})
+        requirement = requirements[assessment["requirement_id"]]
+        revision = assessment["requirement_revision"]
+        if revision != requirement["revision"] and not any(
+                entry["kind"] == "revision" and entry["from_revision"] == revision
+                for entry in requirement["history"]):
+            fail("invalid-record", "Assessment references an unretained revision.", {})
+        for position, ref in enumerate(assessment["source_refs"]):
+            if "artifact_id" in ref and ref["artifact_id"] not in ledger["artifacts"]:
+                fail("broken-reference",
+                     f"assessments[{index}].source_refs[{position}] references "
+                     f"unknown artifact {ref['artifact_id']!r}.",
+                     {"artifact_id": ref["artifact_id"]})
+    for index, verification in enumerate(ledger["verifications"]):
+        requirement = requirements.get(verification["requirement_id"])
+        if requirement is None:
+            fail("broken-reference",
+                 f"verifications[{index}] references unknown requirement "
+                 f"{verification['requirement_id']!r}.",
+                 {"requirement_id": verification["requirement_id"]})
+        if criterion_at_revision(requirement, verification["requirement_revision"],
+                                 verification["criterion_id"]) is None:
+            fail("invalid-record", "Verification references an unknown criterion.", {})
+        check_method_applicability(requirement, verification)
+        for key in verification["dependency_digests"]:
+            if key.startswith("ART-") and key not in ledger["artifacts"]:
+                fail("broken-reference",
+                     f"verifications[{index}].dependency_digests references "
+                     f"unknown artifact {key!r}.",
+                     {"artifact_id": key})
+        evidence_ref = verification["evidence_ref"]
+        if ("artifact_id" in evidence_ref
+                and evidence_ref["artifact_id"] not in ledger["artifacts"]):
+            fail("broken-reference",
+                 f"verifications[{index}].evidence_ref references unknown "
+                 f"artifact {evidence_ref['artifact_id']!r}.",
+                 {"artifact_id": evidence_ref["artifact_id"]})
+    for index, disposition in enumerate(ledger["conflict_dispositions"]):
+        relation = next((relation for relation in ledger["relations"]
+                         if relation["id"] == disposition["relation_id"]), None)
+        if relation is None:
+            fail("broken-reference",
+                 f"conflict_dispositions[{index}] references unknown relation "
+                 f"{disposition['relation_id']!r}.",
+                 {"relation_id": disposition["relation_id"]})
+        if relation["type"] != "conflicts_with":
+            fail("invalid-record",
+                 f"conflict_dispositions[{index}] must reference a "
+                 "conflicts_with relation.",
+                 {"relation_id": disposition["relation_id"]})
+
+
 def validate_ledger(ledger, repo_root):
     """Validate a parsed ledger dict fully; raises RequirementsError on violation."""
     if not isinstance(ledger, dict):
@@ -326,22 +601,38 @@ def validate_ledger(ledger, repo_root):
         if not isinstance(ledger[field], list):
             fail("invalid-record", f"Ledger {field} must be a list (append-only array).",
                  {"field": field})
+        for index, record in enumerate(ledger[field]):
+            if not isinstance(record, dict):
+                fail("invalid-record",
+                     f"{field}[{index}] must be an object.", {"field": field})
     if not isinstance(ledger["relations"], list):
         fail("invalid-record", "Ledger relations must be a list.", {"field": "relations"})
     if not isinstance(ledger["requirements"], dict) or not isinstance(ledger["artifacts"], dict):
         fail("invalid-record", "Requirements/artifacts must be ID maps.", {})
     for rid, record in ledger["requirements"].items():
+        if not isinstance(record, dict):
+            fail("invalid-record",
+                 f"Requirement map entry {rid!r} must be an object.", {"key": rid})
         if rid != record.get("id") or not record.get("id", "").startswith("REQ-"):
             fail("invalid-record",
                  f"Requirement map key {rid!r} must match the record's REQ-<uuid> id.",
                  {"key": rid})
         validate_requirement(record, f"requirements.{rid}")
     for aid, record in ledger["artifacts"].items():
+        if not isinstance(record, dict):
+            fail("invalid-record",
+                 f"Artifact map entry {aid!r} must be an object.", {"key": aid})
         if aid != record.get("id") or not record.get("id", "").startswith("ART-"):
             fail("invalid-record",
                  f"Artifact map key {aid!r} must match the record's ART-<uuid> id.",
                  {"key": aid})
         validate_artifact(record, f"artifacts.{aid}")
+    for index, assessment in enumerate(ledger["assessments"]):
+        validate_assessment(assessment, f"assessments[{index}]", repo_root)
+    for index, verification in enumerate(ledger["verifications"]):
+        validate_verification(verification, f"verifications[{index}]", repo_root)
+    for index, disposition in enumerate(ledger["conflict_dispositions"]):
+        validate_conflict_disposition(disposition, f"conflict_dispositions[{index}]")
     known = set(ledger["requirements"]) | set(ledger["artifacts"])
     identifiers = set()
     for index, relation in enumerate(ledger["relations"]):
@@ -360,6 +651,7 @@ def validate_ledger(ledger, repo_root):
                      f"{where}.{endpoint} references unknown record {relation[endpoint]!r}.",
                      {"endpoint": endpoint, "id": relation[endpoint],
                       "relation_id": relation["id"]})
+    validate_evidence_coupling(ledger)
     from .graphvalidate import validate_graph
 
     validate_graph(ledger, repo_root)
@@ -370,3 +662,10 @@ def validate_repo_locator(repo_root, locator):
     from .graphvalidate import validate_locator
 
     validate_locator(repo_root, locator)
+
+
+def locator_file_exists(repo_root, locator):
+    """Record-time contract: evidence/dependency locator paths must exist as files."""
+    root = os.path.realpath(os.fspath(repo_root))
+    parts = [part for part in locator.split("/") if part not in ("", ".")]
+    return os.path.isfile(os.path.join(root, *parts))

@@ -890,11 +890,24 @@ def test_decomposition_cycles_rejected_through_cli(lib, inited):
 
 
 def test_supersedes_cycles_rejected_through_cli(lib, inited):
-    a = create_result(inited)
-    b = create_result(inited)
-    ok = h.run_cli(inited, "apply", request=h.apply_request(add_relation_op("supersedes", a, b)))
-    assert ok.returncode == 0, ok.stdout + ok.stderr
-    cycle = h.run_cli(inited, "apply", request=h.apply_request(add_relation_op("supersedes", b, a)))
+    old = create_result(inited)
+    replacement = create_result(inited)
+    third = create_result(inited)
+    superseded = h.run_cli(inited, "apply", request=h.apply_request(
+        op_args("supersede-requirement", old_id=old, reason="Replaced.",
+                authority="review", provenance=h.provenance(),
+                replacement_id=replacement)))
+    assert superseded.returncode == 0, superseded.stdout + superseded.stderr
+    chained = h.run_cli(inited, "apply", request=h.apply_request(
+        op_args("supersede-requirement", old_id=replacement,
+                reason="Replaced again.", authority="review",
+                provenance=h.provenance(), replacement_id=third)))
+    assert chained.returncode == 0, chained.stdout + chained.stderr
+    # Terminal records keep their lineage; a legal deployment of the edge type
+    # (old is superseded, replacement is superseded) closes a real cycle and
+    # the acyclic check must reject it.
+    cycle = h.run_cli(inited, "apply", request=h.apply_request(
+        add_relation_op("supersedes", old, replacement)))
     assert cycle.returncode != 0
     assert cycle.error_code() == "cycle-relation"
 

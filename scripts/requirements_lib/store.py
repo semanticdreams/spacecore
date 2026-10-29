@@ -30,6 +30,9 @@ OPERATIONS = (
     "add-relation",
     "revise-relation",
     "retract-relation",
+    "record-assessment",
+    "record-verification",
+    "record-conflict-disposition",
 )
 
 
@@ -220,7 +223,8 @@ def apply(repo_root, request, ledger_path=None):
         state = copy.deepcopy(ledger)
         results = []
         for spec in request["ops"]:
-            results.append(_OPERATIONS[spec["op"]](state, spec["args"], request["actor"]))
+            results.append(
+                _OPERATIONS[spec["op"]](state, spec["args"], request["actor"], root))
         state["revision"] = committed + 1
         schema.validate_ledger(state, root)
         _atomic_write(path, state)
@@ -253,7 +257,10 @@ def query(repo_root, request, ledger_path=None):
     ledger = load_ledger(root, ledger_path)
     target = args["id"]
     if target in ledger["requirements"]:
-        result = {"requirement": ledger["requirements"][target]}
+        from .evidence import criteria_latest
+
+        result = {"requirement": ledger["requirements"][target],
+                  "criteria_latest": criteria_latest(ledger, target, root)}
     elif target in ledger["artifacts"]:
         result = {"artifact": ledger["artifacts"][target]}
     else:
@@ -321,7 +328,7 @@ def _build_requirement(record_id, args, context):
     return record
 
 
-def _op_create_requirement(state, args, actor):
+def _op_create_requirement(state, args, actor, root):
     _args(args, ("classification", "statement", "rationale", "provenance"),
           ("acceptance_criteria",), "create-requirement")
     record_id = schema.new_uuid_id("REQ")
@@ -334,7 +341,7 @@ _REVISABLE = ("statement", "classification", "acceptance_criteria", "rationale",
               "provenance")
 
 
-def _op_revise_requirement(state, args, actor):
+def _op_revise_requirement(state, args, actor, root):
     _args(args, ("id", "reason"), _REVISABLE + ("date",), "revise-requirement")
     record = _or_not_found(state["requirements"], args["id"], "requirement")
     if record["lifecycle"] in ("superseded", "rejected"):
@@ -372,7 +379,7 @@ def _op_revise_requirement(state, args, actor):
             "revision": updated["revision"]}
 
 
-def _op_transition_requirement(state, args, actor):
+def _op_transition_requirement(state, args, actor, root):
     _args(args, ("id", "to", "reason", "authority"), ("date",),
           "transition-requirement")
     record = _or_not_found(state["requirements"], args["id"], "requirement")
@@ -411,9 +418,10 @@ def _op_transition_requirement(state, args, actor):
     return {"op": "transition-requirement", "id": record["id"], "to": target}
 
 
-def _op_supersede_requirement(state, args, actor):
+def _op_supersede_requirement(state, args, actor, root):
     _args(args, ("old_id", "reason", "authority", "provenance"),
           ("create", "replacement_id", "date"), "supersede-requirement")
+    _require_nonempty(args, ("reason", "authority"), "supersede-requirement")
     if ("create" in args) == ("replacement_id" in args):
         raise RequirementsError(
             "invalid-op-args",
@@ -473,7 +481,7 @@ def _op_supersede_requirement(state, args, actor):
             "superseded": old["id"]}
 
 
-def _op_register_artifact(state, args, actor):
+def _op_register_artifact(state, args, actor, root):
     _args(args, ("kind", "title", "locator"), ("selector", "content_digest"),
           "register-artifact")
     record_id = schema.new_uuid_id("ART")
@@ -484,7 +492,7 @@ def _op_register_artifact(state, args, actor):
     return {"op": "register-artifact", "id": record_id}
 
 
-def _op_update_artifact(state, args, actor):
+def _op_update_artifact(state, args, actor, root):
     _args(args, ("id",), ("title", "locator", "selector", "content_digest"),
           "update-artifact")
     record = _or_not_found(state["artifacts"], args["id"], "artifact")
@@ -505,7 +513,7 @@ def _op_update_artifact(state, args, actor):
     return {"op": "update-artifact", "id": record["id"]}
 
 
-def _op_add_relation(state, args, actor):
+def _op_add_relation(state, args, actor, root):
     _args(args, ("type", "source", "target", "rationale", "provenance", "confidence"),
           (), "add-relation")
     record_id = schema.new_uuid_id("REL")
@@ -538,7 +546,7 @@ def _find_relation(state, relation_id):
                             {"id": relation_id})
 
 
-def _op_revise_relation(state, args, actor):
+def _op_revise_relation(state, args, actor, root):
     _args(args, ("id", "reason"), ("confidence", "rationale", "date"),
           "revise-relation")
     relation = _find_relation(state, args["id"])
@@ -571,7 +579,7 @@ def _op_revise_relation(state, args, actor):
     return {"op": "revise-relation", "id": relation["id"]}
 
 
-def _op_retract_relation(state, args, actor):
+def _op_retract_relation(state, args, actor, root):
     _args(args, ("id", "reason"), ("date",), "retract-relation")
     relation = _find_relation(state, args["id"])
     if relation.get("retracted"):
@@ -591,6 +599,182 @@ def _op_retract_relation(state, args, actor):
     return {"op": "retract-relation", "id": relation["id"]}
 
 
+def _own_requirement(args, state, op):
+    if (not schema.is_uuid_id(args["requirement_id"])
+            or not args["requirement_id"].startswith("REQ-")):
+        raise RequirementsError(
+            "invalid-op-args", "Expected a canonical requirement ID.", {})
+    record = _or_not_found(state["requirements"], args["requirement_id"],
+                           "requirement")
+    if args["requirement_revision"] != record["revision"]:
+        raise RequirementsError(
+            "invalid-op-args",
+            f"{op} must reference the requirement's current revision "
+            f"{record['revision']}, not {args.get('requirement_revision')!r}.",
+            {"op": op, "requirement_id": record["id"],
+             "current_revision": record["revision"],
+             "given_revision": args.get("requirement_revision")},
+        )
+    return record
+
+
+def _require_nonempty(args, fields, op):
+    for field in fields:
+        if not _nonempty(args[field]):
+            raise RequirementsError(
+                "invalid-op-args",
+                f"{op} requires grounded nonempty {field}.",
+                {"op": op, "field": field},
+            )
+
+
+def _op_record_assessment(state, args, actor, root):
+    _args(args, ("requirement_id", "requirement_revision", "state", "rationale",
+                 "source_refs"), ("date",), "record-assessment")
+    _require_nonempty(args, ("rationale",), "record-assessment")
+    _own_requirement(args, state, "record-assessment")
+    if not isinstance(args["source_refs"], list) or not args["source_refs"]:
+        raise RequirementsError(
+            "invalid-op-args",
+            "record-assessment requires a nonempty source_refs list.",
+            {"op": "record-assessment"},
+        )
+    entry = {
+        "requirement_id": args["requirement_id"],
+        "requirement_revision": args["requirement_revision"],
+        "state": args["state"],
+        "rationale": args["rationale"],
+        "actor": actor,
+        "date": _op_date(args, "record-assessment"),
+        "source_refs": args["source_refs"],
+    }
+    schema.validate_assessment(entry, f"assessments[{len(state['assessments'])}]",
+                               root)
+    state["assessments"].append(entry)
+    return {"op": "record-assessment", "requirement_id": entry["requirement_id"],
+            "state": entry["state"]}
+
+
+def _op_record_verification(state, args, actor, root):
+    _args(args, ("requirement_id", "requirement_revision", "criterion_id", "method",
+                 "result", "procedure", "environment", "observation", "timestamp",
+                 "evidence_ref", "dependency_digests"), (), "record-verification")
+    _require_nonempty(args, ("procedure", "environment", "observation"),
+                      "record-verification")
+    if not isinstance(args["dependency_digests"], dict):
+        raise RequirementsError(
+            "invalid-op-args",
+            "record-verification dependency_digests must be an object.",
+            {"op": "record-verification"},
+        )
+    for key, value in args["dependency_digests"].items():
+        if not (isinstance(key, str) and _nonempty(value)):
+            raise RequirementsError(
+                "invalid-op-args",
+                "record-verification dependency_digests must map artifact IDs "
+                "or locators to nonempty digest strings.",
+                {"op": "record-verification", "key": key},
+            )
+    record = _own_requirement(args, state, "record-verification")
+    if not isinstance(args["evidence_ref"], dict):
+        raise RequirementsError(
+            "invalid-op-args",
+            "record-verification evidence_ref must be an object naming exactly "
+            "one of 'locator' or 'artifact_id'.",
+            {"op": "record-verification"},
+        )
+    # Record-time contracts: evidence and declared dependency locators must
+    # describe files that exist now (load-time checks verify safety only).
+    evidence_ref = args["evidence_ref"]
+    schema.validate_ref(evidence_ref, "record-verification.evidence_ref", root)
+    evidence_locator = evidence_ref.get("locator")
+    if "artifact_id" in evidence_ref:
+        artifact = state["artifacts"].get(evidence_ref["artifact_id"])
+        if artifact is None:
+            raise RequirementsError("broken-reference", "Evidence artifact is not registered.", {})
+        evidence_locator = artifact["locator"]
+    if evidence_locator is not None:
+        schema.validate_repo_locator(root, evidence_locator)
+        if not schema.locator_file_exists(root, evidence_locator):
+            raise RequirementsError(
+                "invalid-evidence-ref",
+                f"Evidence locator {evidence_locator!r} does not exist in the "
+                "repository and cannot anchor a durable verification.",
+                {"op": "record-verification", "locator": evidence_locator},
+            )
+    for key in args["dependency_digests"]:
+        if not str(key).startswith("ART-"):
+            schema.validate_repo_locator(root, key)
+            if not schema.locator_file_exists(root, key):
+                raise RequirementsError(
+                    "invalid-op-args",
+                    f"Declared dependency locator {key!r} does not exist in the "
+                    "repository.",
+                    {"op": "record-verification", "locator": key},
+                )
+    if schema.criterion_at_revision(record, args["requirement_revision"],
+                                    args["criterion_id"]) is None:
+        raise RequirementsError(
+            "invalid-op-args",
+            f"Criterion {args['criterion_id']!r} does not exist on requirement "
+            f"{record['id']} at revision {args['requirement_revision']}.",
+            {"op": "record-verification", "criterion_id": args["criterion_id"],
+             "requirement_revision": args["requirement_revision"]},
+        )
+    entry = {
+        "requirement_id": args["requirement_id"],
+        "requirement_revision": args["requirement_revision"],
+        "criterion_id": args["criterion_id"],
+        "method": args["method"],
+        "result": args["result"],
+        "procedure": args["procedure"],
+        "environment": args["environment"],
+        "observation": args["observation"],
+        "timestamp": args["timestamp"],
+        "evidence_ref": args["evidence_ref"],
+        "dependency_digests": args["dependency_digests"],
+        "actor": actor,
+    }
+    from .evidence import content_digest
+
+    entry["evidence_digest"] = content_digest(root, evidence_locator)
+    schema.validate_verification(
+        entry, f"verifications[{len(state['verifications'])}]", root)
+    schema.check_method_applicability(record, entry)
+    state["verifications"].append(entry)
+    return {"op": "record-verification", "requirement_id": entry["requirement_id"],
+            "criterion_id": entry["criterion_id"], "result": entry["result"]}
+
+
+def _op_record_conflict_disposition(state, args, actor, root):
+    _args(args, ("relation_id", "explanation", "authority"), ("date",),
+          "record-conflict-disposition")
+    _require_nonempty(args, ("explanation", "authority"),
+                      "record-conflict-disposition")
+    relation = _find_relation(state, args["relation_id"])
+    if relation["type"] != "conflicts_with" or relation.get("retracted"):
+        raise RequirementsError(
+            "invalid-op-args",
+            "record-conflict-disposition requires an active conflicts_with "
+            "relation.",
+            {"op": "record-conflict-disposition", "relation_id": relation["id"],
+             "relation_type": relation["type"],
+             "retracted": bool(relation.get("retracted"))},
+        )
+    entry = {
+        "relation_id": relation["id"],
+        "explanation": args["explanation"],
+        "authority": args["authority"],
+        "actor": actor,
+        "date": _op_date(args, "record-conflict-disposition"),
+    }
+    schema.validate_conflict_disposition(
+        entry, f"conflict_dispositions[{len(state['conflict_dispositions'])}]")
+    state["conflict_dispositions"].append(entry)
+    return {"op": "record-conflict-disposition",
+            "relation_id": entry["relation_id"]}
+
+
 _OPERATIONS = {
     "create-requirement": _op_create_requirement,
     "revise-requirement": _op_revise_requirement,
@@ -601,4 +785,7 @@ _OPERATIONS = {
     "add-relation": _op_add_relation,
     "revise-relation": _op_revise_relation,
     "retract-relation": _op_retract_relation,
+    "record-assessment": _op_record_assessment,
+    "record-verification": _op_record_verification,
+    "record-conflict-disposition": _op_record_conflict_disposition,
 }

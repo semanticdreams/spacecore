@@ -265,3 +265,48 @@ no push/PR/integration/amend/destructive Git.
   recording ops), Task 3 `render`/projection replacing the current explicit
   `not-implemented` CLI verb response, no canonical ledger seeded yet by
   design before the Task 5 gate.
+
+## Task 2 substantive continuation (`REQ-IMPL-2`)
+
+- Controller/workflow: supervisor, strict SDD; branch `juicyrebel/scoter`;
+  verified source BASE `02c5f0ad062898d00ce63469251a8134b4440f4f`.
+  This implementer is a substantive continuation after cancellation, not a
+  format-only redelivery or impersonation of the interrupted worker. No report,
+  checkpoint or test evidence from that worker was available. Delivery correction
+  allowances and prior review history are unchanged.
+- Inspected and retained the six assigned pending Python files (four modified,
+  two additions); initial tracked diff was 528 insertions/18 deletions, with an
+  empty index and no unrelated pending files. The inherited tests passed 98/98
+  when actually run here; that is continuation evidence, not an original TDD RED.
+- Finished append-only assessments, criterion observations, conflict dispositions
+  and per-criterion query currency. Actor identity comes from the apply envelope;
+  evidence bytes are SHA-256 anchored independently of declared dependencies.
+  Artifact dependencies compare actual safe local content, not registry metadata
+  alone. Stored commands remain inert data. Observation time governs within the
+  current applicable requirement revision, with append order breaking ties.
+- Accepted Task 1 observations covered: explicit non-object map-entry errors,
+  deep retained snapshot validation without relaxing originally required fields,
+  supersession/lifecycle coupling and grounded authority, with atomic rollback.
+- Reused the reconciled architecture and design's satisfaction/verification
+  contract. No new architecture, workflow, permissions or runtime hook introduced.
+  The thin CLI already dispatches generic library operations, so it needed no
+  artificial adapter edit. Existing large schema/store modules remain within their
+  assigned responsibilities; evidence computation stays in its focused module.
+- Actual continuation RED: added regressions yielded 10 failed/104 passed for
+  metadata-only currency, missing actor/content identity, append-order selection,
+  impossible timestamps, malformed IDs and retained endpoint checks. Separate RED
+  runs showed two failures for authority/nested rationale and two for missing
+  retained snapshot fields. No interrupted-worker test runs are claimed.
+- Final focused validation: `python3 -m pytest
+  scripts/tests/test_requirements_store.py
+  scripts/tests/test_requirements_evidence.py -q` — **129 passed**, no warnings.
+  Real CLI/library transactions, strict-load corruption cases, local content
+  mutation/deletion, an unrelated temporary-repository commit, empirical method
+  applicability and inert procedures cover this pure-Python surface. Space
+  compile/build/constraints/runtime checks are not applicable. Constraint impact:
+  **not applicable**. Diff whitespace validation passed.
+- Self-reviewed for atomicity, read-only queries, state independence and safe
+  content access. This entry and assigned Python work form the Task 2 local
+  checkpoint; full `BASE..HEAD` independent review is still required. No approval,
+  publication, integration or remote validation is claimed. Private task report
+  and complete range review package are delivered to the controller separately.
