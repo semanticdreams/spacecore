@@ -13,6 +13,77 @@
 - Original task/report/probe payloads remain unchanged in the private controller
   session; this is a privacy-reviewed summary, not a raw session export.
 
+## Final review delivery preflight
+
+Assignment `AUTONOMOUS-HANDOFF-RECOVERY-FINAL`, original reviewer
+`ses_e78c8eec0ffe0g75QG4eTZHe5z`, supervisor/full strict, branch above,
+source/range `4f607d36..4919f89ad4691861f2d8e939e40b963439d4a835`, full review.
+Original payload retained unchanged; Markdown fencing violates JSON-only role
+delivery. `correction_used=1` marked before same-author format-only dispatch to
+remove only outer fences, preserving every JSON fact. No verdict consumed yet.
+
+The same author returned the same outer fences again. Its single correction
+allowance is exhausted; both payloads are retained unchanged and quarantined,
+not treated as approval. No second correction requested. Task continues under
+the user's explicit operational-recovery direction and existing strict gates.
+
+Replacement assessment authorization: fresh independent reviewer, full original
+task requirements/global constraints and complete verified range retained. Local
+snapshot verified `4919f89ad4691861f2d8e939e40b963439d4a835` on the branch above;
+only this controller-owned progress update is pending. Prior initial review
+`4f607d36..08d0415e` and targeted `08d0415e..1c537883` remain trusted assessments,
+not replacements for the required final whole-range review. No parked findings;
+R1-1/G3/G5 were independently verified fixed; no pending expert decision. The
+unusable final report's claims are untrusted leads, not a salvaged pass/findings.
+
+Changed strategy after repeated reviewer delivery-format failures across authors:
+retain source/diff investigation scope, but bound the next final report to a short
+JSON object with required fields and a compact manifest list, no long narrative
+summary. Original role schema and one-format allowance still apply. Continuing
+task-wide delivery-failure accounting includes the initial review's prose prefix
+and this review's fences; format-only corrections are not substantive attempts.
+No fix/consultation/resource budget is refunded by fresh author/session.
+
+One untrusted lead was independently checked by the controller in actual
+`scripts/tests/handoff_recovery_model.py:88-117`: its docstring lists resource
+blockers before eligible normal handling, but code handles eligible first. This
+minor test-only documentation inconsistency is real, not an accepted verdict
+from the quarantined report. A scoped implementer correction can reorder only
+the docstring to match existing behavior, then final replacement review covers
+the full resulting range. No new runtime or policy design is required.
+
+## FIX-2: docstring precedence correction (implementer append)
+
+Source-verified mechanical correction; no new design consultation required.
+FIX_BASE `4919f89ad4691861f2d8e939e40b963439d4a835`; ordinary checkpoint mode.
+Assigned paths only: `scripts/tests/handoff_recovery_model.py` (docstring
+precedence order), `scripts/tests/test_opencode_handoff_recovery_contract.py`
+(one focused anchor test), and this ledger (controller section above preserved
+byte-for-byte; original/corrected quarantined review payloads not modified and
+stay private).
+
+- `route_recovery` docstring items 2/3 reordered to match existing code:
+  eligible usable assessments resume normal handling (2) before the evidenced
+  actual resource/evidence blocker check (3). No behavior, schema, enum,
+  policy or guard-terms change; items 1 and 4-7 unchanged.
+- Added `test_eligible_usable_assessment_precedes_stop_conditions`: anchors the
+  documented order against the code (eligible usable_ok with all stop flags
+  set still routes normal_handling). Anchor-only by design; it passed
+  immediately because the code already routes this way (same rationale as the
+  FIX-1 count-9 anchor).
+- Removed no assertion; frozen evaluator and all other files untouched.
+
+Validation (observed): recovery/delivery/evaluator trio — 199 passed; permission
+checker pass, violations []; `git diff --check` clean; diff secret/path scan
+clean. Coverage rationale: docstring-only text plus a live anchor pinning the
+documented precedence to actual routing behavior; no other surface changed.
+Constraint impact: not applicable.
+
+Next: one scoped checkpoint, then the fresh independent reviewer's full
+replacement assessment covering `4f607d36..HEAD`. The quarantined report's
+single correction allowance remains consumed; no pass/findings are inherited
+from it.
+
 ## Handoff and consultation records
 
 All entries use the branch/BASE above unless stated. Stable assignment identity,

@@ -383,3 +383,21 @@ def test_high_count_with_changed_strategy_and_permitted_step_continues():
     facts = valid_facts(failures_same_signature=9, changed_strategy_recorded=True)
     assert route_recovery(facts) == "replacement_dispatch"
     assert route_recovery(facts) != "truthful_incomplete_stop"
+
+
+# ---------------------------------------------------------------------------
+# FIX-2 (FIX_BASE 4919f89a): source-verified docstring-only correction in
+# handoff_recovery_model.route_recovery — the precedence documentation listed
+# stop conditions before eligible normal handling while the code checks the
+# eligible branch first. No behavior, schema or policy change.
+# ---------------------------------------------------------------------------
+
+def test_eligible_usable_assessment_precedes_stop_conditions():
+    # Anchor the documented precedence: an eligible usable assessment is
+    # handled before resource/evidence stop conditions are evaluated.
+    facts = valid_facts(state="eligible", assessment="usable_ok",
+                        actual_resource_exhaustion=True,
+                        unavailable_evidence_after_diagnosis=True,
+                        permitted_productive_step=False)
+    assert route_recovery(facts) == "normal_handling"
+    assert route_recovery(facts) != "truthful_incomplete_stop"

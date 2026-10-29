@@ -89,12 +89,12 @@ def route_recovery(facts):
 
     1. actual human boundaries and excluded expert/wrapper outputs follow their
        existing routes;
-    2. evidenced actual resource/evidence blockers or no permitted productive
-       step produce truthful incomplete status (never approval, never a routine
-       human permission request);
-    3. eligible usable assessments resume normal handling — adverse findings
+    2. eligible usable assessments resume normal handling — adverse findings
        keep the ordinary fix/consultation/adjudication routes and are never
        replaceable;
+    3. evidenced actual resource/evidence blockers or no permitted productive
+       step produce truthful incomplete status (never approval, never a routine
+       human permission request);
     4. a format_repair delivery spends its single same-author allowance, or is
        quarantined once spent (no second request);
     5. a quarantined delivery requires recorded snapshot verification, immutable
