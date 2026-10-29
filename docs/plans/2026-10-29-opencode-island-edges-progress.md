@@ -211,3 +211,26 @@ bounded design direction, not implementation correctness or integration approval
   generation 2→3, no rollback/recovery. Both current `status` and retained
   `status --request-id 4` confirmed success; ready/manual/not faulted.
 - Local checkpoint only, same batch; no push, PR or integration authorized.
+
+## Wrap-up batch integration (authorized)
+
+- User issued explicit wrap-up/integration authorization for the `live-dev` branch
+  batch (b5591b2f, f16fe346, a714acdc).
+- Safe merge from `origin/main` into `live-dev` (`14dde5de`): clean, no conflicts;
+  no conflict resolution touched `assets/lua`.
+- Base/head recorded: base `5cc254b0` (current origin/main), head `14dde5de`.
+- Validation (standard isolated environment): `make fennel-check` pass (1417
+  files), `make constraints` pass (0 diagnostics), `TEST_FILTER=opencode
+  ./build/space -m tests.fast:main` executed 84 tests, exit 0.
+- One observational `fast-dev-reviewer` review received, `status:
+  pass_with_findings`; schema and identity/range validated before normal
+  handling. Four minor findings; no consultation needed (design already
+  consulted and reconciled earlier in this ledger).
+- Applied the one actionable fix directly: the test fake's explicit
+  endpoint-replace path in `assets/lua/tests/opencode-graph-helpers.fnl` now
+  emits `edge-added` like the real GraphMap replace path, and the fake graph
+  carries the signal. Findings 2-4 (endpoint-key reconstruction precedent,
+  unconditional activation re-authoring, serializer hardening) were optional or
+  pre-existing; no change, left as follow-ups.
+- Post-fix validation: explicit-file `tools.fennel-check` pass;
+  `TEST_FILTER=opencode tests.fast` again 84 tests, exit 0.

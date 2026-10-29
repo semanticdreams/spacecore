@@ -144,8 +144,12 @@
   (local key (edge-identity edge))
   (local existing (. graph.edge-map key))
   (if existing
-      (each [i e (ipairs graph.edges)]
-        (when (= e existing) (tset graph.edges i edge)))
+      (do
+        (each [i e (ipairs graph.edges)]
+          (when (= e existing) (tset graph.edges i edge)))
+        ;; Real-map add-edge replacement emits edge-added alongside record replacement.
+        (when graph.edge-added
+          (graph.edge-added:emit {:edge edge})))
       (table.insert graph.edges edge))
   (tset graph.edge-map key edge)
   edge)
@@ -153,7 +157,8 @@
 (fn fake-parent-graph []
   (local graph {:resolved [] :edges [] :edge-map {} :nodes {} :removals []
                 :islands {} :island-history []
-                :node-added (Signal) :topology-installed (Signal)
+                :node-added (Signal) :edge-added (Signal)
+                :topology-installed (Signal)
                 :node-replaced (Signal) :node-removed (Signal)})
   (set graph.lookup (fn [_self key] (. graph.nodes key)))
   (set graph.upsert-island
