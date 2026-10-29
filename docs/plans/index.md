@@ -13,6 +13,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 
 ### 2026-10
 
+- 2026-10-29 — [Autonomous Handoff Recovery Implementation Plan](./2026-10-29-autonomous-handoff-recovery.md)
 - 2026-10-25 — [Current Layout Boundary Diagnostic Implementation Plan](./2026-10-25-current-layout-boundary-diagnostic.md)
 - 2026-10-25 — [GLM-Default Expert Consultation Implementation Plan](./2026-10-25-glm-default-expert-consultation.md)
 - 2026-10-25 — [Minimal Interactive Canonical Candidates Implementation Plan](./2026-10-25-interactive-canonical-candidates.md)
@@ -205,6 +206,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 
 ### 2026-10
 
+- 2026-10-29 — [Autonomous handoff recovery progress](./2026-10-29-autonomous-handoff-recovery-progress.md)
 - 2026-10-28 — [Development-record preservation progress](./2026-10-28-development-records-progress.md)
 - 2026-10-28 — [OpenCode session-graph review and integration progress](./2026-10-28-opencode-session-graph-review-progress.md)
 ### 2026-09

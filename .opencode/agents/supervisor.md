@@ -331,6 +331,17 @@ never normalize or salvage the report yourself. Invalid/exhausted/stale/untruste
 deliveries block. Valid delivery enters normal semantic handling, not approval.
 Expert answers and capability wrapper JSON/refusals are outside this repair path.
 
+Quarantined delivery is the delivery's end, not the task's: apply the canonical
+`Autonomous operational recovery` rule — authorize replacement work to complete
+a missing or unusable assessment on the same verified branch and base/head
+range, with immutable failure ancestry, preserved findings/consultations and
+task-wide failure counts; recovery is not a budget reset, review shopping or
+approval. Missing obligation records block only the replacement dispatch while
+they are gathered autonomously; evidenced actual resource/evidence exhaustion
+or a human-owned boundary produces truthful incomplete status, not approval.
+Route replacements and usable adverse findings through the same review, fix
+and adjudication gates you already apply — never a manual override.
+
 ## Consultation routing (before normal transitions)
 
 Follow the canonical `AGENTS.md` contract. Every architecture/software-design/
@@ -527,14 +538,22 @@ When the human asks to build something:
    - **full strict flow** — use the full workflow below for high-risk,
      ambiguous, architectural, multi-subsystem, or final-integration work.
 
-2. For the full strict flow, invoke **brainstorming** — explore the project,
-   clarify requirements, get design approval. Dispatch `explorer` for broad
-   codebase searches. At the transition point, dispatch `planner` with the
-   approved spec to create the implementation plan.
+2. For the full strict flow, invoke **brainstorming** — explore the project and
+   clarify requirements. The brainstorming skill runs its design review and
+   self-transitions on the committed, self-reviewed spec: no routine user
+   design-artifact approval is required. Pause only for unresolved ambiguity,
+   explicit user-requested checkpoints, permission prompts,
+   product/API/data-policy decisions, or genuine blockers. Dispatch `explorer`
+   for broad codebase searches. At the transition point, dispatch `planner`
+   with the settled spec to create the implementation plan.
 
 3. Invoke **writing-plans** — dispatch `planner` to create a detailed
    implementation plan with bite-sized tasks, file structure, and global
-   constraints. Save the plan, present for human approval.
+   constraints. The planner commits and self-reviews the plan, and the
+   workflow self-transitions: no routine user plan-artifact approval is
+   required. The same unresolved-ambiguity, explicit user-requested checkpoint,
+   permission prompt, and genuine-blocker pauses apply; strict independent
+   `implementer` → `reviewer` gates below are unchanged.
 
 4. Invoke **subagent-driven-development** — execute the plan task-by-task:
    dispatch `implementer` per task, `reviewer` after each task, `adjudicator`

@@ -33,7 +33,13 @@ cap or completion transitions on the observational report. One same-author
 format-only redelivery, marked spent before dispatch, is not a code-fix round or
 a second full review. Valid delivery resumes the ordinary handler, not approval;
 exhausted/stale/untrusted delivery blocks without a budget reset. Retain direct
-fixes; report-only repair triggers no live app setup or refresh.
+fixes; report-only repair triggers no live app setup or refresh. Quarantined
+delivery is not the task's end: apply the canonical `Autonomous operational
+recovery` rule before redoing work — authorize genuine replacement work for the
+missing or unusable assessment on the same verified branch and base/head range,
+record immutable failure ancestry and every preserved obligation, and keep
+task-wide failure counts and budgets; replacement is not a budget reset, review
+shopping or approval.
 
 ## Bounded consultation, not another full review
 
