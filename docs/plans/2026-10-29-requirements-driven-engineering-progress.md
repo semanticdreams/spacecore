@@ -166,3 +166,36 @@ self-review complete. Independent design review session
 above. Design-fix assignment `REQ-DESIGN-FIX-1` is applied and pending
 independent verification. The implementation plan remains a forward link for the
 next checkpoint; no placeholder plan exists. Implementation has not started.
+
+## Operational recovery and new substantive assignment
+
+The user explicitly delegated the recovery decision to the controller: this is an
+operational matter, not a product choice or artifact approval. The controller
+rejects both unusable plan drafts and commissions actual fresh substantive planning
+from the reviewed design at source `be3619120289eb6036e3384f0112db89545bcb21`.
+This does not repair or accept the failed delivery, impersonate its author, or reset
+its exhausted `correction_used=1` allowance. Its immutable payloads/history remain.
+
+New assignment `REQ-PLAN-REBUILD`: independently reconstruct the complete executable
+plan from original repository evidence and the reviewed design, with no draft
+reuse. New plan content must undergo self-review, checkpoint and independent
+artifact review before dependent implementation. The supervisor owns this recovery
+decision and will not ask the user to approve operational steps or artifacts.
+
+`REQ-PLAN-REBUILD`, planner `ses_e7936305affek0FeKNHVxy0m0a`, returned a
+narrative intention to explore instead of the declared finished plan or supported
+context-needed branch. Source/branch/controller remain as assigned above.
+`correction_used=1` recorded before same-author format-only redelivery. No plan
+facts may be invented; if retained records lack a finished plan, use the supported
+non-approving context-needed branch with the actual missing context.
+
+The format-only correction returned supported `NEEDS_CONTEXT`, preserving lack of
+a completed plan and listing actual missing source evidence. It was eligible for
+normal handling, not approval. The controller supplied a bounded original-source
+context pass; the same author performed normal substantive planning and then a
+spec-alignment revision (neither was another formatting retry). Controller
+self-review corrected mechanical inconsistencies against the unchanged reviewed
+design, preserved the five-task decomposition, and captured the complete plan at
+`2026-10-29-requirements-driven-engineering.md`. No failed draft was accepted as a
+plan. Independent plan review remains pending. Original/corrected/substantive
+reports are retained separately in the private session.
