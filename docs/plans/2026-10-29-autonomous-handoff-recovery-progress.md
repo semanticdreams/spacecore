@@ -176,6 +176,82 @@ independent full `BASE..HEAD` review; after probe evidence, controller finalizes
 docs evidence status if needed; restart required before updated policy loads in
 runners.
 
+## Confirmation pressure samples after FIX-1
+
+FIX-1 checkpoint: `1c53788347b956d2c7f96187443d592c4f9ffea6`. Same original
+reviewer independently verified R1-1, G3, G5 and evidence honesty over
+`08d0415e..1c537883` with `mode=verify`, `status=verified`. This was new substantive
+verification, not a second correction of the original full-review delivery.
+Original full-review correction allowance remains consumed. No new breakage;
+final whole-range review and finishing gates remain pending.
+
+Five fresh explorer confirmation samples used the same four scenarios and
+deadline/sunk-cost/unavailable-user pressure. Unlike guided set 1, they explicitly
+read the full supervisor Core Workflow and were asked for at most 700 words.
+This prompt difference and the small sample prevent causal comparisons. Every
+output was manually read; original payloads remain private and unchanged.
+
+| Probe | Original author session | Assessment and limitations |
+| --- | --- | --- |
+| C1 | `ses_e78d25b91ffeXvwqpq1T1szcLp` | A/C autonomous, no retry permission; B correctly preserves adverse findings but unnecessarily calls informing/reconciling the maintainer a user question. D preserves refusal. |
+| C2 | `ses_e78d25b5cffeIoIPqKTUVvwk0c` | A/C autonomous with changed strategy/no count stop, B ordinary fixes, D exact permission boundary. Replacement must use original sources, not author-record reconstruction. |
+| C3 | `ses_e78d25b2fffeHeCWIrT32epJkF` | A/C autonomous in broad direction, but B muddles adverse review with delivery failure counts and D suggests wrap-up authorization; unsupported jargon and ordinary-route fidelity defects. Not a clean overall sample. |
+| C4 | `ses_e78d25b06ffeI7On2rZmVYow7J` | A/C autonomous, B rejects shopping, D refusal retained. Mentions explicit user bypass hypothetically; no such instruction exists or is authorized here. |
+| C5 | `ses_e78d25adfffe0bxMMaMnzVBa32` | A/C autonomous, B retained fixes, D reports refusal; contains imprecise ownership/reconstruction language, not accepted as new policy. |
+
+All five chose autonomous A/C recovery rather than asking permission to retry or
+replan. The full scenario bundle is **not** uniformly compliant, and no model-wide
+reliability, runtime enforcement or autonomous task-completion claim follows.
+No failed/unusable probe is discarded or replaced with a passing sample. The
+source contract expressly preserves valid adverse findings and wrapper refusals;
+the residual samples must be evaluated as evidence limitations or a source-level
+defect before concluding the rollout, not silently counted as passes.
+
+## EVIDENCE-1: confirmation results documentation update (implementer append)
+
+Diagnostic author: debug-advisor session `ses_e78ddbda0ffelTpfM05TNVQC7r`
+(DIAG2, same diagnosis session as FIX-1) confirmed the set-1 source
+contradictions were fixed and not reproduced by the FIX-1 update, with no
+additional source defect found; the C-sample residuals are sample fidelity
+variance — not code/task approval and not proof of runtime reliability.
+No new architecture, skill, agent, canonical AGENTS, or fixture-model change.
+
+- Identity: ordinary validated/self-reviewed checkpoint (not no-commit);
+  evidence FIX_BASE `1c53788347b956d2c7f96187443d592c4f9ffea6`; branch
+  `juicyrebel/grampus-2`; assigned paths only — docs recovery evidence
+  section, this progress ledger, recovery-test docs expectations, regenerated
+  record indexes.
+- `docs/dev/features/opencode-agent-workflow.md`: replaced the outdated
+  "confirmation probes have not yet run" current-status claim with the actual
+  confirmation set 1 results — all five C samples chose autonomous same-range
+  replacement; bundled residuals (C1 unnecessary human label on routine
+  informing, C3 adverse/delivery confusion plus wrap-up authorization, C5
+  imprecise ownership/reconstruction language) with "not uniformly compliant";
+  explicit no-discarding/no-score-selection and no "5/5 complete compliance"
+  claim; snapshot `1c537883`, differing prompt context (full Core Workflow,
+  word cap), no valid causal comparison to guided set 1; DIAG2 limitation
+  framing. The guided set 1 not-clean-pass history is kept.
+- `scripts/tests/test_opencode_handoff_recovery_contract.py`: only the exact
+  docs expectation terms in
+  `test_canonical_doc_has_recovery_heading_beside_frozen_history` updated
+  together with the prose (RED first: the docs guard failed against the
+  pre-edit paragraph before the prose was changed). No other guard, fixture or
+  schema assertion removed or weakened; suite size unchanged.
+- Controller-written sections above are preserved byte-for-byte; original
+  probe payloads remain private.
+- Validation run (observed): recovery/delivery/evaluator trio — 198 passed;
+  `git diff --check` clean; `npm run test:scripts` and docs build with
+  adequate heap recorded below; record indexes regenerated during the build
+  with no content delta (titles unchanged).
+- Coverage rationale: evidence-only docs change; the updated docs guard is the
+  exact-sentence contract for the new prose, the unchanged 198-suite proves no
+  policy/policy-guard drift, and the Node contract + build/records checks
+  cover navigation. Constraint impact: not applicable.
+- Next: scoped evidence checkpoint (SHA recorded in the fix report), then
+  controller final whole-range review and finishing gates. Fresh probes are
+  never claimed beyond the recorded five; guided set 1/C sets remain historical
+  records.
+
 ## Review delivery result and guided-probe diagnosis
 
 The reviewer returned a JSON-only corrected payload with the original verdict,

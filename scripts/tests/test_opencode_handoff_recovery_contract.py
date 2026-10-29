@@ -126,7 +126,10 @@ def test_canonical_doc_has_recovery_heading_beside_frozen_history():
                  "Reject the unusable delivery", "same verified branch", "immutable failure ancestry",
                  "untrusted lead", "review shopping", "baseline probes",
                  "Guided set 1", "not a clean pass",
-                 "Confirmation probes have not yet run",
+                 "Confirmation set 1 after FIX-1", "not uniformly compliant",
+                 'no "5/5 complete compliance" claim is made',
+                 "causal comparison between the sets is not valid",
+                 "no additional source defect",
                  "attempt count", "test-only", "not runtime enforcement", "not approval",
                  "truthful incomplete", "restart"):
         assert term in new, f"docs recovery section missing {term!r}"

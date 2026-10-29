@@ -548,9 +548,21 @@ after a bare attempt count without exhaustion evidence, and another flagged
 stale supervisor core-workflow plan-approval wording as a residual escape
 hatch. Both residuals were diagnosed and resolved by the scoped canonical
 clarifications in this update — the attempt-count sentence and the supervisor
-core-workflow alignment — with no broad rewrite. Confirmation probes have not
-yet run: their manually read results will be recorded in the tracked progress
-ledger after execution. The design record
+core-workflow alignment — with no broad rewrite. Confirmation set 1 after
+FIX-1 then read the updated sources with the same four scenarios and pressure:
+all five fresh samples chose autonomous same-range replacement rather than
+asking permission to retry or replan, but the bundle is **not uniformly
+compliant** — one sample unnecessarily framed routine maintainer informing as
+a user question, one mixed adverse-review handling with delivery failure
+counts and wrap-up authorization, and one used imprecise ownership/
+reconstruction language. No failed sample is discarded, replaced or
+score-selected, and no "5/5 complete compliance" claim is made. Unlike set 1,
+these samples read the full supervisor Core Workflow under a word cap on
+snapshot `1c537883`, so causal comparison between the sets is not valid. The
+same debug-diagnosis session confirmed the set-1 source contradictions fixed
+and not reproduced, with no additional source defect found; the residuals are
+sample fidelity variance, not task approval or proof of runtime reliability.
+The design record
 [spec](../../specs/2026-10-29-autonomous-handoff-recovery-design.md#alternatives-and-reconciled-decision)
 carries the GLM proposal, expert critique and reconciled decision.
 
