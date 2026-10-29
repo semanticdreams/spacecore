@@ -16,6 +16,18 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
 
+## Requirements reconciliation and review
+
+Use `requirements-reconciliation` before task decomposition and on discoveries.
+Consume independently reviewed requirements/design, original authority, applicable
+IDs/revisions, constraints and evidence. Record the proportional conclusion in
+existing handoff/progress records; reference governing IDs and artifact links in
+the plan without duplicating the ledger. Define checks against material criteria,
+including empirical follow-up rather than automatic goal credit from tests.
+Route changed obligations or known design defects back to reconciliation; retain
+focused genuine policy questions and automatic resumption. Fast/live scoped
+exceptions remain direct, without mandatory planning or per-change worker reviews.
+
 ## Scope Check
 
 If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
@@ -145,7 +157,9 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
-If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
+Fix issues and checkpoint them. If a governing requirement lacks a task, add it;
+if the discovery changes intent/design, reconcile before expanding scope. Self-review
+does not replace independent implementation-spec review of the exact artifact range.
 
 ## Commit the Plan
 
@@ -160,6 +174,14 @@ Do not proceed to the execution handoff until the plan is committed.
 
 ## Execution Handoff
 
-After committing the plan, invoke subagent-driven-development automatically. Tell the user execution is starting and summarize the committed plan path. Do not ask for approval unless the user explicitly requested a checkpoint, the plan has unresolved ambiguity, a permission prompt requires it, or the process is blocked.
+After committing the plan, obtain independent implementation-spec review from the
+existing reviewer over the exact pending diff/revision (including additions) or
+complete recorded BASE..HEAD artifact range. Include applicable IDs, authority,
+constraints, verifiability, coverage, conflicts and expansion risks. Use existing
+handoff/consultation/fix-cap rules; changed revisions require review of their changed
+range. After pass, invoke subagent-driven-development automatically. Tell the user
+execution is starting and summarize the plan path, never require user artifact
+approval. Retain explicit user checkpoints, focused genuine product/policy questions,
+permission gates and blockers; record clarification answers and resume automatically.
 
 "Plan complete and saved to `docs/plans/<filename>.md`. Proceeding with subagent-driven-development now — it will dispatch `implementer` for each task, `reviewer` for spec/quality gates, and `adjudicator` if findings stall at the cap."

@@ -1,4 +1,4 @@
-.PHONY: build build-full cmake cmake-minimal cmake-full debug run pack appimage install install-deb install-rpm clean dump-seed load-seed act release opencode-check fennel-check constraints test test-e2e test-live-hot-reload test-slow test-integration test-all-lua profile commit prof download-models-data resize-logo docs devlog test-windows-wine
+.PHONY: build build-full cmake cmake-minimal cmake-full debug run pack appimage install install-deb install-rpm clean dump-seed load-seed act release opencode-check requirements-check fennel-check constraints test test-e2e test-live-hot-reload test-slow test-integration test-all-lua profile commit prof download-models-data resize-logo docs devlog test-windows-wine
 
 SPACE_TEST_ENV = SKIP_KEYRING_TESTS=1 XDG_DATA_HOME=/tmp/space/tests/xdg-data SPACE_DISABLE_AUDIO=1 SPACE_LOG_DIR=/tmp/space/tests/log SPACE_ASSETS_PATH=$(CURDIR)/assets
 SPACE_FENNEL_ENV = FENNEL_PATH=$(CURDIR)/assets/lua/?.fnl\;$(CURDIR)/assets/lua/?/init.fnl FENNEL_MACRO_PATH=$(CURDIR)/assets/lua/?.fnl\;$(CURDIR)/assets/lua/?/init.fnl
@@ -142,7 +142,16 @@ release:
 	git tag -a $$new_version -m "$$new_version"; \
 	git push origin $$new_version
 
-opencode-check:
+requirements-check:
+	python3 -m pytest scripts/tests/test_requirements*.py
+	@if [ -e docs/requirements/ledger.json ] || [ -L docs/requirements/ledger.json ]; then \
+		python3 scripts/requirements.py validate --repo-root . && \
+		python3 scripts/requirements.py render --repo-root . --check; \
+	else \
+		printf '%s\n' 'requirements-check: canonical seed absent; validation/index check deferred (no initialization)'; \
+	fi
+
+opencode-check: requirements-check
 	python3 scripts/check_opencode_permissions.py --repo-root .
 	python3 -m pytest scripts/tests/test_check_opencode_permissions.py scripts/tests/test_opencode_capabilities.py scripts/tests/test_opencode_git_integrate.py scripts/tests/test_opencode_pr_operator.py scripts/tests/test_opencode_windows_ci_repro.py scripts/tests/test_opencode_windows_ci_policy_docs.py scripts/tests/test_live_dev.py scripts/tests/test_sdd_workspace.py
 

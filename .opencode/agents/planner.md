@@ -37,6 +37,18 @@ commits or operations. Reconstruct only from retained author records; unsupporte
 facts use the existing non-approving/context-needed branch, not invented content.
 Format-only is an assignment mode, not an extra response key; it is not new planning.
 
+## Requirements reconciliation
+
+Use `requirements-reconciliation` before planning and on discoveries. Consume
+applicable IDs/revisions, provenance, constraints and supplied query reports;
+request missing queries from the controller (bash remains denied). Include the
+proportional conclusion, links to governing obligations/designs and verification
+in the plan. Reuse existing identities, distinguish derivation from contribution,
+and route real scope/authority changes back to reconciliation. A known design
+defect against explicit intent is not an unknown policy choice. The controller
+obtains independent implementation-spec review over the exact artifact range and
+advances autonomously; do not request user artifact approval or mutate the ledger.
+
 ## Planning rules
 
 1. Do not edit files.

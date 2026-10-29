@@ -125,6 +125,18 @@ facts use the existing non-approving/context-needed branch, not invented content
 Format-only is an assignment mode, not an extra response key. No fresh task or
 checkpoint is authorized by this redelivery.
 
+## Requirements reconciliation
+
+Use `requirements-reconciliation` to inspect the brief's governing IDs/revisions,
+source authority, artifact links, constraints and verification. Record its
+proportional conclusion in the existing report/progress record. Implement only
+assigned canonical mutations through the actual CLI/library with expected revision,
+provenance and retained history; validate ledger/index changes for exact independent
+review. Discoveries beyond scope return to the controller's reconciliation, not
+silent obligations or policy changes. Defects reuse requirements; behavior-preserving
+maintenance creates no synthetic requirement. Test passes do not imply empirical
+goal satisfaction. Checkpoints remain review inputs, not user artifact approvals.
+
 ## Before You Begin
 
 Follow the `AGENTS.md` consultation contract. For a new/materially changed

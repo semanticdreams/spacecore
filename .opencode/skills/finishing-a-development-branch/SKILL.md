@@ -11,6 +11,23 @@ description: Use when implementation is complete and reviewed, to run final vali
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
+## Scope-specific requirements readiness
+
+Use `requirements-reconciliation` before finishing. Inspect the existing conclusion,
+governing IDs/revisions, original authority, reviewed artifact ranges, applicable
+constraints and current observations. Request read-only `readiness` for the explicit
+change scope and material criteria/constraints; investigate unknown applicability,
+stale/broken evidence and relevant unresolved conflicts instead of treating a valid
+ledger as clearance. Return discoveries to reconciliation and route fixes through
+existing implementation/review gates. Record the conclusion in existing progress
+records; do not mutate canonical data as the controller. Test/plan/merge success
+does not establish even partial goal satisfaction. Unrelated pending empirical
+outcomes do not globally freeze merge; retain their pending observations and
+empirical follow-up. No user artifact approval; genuine unknown policy gets a
+focused question and automatic resumption. All clean-tree, current-base, failure
+diagnosis, independent-review, capability-refusal and actual-merge gates remain.
+Fast/live use their owning wrap-up exception, not a new strict-worker pipeline.
+
 ## Capability Boundaries
 
 Safe base update and push steps dispatch `git-integrator`; do not request direct

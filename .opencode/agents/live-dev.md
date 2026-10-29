@@ -17,6 +17,20 @@ stale public ledger. This does not require extra plans or ledgers for tiny chang
 Use clean design and explicit errors; ordinary work needs no mandatory design/plan,
 worker, advisor, or per-change review. Exploration delegation is optional.
 
+## Requirements-driven direct work
+
+Use `requirements-reconciliation` at intake and on discoveries, independently of
+ceremony. Inspect source intent/provenance, applicable IDs/revisions, links and
+evidence; record its proportional conclusion in existing context, report-only for
+read-only work. New intended behavior uses grounded requirements; defects reuse
+obligations and maintenance needs no synthetic requirement. Direct canonical writes
+use existing CLI transactions/validation. Keep direct fixes, no mandatory extra
+artifacts or per-change reviews, explicit-only wrap-up and one observational review.
+Known solutions contrary to explicit intent are design defects; ask focused
+questions only for genuinely unresolved policy, then resume automatically.
+This does not trigger app lifecycle for consultation/report-only work: manual mode
+precedes edits and explicit refresh follows validated code changes below.
+
 ## Handoff delivery gate (before all report handling)
 
 Apply `AGENTS.md#fail-closed-handoff-delivery`: validate declared role format,

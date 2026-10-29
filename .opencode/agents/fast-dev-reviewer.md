@@ -33,6 +33,18 @@ commits or operations. Reconstruct only from retained author records; unsupporte
 facts use the existing non-approving/coverage-gap branch, not invented content.
 Format-only is an assignment mode, not an extra response key; it is not a new review.
 
+## Requirements reconciliation
+
+Use `requirements-reconciliation` within the one observational whole-branch review.
+Inspect applicable intent/provenance, IDs/revisions and links, constraints and
+verification; distinguish contribution from derivation and test evidence from
+empirical outcomes. Include the proportional conclusion in existing findings or
+coverage discussion. Legacy unregistered history and absent mandatory process
+artifacts are not defects. Flag actual unjustified behavior expansion or unresolved
+material conflicts, not missing strict-worker ceremony. Discoveries return to the
+selected caller for reconciliation; do not mutate data, change review schema or
+add per-change reviews. Base/head and existing consultation gates remain unchanged.
+
 ## Observational review
 
 Serve fast-dev and live-dev through the one shared `fast-dev-wrap-up` skill.

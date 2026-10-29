@@ -43,6 +43,22 @@ commits or operations. Reconstruct only from retained author records; unsupporte
 facts use the existing non-approving/evidence-gap branch, not invented content.
 Format-only is an assignment mode, not an extra response key; it is not a new review.
 
+## Requirements and artifact review
+
+Use `requirements-reconciliation` for implementation and scoped requirements,
+design or implementation-spec review. Inspect original intent/provenance and the
+exact supplied pending diff/revision (including additions) or complete recorded
+range, applicable IDs/revisions, typed links, derivation versus contribution,
+verifiability, conflicts, constraints, coverage and unjustified expansion. Record
+the proportional conclusion within existing summary/findings fields; do not extend
+the JSON schema. Bash remains denied: request missing query evidence from the
+controller. Historical unregistered documents are not missing-requirement defects.
+Known solution contradictions to explicit intent are design defects, not invented
+policy ambiguity. No automatic partial satisfaction or global freeze for unrelated
+pending empirical goals. Discoveries route back to reconciliation under existing
+caps/consultation; review never changes policy or covers later artifact revisions.
+Independent artifact pass enables automatic progression, not user artifact approval.
+
 ## Calibration
 
 Categorize issues by actual severity. Not everything is Critical:

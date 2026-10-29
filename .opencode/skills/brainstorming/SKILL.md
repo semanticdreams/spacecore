@@ -7,15 +7,22 @@ description: "Use before full creative feature work, architectural changes, ambi
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
-Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and proceed unless a blocking ambiguity remains.
+Start with `requirements-reconciliation`: inspect source intent/provenance,
+applicable IDs/revisions, designs/plans and evidence. Record its proportional
+conclusion in existing handoff/progress records. Resolve known design defects
+against explicit intent autonomously; ask only genuinely unresolved product/policy
+questions, record answers and resume automatically. Return discoveries to the same
+recipe. Decomposition must justify derivation versus contribution and preserve
+constraints; solutions never redefine obligations. Fast/live retain their scoped
+direct-development exceptions.
 
 <HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action for normal full-flow work until the design has been captured in a committed, self-reviewed spec and the implementation plan has been captured in a committed, self-reviewed plan. Stop for the user only on unresolved ambiguity, explicit user-requested checkpoints, permission prompts, or blockers; brainstorming remains mandatory before full creative feature work, architectural changes, ambiguous changes, broad refactors, and high-risk work.
+Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action for normal full-flow work until the requirements/design and implementation plan have been captured, self-reviewed and independently reviewed over their exact ranges. Commit coordination artifacts as checkpoints, not approvals. Stop for the user only on genuinely unresolved product/policy ambiguity, explicit user-requested checkpoints, permission prompts, or blockers; brainstorming remains mandatory before full creative feature work, architectural changes, ambiguous changes, broad refactors, and high-risk work.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
-Full-flow projects go through this process. A todo list, a single-function utility, a config change — all of them need this when they are creative, architectural, ambiguous, broad, high-risk, or not explicitly classified for a lower-ceremony path. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but for normal full-flow work you MUST present it, commit a self-reviewed spec, and self-transition to implementation planning.
+Full-flow projects go through this process. A todo list, a single-function utility, a config change — all of them need this when they are creative, architectural, ambiguous, broad, high-risk, or not explicitly classified for a lower-ceremony path. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but normal full-flow work still requires a committed, self-reviewed spec and independent artifact pass before automatic transition to planning.
 
 ## Low-Risk Exclusions
 
@@ -37,10 +44,16 @@ You MUST create a task for each of these items and complete them in order:
 4. **Present design direction** — summarize the chosen direction and proceed unless a blocking ambiguity remains
 5. **Write design doc** — save to `docs/specs/YYYY-MM-DD-<topic>-design.md`
 6. **Commit the spec** — `git add docs/specs/<filename>.md && git commit -m "docs: add design spec for <topic>"`. This is a hard gate: do not proceed to self-review or any further step until the spec file is committed. The finishing skill will reject a dirty tree, and subagent-driven-development only tracks its own task commits — no one else is responsible for committing coordination artifacts.
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope. If the review surfaces changes, amend the commit.
-8. **Automatic transition** — invoke the writing-plans skill from the committed spec to create a detailed implementation plan; do not wait for user review unless the user explicitly requested a checkpoint or the spec has unresolved ambiguity.
+7. **Spec self-review and independent review** — check placeholders, contradictions,
+   authority, IDs/links, verifiability, constraints and scope. Commit fixes in a new
+   checkpoint, never amend. Dispatch the existing reviewer over the exact pending
+   diff/revision (including additions) or complete recorded BASE..HEAD artifact
+   range; handle findings under existing consultation/fix-cap rules. Self-review
+   does not replace independent review, and later edits need their changed range reviewed.
+8. **Automatic transition** — after independent artifact pass, invoke writing-plans
+   from the committed spec; do not require user artifact approval.
 
-**The terminal state is a complete, committed, self-reviewed implementation plan produced by the writing-plans skill.** Proceed to implementation only after the plan is committed and self-reviewed. Pause for the user only on unresolved ambiguity, explicit user-requested checkpoints, permission prompts, or blockers.
+**The terminal state is a complete, committed, self-reviewed and independently reviewed implementation plan produced by writing-plans.** Proceed automatically after independent pass; pause only for genuinely unresolved policy, explicit user-requested checkpoints, permission gates or blockers.
 
 ## The Process
 
@@ -98,7 +111,12 @@ After writing the spec document, look at it with fresh eyes:
 3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
 4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
 
-Fix any issues inline. No need to re-review — just fix and move on.
+Fix issues and checkpoint the changes. Obtain independent artifact review over the
+exact recorded range before progression; subsequent fixes require their changed
+range reviewed. Preserve normal consultation, handoff and cap boundaries.
 
 **Automatic Progression:**
-After the spec review loop passes, proceed automatically to the writing-plans skill without waiting for user review. Only pause for the user if there is unresolved ambiguity, the user explicitly requested a review checkpoint, the action requires a permission prompt, or a genuine blocker is encountered.
+After independent spec review passes, proceed automatically to writing-plans
+without user artifact approval. Ask focused questions only for genuine unresolved
+product/policy choices, record answers and resume; retain explicit user-requested
+checkpoints, permission gates and genuine blockers.

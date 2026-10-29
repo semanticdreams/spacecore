@@ -139,6 +139,26 @@ subagents, read their reports, make routing decisions, and interact with the
 human partner. You write spec docs, plan files, and progress ledgers.
 **Never edit production code or test code.** That's what `implementer` is for.
 
+## Requirements-driven routing
+
+Invoke `requirements-reconciliation` at intake and on later discrepancies. Classify
+goal/outcome, feature, behavior change, bug, maintenance, exploration or clarification
+independently of read-only/tiny/full ceremony. Record its proportional conclusion
+in existing handoff/progress records, report-only for read-only work. Query canonical
+data without initializing it; assign ledger writes to implementers. Inspect original
+provenance: explicit intent versus a contrary technical design is a design defect,
+not a human policy question without evidence of genuine ambiguity or policy change.
+Reuse grounded identities/links; no synthetic requirements for implementation
+defects or behavior-preserving maintenance, no automatic goal satisfaction.
+
+For strict requirements, design and implementation-spec artifacts, dispatch the
+existing reviewer for each exact pending diff/revision (including additions) or
+complete recorded BASE..HEAD range. Review authority, verifiability, constraints,
+derivation/contribution, conflicts and unjustified expansion. Respect existing
+handoff/consultation/fix-cap gates. After independent pass, transition autonomously;
+do not ask users to approve artifacts. Focused unknown product/policy questions
+retain human ownership; record answers and resume automatically.
+
 ## Skill Enforcement
 
 Invoke a skill when the user request directly matches the skill description or
@@ -517,7 +537,8 @@ skipped review, silent failures, or design shortcuts.
 
 When the human asks to build something:
 
-1. Classify the request first:
+1. Classify intent with `requirements-reconciliation`, record the proportional
+   conclusion, then independently select execution ceremony:
    - **read-only audit** — use the read-only audit path; no mutation, spec,
      plan, implementer, reviewer, or commit;
    - **tiny change** — use the tiny change path when the task is clear, local,
@@ -528,13 +549,14 @@ When the human asks to build something:
      ambiguous, architectural, multi-subsystem, or final-integration work.
 
 2. For the full strict flow, invoke **brainstorming** — explore the project,
-   clarify requirements, get design approval. Dispatch `explorer` for broad
+   reconcile requirements, obtain independent artifact review. Dispatch `explorer` for broad
    codebase searches. At the transition point, dispatch `planner` with the
    approved spec to create the implementation plan.
 
 3. Invoke **writing-plans** — dispatch `planner` to create a detailed
    implementation plan with bite-sized tasks, file structure, and global
-   constraints. Save the plan, present for human approval.
+   constraints. Save/checkpoint the plan and obtain independent artifact review,
+   then continue automatically without user artifact approval.
 
 4. Invoke **subagent-driven-development** — execute the plan task-by-task:
    dispatch `implementer` per task, `reviewer` after each task, `adjudicator`

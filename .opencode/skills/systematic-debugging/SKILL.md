@@ -24,6 +24,22 @@ follow-through alone stay GLM. Unknown product/API/data policy is human-owned.
 Live-dev establishes manual mode before edits and explicitly refreshes validated
 code changes; consultation alone requires no lifecycle action.
 
+## Requirements reconciliation during diagnosis
+
+Use `requirements-reconciliation`: a bug report is evidence, not automatically a
+new obligation. Reproduce, inspect original intent/provenance, governing IDs/revisions,
+designs and tests, then record the proportional conclusion in existing evidence
+briefs/progress records. Implementation defects reuse requirements; design defects
+revise solutions; grounded gaps require requirements work; behavior-preserving
+maintenance creates no synthetic requirement. Explicit never-auto-send intent
+versus a contrary design, with no evidence of policy change, is a design defect to
+correct autonomously, not invented human policy ambiguity. Genuine unresolved
+policy still gets a focused question, recorded answer and automatic resumption.
+Request canonical changes through the strict implementer and exact-range review;
+read-only diagnosis stays report-only. Discoveries return to reconciliation without
+bypassing the diagnostic advisor, consultation, fix caps or handoff gates. Fast/live
+retain direct fixes and their scoped lifecycle/review exceptions.
+
 ## Handoff delivery preflight
 
 Apply `AGENTS.md#fail-closed-handoff-delivery` before consultation, verdict, fix,

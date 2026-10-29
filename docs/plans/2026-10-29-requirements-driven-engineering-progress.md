@@ -534,3 +534,121 @@ source identity; `correction_used=0`. Branch identity supplied by controller.
 New guidance must make the missing entity/semantic/reconciliation contract concrete,
 remove stale approvals and preserve the demonstrated working safeguards. Revised
 source replay remains required; static prompt tests alone prove no agent behavior.
+
+## Task 4 implementation draft — controller behavioral replay pending
+
+- Assignment `REQ-IMPL-4`, implementer/current delegated author session (session ID
+  not exposed), controller supervisor/strict SDD, branch `juicyrebel/scoter`;
+  verified BASE and unchanged HEAD `3a157e601a38d6c40b04b6a7fe9227f370a6fc3d`.
+  Initial worktree/index clean. This is substantive implementation, not delivery
+  repair; no new review verdict or correction allowance is claimed.
+- Reused the reviewed design and recorded architecture/readiness reconciliations.
+  Conclusion: extend workflow guidance for the current explicit user obligations;
+  resolve the observed missing relation/identity semantics and known intent/design
+  authority defect. No new product policy, ledger entity, orchestrator, permissions,
+  model/variant, runtime hook or historical migration. Canonical seed remains Task 5.
+- Added the reusable requirements-reconciliation skill with structural proportional
+  conclusion slots, source authority, contribution versus derivation/refinement,
+  identity/history, read-only ownership, actual CLI examples, empirical evidence and
+  scoped readiness semantics. Assigned agents/skills discover the shared recipe;
+  strict requirements/design/implementation-spec review uses exact artifact ranges
+  and autonomous transitions, never ordinary user artifact approval. Fast/live
+  direct-development, explicit-only wrap-up, and live manual/refresh rules retained.
+- Added nonrecursive `requirements-check` prerequisite to `opencode-check`: focused
+  requirements tests always run; canonical validation and read-only index freshness
+  run only when the seed exists. Missing data is never initialized. Real temporary
+  CLI cases cover absent seed, missing/stale projection, valid seed and corruption.
+- Actual static TDD RED before prompt edits: `rtk pytest
+  scripts/tests/test_requirements_workflow_contracts.py -q` — **26 failed, 8 passed**.
+  Failures exposed missing shared skill/touchpoints, stale supervisor approvals and
+  missing Makefile gate; existing role frontmatter invariants already passed.
+  Initial GREEN iteration exposed a case-sensitive wording assertion and an incorrect
+  fixture assumption that `init` renders the index. Inspected actual CLI/store and
+  projection error, corrected the fixture with explicit render and retained missing-
+  projection refusal coverage; no production validation weakened.
+- Final focused static/isolated-gate run: **34 passed**. Required `rtk proxy make
+  opencode-check`: **285 requirements tests passed**, permission checker **pass**,
+  **1181 policy/capability/lifecycle/workspace tests passed**, no warnings in the
+  completed run. Earlier 120s/600s invocations were interrupted, not passes. At the
+  600s cutoff an existing Wine-proof test reported `checked=[]` before its callback;
+  it passed alone in 3.46s and in the complete 686.85s policy run. Wrapper SIGTERM
+  conversion to interruption (`scripts/opencode_windows_ci_repro.py:337-359`) and
+  the 602.19s aborted selection are consistent with the imposed command timeout;
+  no unrelated test/code change or gate bypass was made.
+- Compile/build/Space constraints are not applicable to this prompt/docs/Python-policy
+  surface; constraint impact **not applicable**. Full Space runtime suite not run.
+  Frontmatter digest checks and existing permission tests confirm unchanged agent
+  configuration; lifecycle/capability regression tests cover preserved exceptions.
+  Static tests establish declarations, not live-agent compliance or runtime enforcement.
+- Draft self-review covered scope, source/API fidelity, unchanged role schemas and
+  configuration, review/consultation/cap boundaries, historical compatibility,
+  canonical noninitialization and fast/live lifecycle. Controller behavioral replay
+  now required before final own assessment/checkpoint, as assigned. Supply revised
+  sources explicitly to the same read-only pressure scenarios and retain actual
+  observations. Running roles have not reloaded; reviewed rollout requires quitting
+  and restarting OpenCode. No checkpoint, independent approval, publication or
+  integration yet. All assigned changes remain pending for this bounded replay.
+## Task 4 revised-source replay and timeout diagnosis
+
+- Draft author `REQ-IMPL-4`, implementer `ses_e766e7bffffeNRBZrJ7oMV8g21`,
+  supervisor/strict, branch `juicyrebel/scoter`, BASE=HEAD `3a157e60`, returned
+  supported NEEDS_CONTEXT for controller replay before checkpoint. All 18 pending
+  assigned files preserved; report and original source identity privately retained.
+  Delivery `correction_used=0`.
+- Controller explicitly supplied revised skill and relevant changed workflow sources
+  to fresh read-only replay workers, not a claimed live role reload. Both valid
+  explorer Markdown reports included identity and uncertainties (`correction_used=0`).
+  `REQ-PROBE-NEW-A`, `ses_e76483d86ffeLKh7ruGgdH5zSa`: P1 used contributes_to
+  rather than unsupported derived_from, no partial goal credit; P2 separated
+  verified capability/pending empirical goal and scoped merges; P3 dispatched
+  earliest missing independent artifact review then automatic execution, no user
+  approval. `REQ-PROBE-NEW-B`, `ses_e76483d33ffeJz2HwZLbMQoLCT`: P4 reused
+  existing requirements for defect, none synthetic for maintenance; P5 corrected
+  baseline's unnecessary human stop, classifying contrary design as defect while
+  inspecting actual provenance and preserving genuinely unknown policy escalation.
+  Original scenario prompts/responses retained in private tool sessions. These are
+  observed supplied-source behaviors, not proof of universal compliance or runtime
+  enforcement; static tests remain declared-contract checks only.
+- Required validation interruption was investigated under systematic-debugging.
+  Diagnostic advisor `ses_e76483cfaffepwF8pUV0Eu8gpi`, assignment
+  `REQ-T4-VALIDATION-TIMEOUT`, source `3a157e60` plus pending Task4 changes,
+  valid raw JSON `confirmed`, `correction_used=0`: 602.19s run hit imposed 600s
+  cutoff, SIGTERM is converted into lifecycle interruption, callback's checked=[]
+  alone does not show corrupt-proof failure. Exact rerun passed in 3.46s and
+  completed make run with 1800000ms allowance passed 285 requirements + 1181
+  policy tests. No Windows proof source/tests changed; no repository repair needed.
+  Earlier interrupted runs remain failures/interruption evidence, not passes.
+  Advisor verdict is diagnostic, not Task4 approval; independent review still needed.
+
+### Task 4 resumed author assessment and checkpoint handoff
+
+- Same assignment/author `REQ-IMPL-4`, implementer
+  `ses_e766e7bffffeNRBZrJ7oMV8g21`, supervisor/strict SDD, `juicyrebel/scoter`;
+  original BASE `3a157e601a38d6c40b04b6a7fe9227f370a6fc3d`, `correction_used=0`.
+  Preserved the draft and controller replay/diagnostic entries above unchanged.
+- Author assessed the supplied observations against the draft's explicit contracts:
+  P1 distinguishes usefulness from establishment/derivation; P2 separates capability
+  verification from empirical goal evidence and preserves reviewer assessment;
+  P3 requires missing independent artifact review before autonomous execution;
+  P4 reuses governing intent for defects without synthetic maintenance obligations;
+  P5 corrects a contrary technical solution under inspected explicit intent while
+  retaining genuine unknown-policy escalation. These match the intended boundaries;
+  no new gap or material design change was identified. No further prompt edit needed.
+  Observed supplied-source replay is not universal live-agent compliance or approval.
+- Final focused validation after resume: `rtk proxy python3 -m pytest
+  scripts/tests/test_requirements_workflow_contracts.py
+  scripts/tests/test_check_opencode_permissions.py -q` — **309 passed in 3.15s**,
+  no warnings. Permission checker **pass**, no violations; whitespace diff check
+  **pass**. Prior complete `opencode-check` remains 285 + 1181 passing; no material
+  change required rerunning that long gate. Compile/build/Space constraints remain
+  not applicable; constraint impact **not applicable**.
+- Self-review confirmed complete 18-file scope (including both additions), actual
+  API names, unchanged configuration/output schemas, canonical noninitialization,
+  exact-range independent artifact review, history compatibility and preserved
+  fast/live exceptions/manual lifecycle. Timeout evidence is retained honestly;
+  controller's independent diagnostic confirmation requires no repository repair.
+- Assigned content and this history form the ordinary local Task 4 checkpoint,
+  ready for independent full original BASE..HEAD review, not final approval.
+  Checkpoint SHA and complete review package are reported in the private task report.
+  No push, fetch, PR, merge, live reload or integration performed. Quit/restart
+  OpenCode after reviewed rollout; already-loaded roles remain unchanged.
