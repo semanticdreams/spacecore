@@ -215,6 +215,24 @@ branch `juicyrebel/scoter`, controller supervisor/SDD, ordinary local checkpoint
 full-range independent review required. Controller progress-only entry is pending
 and must be included only as assigned coordination documentation, not discarded.
 
+Task 1 reviewer delivery identity: reviewer `ses_e790dcfb1ffej1JdRdLdLF4Bhr`,
+`REQ-IMPL-1`, full review, branch `juicyrebel/scoter`, source/range
+`69ad4594219df524037f53918f198eb54ff1c555..ee975ddda2a3c45af0cfef22b5efdf9291bfb160`.
+Initial payload retained unchanged privately; it used a Markdown JSON fence rather
+than the role's raw JSON contract. `correction_used=1` recorded before same-author
+format-only redelivery. No verdict handling until valid unchanged JSON delivery.
+
+Same-author redelivery was valid raw JSON with unchanged content. Delivery state:
+eligible for normal handling, `correction_used=1` (the preserved payload's original
+summary counter is not controller bookkeeping). Normal semantic verdict: `pass`.
+Controller confirmed exact HEAD and single checkpoint in the full task range.
+Task 1: complete (commits `69ad4594..ee975ddd`, reviewer: pass).
+
+Task 1 minor observations for later validation work: malformed non-object map
+records should produce schema rather than generic internal errors; nested historical
+snapshots need deep validation; supersession edges must not bypass lifecycle
+coupling. These are tracked for Task 2/3 and final review, not forgotten.
+
 ## Task 1 worker implementation evidence (`REQ-IMPL-1`)
 
 Implementer handoff identity: implementer (specific structured worker session;
@@ -247,4 +265,3 @@ no push/PR/integration/amend/destructive Git.
   recording ops), Task 3 `render`/projection replacing the current explicit
   `not-implemented` CLI verb response, no canonical ledger seeded yet by
   design before the Task 5 gate.
-
