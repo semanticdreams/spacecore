@@ -1,0 +1,2663 @@
+{
+  "artifacts": {
+    "ART-02d98c1b-e036-4697-a0cd-d062047f940c": {
+      "content_digest": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+      "id": "ART-02d98c1b-e036-4697-a0cd-d062047f940c",
+      "kind": "code",
+      "locator": "scripts/requirements_lib/schema.py",
+      "title": "schema.py"
+    },
+    "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb": {
+      "content_digest": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+      "id": "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_render.py",
+      "title": "test_requirements_render.py"
+    },
+    "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3": {
+      "content_digest": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+      "id": "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_evidence.py",
+      "title": "test_requirements_evidence.py"
+    },
+    "ART-52e4021c-9e73-475a-95fb-8904969605af": {
+      "content_digest": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+      "id": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_demos.py",
+      "title": "test_requirements_demos.py"
+    },
+    "ART-7121890a-8068-4b53-ba47-3c4eb4d98687": {
+      "content_digest": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+      "id": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-29-requirements-driven-engineering-design.md",
+      "title": "2026-10-29-requirements-driven-engineering-design.md"
+    },
+    "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8": {
+      "content_digest": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652",
+      "id": "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_workflow_contracts.py",
+      "title": "test_requirements_workflow_contracts.py"
+    },
+    "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81": {
+      "content_digest": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+      "id": "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81",
+      "kind": "code",
+      "locator": "scripts/requirements_lib/evidence.py",
+      "title": "evidence.py"
+    },
+    "ART-a713f611-7f9e-47de-8f63-0eeb19214ae9": {
+      "content_digest": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+      "id": "ART-a713f611-7f9e-47de-8f63-0eeb19214ae9",
+      "kind": "evidence",
+      "locator": "docs/dev/notes/requirement-templates.md",
+      "title": "requirement-templates.md"
+    },
+    "ART-b7346d33-ff24-437b-8350-29e3cf618f4c": {
+      "content_digest": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+      "id": "ART-b7346d33-ff24-437b-8350-29e3cf618f4c",
+      "kind": "code",
+      "locator": "scripts/requirements_lib/graph.py",
+      "title": "graph.py"
+    },
+    "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4": {
+      "content_digest": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+      "id": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_store.py",
+      "title": "test_requirements_store.py"
+    },
+    "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3": {
+      "content_digest": "b194e3b1dd33fd6f837c6978f54895769cce1a3246883abffe4549a52078e280",
+      "id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3",
+      "kind": "evidence",
+      "locator": "docs/plans/2026-10-29-requirements-driven-engineering-progress.md",
+      "title": "2026-10-29-requirements-driven-engineering-progress.md"
+    },
+    "ART-c009aed8-a9a3-4290-86b3-877059c01265": {
+      "content_digest": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+      "id": "ART-c009aed8-a9a3-4290-86b3-877059c01265",
+      "kind": "code",
+      "locator": "scripts/requirements_lib/render.py",
+      "title": "render.py"
+    },
+    "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c": {
+      "content_digest": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+      "id": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_graph.py",
+      "title": "test_requirements_graph.py"
+    },
+    "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b": {
+      "content_digest": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+      "id": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-29-requirements-driven-engineering.md",
+      "title": "2026-10-29-requirements-driven-engineering.md"
+    },
+    "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a": {
+      "content_digest": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+      "id": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
+      "kind": "code",
+      "locator": "scripts/requirements.py",
+      "title": "requirements.py"
+    },
+    "ART-e6db684a-aeba-4034-837f-d2dd8826a514": {
+      "content_digest": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+      "id": "ART-e6db684a-aeba-4034-837f-d2dd8826a514",
+      "kind": "code",
+      "locator": "scripts/requirements_lib/store.py",
+      "title": "store.py"
+    },
+    "ART-e6e4b0ec-f905-4e18-a7dc-5be95f9574d9": {
+      "content_digest": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+      "id": "ART-e6e4b0ec-f905-4e18-a7dc-5be95f9574d9",
+      "kind": "code",
+      "locator": ".opencode/skills/requirements-reconciliation/SKILL.md",
+      "title": "SKILL.md"
+    },
+    "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e": {
+      "content_digest": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+      "id": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "kind": "test",
+      "locator": "scripts/tests/test_requirements_scenarios.py",
+      "title": "test_requirements_scenarios.py"
+    },
+    "ART-f8788ba4-449f-493d-978e-ba2fb78bb726": {
+      "content_digest": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+      "id": "ART-f8788ba4-449f-493d-978e-ba2fb78bb726",
+      "kind": "evidence",
+      "locator": "docs/dev/features/requirements-driven-engineering.md",
+      "title": "requirements-driven-engineering.md"
+    },
+    "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd": {
+      "content_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "kind": "evidence",
+      "locator": "docs/requirements/2026-10-29-task-5-validation.md",
+      "title": "Task 5 observed local validation and limits"
+    }
+  },
+  "assessments": [
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "date": "2026-10-29",
+      "rationale": "Implementation/trace captured; independent Task 5/whole-branch review and safeguarded final merge pending. No empirical achievement claimed.",
+      "requirement_id": "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a",
+      "requirement_revision": 1,
+      "source_refs": [
+        {
+          "artifact_id": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3"
+        }
+      ],
+      "state": "partial"
+    }
+  ],
+  "conflict_dispositions": [],
+  "relations": [
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8ed14048-2dd7-4d58-8f63-cebd5c2d2a9e",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-78ff07c0-8f92-44c3-9959-008f21d95b08",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bf299953-4f1b-4acf-99c1-0c812c39eb88",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-621fb27b-15d8-4953-a668-c7adf578f85a",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-291e45e2-253f-4392-93b0-876f4f387c0b",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4b034797-3671-4289-8eaa-84ef2072eda6",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5edacd9d-7296-4614-9d3c-3d8a39f881c3",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-da27d32e-cf71-4f38-8db2-fd23aa125810",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5c99613b-0f8a-4a70-b7e1-135f5ca5be51",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-218eef2f-7d20-43f3-8f3a-44c3481fe077",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dcfb718c-c4f6-4eb2-8955-c8abdc82c89d",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1c46ba0c-edb3-4d5b-a59a-f058a442de96",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bd00bb03-742a-428d-a0a2-354098ca335b",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b8ef313a-ea75-4892-8cd7-6037c34a2c65",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d7a0a8ba-7ef5-457e-a0c2-e67544374967",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2890f457-3b84-4cb3-a868-864c58d480ce",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d9cc9636-11cf-47c6-abd2-a589f9bd1169",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2bfa454f-333c-4899-a284-b61673e08d61",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0c634639-c7cb-4e91-9d5e-6dd3c8fb8c27",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c0b8a90f-ee35-4af9-a10f-ed6fd0169659",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e95432cc-17bd-4058-bab5-9ea4f9000f1f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eb768440-99ba-43a1-ad77-acb69c85ab47",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d2c2ae6c-d05e-491b-b60e-4b21b697f876",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e3e44f87-ba5d-4207-9bff-3a35fab11972",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8b9a650e-202d-4e04-ad63-7350b0290739",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0ce9377f-3c06-40a0-8939-bd9630ab62f7",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-06cfd493-1a65-48e9-a8aa-c40d707fffd2",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e8bc952b-00b7-4e56-962f-48fd53c02d25",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ef6bf9fd-4957-4fc5-896d-d6bb45ce8ce0",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8f120154-9951-4f9e-ba56-eacc2056f840",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-825121a8-7dcc-4c40-a301-87211f10e8f2",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2e34d6f2-6ec1-4445-a6c2-21cbc310a4d5",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2fe08b79-01ba-4a68-bd98-e4a61050ba06",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed design specifies this explicit obligation.",
+      "retracted": false,
+      "source": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "target": "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b41b0c99-d9d5-47a4-a90f-992ae091cd09",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Reviewed plan assigns implementation/validation; final integration remains controller-owned.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2a6e15c8-f00b-4ebd-9914-9a4b50a1963b",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Supports the goal without establishing empirical achievement.",
+      "retracted": false,
+      "source": "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4c327da1-39ea-4dc1-be2e-c18c93078de3",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Plan executes the reviewed design.",
+      "retracted": false,
+      "source": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "target": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-190697d8-22b2-48d4-ade6-c48dd01e7f4d",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-533f43ba-f278-4980-939f-cbfe11791a18",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-02d98c1b-e036-4697-a0cd-d062047f940c",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-42de22e3-f1da-40e0-bdfa-6eef58824357",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-e6db684a-aeba-4034-837f-d2dd8826a514",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a15b4624-ec7c-43ce-a43f-a2646bec1f16",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-b7346d33-ff24-437b-8350-29e3cf618f4c",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7684b6a3-6348-4313-9a61-8e1375a3f5c4",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-37ec0e00-db0e-4a0d-a12c-3ae27b03cd8e",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-c009aed8-a9a3-4290-86b3-877059c01265",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-08b47f96-117e-4294-95e0-48484c65bcb6",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Assigned Python/workflow implementation.",
+      "retracted": false,
+      "source": "ART-e6e4b0ec-f905-4e18-a7dc-5be95f9574d9",
+      "target": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-90cb3b01-b159-4b0e-ae25-e816cec9c78a",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "target": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3245ceb3-d821-4e46-9b0a-766ad80cdf15",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a3dee77e-1316-40ce-8bb8-b3aff783ae8f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "target": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6b81e220-e317-4702-9c5e-1a008d8eb217",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "target": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fe8ddaa5-0b09-4ed3-ab25-7591a7d8f6e6",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3",
+      "target": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fc375394-e2a8-4caf-b6fa-deac9e7df153",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3",
+      "target": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b21907f8-334b-41ce-9d0f-1ba2e32f008f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3",
+      "target": "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2caab96a-9875-4732-ad41-c81f842253da",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
+      "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4756a5f2-af46-4e06-92d2-2f10df474e7f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
+      "target": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-48853e72-4aec-4b67-ad86-d6f3ab280110",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
+      "target": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4d9da407-f4f9-427d-ba20-02a24c805b01",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
+      "target": "ART-b7346d33-ff24-437b-8350-29e3cf618f4c",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-248507b5-8851-4d24-b1d0-85f241a07c91",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb",
+      "target": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-39306120-5725-42dd-946d-ee72366381f5",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0792bc68-162f-42d8-a518-f06ca6a89472",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb",
+      "target": "ART-c009aed8-a9a3-4290-86b3-877059c01265",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2b3f2aba-7dea-489c-8740-64e6334e084f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8",
+      "target": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1b10f83f-2526-414e-8667-2aa5fd6733b8",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8",
+      "target": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-884139f7-996d-40c1-8cbe-d6deb6075d5d",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8",
+      "target": "ART-e6e4b0ec-f905-4e18-a7dc-5be95f9574d9",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8d447b45-fcb8-4811-b935-a6d5b1512fe2",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eca4ca3c-7d79-4415-9a2c-66fb0c6b2f19",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "target": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a51009a0-2d55-4af9-9bf4-f6b569a682e8",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "target": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0081fe63-0dda-4d81-8513-bd8c0f4c6b8f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2a21007d-f233-4a4b-adfa-1ec7f2ca318f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "target": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6f5598d4-d4b1-494c-a1aa-630a71735a09",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "target": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-06bb5c06-6719-43be-a2ac-0da06c4eb8f5",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "target": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-21a28fc2-d05c-403a-bd83-31e2a87d5d9e",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a60b744e-a38f-4988-a3e0-d355259262da",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Focused test definition; execution evidence is separate.",
+      "retracted": false,
+      "source": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "target": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b0b5f4b8-9925-4b06-be92-1c302993850e",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Test exercises this implementation surface.",
+      "retracted": false,
+      "source": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "target": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0b207f90-638e-4754-8675-c7ce7f6b5134",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Inspectable safe history/documentation, not empirical achievement or execution proof.",
+      "retracted": false,
+      "source": "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-14d4ac77-29b2-476a-9729-271d10b155db",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Inspectable safe history/documentation, not empirical achievement or execution proof.",
+      "retracted": false,
+      "source": "ART-f8788ba4-449f-493d-978e-ba2fb78bb726",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-285e596e-ec2b-4dbd-a4cf-03109f200504",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Inspectable safe history/documentation, not empirical achievement or execution proof.",
+      "retracted": false,
+      "source": "ART-a713f611-7f9e-47de-8f63-0eeb19214ae9",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b0092fdb-36e1-4dd3-8f47-43c7eeb14f2d",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Solution must preserve this explicit boundary.",
+      "retracted": false,
+      "source": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "target": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-71efe9fc-4429-48ad-a53c-8c65bf331c4f",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Solution must preserve this explicit boundary.",
+      "retracted": false,
+      "source": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "target": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-701a2e97-d9a5-40f0-ace1-e0b561cec926",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Current-task trace, not proof of satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md"
+      },
+      "rationale": "Solution must preserve this explicit boundary.",
+      "retracted": false,
+      "source": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "target": "ART-7121890a-8068-4b53-ba47-3c4eb4d98687",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6ed6d07f-d367-4523-b6e7-2f05b46b21c5",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d6a04dda-51aa-487a-8780-60befc1b328b",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5561e131-9d55-4468-97a9-6b091da39df5",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9f0dfaec-5c73-402d-bfe9-dab4fd6b77f7",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d0a4fe84-e9cf-43a7-b824-dec0c1b6fd93",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-92bd1b12-f4fa-4de3-9403-16ee709e01fc",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-930a3f46-c318-4628-822c-0177c059b267",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2955bb4a-9ea5-4716-91a1-9dd0ba163de6",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-db286a46-f473-47c7-ac84-2c31464affb7",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7f985d6c-3120-4d05-a74b-30c509168987",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Safe summary of actual bounded local validation, not independent approval or empirical outcome.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-17e0a39e-ffec-49b6-b3ad-a0f34e9dc710",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6c2f0374-cd24-4edd-a0cc-ca383cc8b965",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fe1e21d1-e537-4710-a383-baf372da5bd6",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-52e4021c-9e73-475a-95fb-8904969605af",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fcdf5e52-4ed4-4df5-8b43-c44e34e094f5",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-df6dc2ae-b66a-4425-ad08-7a039aef5846",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8022e1ca-52f5-49e6-9eb2-3530eea2e71e",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6ffa7588-7654-49a0-851a-6c86b71552fe",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd",
+      "target": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
+      "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ca99bebb-a8ea-4987-8159-6f90cb10add1",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "target": "ART-02d98c1b-e036-4697-a0cd-d062047f940c",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ada9830b-525c-4a58-a917-0f433426be4e",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "origin": "descriptive_evidence",
+        "source_reference": "docs/requirements/2026-10-29-task-5-validation.md"
+      },
+      "rationale": "Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI.",
+      "retracted": false,
+      "source": "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4",
+      "target": "ART-e6db684a-aeba-4034-837f-d2dd8826a514",
+      "type": "exercises"
+    }
+  ],
+  "requirements": {
+    "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Creation/revision/lifecycle tests preserve identity and snapshots, separate classification and prevent terminal resurrection."
+        }
+      ],
+      "classification": "capability",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Use one Requirement entity with opaque immutable `REQ-<uuid>` identity.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#requirements-entity-and-revisions"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Represent native requirements with opaque stable identities, provenance, normative revisions and retained lifecycle history independent of classification."
+    },
+    "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Reject malformed JSON/schema/unsafe locators, serialize writers, preserve bytes on stale/failed writes and report committed projection failures separately."
+        }
+      ],
+      "classification": "constraint",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Stale writers and failed canonical replacement preserve old canonical content.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#library-cli-and-transactional-writes"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Keep canonical mutations strict, serialized and atomic with expected revisions, safe locators and explicit recoverable projection failures."
+    },
+    "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Real CLI/library tests traverse forward and inverse typed artifact chains while distinguishing test definitions from runs."
+        }
+      ],
+      "classification": "capability",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "The same ledger contains a minimal linked-artifact registry, not a source inventory.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#traceable-artifacts"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Trace requirements bidirectionally to justified designs, implementation specifications, code, tests and evidence."
+    },
+    "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Seed provenance is limited to current methodology intent; legacy inventory/navigation stays useful without mandatory registration."
+        }
+      ],
+      "classification": "constraint",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "No bulk historical requirements generation. Seed only actual current-task obligations grounded in this explicit user contract.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#compatibility-documentation-and-verification"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Preserve historical development records and browsing without fabricating or bulk-migrating historical product requirements."
+    },
+    "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Tests retain latest applicable failed/pending results, content/revision/dependency freshness and empirical method restrictions without automatic satisfaction."
+        }
+      ],
+      "classification": "capability",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Empirical criteria require empirical observations, not capability test passes.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#satisfaction-and-verification"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Separate explicit satisfaction assessments from criterion observations, preserving empirical applicability, latest results and content currency."
+    },
+    "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Controller records independent Task 5/whole-branch review, current remote-base evaluation, actual CI and actual mergedAt after authorized guarded integration."
+        }
+      ],
+      "classification": "behavior",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Existing independent review, consultation, debugging, permissions and actual-merge gates remain effective.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#authority-and-intent"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Complete final integration only through safeguarded actual remote validation, independent review and confirmed merge, not local simulation."
+    },
+    "REQ-49e62b92-aada-447d-9d15-531625fa0dcc": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Static contracts retain exact-range review, consultation/debugging/handoff/capability boundaries and fast/live exceptions without permissions/model/runtime changes."
+        }
+      ],
+      "classification": "constraint",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Never require the user to review or approve requirements, decompositions, designs, plans or files.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#authority-and-intent"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Advance strict requirements, design and implementation-spec work autonomously through independent artifact reviews while retaining safeguards and fast/live exceptions."
+    },
+    "REQ-8e50a634-76ae-4100-9f60-90e4552ec954": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Shared guidance covers all intents, proportional conclusions, intent over contrary designs and grounded gaps; fixtures test retrieval/mutations, not agent reasoning."
+        }
+      ],
+      "classification": "behavior",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Implementation defects reuse existing requirements; design defects revise designs; real gaps establish obligations grounded in authority.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#shared-reconciliation-and-autonomous-orchestration"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Reconcile all task intents against original authority and existing obligations before choosing solutions, without synthetic bug or maintenance requirements."
+    },
+    "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Reports retain direction/confidence/bounds, distinguish claims/verification/coverage and apply only reconciled constraint paths without granting merge authority."
+        }
+      ],
+      "classification": "capability",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Do not mistake traceability reachability for a proven behavioral dependency.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#query-coverage-and-impact-contracts"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Report classification-aware trace coverage, honest bounded impact and explicit scoped readiness with unknowns and constraints."
+    },
+    "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe methodology use in actual authorized work without replacing user intent with implementation or falsely claiming outcomes."
+        }
+      ],
+      "classification": "goal",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Evolve the Existing Agentic Development System into a Goal-Aware, Requirements-Driven Engineering System",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#authority-and-intent"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Evolve the existing agentic development system into goal-aware, requirements-driven engineering."
+    },
+    "REQ-e0275d31-a048-4f5c-850e-40bdb647d812": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Named scenarios/demos, requirements/policy tests, docs script tests, generated records/navigation and VitePress build pass; fixtures claim no live compliance or remote merge."
+        }
+      ],
+      "classification": "capability",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Document actual tool APIs and limitations, generated index integration, templates, workflow ownership, evidence semantics, and Orca configuration/restart boundary.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#compatibility-documentation-and-verification"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Document actual APIs, templates, navigation, limitations and all fifteen scenarios plus four real-tool demonstrations with relevant validation."
+    },
+    "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Validate endpoint/cycle policies and traverse recursive shared paths with retained confidence; no edge derives satisfaction."
+        }
+      ],
+      "classification": "capability",
+      "history": [
+        {
+          "actor": "implementer/REQ-IMPL-5",
+          "authority": "Explicit current user contract summarized in reviewed design Authority and intent and REQ-IMPL-5 assignment.",
+          "date": "2026-10-29",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Capture current-task obligations for independent Task 5 review, not approval or satisfaction.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/REQ-IMPL-5",
+        "date": "2026-10-29",
+        "excerpt": "Same-class refinement, shared refinements and multiple parents are valid.",
+        "origin": "user_intent",
+        "source_reference": "docs/specs/2026-10-29-requirements-driven-engineering-design.md#typed-recursive-graph"
+      },
+      "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
+      "revision": 1,
+      "statement": "Support typed recursive many-to-many requirement relations without a fixed abstraction ladder or inferred satisfaction."
+    }
+  },
+  "revision": 10,
+  "schema_version": 1,
+  "verifications": [
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-0bf07879-9bbb-421a-85ab-37f495b6e552",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-49e62b92-aada-447d-9d15-531625fa0dcc",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-8e50a634-76ae-4100-9f60-90e4552ec954",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-e0275d31-a048-4f5c-850e-40bdb647d812",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    },
+    {
+      "actor": "implementer/REQ-IMPL-5",
+      "criterion_id": "c1",
+      "dependency_digests": {
+        ".opencode/skills/requirements-reconciliation/SKILL.md": "e7be14cd1a6a1bdf5d9a058378f4f19dc4f8ec7e39811d6e30a997a33b0faba8",
+        "docs/dev/features/requirements-driven-engineering.md": "03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6",
+        "docs/dev/notes/requirement-templates.md": "262f5df8ccc273ba25cd2b89d917c1cfa6fe6032260e305e74f23f1decd2d45b",
+        "docs/plans/2026-10-29-requirements-driven-engineering.md": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
+        "docs/specs/2026-10-29-requirements-driven-engineering-design.md": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
+        "scripts/requirements.py": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
+        "scripts/requirements_lib/evidence.py": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
+        "scripts/requirements_lib/graph.py": "3541c30e04c9a5ad55771c1bf672564ff8153c5f80bb740db6bbfe11b545486e",
+        "scripts/requirements_lib/render.py": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
+        "scripts/requirements_lib/schema.py": "3e90bd7870d33b246dddf9f386975af92cb5c39e3a7039c73b50c4f12880c2a5",
+        "scripts/requirements_lib/store.py": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
+        "scripts/tests/test_requirements_demos.py": "0611bbb13a873ab804bfcf8c938900b256e94bef9a441f931e16636b12997a4d",
+        "scripts/tests/test_requirements_evidence.py": "8f2446199d4df6a280ffeed0f1659b0b14dd74b063ef0e86fd0bc7bd936264c2",
+        "scripts/tests/test_requirements_graph.py": "7cd26bf97c9f5b45fd10c6179d9017e0e9fb910ec84673bbefed96cb4b76ce63",
+        "scripts/tests/test_requirements_render.py": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
+        "scripts/tests/test_requirements_scenarios.py": "7bea7559effbb0d86091eb98f98fc9317f84918895e5a718b5b200b521879712",
+        "scripts/tests/test_requirements_store.py": "df0dcd32539810fcf60d8c08ab1af2085b54fd8c240a156206cbafac3e65a748",
+        "scripts/tests/test_requirements_workflow_contracts.py": "86342a09111253257684272417bed43709dda5dc3e97c5178a5574155bd18652"
+      },
+      "environment": "Linux; Python 3.12.3 / pytest 9.1.1; Node 18.19.1 / VitePress 1.6.4; temporary fixture repositories and current local checkout.",
+      "evidence_digest": "7281f9836f57d504804b7fbaa2566a4662580e242c8442b5352416c1828ed690",
+      "evidence_ref": {
+        "artifact_id": "ART-f9568bda-b223-48e3-8da4-752bcfde8dbd"
+      },
+      "method": "automated_test",
+      "observation": "307 requirements tests, permission checker pass, 1181 policy tests; 56 docs tests; docs build/navigation pass. Static declarations and real-tool fixtures only, not universal agent behavior, independent approval or actual merge.",
+      "procedure": "python3 -m pytest scripts/tests/test_requirements_*.py -q; make requirements-check; make opencode-check; docs npm script tests, records generation, capacity-adjusted docs build and post-build navigation. See evidence for exact observations and limits.",
+      "requirement_id": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
+      "requirement_revision": 1,
+      "result": "passed",
+      "timestamp": "2026-10-29T23:13:52Z"
+    }
+  ]
+}

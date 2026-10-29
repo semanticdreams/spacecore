@@ -8,9 +8,9 @@
 - Branch: `juicyrebel/scoter`.
 - Initial BASE: `4f607d36cfcb5031b669e847d8c7cf1be8d0d311`; initial worktree clean.
 - [Design](../specs/2026-10-29-requirements-driven-engineering-design.md).
-- Implementation plan: pending; the forward link is
-  `2026-10-29-requirements-driven-engineering.md` and it is captured at the next
-  checkpoint. No placeholder plan file was created.
+- [Implementation plan](2026-10-29-requirements-driven-engineering.md) — now
+  captured and independently reviewed (see stage history below). The original
+  forward-reference/pending state is preserved in the dated delivery history.
 - Original tool-delivered reports are retained unchanged in the private controller
   session, not copied as raw payloads into published documentation. This record
   contains privacy-reviewed summaries, identities and delivery/decision state.
@@ -663,3 +663,72 @@ source replay remains required; static prompt tests alone prove no agent behavio
   New skill invocation is not discoverable in this already-running session;
   its reviewed source is explicitly read/supplied instead. No runtime reload
   is claimed. Restart OpenCode after rollout. Task5 and final review/merge remain.
+
+## Task 5 current-task seed, demonstrations and public documentation
+
+- Assignment `REQ-IMPL-5`, implementer/current delegated author (session ID not
+  exposed), supervisor/strict SDD, branch `juicyrebel/scoter`; clean source BASE
+  `e4efadf63202b859e65496da243c5fcacce18820`. Ordinary assigned local checkpoint;
+  independent complete BASE..HEAD Task 5 review and whole-branch review still
+  required. Delivery `correction_used=0`. No publication/integration authority.
+- Explicitly read the Task 5 brief first and the new reconciliation skill source;
+  no session reload claimed. Reconciliation conclusion: extension of the current
+  explicit methodology contract, not historical Space product capture. Authority:
+  current assignment and reviewed design Authority/intent, entity/graph/trace/
+  evidence/workflow/compatibility sections. Reused all unchanged reconciled
+  architecture and Task 3 applicability rules; no new design scope or consultation.
+- Real CLI init/apply expected-revision transactions captured twelve current-task
+  obligations with opaque IDs, source excerpts and active lifecycle, linked the
+  reviewed design/plan and justified implementation/test/safe evidence references.
+  Initial assessments are explicitly partial; empirical methodology goal and actual
+  integration criteria remain unproven. Independent Task 5 review covers this new
+  seed before completion. No fabricated historical requirements or synthetic
+  maintenance/bug obligations; historical record inventories remain separate.
+- Added all fifteen named scenarios and four composite demos over temporary real
+  CLI/library operations; no mocked keyword-to-finding router. Demo C reproduces
+  an actual fixture assertion failure, corrects fixture code and records the new
+  result under the same requirement. D keeps capability verification separate from
+  empirical outcome evidence. Agent-owned source reasoning is not proven by fixtures.
+- TDD: first focused run 19 passed/1 failed for absent documentation; second run
+  20 passed/2 failed for absent seed and missing projection-temp ignore rule. Final
+  focused run 22 passed; complete requirements regression 307 passed. Existing
+  working CLI features are reused, not represented as initial RED failures.
+- Public guide/templates document actual operations, envelopes, IDs, evidence,
+  applicability bounds, strict ownership and autonomous independent artifact review,
+  historical compatibility, restart boundary and guarded actual final merge limits.
+  Added navigation from home/records/workflow and shared requirements sidebar.
+  Generated historical indexes were rerun and remained useful/current without
+  generator redesign. Current plan summary link above refreshed; old delivery
+  history preserved. Design/plan source records themselves were not edited.
+- `make opencode-check` final unfiltered run (1800000ms allowance): 307 requirements
+  tests + permission checker pass + 1181 policy tests pass (683.41s for policy).
+  Earlier `make requirements-check` passed with canonical/projection checks.
+  Docs script tests 56 passed, records generation passed, capacity-adjusted docs
+  build and post-build navigation passed (186 plans/165 specs). Detailed safe
+  evidence: [Task 5 local validation](/requirements/2026-10-29-task-5-validation).
+- Diagnosed missing locked docs installation and then a distinct default Node heap
+  limit under systematic-debugging. `npm ci`, then a 4096 MiB process heap resolved
+  them without repository source/dependency edits or bypass. Nonfatal existing
+  highlighting/chunk warnings and npm audit's 9 vulnerabilities remain disclosed.
+  No Space compile/build/constraints/runtime check applies; constraint impact
+  **not applicable**. Final data/docs checks follow snapshot refresh.
+- Self-review: preserved transaction-only canonical writes, scoped partial readiness,
+  initial honest assessments with room for later authorized progress, actual API
+  fidelity and original authority. Snapshot digests are refreshed via CLI after
+  changing docs/progress; immutable safe evidence is separate from mutable progress.
+  Future progress appenders must refresh its artifact digest, not rewrite evidence.
+  No permission/model/runtime changes, remote commands or new orchestration layer.
+- Read-only real seed reports after evidence linking: 12 requirements, 20 artifacts,
+  95 relations, 12 partial assessments and 10 current analytical passes; the two
+  empirical criteria are absent/unknown. At depth 8 / 100 paths, both selected
+  forward/inverse traces honestly truncate while retaining the inspected design/code
+  chain. Coverage retains three unaddressed constraints, one missing integration
+  evidence link and one unsupported goal. Code-scoped readiness with the three
+  selected constraints is blocked by their retained partial assessments, not cleared
+  by local tests; `grants_permissions=false`. These pending independent assessment/
+  integration obligations are not bypassed or disguised as structural corruption.
+- Next transition: independent Task 5 requirements/artifact review over complete
+  assigned BASE..HEAD, then controller-owned whole-branch review and safeguarded
+  actual remote validation/merge. This checkpoint is not approval or completion of
+  the high-level empirical goal. Current stage supersedes earlier pending summaries
+  without deleting their history.

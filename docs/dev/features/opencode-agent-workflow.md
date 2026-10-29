@@ -1,5 +1,18 @@
 # OpenCode Agent Workflow
 
+## Requirements-driven intake
+
+Reconcile intent with the [current requirements](/requirements/), original sources,
+designs and evidence before intended behavior changes. The
+[methodology/API guide](/dev/features/requirements-driven-engineering) documents
+ownership, scoped readiness and evidence limits; use the
+[templates](/dev/notes/requirement-templates) proportionally in existing handoffs.
+Strict artifact reviews advance autonomously after independent pass, not user
+artifact approval. Defects reuse governing intent; maintenance gets no synthetic
+requirement. Existing fast/live exceptions, permissions and final integration gates
+remain unchanged. Static fixtures do not prove live-agent compliance. Quit/restart
+OpenCode after reviewed prompt rollout; this page does not reload running roles.
+
 This page documents Space's shared Orca / OpenCode workflow for collaborators using the repo-local configuration. It describes how to set up a working agent environment, what the repository expects from agent-driven changes, and which pieces of the personal VM setup note are intentionally excluded from this shared guide.
 
 ## Official Orca documentation

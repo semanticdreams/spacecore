@@ -63,6 +63,10 @@ This section will eventually show short demos. The current planned gallery label
 
 ## Project State
 
+Browse [development records](/dev/development-records) and the current
+[requirements index](/requirements/) for methodology obligations and trace links,
+not inferred historical product requirements or proof of achieved outcomes.
+
 - [x] 3D runtime with scene rendering, physics, spatial widgets, and embedded surfaces
 - [x] Fennel + C++ runtime with the current layout and widget system
 - [x] Entity and graph model for state, linked objects, and views exposed through the graph
