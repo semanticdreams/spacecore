@@ -113,6 +113,49 @@ No scope expansion.
 
 ## Current gates
 
+### Implementation-plan delivery gate
+
+Assignment `REQ-IMPLEMENTATION-PLAN`, original planner session
+`ses_e795d5e5affeKjqAn25sZx3mJ0`, source `8bc0e45c`, branch
+`juicyrebel/scoter`, controller supervisor/full strict, review mode plan authoring.
+The initial plan payload is retained unchanged in the private controller session.
+Its final line contains stray tool-call delimiters, violating the raw-Markdown
+delivery contract. Dependent work stopped before semantic acceptance.
+`correction_used=1` is recorded before the one same-author format-only redelivery.
+Only removing the stray delivery delimiters is allowed; substantive content and
+range facts must be preserved. Serialization repair will not approve the plan.
+
+The same-author corrected payload was delivered, but changed substantive content
+beyond delimiter removal: it rewrote Task 2 interfaces/tests/implementation,
+changed Task 4's proposed gate commands and documentation targets, removed a global
+integration constraint and altered Task 1 implementation excerpts. Both original
+and corrected payloads remain separately retained unchanged in the private tool
+session. These are content changes, not formatting repair. The correction is
+invalid under `AGENTS.md#fail-closed-handoff-delivery`; the one allowance is
+exhausted. Neither plan was accepted, normalized, saved as an authoritative plan,
+or handed to an implementer. No second redelivery, replacement-author workaround
+or repair-counter reset is authorized.
+
+**HUMAN_DECISION_REQUIRED:** dependent planning/implementation is blocked by this
+delivery failure. Recovery requires an explicit human decision authorizing actual
+new substantive work; it is not a request to review or approve an artifact. The
+reviewed design remains valid. No production, test, agent or skill implementation
+has started, and no push, PR or merge has occurred. The controller confirmed the
+current committed range contains only the design, progress record and two generated
+record indexes. The actual implementation-plan link remains an unfulfilled forward
+reference, not evidence of a completed plan.
+
+### Independent design verification
+
+Reviewer `ses_e79519424ffe946Z4l5ftL8AZa` returned valid targeted JSON
+`status: verified` for design-fix range
+`118f27950b38b9449200cc219b44733216e7baa1..8bc0e45c947ccc663af1a820147f5b97d3dd49e9`.
+Original task range began at initial BASE. `correction_used=0`; no new findings.
+Controller confirmed four changed record/index files in the complete range and
+retained original consultation payloads. Design review is complete; implementation
+planning is not. Reported 56 passing docs-script tests belong only to the design
+record/index fix, not to any unimplemented requirements functionality.
+
 Stage history: after investigation and architectural reconciliation, the design
 stage initially recorded "design captured; commit, self-review and independent
 review pending".
