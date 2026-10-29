@@ -652,3 +652,14 @@ source replay remains required; static prompt tests alone prove no agent behavio
   Checkpoint SHA and complete review package are reported in the private task report.
   No push, fetch, PR, merge, live reload or integration performed. Quit/restart
   OpenCode after reviewed rollout; already-loaded roles remain unchanged.
+- Task 4 independent gate: reviewer `ses_e76455b4bfferfsdETKztHrE68`, assignment
+  `REQ-IMPL-4`, supervisor/strict, branch `juicyrebel/scoter`, complete range
+  `3a157e60..5d5d4cf3`, valid raw full-review JSON `pass`, `correction_used=0`,
+  all 18 files inspected, no findings. Controller authenticated retained baseline
+  and replay payloads against P1–P5 prompts and explicit revised-source supply;
+  retained completed gate/focused evidence and independent timeout diagnosis.
+  Cannot-verify items concern private execution evidence, not source defects.
+- Task 4: complete (commits `3a157e60..5d5d4cf3`, reviewer: pass).
+  New skill invocation is not discoverable in this already-running session;
+  its reviewed source is explicitly read/supplied instead. No runtime reload
+  is claimed. Restart OpenCode after rollout. Task5 and final review/merge remain.
