@@ -243,24 +243,6 @@ struct ChannelHandle
     }
 };
 
-struct SftpHandle
-{
-    sftp_session value { nullptr };
-
-    explicit SftpHandle(sftp_session sftp)
-        : value(sftp)
-    {
-    }
-
-    ~SftpHandle()
-    {
-        if (value)
-        {
-            sftp_free(value);
-        }
-    }
-};
-
 struct TunnelHandle
 {
     SocketFd listener_fd { InvalidSocketFd };
@@ -413,16 +395,58 @@ struct SftpFileResource
 
     void request_close()
     {
+        close();
+    }
+
+    int close()
+    {
         std::lock_guard<std::mutex> lock(mutex);
         if (value)
         {
-            sftp_close(value);
-            value = nullptr;
+            // libssh consumes the file even when close reports an error.
+            auto file = std::exchange(value, nullptr);
+            close_status = sftp_close(file);
         }
+        return close_status;
     }
 
     std::mutex mutex;
     sftp_file value { nullptr };
+    int close_status { SSH_OK };
+};
+
+struct SftpHandle
+{
+    sftp_session value { nullptr };
+    std::shared_ptr<SftpFileResource> file;
+
+    explicit SftpHandle(sftp_session sftp)
+        : value(sftp)
+    {
+    }
+
+    SftpHandle(const SftpHandle&) = delete;
+    SftpHandle& operator=(const SftpHandle&) = delete;
+
+    ~SftpHandle()
+    {
+        reset();
+    }
+
+    void reset()
+    {
+        // Registry removal is not a lifetime barrier: cancellation may retain
+        // another shared_ptr. Close explicitly before freeing the parent.
+        if (file)
+        {
+            file->close();
+            file.reset();
+        }
+        if (value)
+        {
+            sftp_free(std::exchange(value, nullptr));
+        }
+    }
 };
 
 struct RelayResource
@@ -871,6 +895,11 @@ public:
         input.seekg(0, std::ios::end);
         const std::streamoff total = input.tellg();
         input.seekg(0, std::ios::beg);
+        if (total < 0 || !input)
+        {
+            context.sink().emit(error_event(context.operation_id(), ErrorCode::LocalFileError, "SSH SFTP upload could not seek local file"));
+            return;
+        }
 
         SftpHandle sftp(nullptr);
         {
@@ -883,6 +912,7 @@ public:
             return;
         }
         auto output = std::make_shared<SftpFileResource>(sftp_open(sftp.value, options.remote_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600));
+        sftp.file = output;
         if (!output->valid())
         {
             context.sink().emit(error_event(context.operation_id(), ErrorCode::RemoteFileError, "SSH SFTP upload could not open remote file"));
@@ -896,6 +926,12 @@ public:
         {
             input.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
             const std::streamsize read = input.gcount();
+            if (input.bad() || (input.fail() && !input.eof()))
+            {
+                unregister_active_sftp_file(context.operation_id(), output);
+                context.sink().emit(error_event(context.operation_id(), ErrorCode::LocalFileError, "SSH SFTP upload local read failed"));
+                return;
+            }
             if (read <= 0)
             {
                 break;
@@ -937,7 +973,31 @@ public:
             unregister_active_sftp_file(context.operation_id(), output);
             return;
         }
+        // EOF/failbit from a valid short final read is not a close failure.
+        input.clear();
+        input.close();
+        if (input.fail())
+        {
+            unregister_active_sftp_file(context.operation_id(), output);
+            context.sink().emit(error_event(context.operation_id(), ErrorCode::LocalFileError, "SSH SFTP upload local close failed"));
+            return;
+        }
+        const int close_status = output->close();
+        // Capture diagnostics while both parent sessions are alive. Do not
+        // expose raw libssh messages (which may contain private remote paths).
+        const int remote_error = sftp_get_error(sftp.value);
         unregister_active_sftp_file(context.operation_id(), output);
+        sftp.reset();
+        if (!check_active(context))
+        {
+            return;
+        }
+        if (close_status != SSH_OK)
+        {
+            context.sink().emit(error_event(context.operation_id(), ErrorCode::RemoteFileError,
+                "SSH SFTP upload remote close failed (SFTP status " + std::to_string(remote_error) + ")"));
+            return;
+        }
         context.sink().emit(Event{ EventKind::SftpComplete, context.operation_id(), session_id });
         context.sink().emit(Event{ EventKind::OperationSuccess, context.operation_id(), session_id });
     }
@@ -961,6 +1021,7 @@ public:
             return;
         }
         auto input = std::make_shared<SftpFileResource>(sftp_open(sftp.value, options.remote_path.c_str(), O_RDONLY, 0));
+        sftp.file = input;
         if (!input->valid())
         {
             context.sink().emit(error_event(context.operation_id(), ErrorCode::RemoteFileError, "SSH SFTP download could not open remote file"));
@@ -1028,7 +1089,29 @@ public:
             unregister_active_sftp_file(context.operation_id(), input);
             return;
         }
+        output.flush();
+        const bool flush_failed = !output;
+        output.close();
+        if (flush_failed || !output)
+        {
+            unregister_active_sftp_file(context.operation_id(), input);
+            context.sink().emit(error_event(context.operation_id(), ErrorCode::LocalFileError, "SSH SFTP download local finalization failed"));
+            return;
+        }
+        const int close_status = input->close();
+        const int remote_error = sftp_get_error(sftp.value);
         unregister_active_sftp_file(context.operation_id(), input);
+        sftp.reset();
+        if (!check_active(context))
+        {
+            return;
+        }
+        if (close_status != SSH_OK)
+        {
+            context.sink().emit(error_event(context.operation_id(), ErrorCode::RemoteFileError,
+                "SSH SFTP download remote close failed (SFTP status " + std::to_string(remote_error) + ")"));
+            return;
+        }
         context.sink().emit(Event{ EventKind::SftpComplete, context.operation_id(), session_id });
         context.sink().emit(Event{ EventKind::OperationSuccess, context.operation_id(), session_id });
     }
