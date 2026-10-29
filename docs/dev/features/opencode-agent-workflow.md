@@ -495,6 +495,66 @@ current-base/final local checks and PR CI/integration gates remain **PENDING**;
 neither merged nor ready-to-PR status is claimed. Quit/restart OpenCode **only after
 the complete reviewed rollout**, not now; loaded sessions still retain old roles.
 
+#### Autonomous handoff recovery: controller-owned replacement
+
+The same [canonical rule](https://github.com/semanticdreams/spacecore/blob/main/AGENTS.md#fail-closed-handoff-delivery)
+now defines autonomous operational recovery: **Reject the unusable delivery,
+not the overall task.** An exhausted-correction, changed-fact, stale-snapshot,
+untrusted-scope or unavailable-author delivery is quarantined with immutable
+failure ancestry, and the receiving controller continues the task inside
+existing permissions. The controller authorizes explicit replacement work —
+typically a fresh worker, never impersonation — to complete a missing or
+unusable assessment on the same verified branch and base/head range; no
+artificial commit or range change is required. Before replacement dispatch the
+controller records, in existing handoff/progress artifacts: predecessor
+identity and immutable failure ancestry, verified current local snapshot and
+complete assigned range, original requirements and global constraints, observed
+failure with diagnosis and a concrete changed strategy, trusted source/diff
+references requiring independent investigation, established findings plus
+pending consultations/adjudications, separately labelled untrusted leads from
+unusable reports for later verification, and continuing task-wide failure
+counts with fix/consultation/resource accounting.
+
+Safeguards stay intact. Usable adverse assessments are not replaceable for
+review shopping: they keep the ordinary fixes, consultation and adjudication
+route, replacement work must cover the same complete range, and passing
+fragments never substitute for whole-range review. At two task-wide failures
+with the same signature — a format-only correction is not a substantive attempt —
+the controller records a concrete changed strategy (gather evidence, narrower
+output, decomposition, or a different inspection method) before another
+dispatch; unchanged blind retries are refused, and the task continues. Missing
+obligation records or facts block only the replacement dispatch while they are
+gathered autonomously — evidence gathering, not a human permission question.
+Evidenced actual resource/tool exhaustion, evidence unavailable after permitted
+diagnosis, or no permitted productive next step produce truthful incomplete
+status, not approval, with the concrete blocker, attempted strategies, retained
+state and unfinished obligations stated. Genuine product/API/data-policy,
+credential, safety, permission or unsafe-history decisions remain human-owned.
+Recovered replacements pass the same delivery validation and semantic gates;
+usable verdicts are still not automatic approval.
+
+**Evidence status.** Five baseline probes ran before any skill edits and
+established inconsistent routing, not a success rate: under deadline, sunk-cost
+and unavailable-user pressure, baseline 2 reproduced unwanted escalation ("until
+the human re-opens the scope"), baseline 5 called a same-scope redo ineligible
+and human-owned, baseline 1 disclosed incomplete source access, and other
+samples exposed same-range authority ambiguity. Every output was read manually
+and snapshot verification was controller-owned. The five guided probes have
+not yet run: five fresh-context probes with the same four-scenario and
+pressure structure follow the reviewed implementation, are read manually, and their safe summaries
+land in the tracked progress ledger. The design record
+[spec](../../specs/2026-10-29-autonomous-handoff-recovery-design.md#alternatives-and-reconciled-decision)
+carries the GLM proposal, expert critique and reconciled decision.
+
+**Limits.** The update ships source-contract guards, a labelled **test-only**
+offline fixture model and prompt/skill guidance. Source guards, fixtures and
+virtual probes are **not runtime enforcement**, an OpenCode hook, a report
+parser or completion proof; they illustrate policy. Valid recovered
+deliveries remain eligibility, never approval, and quarantined replacements
+consume the ordinary handling routes. OpenCode must restart after the complete
+reviewed rollout for the updated agent/skill instructions to take effect;
+running sessions retain the previously loaded policy until then.
+
 ### Fast interactive development flow
 
 `supervisor` remains the default and retains its strict workflow. Users may select

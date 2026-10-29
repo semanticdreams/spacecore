@@ -32,6 +32,13 @@ review. One same-author format-only redelivery, marked spent before dispatch, is
 not a code-fix round. Valid delivery resumes the ordinary handler, not approval;
 exhausted/stale/untrusted delivery blocks without a budget reset. Direct primaries
 retain direct fixes; report-only repair triggers no live app setup or refresh.
+Quarantined delivery is not the task's end: apply the canonical `Autonomous
+operational recovery` rule before replaying work — authorize replacement work
+for the missing/unusable assessment on the same verified branch and base/head
+range, record immutable failure ancestry and every preserved obligation, and
+keep task-wide failure counts and budgets; recovery is not a budget reset,
+review shopping or approval. Missing records block only the replacement
+dispatch while they are gathered autonomously.
 
 ## The Iron Law
 

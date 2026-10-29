@@ -160,13 +160,61 @@ bookkeeping is not a worker response-schema extension. Revalidate the correction
 against the unchanged declared contract, identity/range and protected facts before
 ordinary semantic handling; successful serialization alone grants no verdict.
 
-Block dependent work for missing/changed/stale/untrusted scope, changed substantive
-facts, or author unavailable; do not paper over gaps with paper SHAs or a new worker
-impersonating the author. After one invalid correction, block: no second request,
-rename or redispatch reset. Duplicates do not reset the allowance. A genuinely
-new authorized substantive scope/range requires explicit actual new work through
-the normal review flow, not laundering the old invalid report and not an automatic
-fresh-review loophole. Escalation may gather context but cannot manufacture a verdict.
+Autonomous operational recovery: **Reject the unusable delivery, not the
+overall task.** An exhausted-correction, changed-fact, stale-snapshot or
+unavailable-author delivery is quarantined with immutable failure ancestry, and
+the task continues autonomously under existing permissions: an unusable
+delivery is evidence about that delivery, never by itself a human permission
+question. The receiving controller (supervisor or selected `fast-dev`/`live-dev`)
+authorizes explicit replacement work — usually a fresh worker, never
+impersonation — to complete a missing or unusable assessment on the same
+verified branch and base/head range; no artificial commit or range change is
+required. Before replacement dispatch, record in existing handoff/progress
+artifacts: predecessor identity and immutable failure ancestry, verified
+current local snapshot and complete assigned range, original requirements and
+global constraints, observed failure with diagnosis and a concrete changed
+strategy, trusted source/diff references with required independent
+investigation, established findings and pending consultations/adjudications,
+separately labelled untrusted leads from unusable reports for later
+verification, and continuing task-wide failure counts with
+fix/consultation/resource accounting.
+
+Recovery stays budget- and scope-safe. These counts and obligations are
+task-wide across authors, sessions and decomposition; each genuinely new
+delivery receives its own ordinary format-correction allowance, which refunds
+no ancestor allowance or substantive fix/consultation/resource budget. Usable
+adverse assessments are not replaceable for review shopping: they keep the
+ordinary fixes, consultation and adjudication route; replacement work must
+cover the same complete range, and passing fragments never substitute for
+whole-range review. At two task-wide failures with the same signature — a
+format-only correction is not a substantive attempt — record a concrete changed
+strategy (gather evidence, narrower output, decomposition, or a different
+inspection method) before another dispatch; unchanged blind retries are
+refused, not the task. Missing obligation records or facts block only the
+replacement dispatch while they are gathered autonomously — evidence gathering,
+not a human permission question. Evidenced actual resource/tool exhaustion,
+evidence unavailable after permitted diagnosis, or no permitted productive next
+step produce truthful incomplete status, not approval, stating the concrete
+blocker, attempted strategies, retained state and unfinished obligations
+without requesting routine retry or replan authorization. Genuine
+product/API/data-policy, credential, safety, permission or unsafe-history
+decisions remain human-owned.
+
+A delivery with missing/changed/stale/untrusted scope, changed substantive facts
+or an author unavailable is quarantined — that delivery, not the task: block
+dependent work on that delivery, do not paper over gaps with paper SHAs or a new
+worker impersonating the author, and recover the task under the autonomous rule
+above.
+
+After one invalid correction there is no second request to the same author;
+**Duplicates do not reset the allowance**, and neither does a rename or a
+redispatch. A genuinely new authorized substantive scope/range requires
+explicit actual new work through the normal review flow, not laundering the old
+invalid report and not an automatic fresh-review loophole. Strict work still
+requires implementer → independent reviewer → pass; a fast/live replacement of
+an unusable observational report completes that wrap-up obligation instead of
+opening review shopping. Escalation may gather context but cannot manufacture a
+verdict.
 
 GPT expert answers and capability wrapper JSON/refusals are excluded from this GLM
 repair path: do not rewrite expert evidence/refusals or rerun privileged operations

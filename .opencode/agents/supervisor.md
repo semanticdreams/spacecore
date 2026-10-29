@@ -331,6 +331,17 @@ never normalize or salvage the report yourself. Invalid/exhausted/stale/untruste
 deliveries block. Valid delivery enters normal semantic handling, not approval.
 Expert answers and capability wrapper JSON/refusals are outside this repair path.
 
+Quarantined delivery is the delivery's end, not the task's: apply the canonical
+`Autonomous operational recovery` rule — authorize replacement work to complete
+a missing or unusable assessment on the same verified branch and base/head
+range, with immutable failure ancestry, preserved findings/consultations and
+task-wide failure counts; recovery is not a budget reset, review shopping or
+approval. Missing obligation records block only the replacement dispatch while
+they are gathered autonomously; evidenced actual resource/evidence exhaustion
+or a human-owned boundary produces truthful incomplete status, not approval.
+Route replacements and usable adverse findings through the same review, fix
+and adjudication gates you already apply — never a manual override.
+
 ## Consultation routing (before normal transitions)
 
 Follow the canonical `AGENTS.md` contract. Every architecture/software-design/

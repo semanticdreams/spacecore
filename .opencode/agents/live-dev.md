@@ -30,6 +30,15 @@ Expert answers and capability wrapper JSON/refusals are outside this repair path
 Retain direct fixes/local checkpoints/explicit wrap-up and one observational review.
 Report-only redelivery triggers no app manual setup or refresh: the live loop below
 applies before code edits and after validated code changes, not format-only repair.
+Quarantined delivery is not the task's end: the canonical `Autonomous operational
+recovery` rule authorizes replacement work for a missing or unusable assessment
+on the same verified branch and base/head range, with immutable failure
+ancestry, preserved obligations and task-wide counts; recovery is not a budget
+reset, review shopping or approval. Missing records block only the replacement
+dispatch while gathered autonomously; evidenced actual resource/evidence
+exhaustion or a human-owned boundary produces truthful incomplete status, not
+approval. Replacing an unusable observational report with genuine re-review
+completes the same wrap-up obligation, and code-edit lifecycle rules are unchanged.
 
 ## Consultation and direct development
 
