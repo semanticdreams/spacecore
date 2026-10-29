@@ -497,3 +497,40 @@ no push/PR/integration/amend/destructive Git.
   reconciled transaction/projection boundary; no redesign or unrelated changes.
   The local fix checkpoint containing this entry requires independent targeted
   verification; no approval or integration is claimed.
+- Task 3 independent gate: reviewer `ses_e7678c0e1ffeB8TudbXSvlf15a`, full review
+  `0eabab68..7672344c`, valid raw JSON (`correction_used=0`), found critical
+  canonical/projection path collision and important postcommit encoding reporting.
+  Fix round 1 `7672344c..ff5f66f5` independently verified both fixed, no new breakage.
+  Actual combined evidence 251 passing tests. Controller confirmed HEAD/tree.
+  Task 3: complete (commits `0eabab68..ff5f66f5`, reviewer: verified after full
+  review and one fix round). Not final branch approval.
+
+## Task 4 pre-edit behavioral baseline
+
+At source `ff5f66f5249e1527cc39c3f892ecc5b4385fdccf`, before any workflow edits,
+controller loaded writing-skills, TDD and customize-opencode and dispatched actual
+read-only fresh-context probes. Original prompts/responses retained unchanged in
+private tool sessions; safe observations below, not claims of runtime enforcement.
+Both explorer Markdown deliveries included Findings/Patterns/Uncertainties and
+source identity; `correction_used=0`. Branch identity supplied by controller.
+
+- `REQ-PROBE-BASE-A`, explorer `ses_e766ffc24ffenMl1v13oZTNYLg`, read existing
+  supervisor plus brainstorming/planning/finishing. P1 rejected early goal credit,
+  but explicitly found `derived_from` undefined and left its meaning conditional.
+  P2 kept empirical goal pending without global freeze. P3 correctly rejected user
+  artifact approval under direct user authority and continued execution, but cited
+  contradictory supervisor approval wording. These are baseline successes and
+  missing-contract observations, not fabricated behavioral failures.
+- `REQ-PROBE-BASE-B`, explorer `ses_e766ffbf0ffej32uUiAPeZqYu0`, read existing
+  supervisor/debug-advisor/debugging/SDD. P4 correctly reused existing intent for
+  implementation defect and avoided synthetic maintenance requirements, but lacked
+  formal identity/link guidance. P5 unnecessarily chose HUMAN_DECISION_REQUIRED
+  for explicit never-auto-send intent versus contrary technical design: no evidence
+  of a policy change was supplied. This is the observed authority/reconciliation
+  gap to address: inspect provenance, retain authoritative intent and classify a
+  design defect autonomously unless actual unresolved policy ambiguity remains.
+  Deadline, sunk-cost and report-per-bug pressures did not defeat other safeguards.
+
+New guidance must make the missing entity/semantic/reconciliation contract concrete,
+remove stale approvals and preserve the demonstrated working safeguards. Revised
+source replay remains required; static prompt tests alone prove no agent behavior.
