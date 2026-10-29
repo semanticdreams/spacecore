@@ -25,7 +25,8 @@ class RequirementsError(Exception):
     def envelope(self):
         return {
             "status": "error",
-            "revision": None,
+            "revision": (self.details.get("committed_revision")
+                         if self.code == "projection-stale" else None),
             "error": {
                 "code": self.code,
                 "message": str(self),

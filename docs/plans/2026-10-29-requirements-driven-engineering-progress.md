@@ -353,3 +353,112 @@ no push/PR/integration/amend/destructive Git.
   151 store/evidence tests passing. Controller verified exact HEAD and clean tree.
 - Task 2: complete (commits `02c5f0ad..901c2a41`, reviewer: verified after full
   review and one accepted fix round). This is not branch completion or publication.
+
+## Task 3 implementation draft — bounded readiness consultation pending
+
+- Assignment `REQ-IMPL-3`, implementer/current delegated session (session identifier
+  not exposed), supervisor/strict SDD, branch `juicyrebel/scoter`; verified BASE and
+  current HEAD `0eabab68cbe13f2b2ca8e4ff3b78e279778bd547`. Fresh substantive work,
+  not a format-only redelivery. Initial tree/index clean; no checkpoint yet.
+- Added pending pure-Python graph/render modules and focused tests; integrated
+  generic query/render dispatch and locked post-commit projection refresh. Draft
+  reports retain orientation, rationale, confidence, cycle diagnostics and actual
+  bounds, separating coverage, recorded claims and content-current observations.
+- Actual initial TDD RED: 42 failed/8 passed for missing graph/render features;
+  initial GREEN 50 passed. Expanded RED isolated candidate-constraint promotion
+  and indirect design-justification gaps; fixed and regression-tested. Additional
+  RED/GREEN cases cover projection locator safety, stale-write envelope semantics
+  and repeated inverse realization paths. An evidence fixture initially used an
+  empirical method for an analytical criterion; corrected the fixture after
+  inspecting the schema rather than weakening validation.
+- Final focused command before pause: `rtk proxy python3 -m pytest
+  scripts/tests/test_requirements_graph.py scripts/tests/test_requirements_render.py
+  scripts/tests/test_requirements_store.py scripts/tests/test_requirements_evidence.py
+  -q` — **212 passed**, no warnings. Compile/build/Space constraints not applicable;
+  constraint impact **not applicable**. Diff whitespace check passed.
+- **NEEDS_CONTEXT:** self-review identified that direct-only material-constraint
+  applicability rejects a governing design constraint when the supplied change
+  scope is linked code. Arbitrary graph reachability is not a safe substitute:
+  contributions/conflicts/shared locators must not acquire normative authority.
+  A canonical bounded consultation request and original source paths are retained
+  in the private Task 3 report. Proposed typed, explicit solution/decomposition/
+  constraint paths require reconciliation before dependent implementation; no
+  transitive-applicability change has been made or represented as reviewed.
+- Pending task source/tests and this safe summary are unstaged/uncommitted; no
+  unrelated state changed. No complete review package/checkpoint exists, because
+  HEAD still equals BASE and a range-only package would omit the draft. Resume
+  this implementer after evidenced reconciliation, finish scoped readiness/tests,
+  validate/self-review/checkpoint and then obtain independent full-range review.
+  No task completion, approval, publication or integration is claimed.
+- Task 3 delivery gate: `REQ-IMPL-3`, implementer
+  `ses_e7692d05fffemZDLntM01IAdHc`, supervisor/strict SDD, `juicyrebel/scoter`,
+  BASE=HEAD `0eabab68cbe13f2b2ca8e4ff3b78e279778bd547`, pending-work authoring mode.
+  Initial NEEDS_CONTEXT report retained privately at `task-3-report.md` and in the
+  tool session. Its consultation uses `proposal` instead of the canonical
+  `glm_proposal` field. Dependent consultation/implementation stopped;
+  `correction_used=1` spent before same-author format-only redelivery. Only the
+  canonical field-name serialization may change; substantive proposal, evidence,
+  pending range and non-approving state must remain unchanged.
+- Task 3 same-author corrected request retained separately in private tool delivery:
+  only `proposal` → `glm_proposal` changed, all substantive fields unchanged;
+  eligible for normal consultation handling, not approval (`correction_used=1`).
+- Expert `ses_e76833a2effeuqC7dz6Ugn46x8` inspected original design, graph draft,
+  endpoint validation and focused tests. Scope: material constraint applicability
+  to explicit change scope. GLM proposed downward solution/decomposition and
+  constraint chains. Critique: explicit relation confidence alone does not establish
+  normative inheritance; `derived_from` is not refinement and `constrains` is not
+  declared transitive in the reviewed design (lines 74–86, 111–124, 175–189).
+- Evidenced reconciliation before dependent implementation: accept scope-self or
+  explicit constrains followed only by downward inverse refines/addresses/realizes/
+  implements paths, stopping at scope. Exclude upward/sibling propagation,
+  derived_from-only, repeated constrains and other impact-only relations from
+  established applicability. They remain investigation context, not authority.
+  Preserve listed vs established constraint IDs and directed witness/confidence;
+  valid unlinked/candidate/excluded/truncated applicability is unknown and requires
+  investigation, not invalid data, a violation blocker or clearance. Existing
+  independent blockers still block. Direct explicit discovery remains bounded;
+  unrelated empirical criteria never expand into global blockers. Add regressions
+  for accepted paths, excluded paths and bounds, then return to the same implementer.
+  Advice is not independent review or checkpoint approval.
+
+### Task 3 substantive resume and implementation evidence
+
+- Same assignment `REQ-IMPL-3`, implementer `ses_e7692d05fffemZDLntM01IAdHc`,
+  supervisor/strict SDD, branch `juicyrebel/scoter`, original BASE
+  `0eabab68cbe13f2b2ca8e4ff3b78e279778bd547`. Pending work and all prior progress
+  entries preserved. Delivery `correction_used=1` remains spent; the original
+  private report/request is unchanged, with a new substantive report appended.
+- Implemented the evidenced reconciliation above, not the original broader
+  proposal: scope-self or one constrains followed only by downward inverse
+  refines/addresses/realizes/implements, stopping at scope, all explicit to
+  establish applicability. Typed endpoint validation remains the existing full
+  ledger validation; endpoint validity alone never implies transitivity.
+- Requested and established constraints are reported separately, with original
+  directed witness paths, per-path confidence, reasons and explicit bounds.
+  Excluded/candidate/unlinked/truncated applicability stays unknown and requires
+  investigation; broader paths, cycles and shared-locator potential effects are
+  separate context, not authority or clearance. Existing independent blockers
+  dominate unknowns. Direct explicit discovery is retained; unrelated empirical
+  parents never become global blockers. Constraint criteria are applicability-
+  gated even when individually selected as material observations.
+- Actual resume TDD RED: `rtk proxy python3 -m pytest
+  scripts/tests/test_requirements_graph.py -k reconciled -q --tb=short` —
+  **22 failed/1 passed/54 deselected**, for missing inherited applicability,
+  unknown reporting, requested/established separation and readiness bounds.
+  Initial implementation left one test fixture with an independent unresolved
+  conflict; recorded a scoped disposition in that fixture to isolate applicability,
+  preserving production conflict blocking and its separate dominance regression.
+- Additional self-review REDs: **3 failed** for direct-discovery starvation under
+  small bounds and criterion-selection bypass of applicability; **1 failed** for
+  missing shared-locator context reporting. Each is covered by final GREEN.
+- Final validation: graph/render **87 passed**; combined graph/render/store/evidence
+  **238 passed**, no warnings, using `rtk proxy python3 -m pytest` on the four
+  assigned/regression Python files. Whitespace diff check passed. Compile/build/
+  Space constraints are not applicable to this pure-Python tooling surface;
+  constraint impact **not applicable**. No full Space runtime suite needed.
+- Self-review completed across traversal bounds/cycles, authority/confidence,
+  coverage-vs-satisfaction, projection atomicity and committed-revision errors,
+  read-only queries and strict malformed input. No unresolved implementation
+  concern identified. Source/tests plus this preserved safe coordination record
+  form the local Task 3 checkpoint; independent full BASE..HEAD review is still
+  required. No approval, publication, integration or remote evidence claimed.

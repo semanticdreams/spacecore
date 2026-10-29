@@ -228,6 +228,9 @@ def apply(repo_root, request, ledger_path=None):
         state["revision"] = committed + 1
         schema.validate_ledger(state, root)
         _atomic_write(path, state)
+        from .render import refresh_committed
+
+        refresh_committed(root, state)
     return {"status": "ok", "revision": state["revision"], "result": {"ops": results}}
 
 
@@ -240,13 +243,19 @@ def query(repo_root, request, ledger_path=None):
             "Query request must be an object with exactly 'op' and 'args'.",
             {"keys": sorted(request) if isinstance(request, dict) else None},
         )
-    if request["op"] != "get":
+    from .graph import OPS, report
+
+    if not isinstance(request["op"], str) or request["op"] not in ("get", *OPS):
         raise RequirementsError(
             "invalid-op",
-            f"Unknown query operation {request['op']!r}; Task 1 supports ('get',).",
+            f"Unknown query operation {request['op']!r}; supported: {('get', *OPS)}.",
             {"op": request["op"]},
         )
     args = request["args"]
+    if request["op"] != "get":
+        ledger = load_ledger(root, ledger_path)
+        return {"status": "ok", "revision": ledger["revision"],
+                "result": report(ledger, root, request["op"], args)}
     if (not isinstance(args, dict) or set(args) != {"id"}
             or not isinstance(args.get("id"), str) or not args["id"].strip()):
         raise RequirementsError(

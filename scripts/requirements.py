@@ -3,8 +3,7 @@
 
 Verbs: ``init``, ``apply``, ``query``, ``validate``, ``render``. Reads never
 initialize/repair/write; errors are machine-readable envelopes with nonzero
-exit. ``render`` is implemented by Task 3's projection module and reports
-``not-implemented`` until then — it never claims success falsely.
+exit. ``render --check`` checks the deterministic projection without writing.
 """
 
 import argparse
@@ -44,6 +43,8 @@ def _build_parser():
         child.add_argument("--ledger", default=None,
                            help="root-relative or absolute ledger path")
         child.set_defaults(verb=verb)
+        if verb == "render":
+            child.add_argument("--check", action="store_true")
         if verb in ("apply", "query"):
             child.add_argument("--request", default=None)
             child.add_argument("--stdin", action="store_true")
@@ -95,12 +96,9 @@ def _dispatch(args):
         return {"status": "ok", "revision": ledger["revision"],
                 "result": {"valid": True}}
     if args.verb == "render":
-        raise RequirementsError(
-            "not-implemented",
-            "render is delivered by the graph/report tasks (Task 3) and never "
-            "claims success before the deterministic projection exists.",
-            {"verb": "render"},
-        )
+        from requirements_lib.render import render
+
+        return render(args.repo_root, args.ledger, args.check)
     raise RequirementsError("invalid-request", f"Unknown verb {args.verb!r}.", {})
 
 
