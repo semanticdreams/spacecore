@@ -39,7 +39,7 @@
             (if state.title (.. "\nTitle: " (tostring state.title)) "")))
       (= ptype "patch")
       (json.dumps {:files part.files :hash part.hash})
-      (.. "[" ptype "] (see raw part)")))
+      (json.dumps part)))
 
 (fn detail-text [node part]
   (local ptype (if part.type (tostring part.type) "?"))
@@ -53,7 +53,7 @@
         (json.dumps {:callID part.callID
                      :attachments state.attachments
                      :metadata part.metadata}))
-      "(see raw part)"))
+      (json.dumps part)))
 
 (fn tool-state-text [key part]
   (local ptype (if part.type (tostring part.type) "?"))
