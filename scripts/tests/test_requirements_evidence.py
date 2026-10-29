@@ -753,7 +753,7 @@ def test_prior_snapshots_are_deep_validated(lib, inited):
           "acceptance_criteria": [], "bogus": 1}, "unknown-field"),
     )
     for prior, expected in cases:
-        record = h.make_requirement(history=[_revision_entry(prior)])
+        record = h.make_requirement(revision=2, history=[_revision_entry(prior)])
         ledger = h.base_ledger()
         ledger["requirements"][record["id"]] = record
         h.write_ledger(inited, ledger)
@@ -763,7 +763,7 @@ def test_prior_snapshots_are_deep_validated(lib, inited):
     minimal = {"statement": "Old text.", "classification": "capability",
                "acceptance_criteria": [{"id": "c1", "text": "Old criterion.",
                                         "applicability": "analytical"}]}
-    record = h.make_requirement(history=[_revision_entry(minimal)])
+    record = h.make_requirement(revision=2, history=[_revision_entry(minimal)])
     ledger = h.base_ledger()
     ledger["requirements"][record["id"]] = record
     h.write_ledger(inited, ledger)
@@ -815,7 +815,7 @@ def test_supersede_requires_authority_and_rolls_back(inited):
 def test_prior_snapshot_rationale_has_live_validation(lib, inited):
     prior = {"statement": "Old", "classification": "capability",
              "acceptance_criteria": [], "rationale": []}
-    record = h.make_requirement(history=[_revision_entry(prior)])
+    record = h.make_requirement(revision=2, history=[_revision_entry(prior)])
     ledger = h.base_ledger()
     ledger["requirements"][record["id"]] = record
     h.write_ledger(inited, ledger)
@@ -827,7 +827,7 @@ def test_retained_snapshots_preserve_original_required_fields(lib, inited, missi
     entry = _revision_entry({"statement": "Old", "classification": "capability",
                              "acceptance_criteria": []})
     del entry["prior"][missing]
-    record = h.make_requirement(history=[entry])
+    record = h.make_requirement(revision=2, history=[entry])
     ledger = h.base_ledger()
     ledger["requirements"][record["id"]] = record
     h.write_ledger(inited, ledger)
@@ -841,3 +841,109 @@ def test_superseded_mark_requires_lineage(lib, inited):
     ledger["requirements"][record["id"]] = record
     h.write_ledger(inited, ledger)
     expect_error(lambda: lib.load_ledger(str(inited)), "invalid-supersession")
+
+
+@pytest.mark.parametrize("collection", ["assessments", "verifications"])
+def test_load_rejects_future_snapshot_evidence(lib, inited, collection):
+    rid = create_req(inited)
+    apply_op(inited, assessment_op(rid))
+    apply_op(inited, verification_op(rid))
+    apply_op(inited, op_args("revise-requirement", id=rid, reason="Clarify",
+                            statement="Revision two."))
+    ledger = read_ledger(inited)
+    entry = ledger["requirements"][rid]["history"][0]
+    entry.update(from_revision=9, to_revision=10)
+    ledger[collection][0]["requirement_revision"] = 9
+    ledger["verifications" if collection == "assessments" else "assessments"] = []
+    h.write_ledger(inited, ledger)
+    expect_error(lambda: lib.load_ledger(inited), "invalid-record")
+
+
+@pytest.mark.parametrize("pairs,current", [
+    ([(0, 1)], 1), ([(-1, 0)], 1), ([(1, 1)], 1),
+    ([(1, 3)], 3), ([(1, 2)], 1), ([], 2),
+    ([(1, 2)], 3), ([(2, 3)], 3),
+    ([(1, 2), (1, 2)], 2),
+    ([(2, 3), (1, 2)], 3),
+    ([(True, 2)], 2), ([(1, 2.0)], 2),
+])
+def test_load_rejects_inconsistent_revision_sequence(lib, inited, pairs, current):
+    history = []
+    for index, (from_revision, to_revision) in enumerate(pairs):
+        entry = _revision_entry({"statement": f"Snapshot {index}",
+                                 "classification": "capability",
+                                 "acceptance_criteria": []})
+        entry.update(from_revision=from_revision, to_revision=to_revision)
+        history.append(entry)
+    record = h.make_requirement(revision=current, history=history)
+    ledger = h.base_ledger()
+    ledger["requirements"][record["id"]] = record
+    h.write_ledger(inited, ledger)
+    expect_error(lambda: lib.load_ledger(inited), "invalid-record")
+
+
+def test_valid_multirevision_evidence_survives_load(lib, inited):
+    rid = create_req(inited)
+    for revision in (1, 2, 3):
+        apply_op(inited, assessment_op(rid, requirement_revision=revision))
+        apply_op(inited, verification_op(rid, revision=revision))
+        if revision == 1:
+            apply_op(inited, op_args("transition-requirement", id=rid, to="active",
+                                    reason="Activate", authority="Explicit intent"))
+        if revision < 3:
+            apply_op(inited, op_args("revise-requirement", id=rid,
+                                    reason="Clarify", statement=f"Revision {revision + 1}"))
+    ledger = lib.load_ledger(inited)
+    assert [v["requirement_revision"] for v in ledger["verifications"]] == [1, 2, 3]
+    assert [a["requirement_revision"] for a in ledger["assessments"]] == [1, 2, 3]
+    assert report(inited, rid)["c1"]["requirement_revision"] == 3
+
+
+@pytest.mark.parametrize("mutation,code", [
+    ("missing", "invalid-supersession"),
+    ("rejected-origin", "invalid-supersession"),
+    ("duplicate", "invalid-supersession"),
+    ("later-transition", "invalid-supersession"),
+    ("authority", "invalid-record"),
+    ("reason", "invalid-record"),
+])
+def test_superseded_lineage_requires_valid_retained_transition(lib, inited, mutation, code):
+    old = create_req(inited)
+    replacement = create_req(inited)
+    apply_op(inited, op_args("supersede-requirement", old_id=old,
+                            replacement_id=replacement, reason="Replace",
+                            authority="Explicit intent", provenance=h.provenance()))
+    ledger = read_ledger(inited)
+    history = ledger["requirements"][old]["history"]
+    if mutation == "missing":
+        history.clear()
+    elif mutation == "rejected-origin":
+        history[0]["from_lifecycle"] = "rejected"
+    elif mutation == "duplicate":
+        history.append(dict(history[0]))
+    elif mutation == "later-transition":
+        history.append({**history[0], "from_lifecycle": "superseded",
+                        "to_lifecycle": "active"})
+    else:
+        history[0][mutation] = " "
+    h.write_ledger(inited, ledger)
+    expect_error(lambda: lib.load_ledger(inited), code)
+
+
+def test_supersession_chain_retains_transition_with_retracted_lineage(lib, inited):
+    old, replacement, latest = [create_req(inited) for _ in range(3)]
+    apply_op(inited, op_args("transition-requirement", id=old, to="active",
+                            reason="Activate", authority="Explicit intent"))
+    for predecessor, successor in ((old, replacement), (replacement, latest)):
+        apply_op(inited, op_args("supersede-requirement", old_id=predecessor,
+                                replacement_id=successor, reason="Replace",
+                                authority="Explicit intent", provenance=h.provenance()))
+    relation_id = read_ledger(inited)["relations"][0]["id"]
+    apply_op(inited, op_args("retract-relation", id=relation_id,
+                            reason="Retain historical lineage only"))
+    ledger = lib.load_ledger(inited)
+    assert ledger["relations"][0]["retracted"] is True
+    for rid in (old, replacement):
+        record = ledger["requirements"][rid]
+        assert record["lifecycle"] == "superseded"
+        assert record["history"][-1]["to_lifecycle"] == "superseded"

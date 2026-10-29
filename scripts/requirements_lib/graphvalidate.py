@@ -182,7 +182,8 @@ def check_supersession_coupling(ledger):
     terminal-superseded (the supersede operation sets both atomically), and a
     superseded requirement must retain at least one ``supersedes`` lineage edge
     (retracted lineage still counts, because terminal records never resurrect
-    and lineage is never silently erased).
+    and lineage is never silently erased). The terminal state must also retain
+    its grounded transition, not merely a manually set lifecycle flag.
     """
     all_targets = set()
     for relation in ledger["relations"]:
@@ -207,6 +208,20 @@ def check_supersession_coupling(ledger):
                         f"Requirement {record_id} is superseded but no "
                         "supersedes relation targets it.",
                         {"record_id": record_id})
+        transitions = [entry for entry in record["history"]
+                       if entry["kind"] == "transition"]
+        supersessions = [entry for entry in transitions
+                         if entry["to_lifecycle"] == "superseded"]
+        if record["lifecycle"] == "superseded":
+            if (len(supersessions) != 1 or transitions[-1] is not supersessions[0]
+                    or supersessions[0]["from_lifecycle"] not in ("proposed", "active")):
+                schema.fail("invalid-supersession",
+                            f"Requirement {record_id} must retain one final valid "
+                            "transition into superseded.", {"record_id": record_id})
+        elif supersessions:
+            schema.fail("invalid-supersession",
+                        f"Requirement {record_id} retains a supersession transition "
+                        "but is not terminal-superseded.", {"record_id": record_id})
 
 
 def validate_graph(ledger, repo_root):

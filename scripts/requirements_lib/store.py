@@ -364,7 +364,6 @@ def _op_revise_requirement(state, args, actor, root):
         if key in args:
             updated[key] = args[key]
     updated["revision"] = record["revision"] + 1
-    schema.validate_requirement(updated, f"requirements.{updated['id']}")
     updated["history"].append({
         "kind": "revision",
         "from_revision": record["revision"],
@@ -374,6 +373,7 @@ def _op_revise_requirement(state, args, actor, root):
         "date": _op_date(args, "revise-requirement"),
         "prior": prior,
     })
+    schema.validate_requirement(updated, f"requirements.{updated['id']}")
     state["requirements"][record["id"]] = updated
     return {"op": "revise-requirement", "id": record["id"],
             "revision": updated["revision"]}

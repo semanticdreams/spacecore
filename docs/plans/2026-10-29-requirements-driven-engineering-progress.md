@@ -310,3 +310,31 @@ no push/PR/integration/amend/destructive Git.
   checkpoint; full `BASE..HEAD` independent review is still required. No approval,
   publication, integration or remote validation is claimed. Private task report
   and complete range review package are delivered to the controller separately.
+
+### Task 2 accepted integrity fixes — round 1
+
+- Assignment `REQ-IMPL-2`, supervisor/strict SDD, branch `juicyrebel/scoter`;
+  verified FIX_BASE `f14f6771a36a28d9ed0f9cc6d0f92352f393a115`;
+  original BASE remains `02c5f0ad062898d00ce63469251a8134b4440f4f`.
+  Independent full review returned accepted important findings R1-1 and R1-2.
+  Delivery `correction_used=0` for the implementer/reviewer; this is code-fix
+  round 1, not a delivery repair or approval.
+- R1-1: retained normative snapshots must form the ordered, positive, single-step
+  sequence from revision 1 to the current revision before evidence coupling.
+  Duplicate/conflicting snapshots, future snapshots, gaps and inconsistent current
+  revisions now fail explicitly. Revision operations append the snapshot before
+  validating the completed candidate, preserving valid multi-revision transactions.
+- R1-2: a superseded record must retain one final transition into superseded from
+  proposed/active as well as lineage. Existing schema checks enforce its nonempty
+  authority/reason. Missing, duplicated or invalid terminal transitions fail;
+  valid chains and retracted historical lineage remain accepted.
+- Actual TDD RED: 14 failed/8 passed in the new focused selection; after isolating
+  the future-reference fixture from unrelated historical evidence, both future
+  assessment/verification reproducers also failed as intended (2 failed).
+  GREEN: focused selection **22 passed**; complete required Python checks
+  **151 passed**, no warnings (`test_requirements_store.py` and
+  `test_requirements_evidence.py`). Space compile/build/constraints not applicable;
+  constraint impact **not applicable**. Diff whitespace check passed.
+- Self-review found no unresolved assigned defect. Reused the existing history/
+  lifecycle contract; no redesign or unrelated changes. The checkpoint containing
+  this entry is ready for independent targeted verification, not approved.

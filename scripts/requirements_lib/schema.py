@@ -227,6 +227,7 @@ def validate_acceptance_criteria(criteria, where):
 
 
 def validate_history(record, where):
+    expected_revision = 1
     for index, entry in enumerate(record.get("history", [])):
         spot = f"{where}.history[{index}]"
         kind = None
@@ -237,11 +238,15 @@ def validate_history(record, where):
             _check_keys(entry, REVISION_HISTORY_FIELDS, (), spot)
             from_rev, to_rev = entry["from_revision"], entry["to_revision"]
             if not (_int(from_rev, f"{spot}.from_revision")
-                    and _int(to_rev, f"{spot}.to_revision") and from_rev <= to_rev):
+                    and _int(to_rev, f"{spot}.to_revision")
+                    and from_rev == expected_revision and to_rev == from_rev + 1):
                 fail("invalid-record",
-                     f"{spot} revisions must be integers with from_revision <= to_revision.",
-                     {"from_revision": from_rev, "to_revision": to_rev})
+                     f"{spot} must advance retained revision {expected_revision} "
+                     "by exactly one, without gaps or duplicate snapshots.",
+                     {"from_revision": from_rev, "to_revision": to_rev,
+                      "expected_revision": expected_revision})
             validate_prior_snapshot(entry["prior"], f"{spot}.prior")
+            expected_revision = to_rev
         elif kind == "transition":
             _check_keys(entry, TRANSITION_HISTORY_FIELDS, (), spot)
             if entry["from_lifecycle"] not in LIFECYCLES or entry["to_lifecycle"] not in LIFECYCLES:
@@ -260,6 +265,11 @@ def validate_history(record, where):
         if not valid_date(entry["date"]):
             fail("invalid-record", f"{spot}.date must be an ISO 'YYYY-MM-DD' date.",
                  {"date": entry["date"]})
+    if expected_revision != record["revision"]:
+        fail("invalid-record",
+             f"{where}.history must retain every revision before the current revision.",
+             {"retained_revision": expected_revision,
+              "current_revision": record["revision"]})
 
 
 def validate_requirement(record, where):
