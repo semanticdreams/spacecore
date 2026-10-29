@@ -199,3 +199,52 @@ design, preserved the five-task decomposition, and captured the complete plan at
 `2026-10-29-requirements-driven-engineering.md`. No failed draft was accepted as a
 plan. Independent plan review remains pending. Original/corrected/substantive
 reports are retained separately in the private session.
+
+## Implementation-plan gate and execution
+
+Plan checkpoint `69ad4594219df524037f53918f198eb54ff1c555` follows controller
+self-review. Independent reviewer `ses_e792d3913ffe9sC8EzGSmgf7Vj` returned
+valid full JSON `status: pass` over `be361912..69ad4594`, `correction_used=0`.
+Only a minor endpoint clarification was noted: constraint-to-constraint is already
+allowed because a constraint is a requirement; make that explicit in the table
+during Task 1 and cover it with tests. No architectural change or blocker.
+Generated indexes/forward links remain scheduled documentation work.
+
+Task 1 assignment `REQ-IMPL-1`, source BASE `69ad4594219df524037f53918f198eb54ff1c555`,
+branch `juicyrebel/scoter`, controller supervisor/SDD, ordinary local checkpoints,
+full-range independent review required. Controller progress-only entry is pending
+and must be included only as assigned coordination documentation, not discarded.
+
+## Task 1 worker implementation evidence (`REQ-IMPL-1`)
+
+Implementer handoff identity: implementer (specific structured worker session;
+the session identifier was not self-recoverable in its environment), model
+GLM (`opencode-go/glm-5.3-flash`), strict SDD flow, ordinary local checkpoints,
+no push/PR/integration/amend/destructive Git.
+
+- Source snapshot: plan checkpoint `69ad4594219df524037f53918f198eb54ff1c555`
+  on `juicyrebel/scoter` (assigned BASE). Scope: Task 1 of
+  `docs/plans/2026-10-29-requirements-driven-engineering.md` only, with the
+  accepted minor finding R1-1 (explicit constraint-to-constraint in the
+  endpoint table) - no prompt/skill edits (Task 4 serializes those).
+- Task checkpoint: `feat(scripts): add transactional requirements ledger`
+  covering the full `BASE..HEAD` range; review range is the complete task
+  range, not a single commit.
+- TDD evidence: focused RED run of
+  `python3 -m pytest scripts/tests/test_requirements_store.py -q` before
+  implementation (1 failed + 70 setup errors: the adapter/library did not
+  exist), then GREEN `71 passed` three consecutive runs for concurrency
+  stability. Coverage rationale in the task report file: CLI subprocess,
+  real two-writer race, monkeypatched failed `os.replace`, in-process strict
+  load rejections.
+- Delivery status: initial implementer report delivered unreviewed as
+  `task-1-report.md` in the private SDD workspace; format corrections at
+  `correction_used=0` (retained delivery errors: none recorded by author).
+- R1-1 applied: plan endpoint `constrains` row extended to "requirement
+  (including another constraint)" and covered by
+  `test_constraint_to_constraint_is_permitted`.
+- Open for later tasks: Task 2 evidence arrays (record-level validation and
+  recording ops), Task 3 `render`/projection replacing the current explicit
+  `not-implemented` CLI verb response, no canonical ledger seeded yet by
+  design before the Task 5 gate.
+

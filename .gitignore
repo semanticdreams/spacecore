@@ -2,6 +2,9 @@
 gl.log
 .env
 /prof
+# Requirements ledger local lock/temp siblings (canonical ledger.json stays tracked)
+docs/requirements/ledger.json.lock
+docs/requirements/.ledger.json.*.tmp
 # Private reports, raw handoffs and scratch diffs only. Durable specs/plans and
 # progress ledgers belong in tracked docs/, never solely in this workspace.
 .superpowers/

@@ -44,7 +44,7 @@
 | Relation | Endpoints |
 | --- | --- |
 | `refines`, `derived_from`, `contributes_to`, `depends_on`, `conflicts_with`, `supersedes` | requirement → requirement |
-| `constrains` | constraint requirement → requirement/design/implementation spec |
+| `constrains` | constraint requirement → requirement (including another constraint)/design/implementation spec |
 | `addresses` | design/implementation spec → requirement |
 | `realizes` | implementation spec → design |
 | `implements` | code → implementation spec |

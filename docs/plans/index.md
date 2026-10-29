@@ -13,6 +13,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 
 ### 2026-10
 
+- 2026-10-29 — [Goal-aware requirements-driven engineering Implementation Plan](./2026-10-29-requirements-driven-engineering.md)
 - 2026-10-25 — [Current Layout Boundary Diagnostic Implementation Plan](./2026-10-25-current-layout-boundary-diagnostic.md)
 - 2026-10-25 — [GLM-Default Expert Consultation Implementation Plan](./2026-10-25-glm-default-expert-consultation.md)
 - 2026-10-25 — [Minimal Interactive Canonical Candidates Implementation Plan](./2026-10-25-interactive-canonical-candidates.md)
