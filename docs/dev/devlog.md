@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-28
+[Workflow-backed agent sessions](/dev/features/workflow-backed-agent-sessions) expose live OpenCode sessions — sessions, messages and message parts — as first-class graph topology, so [the graph app](/dev/features/opencode-agent-workflow) can inspect real running agent state instead of inferred summaries, with capability wiring aligned to the exact long-term branches. [Development records](/dev/development-records) become tracked, browsable, cross-linked documentation: specs and plans indexes are generated automatically, record navigation is enforced in CI, and durable progress stays out of ignored scratch directories — grounding [the live-dev workflow](/dev/features/live-dev) in reviewable history rather than ephemeral session dumps.
+
 ## 2026-10-27
 [Nonvisual graph capabilities](/dev/features/graph-capabilities) expose stored texts and directed relationships without opening views or changing map membership, while shared revision-aware editors reject stale saves and preserve attempted input. [Record publication](/dev/features/record-publication) strengthens the shared persistence boundary with explicit committed outcomes and a Wine bridge to the POSIX core, keeping recovery separate from presentation. Native hashing, constraint-selection improvements and portable test fixtures support this broader access; [recorded Wine validation](/dev/notes/windows-wine-build-and-test#current-publication-contract-measured-wine-acceptance-below) reached 4,867 passing tests at its measured revision, without claiming native Windows security certification.
 
