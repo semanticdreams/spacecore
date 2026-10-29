@@ -66,13 +66,33 @@ def test_canonical_autonomous_recovery():
 
 
 def test_canonical_recovery_routing_terms():
+    # The rename/redispatch refusal phrase from review R1-1 is prose-guarded;
+    # fixtures do not model rename/redispatch identities, only counts.
     rule = section("AGENTS.md", "### Fail-closed handoff delivery")
     for term in ("replacement work", "quarantine", "task-wide",
                  "failures with the same signature", "changed strategy", "review shopping",
                  "ordinary fixes, consultation and adjudication", "evidence gathering",
+                 "neither does a rename or a redispatch",
+                 "attempt count alone never terminates the task",
                  "not a human permission question", "not approval",
                  "no artificial commit or range change"):
         assert term in rule, f"canonical recovery rule missing {term!r}"
+
+
+def test_supervisor_core_workflow_has_no_routine_artifact_approval_gate():
+    body = text(".opencode/agents/supervisor.md")
+    core = " ".join(body.split("## Core Workflow", 1)[1].split("## Discipline", 1)[0].split())
+    for banned in ("get design approval", "present for human approval"):
+        assert banned not in core, banned
+    for term in ("no routine user design-artifact approval",
+                 "no routine user plan-artifact approval",
+                 "unresolved ambiguity", "permission prompt",
+                 "explicit user-requested checkpoint",
+                 "product/API/data-policy decisions",
+                 "genuine blockers"):
+        assert term in core, f"core workflow missing {term!r}"
+    # Strict review ownership is unchanged outside this alignment.
+    assert "`implementer` → `reviewer` → pass" in body
 
 
 @pytest.mark.parametrize("name", CONTROLLERS)
@@ -104,8 +124,10 @@ def test_canonical_doc_has_recovery_heading_beside_frozen_history():
     new = section("docs/dev/features/opencode-agent-workflow.md", DOC_HEADING)
     for term in ("AGENTS.md#fail-closed-handoff-delivery",
                  "Reject the unusable delivery", "same verified branch", "immutable failure ancestry",
-                 "untrusted lead", "review shopping", "guided probes have not yet run",
-                 "baseline probes", "test-only", "not runtime enforcement", "not approval",
+                 "untrusted lead", "review shopping", "baseline probes",
+                 "Guided set 1", "not a clean pass",
+                 "Confirmation probes have not yet run",
+                 "attempt count", "test-only", "not runtime enforcement", "not approval",
                  "truthful incomplete", "restart"):
         assert term in new, f"docs recovery section missing {term!r}"
 
@@ -344,3 +366,17 @@ def test_missing_obligation_precedes_threshold_strategy_check():
     facts = valid_facts(failures_same_signature=3)
     facts["whole_range_review_required"] = False
     assert route_recovery(facts) == "autonomous_evidence_gathering"
+
+
+# ---------------------------------------------------------------------------
+# FIX_BASE 08d0415e follow-up: review R1-1 guard plus G3/G5 residuals from
+# guided set 1 (see progress ledger). Anchors for already-supported routing
+# are expected green; prose guards are expected RED before the text edits.
+# ---------------------------------------------------------------------------
+
+def test_high_count_with_changed_strategy_and_permitted_step_continues():
+    # No attempt count alone terminates the task; the model already routes
+    # this way and the fixture anchors it at a high, non-threshold count.
+    facts = valid_facts(failures_same_signature=9, changed_strategy_recorded=True)
+    assert route_recovery(facts) == "replacement_dispatch"
+    assert route_recovery(facts) != "truthful_incomplete_stop"

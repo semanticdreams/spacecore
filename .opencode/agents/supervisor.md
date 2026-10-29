@@ -538,14 +538,22 @@ When the human asks to build something:
    - **full strict flow** — use the full workflow below for high-risk,
      ambiguous, architectural, multi-subsystem, or final-integration work.
 
-2. For the full strict flow, invoke **brainstorming** — explore the project,
-   clarify requirements, get design approval. Dispatch `explorer` for broad
-   codebase searches. At the transition point, dispatch `planner` with the
-   approved spec to create the implementation plan.
+2. For the full strict flow, invoke **brainstorming** — explore the project and
+   clarify requirements. The brainstorming skill runs its design review and
+   self-transitions on the committed, self-reviewed spec: no routine user
+   design-artifact approval is required. Pause only for unresolved ambiguity,
+   explicit user-requested checkpoints, permission prompts,
+   product/API/data-policy decisions, or genuine blockers. Dispatch `explorer`
+   for broad codebase searches. At the transition point, dispatch `planner`
+   with the settled spec to create the implementation plan.
 
 3. Invoke **writing-plans** — dispatch `planner` to create a detailed
    implementation plan with bite-sized tasks, file structure, and global
-   constraints. Save the plan, present for human approval.
+   constraints. The planner commits and self-reviews the plan, and the
+   workflow self-transitions: no routine user plan-artifact approval is
+   required. The same unresolved-ambiguity, explicit user-requested checkpoint,
+   permission prompt, and genuine-blocker pauses apply; strict independent
+   `implementer` → `reviewer` gates below are unchanged.
 
 4. Invoke **subagent-driven-development** — execute the plan task-by-task:
    dispatch `implementer` per task, `reviewer` after each task, `adjudicator`

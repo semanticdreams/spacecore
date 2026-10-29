@@ -192,6 +192,13 @@ CASES = [
      "facts": _facts("quarantined", "unusable", failures_same_signature=2,
                      changed_strategy_recorded=True),
      "expected": "replacement_dispatch"},
+    # No attempt count alone terminates the task: a high count with a recorded
+    # strategy and a permitted productive step still dispatches replacement
+    # work; only evidenced actual blockers produce truthful incomplete status.
+    {"name": "attempt_count_nine_with_strategy_and_permitted_step_continues",
+     "facts": _facts("quarantined", "unusable", failures_same_signature=9,
+                     changed_strategy_recorded=True),
+     "expected": "replacement_dispatch"},
     # Evidenced actual resource exhaustion stops truthfully, not approval
     {"name": "actual_resource_exhaustion_truthful_incomplete",
      "facts": _facts("quarantined", "unusable", actual_resource_exhaustion=True),

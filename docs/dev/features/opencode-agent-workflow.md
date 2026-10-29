@@ -539,10 +539,18 @@ and unavailable-user pressure, baseline 2 reproduced unwanted escalation ("until
 the human re-opens the scope"), baseline 5 called a same-scope redo ineligible
 and human-owned, baseline 1 disclosed incomplete source access, and other
 samples exposed same-range authority ambiguity. Every output was read manually
-and snapshot verification was controller-owned. The five guided probes have
-not yet run: five fresh-context probes with the same four-scenario and
-pressure structure follow the reviewed implementation, are read manually, and their safe summaries
-land in the tracked progress ledger. The design record
+and snapshot verification was controller-owned. Guided set 1 then ran on the
+implemented recovery checkpoint with the same four-scenario and pressure
+structure: five fresh explorer reports were read manually, and the set is
+**not a clean pass**. Autonomous same-range replacement, adverse-shopping
+refusal and human boundaries held in every sample, but one sample still stopped
+after a bare attempt count without exhaustion evidence, and another flagged
+stale supervisor core-workflow plan-approval wording as a residual escape
+hatch. Both residuals were diagnosed and resolved by the scoped canonical
+clarifications in this update — the attempt-count sentence and the supervisor
+core-workflow alignment — with no broad rewrite. Confirmation probes have not
+yet run: their manually read results will be recorded in the tracked progress
+ledger after execution. The design record
 [spec](../../specs/2026-10-29-autonomous-handoff-recovery-design.md#alternatives-and-reconciled-decision)
 carries the GLM proposal, expert critique and reconciled decision.
 

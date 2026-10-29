@@ -190,7 +190,10 @@ whole-range review. At two task-wide failures with the same signature — a
 format-only correction is not a substantive attempt — record a concrete changed
 strategy (gather evidence, narrower output, decomposition, or a different
 inspection method) before another dispatch; unchanged blind retries are
-refused, not the task. Missing obligation records or facts block only the
+refused, not the task. An attempt count alone never terminates the task: the
+threshold only forces a changed strategy, and truthful stopping still requires
+the evidenced actual resource/evidence blockers or the absence of a permitted
+productive next step — never a bare number. Missing obligation records or facts block only the
 replacement dispatch while they are gathered autonomously — evidence gathering,
 not a human permission question. Evidenced actual resource/tool exhaustion,
 evidence unavailable after permitted diagnosis, or no permitted productive next
