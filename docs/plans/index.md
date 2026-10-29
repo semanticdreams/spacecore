@@ -205,6 +205,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 
 ### 2026-10
 
+- 2026-10-29 — [Requirements-driven engineering progress](./2026-10-29-requirements-driven-engineering-progress.md)
 - 2026-10-28 — [Development-record preservation progress](./2026-10-28-development-records-progress.md)
 - 2026-10-28 — [OpenCode session-graph review and integration progress](./2026-10-28-opencode-session-graph-review-progress.md)
 ### 2026-09

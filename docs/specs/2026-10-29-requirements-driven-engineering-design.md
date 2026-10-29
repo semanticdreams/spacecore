@@ -89,7 +89,8 @@ No self edges. Duplicate logical relations and broken references fail validation
 Same-class refinement, shared refinements and multiple parents are valid.
 Mixed dependency/contribution/constraint cycles must terminate in queries; a
 visited set prevents loops. Cycle diagnostics do not mean traversal was truncated:
-`truncated` means an actual node/depth/result bound was reached.
+`truncated` means an actual node/depth/result bound was reached. Cycle
+diagnostics do not invalidate structurally valid ledger data.
 
 Conflicts may remain unresolved in a structurally valid ledger. Disposition
 records explanation and authority, not proof that incompatible active statements
@@ -167,6 +168,7 @@ designs without requirement justification (legacy distinguished), missing linked
 implementation/evidence, broken/stale references, unaddressed applicable
 constraints, orphaned refinements, unsupported goals/outcomes and superseded
 dependencies. Missing links mean unknown/unlinked, not proof of absent behavior.
+Unregistered historical records are outside the semantic coverage scope.
 High-level goals can have indirect design trace through contributors/refinements;
 that never demonstrates outcome achievement.
 
@@ -205,8 +207,9 @@ machine-readable and actionable; valid incomplete coverage is not corrupt data.
 Every canonical mutation carries expected ledger revision and actor. Serialize
 writers with an advisory lock covering load, comparison, complete candidate
 validation and atomic replacement. Stale writers and failed canonical replacement
-preserve old canonical content. Locks/tempfiles are local ignored artifacts.
-Index rendering is derived and separately checkable: failure after successful
+preserve old canonical content. Locks/tempfiles are local ignored artifacts;
+their `.gitignore` placement is settled in the implementation plan. Index
+rendering is derived and separately checkable: failure after successful
 canonical write reports the committed revision and stale projection explicitly,
 never falsely claims rollback. Read-only `render --check` detects stale output.
 
@@ -231,7 +234,12 @@ Record a proportional reconciliation conclusion: already covered, clarification,
 refinement, extension, conflict, supersession, missing requirement, design defect,
 implementation defect or maintenance. Multiple findings can apply. Identify what
 changes, why, applicable constraints, uncertainty, authority, downstream impacts
-and verification. Do not generate artifacts unnecessarily.
+and verification. Do not generate artifacts unnecessarily. Conclusions are
+recorded through the existing task handoff and progress conventions, not a new
+ledger entity or a forced tracked artifact. Read-only audits stay mutation-free,
+so a report-only conclusion in the existing handoff/progress records is
+sufficient. Mutation-requiring findings use normal ledger operations with
+provenance plus normal progress records.
 
 High-level intent can require justified decomposition, not a full speculative tree.
 Capabilities often contribute to goals rather than being logically derived from
@@ -268,7 +276,8 @@ Testing under `scripts/tests/` covers strict schema, creation and stable identit
 revisions/history, lifecycle/supersession, recursive many-to-many typed relations,
 forbidden/allowed cycles, conflicts, locator safety, concurrent stale writers,
 atomic-write/index failure, evidence freshness and latest results, forward/backward
-traces, confidence, classification-aware coverage and bounded impact.
+traces, confidence, classification-aware coverage, bounded impact, and
+reconciliation conclusion recording for read-only and mutation findings.
 
 Executable workflow fixtures cover all fifteen user scenarios: missing and existing
 requirements; goal decomposition; multi-capability outcomes; multi-goal capability;
@@ -291,5 +300,7 @@ local prerequisites for this pure Python/prompt/docs surface unless scope expand
 
 ## Related records
 
-- [Implementation plan](../plans/2026-10-29-requirements-driven-engineering.md)
+- Implementation plan: pending; it will be captured as
+  `2026-10-29-requirements-driven-engineering.md` under `../plans/` at the next
+  checkpoint, and no placeholder plan file exists yet.
 - [Progress and reconciliation](../plans/2026-10-29-requirements-driven-engineering-progress.md)
