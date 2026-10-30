@@ -2,7 +2,17 @@
 
 ## Identity, authority and current boundary
 
-**Current Task3/H boundary (ledger49): all39 H filename dispositions and bounded
+**Current Task3/Time boundary (ledger52): all50 Time filename dispositions and
+documented temporal/scheduler contracts reconciled at declared depth.** Added17
+proposed requirements,77 linked artifacts and198 typed relations; all prior
+records/observations retained. Broad original production temporal intent remains
+grounded, not retired by bounded closeout or assessed achieved. Specific standards,
+adapter, migration and scheduler defects/gaps are retained below. No application
+repair or runtime tests. Prior P/H independent passes supplied by controller;
+Time checkpoint is a review input. N/D and Task4 pending; original complete Task3
+range review still owed.
+
+**Prior Task3/H boundary (ledger49): all39 H filename dispositions and bounded
 SDK/hosted-app/distribution contracts reconciled.** P independently passed per
 controller; its history below is retained. H adds12 proposed requirements,
 76 linked artifacts and153 relations without changing prior records or outcomes.
@@ -592,3 +602,113 @@ records/revisions/transitions/links after49; no no-op apply. Ledger/index digest
 Task4 every-family second sweep is still owed. Ordinary H checkpoint remains
 independent review input over `75694e9d..H_HEAD`, not approval. H complete at
 declared representative depth; Time/N/D and Task4 pending. No publication/integration.
+
+## Task3/Time — temporal platform and runtime scheduling, revision52
+
+Author `implementer/baseline-task-3-Time`, supervisor strict workflow, BASE
+`dfbe674e01bf6255b561524f1363913c190323e7`, frozen F unchanged. Governing design
+`6fd7c0bcdc16444d18ad4332662eb6c4da0f5b52` and shared revision1 reconciliation,
+history, trace, evidence separation, exact transaction and independent-review
+requirements reused. No existing requirement/artifact/observation was revised.
+
+### Reconciliation, authority and scope
+
+Conclusion: missing meaningful temporal representation plus **solution/coverage
+defects**, not a product-policy question. Full original complete-library design
+at `c316fba4c857456549e459c40a5ec8efe7e9329b` explicitly says “complete production
+temporal platform, not only a deterministic core with deferred future layers”,
+“All previously deferred temporal categories are in scope”, and “Nothing deferred”
+requires production API/docs/tests/data/fixtures/extension paths. Original roadmap
+publication `0c8cf10629518a8be8bae368ca6cc5968569d807` matches this contract.
+Initial finite corpus decisions and later corpus growth are legitimate; an
+unimplemented standards adapter is not merely another locale/phrase fixture.
+
+Closeout introduction `acdf4097115ae4231e673c0624ecc51947012070` and feature
+amendment `f3455866c2d0338db14c7dabffc9d8cc7804e427` explicitly close a **bounded**
+roadmap while excluding native libical/ICU adaptation/custom VTIMEZONE and
+non-workflow migration integration. Git shows the umbrella design unamended at F;
+the later technical non-goals/merge/status label supply no original policy change
+retiring broader intent. Preserve that obligation and report bounded implementation
+separately. No arbitrary ecosystem parity, unlimited jurisdictions/locales or
+new product execution mandate is invented. The acceptance page lists required
+evidence/commands, not fresh results; its “complete” wording does not certify them.
+
+### Canonical result and inspection bounds
+
+Transactions `apply --stdin`49→50 created17 coherent obligations (13 capabilities,
+four constraints),50→51 registered77 artifacts (20 designs including four current
+feature contracts,16 real plans,24 production/declaration modules,17 test
+definitions),51→52 added198 relations:53 addresses,16 realizes,24 implements,
+25 verifies,17 exercises,50 constrains,13 contributes_to. Exact requirement IDs
+and sampled ranges are in the appended [Task3 report](./2026-10-30-baseline-task-3-report.md).
+All17 remain proposed revision1; no assessment/verification/evidence artifacts
+added. All77 artifacts are linked; no invented plan, code-to-requirement edge,
+automatic satisfaction or historical-plan activation. All83/301/693 prior
+requirements/artifacts/relations and17 assessments/63 verifications preserved.
+Totals now100 requirements/378 artifacts/891 relations, revision52.
+
+T0 is the broad production platform; T1 primitives; T2 semantic separation/core
+boundary; T3 explicit context; T4 offline/provenance; T5 loud diagnostics/canonical
+options; T6 parsing/expressions; T7 civil periods; T8 intervals; T9 recurrence/sets;
+T10 ICS; T11 localization/calendars; T12 business; T13 natural; T14 providers;
+T15 migrations; T16 scheduler. Category contributions help T0 without sufficiency.
+T0→Core is explicitly inferred help, not evidence of runtime stability/performance.
+Constraint applicability is temporal only: T2/T4/T5 target all13 capability groups;
+T3 excludes pure period/registry groups and applies only relevant context-sensitive
+operations. No ambient security/sandbox or global constraint inheritance.
+
+Full16 principal designs and current core/roadmap/acceptance/scheduler feature
+contracts read; plans sampled generally1–60, roadmap1–140, scheduler1–100,
+closeout1–70. Every50 Time filename row updated, preserving18 opening-only minor
+historical records without unsupported supersession or invented traces. Other312
+rows unchanged; frozen362 denominator remains168 specs/194 plans exactly once.
+Representative implementation/declaration presence13/13 capability groups;
+selected assertion-definition links13/13. These are **not** complete implementation
+or passed criteria counts. Four constraints have sampled support, not full
+validation; no product execution, live measurement or satisfaction assessment.
+
+### Concrete retained discrepancies / follow-up ownership
+
+- T9: full in-scope standalone RRULE goal includes applicable BY selectors, but
+  `temporal/recurrence/engine.fnl`835–850 rejects sub-daily BYMONTH/BYMONTHDAY/
+  BYYEARDAY/BYWEEKNO; actual RFC test169–173 expects rejection of hourly BYMONTH.
+  Loud rejection is better than guessing but does not establish full selector
+  conformance. Keep the broader recurrence contract and conformance coverage gap.
+- T10/T11/T0: ICS is selected Fennel fixtures with metadata-only VTIMEZONE;
+  libical manifest remains planned. CMake adapter flags hard-fail; localization
+  uses selected CLDR seed, not native ICU adaptation/full generated data. Record
+  architecture/conformance coverage defects, not retired umbrella obligations.
+- T8: Track6 explicitly supports selected instant/plain/zoned endpoint grammar;
+  remaining ISO families are documented unsupported. Do not claim exhaustive ISO
+  conformance or inflate the original supported-family obligation into every
+  imaginable interval feature. No additional implementation work assigned here.
+- T15: workflow-first migration has explicit helper/schema tests; agent-sessions,
+  code entities, conversations and messages remain inventory-only integration
+  gaps, not evidence of broad canonical migration completion. No user data read,
+  rewritten or migrated in this audit.
+- T16/T5: scheduler duration conversion23–36 accepts raw numeric values despite
+  typed API contract; the full scheduler test226 lines tests aliases but not raw
+  delay rejection. Preserve as implementation defect, no technical alias policy.
+  Fixed-epoch manual delta scheduling is sampled, not monotonic/wall-clock or all
+  lifecycle/overflow/fault validation. Timer wrappers remain explicitly separate.
+- T11: localization design206–208 says time fields preserved while also defining
+  date-only text/midnight parsing. Actual localization tests105–116 assert midnight;
+  record the contradictory sentence as a documentation defect, not hidden time
+  recovery or a new requirement. Selected calendar conversion preserves time fields
+  separately; finite era/corpus restrictions remain explicit.
+
+Controller owns separate defect reconciliation and follow-up authorization; no
+repair, track reopening, new consultation or satisfaction was attempted. Task4
+owns every-family consistency/idempotence and final docs gates. Time-only review
+does not replace original complete Task3 `c054ef5b..HEAD` independent review.
+
+Time validation: canonical valid/render-current52; `make requirements-check`
+timeout600000 →348 passed in183.30s, pristine. Preservation/manifest/source-hash
+checks passed (362 unique frozen rows,50 Time changed/312 unchanged; all77 new
+artifact source bytes unchanged). Time coverage17 IDs32/1000 untruncated with four
+unassessed-constraint findings; bounded context/traces truncate, with narrower
+direct traces/gets inspected and no complete readiness claim. Time-only second
+reconciliation justified zero further changes; ledger/index unchanged at52.
+Every-family second sweep remains Task4. Complete evidence, file list, digests,
+limits and independent-review range are appended to the Task3 report. Ordinary
+five-file local checkpoint only, not approval or publication.

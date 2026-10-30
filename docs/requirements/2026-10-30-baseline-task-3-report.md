@@ -486,3 +486,242 @@ SHA/subject supplied in final handoff, not self-referentially embedded here.
 **H complete at declared depth; Task3 Time/N/D and Task4 pending.** Controller
 owns reconciliation of retained product defects and subsequent independent review;
 no push, PR, integration, runtime execution or satisfaction claimed.
+
+## Task3/Time intake and requirements reconciliation — 2026-10-30
+
+Fresh bounded implementer/baseline-task-3-Time; supervisor strict workflow,
+branch `juicyrebel/ridley`, clean BASE
+`dfbe674e01bf6255b561524f1363913c190323e7`, ledger49. Prior P/H passes are
+retained; the original Task3 `c054ef5b..HEAD` complete-range review remains owed.
+Only Time rows, ledger/index, audit and this append are assigned. Private original
+Git/CLI/validation evidence is retained at
+`.superpowers/sdd/2026-10-30-repository-requirements-baseline-15f6a125/task3-Time-source-execution-evidence.md`.
+
+**Conclusion (requirements-reconciliation): missing requirements and evidenced
+solution/coverage defects**, not a new product-development mandate. Inspected
+full umbrella/closeout originals and current feature/acceptance pages; broad
+explicit production-platform intent outranks later bounded technical closeout
+without actual policy-change authority. Original introduction `c316fba4`, roadmap
+publication `0c8cf106`, closeout introduction `acdf4097` and amendment `f3455866`
+preserve this distinction. Finite initial locale/calendar/holiday/phrase corpora
+are legitimate initial scope choices; missing standards adapters/conformance and
+non-workflow migration integration are not demonstrated completed architecture.
+Do not infer arbitrary ecosystem parity, unlimited datasets, human ambiguity,
+activation, or satisfaction. No application repair or reopening tracks here.
+
+All83 existing statements compared before creates, with literal/provenance search
+and canonical core-platform get/shared context. Reuse revision1 methodology IDs
+from the brief (reconciliation/history/trace/evidence/transaction/review) unchanged;
+reuse core-platform and host/workflow context without duplicating their contracts.
+New coherent capability groups and four scoped temporal constraints will remain
+proposed revision1. Criteria are analytical, independently checkable contracts,
+not empirical goal measurements. No new observations/assessments/evidence artifacts.
+Next transition: exact-revision CLI backfill, focused validation, self-reviewed
+local checkpoint, then independent range review. Compile/Space constraints/TDD
+not applicable to docs/ledger-only work. Constraint Impact: **not applicable** to
+executable constraints; temporal product invariants are represented explicitly.
+
+## Time canonical transactions and exact identities
+
+Existing CLI `apply --stdin` returned **status ok** for49→50 (17 requirements),
+50→51 (77 artifacts),51→52 (198 relations). Requests were constructed in memory;
+dependent operations used actual returned IDs reloaded through the canonical
+library. No direct JSON/index edits or initialization. Every new requirement is
+proposed revision1 with justified-interpretation provenance; no activation or
+assessment. Logical actor identifies this session without inventing an unavailable
+runtime session UUID.
+
+| Time alias | Canonical requirement | Meaning |
+| --- | --- | --- |
+| T0 | REQ-12548562-84c7-4256-8fcd-94881344913a | Complete production platform; broad obligation retained |
+| T1 | REQ-c78224ee-845e-45d2-a589-db936de5fb1e | Typed native primitives and clocks |
+| T2 | REQ-4e1bd2b4-4c07-444c-9d19-a8d5cfe606c6 | Exactness/separate policies/native boundary constraint |
+| T3 | REQ-42ea16ff-9a3f-4139-8d75-e4370f0c7ffb | Explicit zone/locale/reference/ambiguity constraint |
+| T4 | REQ-d590b359-3c2e-4370-9569-33822abf0750 | Offline deterministic local licensed/provenance data constraint |
+| T5 | REQ-32009aed-ef9f-4006-a1ae-c2d9a6bf3d4f | Loud invalid/unsupported/canonical options constraint |
+| T6 | REQ-52304b67-61db-47fd-bca7-808a868cdc73 | Strict/pattern parsing and expressions |
+| T7 | REQ-019f6c01-bb6e-4b64-8036-fe4f02c72248 | Civil calendar arithmetic/periods |
+| T8 | REQ-c4a1cf46-f729-4123-adc1-d08c15413759 | ISO intervals and distinct repeat semantics |
+| T9 | REQ-d0a8c552-e2dd-4a29-99c1-ca6e8c04aa10 | RFC recurrence and explicit-zone sets |
+| T10 | REQ-3127684f-fe5f-4c0a-a09b-50cdd5df10c0 | Full documented ICS/VTIMEZONE interoperability |
+| T11 | REQ-a32c28f6-56ee-40a9-a5d5-f83b96c54caa | ICU/CLDR localization and explicit calendars |
+| T12 | REQ-990b8657-d70b-4a7c-9589-c4255e7a6431 | Packaged holiday/business policy |
+| T13 | REQ-7aea0ca7-b344-4a59-af68-c4ef091b010c | Deterministic natural candidates/ambiguity/context |
+| T14 | REQ-073f900a-38d1-4658-9d90-9853515a6a10 | Local deterministic provider registry |
+| T15 | REQ-15f71fe3-c293-42e5-b070-a0a9a3cd43c4 | Explicit persisted timestamp migrations |
+| T16 | REQ-58fb37cf-c66f-4ea6-964f-721b3ceaa070 | Typed runtime scheduler/host/wrappers |
+
+These are coherent independent contracts, not requirements per historical patch.
+Four invariants are independent constraints; each applies only to temporal groups
+and relevant operations, not arbitrary reachable goals. T2/T4/T5 constrain13 groups;
+T3 constrains11 (not pure periods/registry). Category contributions help T0 without
+sufficiency; T0 contributes to existing Core goal with **inferred** confidence,
+not authority derivation or measured performance. No fabricated implementation-spec
+artifact fills a missing chain. Sixteen principal design→plan pairs are real
+historical records. Eighteen minor opening-only rows have no typed registrations.
+
+At52: **100 requirements/378 artifacts/891 relations**. New artifact kinds:
+20 designs (16 specs/four full current feature pages),16 implementation specs,
+24 code/declaration samples,17 test definitions. New relation types:53 addresses,
+16 realizes,24 implements,25 verifies,17 exercises,50 constrains,13 contributes_to.
+All77 new artifacts linked. No prior83 requirements/301 artifacts/693 relations
+changed;17 assessments/63 verifications/0 conflict dispositions retained exactly.
+No new evidence artifacts, observations, verification records or assessments.
+
+## Time original history and principal contract inspection
+
+Read full principal designs: ecosystem275, parsing322, periods215, umbrella157,
+foundation149, provider115, RFC238, set261, intervals392, ICS420,
+localization312, business156, natural175, migrations165, scheduler272,
+closeout100 lines. Full current core92/roadmap76/acceptance185/scheduler134 pages.
+Principal plans sampled1–60 except roadmap1–140, scheduler1–100, closeout1–70.
+All50 assigned filename rows updated; other312 unchanged. The18 older incremental
+design/plan bodies are still opening-only, explicitly not full review or retired.
+
+`git log F -- <umbrella,closeout,roadmap,acceptance paths>` and original `git show`
+investigation retained privately with full SHAs/excerpts:
+
+| Original object | Inspected authority and conclusion |
+| --- | --- |
+| c316fba4c857456549e459c40a5ec8efe7e9329b | Full original umbrella: production platform, all previously deferred categories in scope, finite initial corpus but no deferred architecture; original full ICS/VTIMEZONE and ICU/CLDR-backed commitments retained. |
+| 0c8cf10629518a8be8bae368ca6cc5968569d807 | Full original roadmap corroborates completion definition, adapters and current subset until tracks land; not code-derived product intent. |
+| acdf4097115ae4231e673c0624ecc51947012070 | Full original bounded closeout explicitly excludes native libical/ICU/custom observances and non-workflow migrations; does not amend original umbrella policy. |
+| f3455866c2d0338db14c7dabffc9d8cc7804e427 | Actual roadmap/acceptance amendments close bounded track, add six ecosystem-gap bullets and smoke commands; no independent original-intent retirement authority. |
+
+The umbrella and closeout specs have only their introductions in Git history at F.
+Broad explicit intent therefore stays represented; finite seed selections are
+legitimate choices, while missing standards adaptation/conformance cannot be
+declared merely corpus maintenance. This audit records solution/coverage defects,
+not human ambiguity or reopening implementation tracks. Required command ladders
+on acceptance pages are inert procedures, not observed fresh pass results. No
+historical status/merge is promoted to requirement satisfaction.
+
+## Time production/assertion matrix — READ, NOT RUN
+
+Paths in this table are relative to `assets/lua/` except explicit native/script
+paths. Representative implementation/declaration presence13/13 capability groups,
+selected assertion-definition linkage13/13. These are **not** complete-implementation
+or passed-criterion counts. The four constraints have selected support/negative
+cases but no comprehensive enforcement audit. Fresh product execution0; strategic
+satisfaction not assessed. Compile check not applicable; application constraints
+not applicable; Constraint Impact **not applicable**; TDD not applicable.
+
+| Contract | Actual production depth | Actual assertions and remaining gaps |
+| --- | --- | --- |
+| T0 | Full public facade136; actual planned libical manifest15/CMake41 gates; full current status/acceptance | Full closeout151 asserts one composition per category and loud unsupported examples. Cannot demonstrate umbrella completeness or replace focused suites. |
+| T1/T2/T3 | `src/temporal.h` full136, `src/temporal.cpp`270–699; facade full136 | Full `tests/test_temporal_core.cpp`287 asserts explicit offset, leap-second rejection, nanosecond bounds/overflow, native clamp, New York gap/overlap instants and fixed clock. Lua binding/userdata immutability, full native parser helpers and platform/tzdb packaging faults not exhaustively audited. Unix OS tzdb versus bundled Windows data remains conditional. |
+| T4 | CMake full41; manifest validator1–165; CLDR/holiday/natural manifest bodies full | Validator pytest1–279 includes missing manifest/data, no-network flags, planned metadata leniency and packaged provenance rejection. Static flags/metadata do not prove no network calls or legal compliance everywhere. No source/license download or runtime data update. |
+| T5/T6 | standard full61, expression full81, pattern1–100 | Parsing-recurrence1–150 asserts standard round trips/offset mismatch, numeric pattern/literal rejection and RRULE key rejection. Entire expression projection/unsupported-option matrix not inspected; scheduler raw-number exception below contradicts typed contract. |
+| T7 | period full159; native combined-month helper337–370 | Native test167–182 asserts Jan31/leap-day clamp, combined P2M and overflow. Full Fennel period regression module not inspected/linked; no fabricated complete arithmetic proof. |
+| T8 | interval1–160; repeating160–185 | Interval test120–309 asserts zoned DST gap/overlap, exact versus civil repeat steps, limits, unused next occurrence and month-end repeat. Selected grammar only; full grammar/helper/type/contains matrix and exhaustive ISO conformance remain unverified. |
+| T9 | recurrence engine1–130/830–949; set180–359 | RFC test1–185 asserts fields/order, ordinals/negative selectors/BYSETPOS, WKST, sub-daily examples, invalid/unsupported combinations. Set test1–155 asserts explicit zone, union/dedupe/exclusion/list shape/limit; complete DST/UTC UNTIL tests not newly inspected. Sub-daily BYMONTH rejection is a conformance defect against full in-scope intent, not proof of full RFC. |
+| T10 | ICS facade full18; parser250–304 | ICS test1–210 asserts date/floating/UTC/zoned modes, escaping/folding and unsupported custom TZID/components/value forms; libical planned assertion53–58 explicitly disclaims vendoring. Override/cancellation/round-trip test bodies and internal formatter/expander not fully inspected. Metadata-only VTIMEZONE is not standards-library/custom observance support. |
+| T11 | localization1–190; calendar1–220 | Localization test1–170 asserts exact combinations/examples and emitted dates parsing to midnight; calendar test1–150 asserts Gregorian/Buddhist round trip, Japanese era boundaries/time fields and invalid options. Neither establishes full ICU adaptation or additional calendars/locales. |
+| T12 | business-calendar full127; holiday manifest full12 | Business test1–175 asserts exact seed jurisdiction, defensive records, unsupported jurisdictions and observed-date lookup; broader arithmetic tests/holiday loader body not newly audited. US-FED2026–27 is finite initial corpus, not global coverage. |
+| T13/T14 | natural1–205, provider registry1–180; full natural manifest11 | Full natural test137 asserts three locales, schema/provider id, explicit ambiguity/missing context/unsupported locale; registry100–269 asserts summary defense, scoped handles, deterministic candidate/provider ordering, prefixed failures and explicit business dispatch. Trusted callbacks are not a sandbox/no-network enforcement mechanism. |
+| T15 | migrations1–165/200–291 | Migration test1–190 asserts conversion, invalid/fractional/missing values, dry-run byte preservation, atomic-helper rewrite/idempotence/no-write on malformed data and nested schema fields. Workflow integration call sites/test bodies not newly audited; other listed stores remain inventory-only. No migration executed. |
+| T16 | scheduler full248; timers1–120; host services1–150 | Full scheduler test226 covers fixed-clock/manual due/catch-up/order/cancel/clear/errors/aliases/zone/payload/absolute deadline. Timer test1–140 covers timeout/debounce/drop/clear/fractional/restart; full host92 checks pause/step and timers before facets. Raw number type rejection, deadline overflow, partial recurrence setup failure and complete host teardown/native scheduling remain gaps. |
+
+### Time material discrepancies retained without repair
+
+1. **Original breadth versus closeout:** no supersession/goal-achieved assessment.
+   Missing vetted ICS standards adaptation/custom VTIMEZONE and native ICU/CLDR
+   implementation are solution/coverage defects; seed metadata alone cannot
+   satisfy architecture/conformance. Initial finite locales/calendars/jurisdictions
+   are not a demand for unlimited corpus growth or arbitrary ecosystem equivalence.
+2. **RFC selector gap:** engine835–850 rejects sub-daily BYMONTH/BYMONTHDAY/
+   BYYEARDAY/BYWEEKNO; test169–173 expects rejection for hourly BYMONTH. Full
+   documented in-scope selector expansion is broader. Preserve T9; no repair here.
+3. **Typed scheduler gap:** `duration->nanoseconds`23–36 accepts a raw number;
+   `schedule-once`140–147/`schedule-every`149–156/`advance`202–205 use it. This
+   violates the documented typed duration boundary. Scheduler tests reject a
+   legacy key but do not assert rejection of raw numeric durations. Preserve T16
+   and T5; do not invent an authorized numeric alias or implement a repair.
+4. **Migration integration:** workflow-first helpers do not complete the original
+   broader persisted-schema migration obligation; agent/code/conversation/message
+   families remain inventory-only. Live stores/data were not accessed.
+5. **Localization wording:** full design206–208 simultaneously says time fields
+   preserve and date-only parse yields midnight; actual tests105–116 check
+   midnight. Record a documentation defect, not impossible recovery of undisplayed
+   time. Calendar conversion separately preserves explicit time fields.
+
+No unresolved technical decision is necessary to record these evidenced gaps;
+no mandatory consultation trigger, implementation attempt or broadened authority.
+Controller owns further reconciliation/follow-up work, independent of this audit.
+
+## Time validation, self-review and checkpoint handoff
+
+**Compile-check evidence:** not applicable, no Fennel/native edits or runtime
+execution. **Constraint status:** application constraints not run/not applicable;
+canonical ledger validation passes. **Test evidence:** `make requirements-check`
+(transparent `rtk`, explicit tool timeout600000) collected348 cases, **348 passed
+in183.30s**, followed by valid/current revision52. Output pristine. These checks
+cover the actual ledger transaction/history/schema/query/projection surface being
+changed, not temporal runtime behavior, native packaging or empirical outcomes.
+TDD and executable constraint impact remain not applicable. No full application
+suite, builds, external services or migrations were warranted/run.
+
+Executed checks:
+
+1. `python3 scripts/requirements.py validate` → status ok, valid true, revision52.
+2. `python3 scripts/requirements.py render` then `render --check` → current true52.
+3. `make requirements-check` →348 passed; canonical valid/current52 as above.
+4. In-memory preservation comparison through existing `load_ledger`, original
+   `git show BASE:...` and actual Git source hashes: all83 prior requirements,
+   301 artifacts and693 relation records preserved exactly,17 assessments and63
+   verifications unchanged,0 conflict dispositions. Unique active relation tuples
+   and artifact locator/selector tuples; all77 additions linked. All77 registered
+   source files byte-equal F/BASE/worktree; no source/code/test/prompt/schema writes.
+5. Frozen `git ls-tree -r -z --name-only F` versus first-column spec/plan rows,
+   plus exact BASE/pending-diff comparison: **362 unique paths,168 specs/194 plans**,
+   50 Time row updates,312 other rows unchanged,0 missing/extra/duplicate. Existing
+   report retained as an exact append-only prefix. All five changed tracked paths
+   are assigned; initial and pre-stage index empty. No record-index regeneration
+   needed: no new spec/plan/report page was added.
+6. Actual CLI `query --stdin` coverage over all17 Time IDs at32/1000 → **not
+   truncated**, findings only four unassessed constraints. This is expected:
+   negative fixtures/links do not authorize satisfied constraint assessments.
+   Context over17 IDs at32/1000 truncates; T0 both-direction trace32/1000 returns
+   1000 paths/truncated. T16 trace2/1000 returns115 paths/depth-truncated. Narrowed
+   individual17 traces1/1000 return7–24 direct paths, all depth-truncated; narrowed
+   T16 context1/1000 still depth-truncated. No complete blast-radius/readiness
+   claim follows. All198 direct new tuples and exact applicability were inspected;
+   actual T0/T16 gets show revision1/proposed, every criterion absent/unknown,
+   observations0. Unregistered history/unlinked behavior and candidate link
+   interpretation remain explicit unknowns.
+7. `git diff --check` passed; actual status/diff/staged diff/recent history inspected
+   before checkpoint. The large existing report/audit/ledger files are history-
+   sensitive; append/scoped-row edits avoid unrelated restructuring.
+
+Self-review compared all17 statements/criteria,77 locator roles and198 relation
+directions to inspected source contracts and actual assertions. Preserved broad
+intent versus bounded implementation, exact versus civil policy, trusted callbacks
+versus enforced isolation, test definitions versus observations, and private
+execution material versus canonical evidence. No further justified Time creates,
+revisions, transitions or links in the Time-only repeat sweep. Ledger52/index
+unchanged after read-only post-write reconciliation; no no-op apply. This is **not**
+Task4 every-family idempotence or independent approval.
+
+After intended mutations and checks, SHA-256:
+
+- ledger: `693313966c1c7c9a7008e9230e7ca67b81490a65e5bb565f8e7dc0f6dadfff35`
+- index: `bda056c2bb07396596c2a279cd9fb8f149c3438d57637365df8e45c0ea70323b`
+
+Complete assigned tracked file list (existing files, no additions):
+
+- `docs/requirements/ledger.json` — existing CLI only.
+- `docs/requirements/index.md` — existing renderer only.
+- `docs/requirements/2026-10-30-repository-reconciliation.md`.
+- `docs/requirements/2026-10-30-repository-source-dispositions.md`.
+- `docs/requirements/2026-10-30-baseline-task-3-report.md` — append only.
+
+Additional assigned **private, untracked/ignored** evidence file:
+`.superpowers/sdd/2026-10-30-repository-requirements-baseline-15f6a125/task3-Time-source-execution-evidence.md`.
+Retain for reviewer; not canonical measurement evidence or a checkpoint addition.
+Ordinary local checkpoint over the five tracked files; SHA/subject supplied in
+final response rather than self-referentially in this commit. Review complete
+`dfbe674e01bf6255b561524f1363913c190323e7..Time_HEAD`, including ledger49→52,
+all17 records/77 artifacts/198 links/50 dispositions and private source evidence.
+Prior P/H passes do not replace the still-owed original complete Task3 review.
+**Time complete at declared depth; N/D and Task4 pending.** No publication,
+integration, product-completeness approval or new repair authority claimed.
