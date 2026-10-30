@@ -2,6 +2,15 @@
 
 ## Identity, authority and current boundary
 
+**Current Task3/N boundary (ledger57): all11 N filename dispositions and bounded
+networking/security/publication contracts reconciled at declared depth.** Added14
+proposed requirements,47 linked artifacts and108 typed relations; prior records,
+history and observations retained. P/H/Time independent passes supplied by
+controller; N is a checkpoint for independent review, not approval. D and Task4
+remain pending, as does original complete Task3 range review. Stable required
+behavior is separate from current defects/gaps, with no product repair, services,
+credentials, runtime verification or strategic satisfaction. See appended N report.
+
 **Current Task3/Time boundary (ledger53 after accepted R1-1 correction): all50 Time filename dispositions and
 documented temporal/scheduler contracts reconciled at declared depth.** Added17
 proposed requirements,77 linked artifacts and198 typed relations; all prior
@@ -745,3 +754,86 @@ filename dispositions are unchanged in this fix. Validate/render-current53 and
 coverage, bounded context/trace and exact history/preservation checks passed
 within their recorded bounds; no readiness or product satisfaction follows.
 See appended Task3 fix report and private evidence for exact range and queries.
+
+## Task3/N — networking/security/publication baseline, ledger53→57
+
+Bounded N BASE `559b8679fa6a11d83cb9c0972628ca3a97df1e1c`, author
+`implementer/baseline-task-3-N`, supervisor strict lane. P/H/Time passes supplied
+by controller. All11 N frozen filenames read in full and dispositions updated;
+remaining D and Task4 pending. Original Task3 `c054ef5b..HEAD` complete-range
+review remains separate. N checkpoint is an independent-review input only.
+
+Reconciliation conclusion: missing representation/refinement against original
+intent, not new product development, maintenance requirements or repair. New
+N1–N14 proposed revision1 records (exact ID table in Task3 report) represent
+backend-neutral phase1 SSH, explicit trust/secret constraint, bounded fleet,
+strict Linux CI/local optionality, SFTP successful finalization; ordinary private
+atomic record publication/truthful store outcomes, owned-handle privacy constraint,
+admitted real Wine and bounded read-only Linux SELinux; native HTTP/SSE lifecycle,
+realtime feature/ticket contracts and wallet/Nova/encrypted persistence intent.
+Existing Core/Live/Shared/Owned/Matrix/Social/Services/SDK/text-revision and six
+audit governors retained; contributions confer no sufficiency or satisfaction.
+
+Original source authority matters: full original publication `27144fd8` and
+explicit correction `5b79ef29` establish privacy **and** ordinary umask002 editing,
+not a blanket refusal policy. Native payload/retained handles replace the draft
+callback; confidentiality before bytes, supported restrictions, attempt-only
+cleanup, cache/revision/one notification and sticky committed outcomes remain.
+`f2901da9` explicitly requires real local Wine, not native-CI substitution. Current
+canonical publication page319 lines and SELinux92 lines retain host-POSIX versus
+strict native-NT separation and the bounded read-only label exception; represented
+Wine token state is not sandbox/foreign-UID proof. Original SELinux page at
+`a6ad16fc` read full; navigation updates do not expand that policy.
+
+Original SSH `ec265af6`, strict validation `ff6ba87f`, SFTP `15331efd` and SSE
+`8fcf0326` were inspected from actual Git objects as well as current full sources.
+SFTP success requires checked local finalization, consumed checked remote close
+and finished transfer SFTP free before activity recheck/notification; cancel and
+timeout are not cleanup barriers, success notifications are separate and free is
+void. Phase1 shell/auth intent stays required despite current deferred/opt-in
+real shell tests. No native Windows/macOS runtime assertion follows from Linux
+CI/dependency declarations or source samples.
+
+Wallet original feature `a709a289` promises encrypted JSON and ETH/ERC20. Sampled
+current store instead writes public JSON metadata and uses keyring mnemonics;
+sampled signer constructs only native Nova transfers. This is a source/solution
+coverage discrepancy, not authority to silently narrow intent or a mandate to
+operate money/secrets or choose new storage policy. Controller owns follow-up
+reconciliation. Realtime original `291e73b8` separates native hotplug/ticket
+transport from future Matrix world/discovery; existing roadmaps retained, not
+credited achieved. Networking implementation lists and external API/vendor
+mirrors do not generate synthetic obligations for every binding.
+
+Actual in-memory CLI transactions53→54 (14 requirements/45 artifacts),54→55
+(105 relations),55→56 (native wallet code/wrapper test artifacts),56→57 (3 links),
+all status ok. Final **114 requirements/425 artifacts/999 relations**; additions
+14/47/108 with32 addresses,5 realizes,12 implements,17 verifies,16 exercises,
+8 constrains,18 contributes_to. All100 prior requirements/378 artifacts/891
+relations and17 assessments/63 verifications retained exactly, with no activation,
+assessment, verification, evidence artifact or old source edit.
+
+Representative implementation/assertion samples are tabulated in appended Task3
+report; no runtime test executed. Full actual five plan/design pairs traced;
+SFTP has an actual plan but no invented design, yojimbo note is an actual working
+implementation plan. General HTTP, SELinux and wallet lack an inspected complete
+implementation-spec chain; code/test presence is separate from missing links.
+All47 new artifacts linked, not registered for mere filename inventory. Current
+Wine page reports historical `fa4fc4b2`4867/4867 with fixed-base-dir/foreign-UID and
+native-platform qualifications; not imported as current measurement. Full
+security/lifecycle/CI/packet/RPC/privacy matrices and real empirical outcomes stay
+unverified. Descriptive Matrix/libtorrent/ZMQ integration gaps stay descriptive.
+
+Validation: native compile/Fennel constraints not applicable; no code/Fennel edits.
+`make requirements-check` timeout600000 passed348/348 in175.60s; standalone
+validate valid57/render-check current57. Manifest assertions preserve frozen362
+(194 plans/168 specs), uniqueness/order, all11 N updates and all non-N rows.
+Scoped coverage14 N IDs is untruncated; N2/N7 unsatisfied-constraint findings are
+retained, not fabricated satisfaction. Shared/N context at32/1000 is truncated;
+individual forward/backward traces for every N record at32/1000 are untruncated,
+supplemented by exact108 tuples and direct source inspection. Unknown unlinked
+history/global reachability remains. No empirical or runtime satisfaction follows.
+
+Self-review retained stable source-grounded criteria separately from present
+status/gaps and corrected a potential wallet test-surface misattribution before
+handoff. Only five assigned tracked files changed; report is append-only and
+private evidence remains ignored. **N done at declared depth; D pending**.

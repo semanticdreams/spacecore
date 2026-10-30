@@ -851,3 +851,207 @@ read-only reconciliation:
 Original checkpoint subject: `93f2b438 docs(requirements): Reconcile bounded temporal baseline`.
 The correction checkpoint is additional review input, not approval of the initial
 or amended criterion set. No push, PR or integration performed.
+
+## N bounded continuation — networking/security/publication
+
+### Identity and requirements reconciliation
+
+Author/CLI actor `implementer/baseline-task-3-N` (logical identity; no platform
+session UUID supplied), supervisor strict workflow, branch `juicyrebel/ridley`.
+Clean assigned BASE `559b8679fa6a11d83cb9c0972628ca3a97df1e1c`, ledger53;
+original Task3 BASE `c054ef5beb4ad40750133f1252585af4a1ae5c8e`, frozen F
+`fec176453c88fa1c47f22b7fe1d447dfe0ba281b`. Controller supplies P/H passes and
+Time pass after R1-1 targeted verification. This ordinary N checkpoint is not
+approval of N or the complete Task3 range. **N done at declared depth; D pending**;
+Task4 cross-family reconciliation/idempotence and original full Task3 review remain.
+
+Read assigned brief first; obeyed its global constraints and five tracked-file
+allowlist. Conclusion: **missing representation/refinement**, not missing-product
+repair or new intended functionality. Inspected all100 canonical statement/source
+pairs and relevant shared criteria/artifact locators at53, original Git objects,
+all11 N design/plan files in full, current contracts and sampled actual production
+and assertion bodies. Literal CLI searches were corroboration, not semantic proof.
+Existing Core/Live/Shared/Owned/Matrix/Social/Services, SDK and text-revision IDs
+are retained/reused; six revision1 audit governors in consolidated audit still
+govern. No new shared goal, hierarchy, synthetic per-defect maintenance obligation,
+source-policy choice or security-boundary operation. All14 new requirements are
+proposed revision1 with justified-interpretation provenance; no activation,
+assessment, verification or evidence artifact added. Stable desired behavior and
+finite analytical criteria are separate from present defects/status below.
+
+Authority: publication explicitly records user intent and its correction, not a
+date-based supersession. Foundation SSH retains its broader phase1 shell/auth
+contract despite opt-in/deferred present tests. Wallet encrypted-JSON/ERC20 intent
+is retained despite contrary note/current solution; this audit cannot choose a
+new financial/storage policy. That discrepancy returns to controller reconciliation,
+not an instruction to repair, access keys, or operate a chain. Other evidence
+gaps do not block this source-grounded representation. No dependent architecture
+or material repeated product failure arose requiring expert consultation.
+
+### Canonical transactions and returned identities
+
+Actual existing CLI `apply --stdin` with requests constructed in memory, expected
+revision and actor above (no direct JSON/index edits or request/temp files):
+
+1. **53→54**, status ok:14 requirements and45 artifacts returned.
+2. **54→55**, status ok:105 typed relations using returned IDs.
+3. **55→56**, status ok: self-review follow-through registered the actual native
+   wallet binding and Wallet wrapper test, after reading both full bodies.
+4. **56→57**, status ok:3 relations connect the correct native/wrapper test
+   surfaces. The core test does not falsely exercise `wallet.fnl`.
+
+Total additions: **14 requirements,47 artifacts,108 relations** (32 addresses,
+5 realizes,12 implements,17 verifies,16 exercises,8 constrains,18 contributes_to).
+Final57: **114 requirements/425 artifacts/999 relations**,17 assessments/63
+verifications unchanged. Every new artifact has an explicit typed link. No prior
+requirement/artifact/relation/history/observation changed; no inferred satisfaction.
+Canonical ART/REL identities are fully enumerated in ledger/index diff.
+
+| Alias | Returned requirement ID | Stable required behavior |
+| --- | --- | --- |
+| N1 | REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8 | Backend-neutral async phase1 SSH client/session/auth/exec/SFTP/shell/tunnels |
+| N2 | REQ-053caeb4-23d8-4610-84f1-76198705bdc9 | Explicit host trust, no credential disclosure/core persistence constraint |
+| N3 | REQ-dac6f6aa-b260-4aab-9b08-22990f744097 | Bounded fleet execution and per-host results |
+| N4 | REQ-d838a166-664f-437e-8a03-8eedc6ce44ef | Strict real Linux CI, optional local builds and tested platform/SDK docs |
+| N5 | REQ-ba697587-cf4f-481f-8b1c-980236da6490 | SFTP success after checked local/remote finalization and teardown |
+| N6 | REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1 | Normal editing, atomic native record publication and truthful store outcomes |
+| N7 | REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740 | Before-byte confidentiality, supported policy and owned-handle cleanup constraint |
+| N8 | REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f | Real admitted matched-Wine9 POSIX publication, sticky commit and closed validation |
+| N9 | REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7 | Capability-enabled Linux read-only SELinux subset/default authority |
+| N10 | REQ-e65ba9e6-11f9-400d-b1bd-1205f4572f27 | Async HTTP polling/callback/chunk/cancel/error contract |
+| N11 | REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896 | HTTP routes/SSE API and safe GC/shutdown lifecycle |
+| N12 | REQ-272f39ab-d520-4410-89e8-0b4061474db1 | Native realtime feature transport and hot-plug lifecycle |
+| N13 | REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34 | Scoped verified-ticket token/feature gating, not production identity policy |
+| N14 | REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93 | Wallet mnemonic/Nova transfers/lifecycle and encrypted persistence intent |
+
+N2 constrains N1/N3 and foundation design only. N7 constrains N6/N8/N9 and secure/
+Wine designs only, with platform subset applicability; neither is universal
+inherited security policy. Contributions help existing goals without sufficiency.
+Actual matching five plan→design pairs are linked. SFTP has a real plan/current
+subsystem contract, no invented separate design; SELinux, general HTTP and wallet
+have no inspected actual implementation-spec chain, so no fabricated code→plan
+or code→requirement edges. The yojimbo note explicitly is a working implementation
+plan and is registered as such; no false realizes edge to its later SDK summary.
+
+### Original source authority and honest inspection depth
+
+All11 N filename rows were updated, retaining exactly the frozen362 manifest.
+Full reads: SSH foundation design318/plan767, validation design166/plan280,
+secure design143/plan121, Wine design320/plan473, SSE design113/plan127,
+SFTP plan73; current publication319, SELinux92, SSH subsystem152, networking33,
+HTTP SDK50/server54/realtime56, yojimbo643, wallet feature50/notes81+80.
+Full source reading is not full execution/platform verification.
+
+Original `git log F -- <principal paths>` and actual `git show COMMIT:path`:
+
+- `ec265af63ad04002589832123dd045c1c1158b72` full SSH design: phase1 capabilities,
+  trust/secret invariants and Linux-first limits. `ff6ba87fbec20265fe74801e63de2b01c0443676`
+  validation L1–37 requires real Linux CI, not universal real-platform coverage.
+- `27144fd8292dca8c3f1e73fb7dd7dab8a99034d3` full original publication contract
+  authorizes native Windows overwrite/privacy correction; full
+  `5b79ef29d35277b30e3559c228d75585a052481c` explicitly corrects callback/ancestry
+  refusal: ordinary umask002 editing must work; retained handles replace writable
+  callback, **not privacy checks**. Current source preserves that authority and
+  cache/revision/notification ordering, detached results and committed baseline.
+- `f2901da907b81bb93728ac18e9e6ce30df1ca479` Wine L1–84 explicitly requires real
+  local persistent publication and rejects native-CI-only substitution. Current
+  canonical page, not an old mechanism proposal, governs selected backend scope,
+  cooperative token limits, sticky commit and cleanup-only recovery.
+- `a6ad16fc61138237efd5bdff34d9e2a074b81db2` original SELinux page read full:
+  bounded read-only exception; `5e591640fa51a3bb7e07819c4ca6062c573249c9` navigation
+  update is not security-policy expansion. Enforcing host/readable label alone
+  never establishes supported new-labelled publication.
+- `8fcf03269b7fc17eb28d7f0cb6db37d80145db70` SSE L1–14 preserves existing stream
+  API and GC-before-stop safety; repair reuses N11 rather than inventing a feature.
+  `15331efd0ae3b8d9718f094987fe8fc62418f5a2` SFTP L1–19 expressly says success-only
+  barrier: cancel/timeout non-barriers, separate successful events, consumed close,
+  void free, no durability promise.
+- `2ab7686b3e6222fd7acd84f154b7d183098dafa1` HTTP L13–22 supports native contract;
+  `291e73b8201364bfbac2d7b6f97298a99eb7b1c9` yojimbo L7–45 supports transport
+  separation/hotplug/tickets/default-on intent, not Matrix-world completion.
+- `a709a28991798ba988291708ee156aa60a9a8119` wallet feature L14–31 already states
+  encrypted JSON and ETH/ERC20; note/current keyring storage cannot silently
+  retire them. Broader wallet roadmap ideas remain proposals, not automatic work.
+
+### Implementation, assertion definitions, historical reports and current gaps
+
+These are source-audit observations, **not acceptance criteria or runtime results**.
+
+| Contract | Actual production/assertion sample | Coverage limit/current discrepancy |
+| --- | --- | --- |
+| N1/N2 | service100–229; native test515–664 unavailable/header isolation/invalid IDs/single cancel/timeout/late-event assertions | Full known-host backend/auth redaction, shell, tunnel and shutdown matrix not newly traced; current SSH page136–148 defers real shell channel-write and non-PTY semantics. Foundation shell/auth intent remains, not rewritten as deferred acceptance. |
+| N3/N4 | fleet1–190 and actual fake-test100–238 cancellation/timeout/redaction/structured SDK assertions; workflow356–357 strict variables, build docs49/146–156 and Windows script11/270 dependency declarations | No live fleet/real fixture/CI/cross-build observation. A declaration or test name is not real-backend success; complete fleet scheduler/clock behavior not audited. |
+| N5 | libssh881–1117 checked local I/O/remote close/free/recheck; native test200–472 actual gated no-success, order, exact binary/empty bytes, errors, cancel/timeout/session-close single-winner assertions | Executable-local wrappers include separately labelled close-error injection and local FD invalidation. Not executed here; no async-cancel cleanup barrier, atomic event pair or general same-session concurrency claim. |
+| N6/N7 | publication260–404,1234–1388; RecordFiles full77; native test658–832 actual pre/postcommit, foreign names, nesting, substitutions and ordinary umask layouts; owning test59–133 real assertion matrix checks cache/revision before notification and detached committed errors | Complete2227-line native test/platform policy, JSON helper/store/editor production ownership and crash/fault/security matrix not exhaustively traced. Native NT/macOS behavior not newly observed. Native cleanup diagnostics remain committed, no rollback claim. |
+| N8 | shared core1234–1388; driver270–349 cleanup-only retirement/sticky result; native-adapter test80–239 actual binary/nesting/no-replay/hooks/empty-error/authority-loss assertions | Host adapter tests are not actual Wine loader/PE/ABI/grant/host privacy evidence. Canonical publication284–314 reports historical fa4fc4b2 execution4867/4867, not rerun or imported as current verification; foreign_uid_probe not-configured and fixed-base-dir probe is not default-root coverage. Native Windows/macOS assertions/certification remain distinct. |
+| N9 | SELinux core180–274 fresh default lookup/double metadata inspection; test1–150 actual mount-token/xattr/mismatch/no-setter and conditional labelled authority assertions | No enforcing mount/task/policy access, relabel or download/build. Private dependency/link-symbol/remaining325-line implementation and enforcing-host matrix not exhaustively audited; capability-absent Wine retains blanket refusal. |
+| N10/N11 | HTTP binding1–290 and full24-line test URL/unknown cancel assertions; HTTP server470–513 named captures; actual SSE test330–519 identity/payload/once-close/weak-root/GC-before-stop assertions | No listeners/HTTP requests/runtime GC/crash reproduction. General HTTP timeout/redirect/stream/error/503 and full server lifecycle matrix remain incompletely traced; supplied historical crash evidence is not a fresh finding. |
+| N12/N13 | auth full232; core950–1012 verified token scope/lifetime and1450–1529 feature command checks; native test full228 actual registry/signature/time/allowlist/lifecycle assertions | No real packet exchange, full feature protocol/thread/drop audit or production auth/Matrix permission proof. Yojimbo note543–545 reports historical offline/loopback passes only; shipped durable shared-world integration remains under existing Matrix/Shared records. |
+| N14 | native wallet binding full216, Wallet full69, store full165; core test full66, Wallet test full45 and store test full135 actual derivation/invalid mnemonic/reopen/missing-secret assertions | Store writes plaintext public metadata and puts mnemonic in keyring; not documented encrypted-JSON implementation. Wallet signer only builds native transfer payload, not ERC20 path. Tests use deterministic public fixtures/stub keyring and do not prove encryption/signing/RPC/real OS-keyring privacy. No policy selection or money/key/service operations. |
+
+Networking subsystem key-file list (Matrix/libtorrent/HTTP/realtime) is descriptive,
+not independent Space intent for every native binding. Existing Matrix/Services
+roadmaps are reused; uninspected Matrix/libtorrent/ZMQ/security integrations remain
+descriptive trace gaps, not newly fabricated obligations. Unknown financial,
+identity and shared-world permissions stay with controller/product authority.
+
+### Validation, constraint impact and self-review
+
+Compile-check evidence: **not applicable** (no Fennel/C++ changes or runtime use).
+Constraint status: Space/Fennel constraints **not applicable**; no baseline/tool
+change or bypass. **Constraint Impact: not applicable** for source/ledger-only
+reconciliation. TDD RED/GREEN not applicable: no product feature/repair or tests
+authored, and source definitions are never called execution evidence.
+
+- `make requirements-check`, tool timeout600000: **348 passed in175.60s**, exit0;
+  canonical validate valid57 and index render-check current57. Focused existing
+  requirements suite covers ledger/schema/history/typed graph/render/provenance
+  semantics without asserting product/empirical success.
+- Separate `python3 scripts/requirements.py validate --repo-root .` and
+  `render --repo-root . --check`: status ok57, valid true/current true.
+- In-memory preservation/manifest assertions: all prior100 requirements/378
+  artifacts/891 relations exactly unchanged;17 assessments/63 verifications and
+  conflicts unchanged; all47 new artifacts linked; all14 proposed revision1.
+  Frozen362 =194 plans+168 specs, exact first-column set/order/unique count
+  preserved;11/11 N updated and all non-N documentation rows byte-identical.
+  First helper incorrectly treated relation list as dict (`AttributeError`),
+  then adapted to actual schema and passed; no canonical mutation or failed test.
+- Scoped coverage all14 N IDs: ok57, not truncated; only findings are N2/N7
+  `unaddressed-constraint` (no explicit satisfied assessment), intentionally not
+  manufactured away. All empirical/product outcomes remain unverified.
+- N-scoped reconciliation-context depth32/paths1000 is truncated because of
+  shared cross-family reachability; initial shared seeds and depth1 narrowing
+  also reported omitted paths. Material N investigation narrowed to14 individual
+  forward and14 backward traces at32/1000, **all untruncated**, plus exact108
+  new tuples/direct source inspection. Unlinked history remains unknown; no
+  complete global impact, clearance or approval claim from bounded traversal.
+
+Required both-direction N5 trace at32/1000 also returned ok57/truncated true,
+1000 paths. The already untruncated individual directional traces/direct tuples
+narrow the material N review without asserting exhaustive cross-family reach.
+N5 `get` confirms all three criteria have observations0/result absent/currency
+unknown. Final whitespace/diff review passed; private evidence remains ignored.
+
+Self-review checked stable acceptance wording against future completed behavior,
+explicit source authority, platform subset/security limits, correct test→code
+surfaces and no false code→requirement edges. Added the wallet native/wrapper
+links rather than pretending native tests call the wrapper. No historical
+outcome or old draft source was rewritten. Large ledger/audit/disposition/report
+files were handled narrowly without restructuring. Security/financial gaps above
+are retained product evidence limits, not doubts requiring speculative repairs.
+
+Assigned tracked files (complete list): `docs/requirements/ledger.json` (CLI only),
+`docs/requirements/index.md` (renderer only),
+`docs/requirements/2026-10-30-repository-reconciliation.md`,
+`docs/requirements/2026-10-30-repository-source-dispositions.md`, and this report
+(N append only). Required private original-Git/CLI/query/validation excerpts:
+`.superpowers/sdd/2026-10-30-repository-requirements-baseline-15f6a125/task3-N-source-execution-evidence.md`;
+ignored, not checkpointed or registered measurement evidence. No additions to
+tracked specs/plans, so their generated indexes require no regeneration.
+
+Ledger57 SHA256 `d4f22af6782d0afc84e679ae61ae225603bf5b40b8cbc742be5795fa132f1c1c`;
+index SHA256 `5abfd203b922c3e1c9311fb1b1266ed4093e41e912de04fb4ac93b2ac8a103dd`.
+Checkpoint SHA/subject supplied in final handoff: review complete
+`559b8679fa6a11d83cb9c0972628ca3a97df1e1c..N_HEAD`, ledger53→57, all five files,
+plus preserved original Task3 full range when complete. Independent review still
+required; no push, PR, integration or empirical outcome approval.

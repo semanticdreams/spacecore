@@ -102,6 +102,22 @@ production obligations from bounded shipped surfaces. No temporal tests run;
 no observation or satisfaction credit. Recording defects does not reopen tracks
 or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 
+### Task 3/N continuation
+
+All11 **3/N** rows reconsidered at BASE `559b8679`, ledger53→57; other351 frozen
+rows unchanged. N1–N14 below are report aliases mapped to actual opaque IDs in
+the appended [Task3 N report](./2026-10-30-baseline-task-3-report.md), not schema
+classes. O means grounded proposed obligation, not activation/approval/satisfaction.
+All11 design/plan bodies read fully; current native networking/publication/wallet
+contracts and actual code/assertion samples have exact depth/limits in that report.
+Explicit publication correction preserves ordinary editing and before-byte privacy;
+canonical Wine/SELinux source qualifies platform policy. SFTP success-only teardown
+does not make cancellation/timeouts cleanup barriers. Current wallet/storage and
+SSH shell/validation gaps remain audit findings, not weakened acceptance criteria.
+No runtime, services, credentials, repair or security-boundary operations.
+**N complete at declared depth; D and Task4 pending**; prior family sections above
+remain execution history, not the latest status.
+
 ## Plans and progress (194 frozen paths)
 
 | Source | Family/owner | Disposition | Inspected passage and resulting ID or concrete gap |
@@ -238,10 +254,10 @@ or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 | `docs/plans/2026-10-03-graph-selection-leader-commands.md` | 2/G | S | G L1–16: focused-node operations through native selector with map-owned persisted selection; supports G5. Actual availability/hint assertions L276–324 inspected; full selector integration remains untraced. |
 | `docs/plans/2026-10-03-temporal-closeout.md` | 3/Time | S | Time L1–70: bounded smoke plan realizes closeout design and addresses T0/T5 only in part. Full actual151-line smoke read; no independent policy retirement of umbrella or runtime execution evidence. |
 | `docs/plans/2026-10-04-graph-leader-command-expansion.md` | 2/G | S | G L1–16: same pointer/numeric action list and bounded focused/view/map commands; G5 plus G2 map context. Provider resolver/gating code inspected; complete action slot and map manager assertion chains not sampled. |
-| `docs/plans/2026-10-04-ssh-integration-foundation.md` | 3/N | S | L5: isolated libssh async/fleet APIs; backend availability tests untraced. |
+| `docs/plans/2026-10-04-ssh-integration-foundation.md` | 3/N | S | N full1–767: actual plan realizes foundation design/addresses N1–N3; service, libssh transfer and fleet implementations plus actual native/fake assertions sampled. Full auth/shell/tunnel/shutdown/native-platform matrix not verified; Linux-first is not universal backend support. |
 | `docs/plans/2026-10-05-focus-start-node-command.md` | 2/G | S | G L1–16: focus-start orchestrates existing Add Start then reveal options, not a new loader API. Included in G5 c3; graph-maps action semantics read, full actual command assertion not newly sampled. |
 | `docs/plans/2026-10-05-opencode-fast-development-flow.md` | 3/D | S | L5: interactive lane with strict default; later lane authority untraced. |
-| `docs/plans/2026-10-05-ssh-real-backend-validation.md` | 3/N | S | L5: real Linux SSH CI; fixture versus real backend observations untraced. |
+| `docs/plans/2026-10-05-ssh-real-backend-validation.md` | 3/N | S | N full1–280: N4 strict Linux CI/optional local distinction, platform dependencies and tested SDK examples; matching design/plan traced. Workflow356–357 and dependency declarations inspected, actual fleet example assertions100–238 sampled. No fresh CI/fixture/backend or platform observation. |
 | `docs/plans/2026-10-06-fast-dev-local-main-wrap-up.md` | 3/D | S | L5: local-main guarded conversion; current branch contract applicability untraced. |
 | `docs/plans/2026-10-06-string-entity-text-search.md` | 2/G | S | G L1–16: actual plan realizes full search design/addresses G6. Backend and node implementations plus options/grouping/cancellation/stale/capture assertions traced; actual ripgrep process and UI submission runtime not executed. |
 | `docs/plans/2026-10-07-hierarchical-focus-navigation.md` | 3/P | S | P L1–85: actual plan realizes full P13 design; manager entry/exit and first/remembered/nested/pruned/directional assertions sampled. Complete leader availability/preview-collapse integration remains untraced, not duplicated text-focus policy. |
@@ -268,11 +284,11 @@ or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 | `docs/plans/2026-10-16-reference-lifecycle-full-gate-repairs.md` | 2/G | S | G L1–16: finite FXAA mock, fixture ownership and duplicate outline selection cleanup; maintenance supporting G2/G9. Opaque mode-state retention remains contractual, not re-proven by historical gate wording. |
 | `docs/plans/2026-10-16-reference-lifecycle-reload-merge.md` | 2/G | S | G L1–16: preserve 21 registrations while extracting injected root-fixture support. Merge maintenance, not new product intent or G9 satisfaction; exact parent regression union not independently audited. |
 | `docs/plans/2026-10-16-reference-presentation-extension.md` | 2/G | S | G L1–16 and full current lifecycle feature L56–71: passive list labels and concrete-owner notebook previews cause zero writes, preserving canonical aliases/order; G9 c3. Full actual preview/provider/callback assertion chain remains untraced. |
-| `docs/plans/2026-10-16-secure-record-publication.md` | 3/N | S | L5: private publication/default editing via native draft APIs; overwrite/migration tests untraced. |
+| `docs/plans/2026-10-16-secure-record-publication.md` | 3/N | S | N full1–121: N6/N7 corrected retained-handle payload publication, normal umask002 editing and sticky committed cleanup/store ordering. Original27144fd and explicit5b79ef2 correction inspected; this is not the rejected pathname callback. Native260–404/1234–1388, adapter full77 and actual native658–832/store59–133 assertions traced; full Windows/macOS/privacy matrix remains unverified. |
 | `docs/plans/2026-10-16-windows-validation-diagnostics.md` | 3/D | S | L5: remove Wine-helper contamination; trusted reproduction provenance untraced. |
 | `docs/plans/2026-10-16-wine-suite-lifecycle.md` | 3/D | S | L5: finite suite budget/isolated server cleanup; unrelated-prefix safety untraced. |
 | `docs/plans/2026-10-17-wine-native-failure-diagnostics.md` | 3/D | S | L5: InputDialType defect/actionable failures; diagnostic/native boundary untraced. |
-| `docs/plans/2026-10-17-wine-posix-publication.md` | 3/N | S | L5: real persistent Wine publication preserving policy; actual success evidence untraced. |
+| `docs/plans/2026-10-17-wine-posix-publication.md` | 3/N | S | N full1–473: N8 real Linuxx64/win64 matchedWine9 shared POSIX operation/closed grants, preserving N7 privacy and native NT policy. Matching design/plan, core/driver and actual native-adapter assertions80–239 traced. Full loader/ABI/grant/tooling/PE/host matrix not newly inspected; canonical historical fa4fc4b2 report retained as reported evidence, not fresh execution/certification. |
 | `docs/plans/2026-10-18-constraint-scenario-ownership.md` | 3/D | S | L5: scenario ownership/caller isolation; invocation state tests untraced. |
 | `docs/plans/2026-10-18-wine-diagnostics-checkpoints.md` | 3/D | S | L5: portability diagnostics in three checkpoints; complete diagnostic contract untraced. |
 | `docs/plans/2026-10-18-wine-suite-portability-repairs.md` | 3/D | S | L5: zero-failure actual Wine requirement; historical observation applicability untraced. |
@@ -280,7 +296,7 @@ or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 | `docs/plans/2026-10-20-devlog-branch-capability.md` | 3/D | S | L5: exact dated-branch capability; guard tests untraced. |
 | `docs/plans/2026-10-20-guarded-merge-policy.md` | 3/D | S | L5: prove protection/queue method before auto-merge; policy query tests untraced. |
 | `docs/plans/2026-10-21-devlog-gap-backfill.md` | 3/D | S | L5: 41 evidence-backed entries; count is historical task scope, not product target. |
-| `docs/plans/2026-10-21-sse-closure-finalizers.md` | 3/N | S | L5: safe callback GC before shutdown; finalization tests untraced. |
+| `docs/plans/2026-10-21-sse-closure-finalizers.md` | 3/N | S | N full1–127: actual plan realizes SSE repair design within N11 HTTP/SSE lifecycle, no synthetic defect-per-requirement. Named native callables470–513 and actual metatable/GC/once-only close assertions330–519 traced; supplied crash diagnosis and historical execution remain distinct from this source-only audit. |
 | `docs/plans/2026-10-22-checkpoint-review-ownership.md` | 3/D | S | L5: checkpoint ownership preserving review; complete-range gates untraced. |
 | `docs/plans/2026-10-23-daily-devlog-catch-up.md` | 3/D | S | L5: prior-day meaningful-work catch-up; no-op regression tests untraced. |
 | `docs/plans/2026-10-24-wine-test-child-launch.md` | 3/D | S | L5: closed Unix launch boundary for five children; environment isolation untraced. |
@@ -297,7 +313,7 @@ or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 | `docs/plans/2026-10-29-opencode-island-edges-progress.md` | 2/A | S | A full L1–236: explicit user request for enumeration edges/JSON leaves, reconciled retention/reentrancy and historical reload/review records. A7 retains automatic-island exception and independent explicit edges; common L167–243/map assertions L55–239 sampled. No fresh live counts/inherited approval or private advice revalidation. |
 | `docs/plans/2026-10-29-requirements-driven-engineering-progress.md` | 3/D | R | L5 task identity plus existing registry inspection: ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3 retained; mutable historical evidence, not fresh baseline observation. |
 | `docs/plans/2026-10-29-requirements-driven-engineering.md` | 3/D | R | L5 methodology implementation Goal: reuse ART-d5aa9361-7216-43f1-99e2-1bdd9446070b and existing methodology obligations, not product goals. |
-| `docs/plans/2026-10-29-sftp-success-finalization.md` | 3/N | S | L5: notify success after checked local I/O/remote close/teardown; failure-order tests untraced. |
+| `docs/plans/2026-10-29-sftp-success-finalization.md` | 3/N | O | N full1–73 and original15331efd L1–19: N5 success-only local completion/checked consumed remote close/SFTP teardown then activity recheck. Native881–1117 and actual real-backend wrapper assertions200–472 traced, not run. Cancel/timeout remain non-barrier winners; void free is not durability/all-errors proof and success events are not atomic. No separate design invented. |
 | `docs/plans/2026-10-30-autonomous-workflow-decisions-progress.md` | 3/D | U | L5 controller/branch identity only: what authorized journal changes and gate evidence remain current? Body not reviewed. |
 | `docs/plans/2026-10-30-autonomous-workflow-decisions.md` | 3/D | S | L5 opening: autonomous routine decisions; full journal-edit scope and current policy trace uninspected. |
 
@@ -428,10 +444,10 @@ or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 | `docs/specs/2026-10-03-graph-selection-leader-commands-design.md` | 2/G | S | G L1–16 and full leader feature: focused selection select/add/remove/toggle/clear are distinct from selected previews. G5; actual availability assertions inspected, native selector integration still representative-depth gap. |
 | `docs/specs/2026-10-03-temporal-closeout-design.md` | 3/Time | S | Time full1–100 plus original acdf4097/f3455866 amendments: smoke/diagnostics support T0/T5 only partially. Explicit non-goals are implementation bounds, not evidenced retirement of broader c316fba4 scope. No achieved-goal or human-ambiguity claim. |
 | `docs/specs/2026-10-04-graph-leader-command-expansion-design.md` | 2/G | S | G L1–16 and full leader feature: focused actions, view navigation and map operations extend existing p/s namespaces. G5 includes declared-context non-destructive commands; complete numeric/menu/map command assertions not sampled. |
-| `docs/specs/2026-10-04-ssh-integration-foundation-design.md` | 3/N | S | L5 opening: reusable SSH foundation for ecosystem; native backend/platform scope untraced. |
+| `docs/specs/2026-10-04-ssh-integration-foundation-design.md` | 3/N | O | N full1–318 plus full original ec265af: N1 backend-neutral phase1 SSH, N2 explicit trust/no core secret persistence, N3 bounded fleet. Original shell/auth scope retained despite current deferred/opt-in shell coverage; future server/jump-host is not phase1. Actual native/fleet assertion samples, not runtime proof. |
 | `docs/specs/2026-10-05-focus-start-node-command-design.md` | 2/G | S | G L1–16 and graph-maps L594–596: reuse Add Start before reveal, not a new automatic seed. G5 c3; end-to-end command camera assertion not newly inspected. |
 | `docs/specs/2026-10-05-opencode-fast-development-flow-design.md` | 3/D | U | L5 opening: strict workflow context; which interactive exemptions retain safeguards? Full original lane uninspected. |
-| `docs/specs/2026-10-05-ssh-real-backend-validation-design.md` | 3/N | S | L5: close validation gap after SSH foundation; actual backend observations not inferred from definitions. |
+| `docs/specs/2026-10-05-ssh-real-backend-validation-design.md` | 3/N | O | N full1–166; original ff6ba87 L1–37: N4 real Linux PR gate must fail without fixture/backend; normal local optionality retained. Design→plan→workflow/SDK example definitions traced; Windows dependency requests/macOS documentation are not native real-backend CI proof. |
 | `docs/specs/2026-10-06-fast-dev-local-main-wrap-up-design.md` | 3/D | U | L5 opening: first interactive implementation context; which old local-main path remains applicable? Full later policy comparison needed. |
 | `docs/specs/2026-10-06-string-entity-text-search-design.md` | 2/G | S | G full L1–249 plus full feature: registered design addresses G6; persisted Markdown, literal ignore-case ripgrep and runtime-only query/results. Backend/node actual options/stale/capture assertions traced. Nonvisual capability search remains deliberately case-sensitive and separate. |
 | `docs/specs/2026-10-07-hierarchical-focus-navigation-design.md` | 3/P | O | P full L1–188 plus original34c208ac L25–51: P13 generic entry/exit/remembered descendant and unopened-scope boundaries; not separate shell type or text-only policy. Actual manager and nested/directional assertions sampled; complete graph-preview/leader integration remains gap. |
@@ -452,15 +468,15 @@ or authorize repairs. Time complete at declared depth; N/D and Task4 pending.
 | `docs/specs/2026-10-15-reference-lifecycle-design.md` | 2/G | S | G full L1–251 plus original f2002a60 Git object and full feature: registered design addresses G9. Owning normalization, transitive incoming cleanup, source-last morph and no-write map presentation. Coordinator/closure/alias/history assertions sampled; world/board/recovery/preview matrix explicitly not exhaustive. |
 | `docs/specs/2026-10-15-reload-boundary-contract-design.md` | 3/P | O | P full L1–188 and original d80cc2a0 full: P12 root-default controller eligibility before mutation/deferred watcher, direct caller-managed limits. Actual target/deferral assertions sampled; live/repeated recovery not observed, no general freshness/sandbox/multiplayer guarantee. |
 | `docs/specs/2026-10-15-uniform-graph-access-design.md` | 2/G | S | Retain predecessor full L1–193, original545f36051effc5fe73cb3fcca34e1be58c2097ff and all existing Access/Isolation/revision IDs/artifacts. G independently reread original no-dereference slice; full feature L362–381 and original13d86a985c8e9faea3154c9bffc719c7b09b85af amendment explicitly extend DTO resolution, supported by lifecycle design/plan. Actual L292–338 alias/raw-byte assertions confirm definitions, not execution; historical scope is not rewritten. |
-| `docs/specs/2026-10-16-secure-record-publication-design.md` | 3/N | S | L5 opening: user-authorized native Windows overwrite correction; private publication invariants untraced. |
+| `docs/specs/2026-10-16-secure-record-publication-design.md` | 3/N | O | N full1–143 and full original27144fd/5b79ef2 correction: N6 ordinary editing/atomic publication/truthful store outcomes, N7 before-byte confidentiality/supported policy/pinned ownership/attempt-only cleanup. Explicit corrected authority retires only draft callback/ancestry refusal, not privacy. Canonical record-publication and bounded SELinux exception clarify platform policy; no security certification. |
 | `docs/specs/2026-10-16-windows-validation-diagnostics-design.md` | 3/D | S | L5 opening: failing cross-build diagnosis authorization; contamination-free evidence untraced. |
 | `docs/specs/2026-10-16-wine-suite-lifecycle-design.md` | 3/D | S | L5 opening: artifact-safe instrumented reproduction at 9b261b0; finite budget/cleanup evidence untraced. |
 | `docs/specs/2026-10-17-wine-native-failure-diagnostics-design.md` | 3/D | S | L5 opening: safe e4185c0 build/package/admission report; root cause assertions need original evidence. |
-| `docs/specs/2026-10-17-wine-posix-publication-design.md` | 3/N | S | L5 opening: real persistent publication, not mocks; actual Wine observations untraced. |
+| `docs/specs/2026-10-17-wine-posix-publication-design.md` | 3/N | O | N full1–320; original f2901da L1–84: N8 real local Wine target, host-POSIX privacy with unchanged native Windows policy, sticky commit/cleanup, no subprocess/fallback/new outcome. Represented-token checks are cooperative, not differing-UID/sandbox proof. Current canonical page full319 retains reported fa4fc4b2 result and fixed-base-dir/foreign-UID/native-platform limits; no fresh observation. |
 | `docs/specs/2026-10-20-devlog-branch-capability-design.md` | 3/D | S | L5: missing exact branch capability after safe preflight; branch guard assertions untraced. |
 | `docs/specs/2026-10-20-guarded-merge-policy-design.md` | 3/D | S | L5: helper cannot prove PR/method despite authentication/queue; authority query tests untraced. |
 | `docs/specs/2026-10-21-devlog-gap-backfill-design.md` | 3/D | S | L5: first-parent landing history with immutable published entries; exact historical 41-entry scope not a new target. |
-| `docs/specs/2026-10-21-sse-closure-finalizers-design.md` | 3/N | S | L5 opening: user-reported native SSE shutdown abort; GC/shutdown regression tests untraced. |
+| `docs/specs/2026-10-21-sse-closure-finalizers-design.md` | 3/N | S | N full1–113; original8fcf032 L1–14: grounded repair solution supports N11 HTTP/SSE safe lifecycle, preserving public API and ownership scope. Actual named-type and weak-root/GC/once-only close assertions traced; no sensitive cores, live listeners or new diagnosis/repair. |
 | `docs/specs/2026-10-22-checkpoint-review-ownership-design.md` | 3/D | S | L5 opening: assigned local checkpoints; checkpoint-versus-approval guards untraced. |
 | `docs/specs/2026-10-23-daily-devlog-catch-up-design.md` | 3/D | S | L5 opening: recover meaningful uncovered development; latest-entry cutoff tests untraced. |
 | `docs/specs/2026-10-24-wine-test-child-launch-design.md` | 3/D | S | L5 opening: narrow Wine POSIX acceptance extension; child environment boundary untraced. |

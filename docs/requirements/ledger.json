@@ -49,6 +49,12 @@
       "locator": "docs/specs/2026-10-07-hierarchical-focus-navigation-design.md",
       "title": "2026-10-07-hierarchical-focus-navigation-design.md"
     },
+    "ART-04055c4e-1788-49a3-9c09-8d254730cf05": {
+      "id": "ART-04055c4e-1788-49a3-9c09-8d254730cf05",
+      "kind": "code",
+      "locator": "src/realtime/core.cpp",
+      "title": "core.cpp"
+    },
     "ART-047f10b7-d936-47d9-bc5b-355ee10ec55e": {
       "id": "ART-047f10b7-d936-47d9-bc5b-355ee10ec55e",
       "kind": "implementation_spec",
@@ -73,6 +79,12 @@
       "locator": "assets/lua/graph/nodes/opencode-live.fnl",
       "title": "opencode-live.fnl"
     },
+    "ART-07921f0a-c67c-4636-9b5b-465fec5ef366": {
+      "id": "ART-07921f0a-c67c-4636-9b5b-465fec5ef366",
+      "kind": "code",
+      "locator": "src/record_publication_wine_driver.h",
+      "title": "record_publication_wine_driver.h"
+    },
     "ART-07da9541-9708-4233-ba12-0405e7a10348": {
       "id": "ART-07da9541-9708-4233-ba12-0405e7a10348",
       "kind": "code",
@@ -90,6 +102,12 @@
       "kind": "code",
       "locator": "docs/sdk/index.md",
       "title": "index.md"
+    },
+    "ART-07fd3b6c-6965-4758-aa1d-83ea1376dcdc": {
+      "id": "ART-07fd3b6c-6965-4758-aa1d-83ea1376dcdc",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-21-sse-closure-finalizers.md",
+      "title": "2026-10-21-sse-closure-finalizers.md"
     },
     "ART-08d468da-52f0-4d87-be74-81ca3278bf78": {
       "id": "ART-08d468da-52f0-4d87-be74-81ca3278bf78",
@@ -134,6 +152,12 @@
       "locator": "docs/plans/2026-09-28-temporal-rfc5545-recurrence.md",
       "title": "2026-09-28-temporal-rfc5545-recurrence.md"
     },
+    "ART-0bfda210-75ca-4df7-8cf2-3b6063983460": {
+      "id": "ART-0bfda210-75ca-4df7-8cf2-3b6063983460",
+      "kind": "design",
+      "locator": "docs/dev/features/record-publication.md",
+      "title": "record-publication.md"
+    },
     "ART-0c4cf142-1e99-40bc-8e12-6f03227a4be2": {
       "id": "ART-0c4cf142-1e99-40bc-8e12-6f03227a4be2",
       "kind": "implementation_spec",
@@ -151,6 +175,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-10-15-reload-boundary-contract-design.md",
       "title": "2026-10-15-reload-boundary-contract-design.md"
+    },
+    "ART-0ce8ce31-ac0d-4b9c-b171-0886edc223b2": {
+      "id": "ART-0ce8ce31-ac0d-4b9c-b171-0886edc223b2",
+      "kind": "test",
+      "locator": "tests/test_ssh_service.cpp",
+      "title": "test_ssh_service.cpp"
     },
     "ART-0e0f36eb-c817-4c50-8661-9a8cbcf0e2f5": {
       "id": "ART-0e0f36eb-c817-4c50-8661-9a8cbcf0e2f5",
@@ -237,6 +267,12 @@
       "locator": "docs/plans/2026-08-14-graph-authored-agent-workflows.md",
       "title": "2026-08-14-graph-authored-agent-workflows.md"
     },
+    "ART-179d6b3a-71d8-464c-b913-0d518b30b9b6": {
+      "id": "ART-179d6b3a-71d8-464c-b913-0d518b30b9b6",
+      "kind": "code",
+      "locator": "src/ssh_service.cpp",
+      "title": "ssh_service.cpp"
+    },
     "ART-17bd7f55-4585-4ac2-98ad-8ebf20b9b676": {
       "id": "ART-17bd7f55-4585-4ac2-98ad-8ebf20b9b676",
       "kind": "code",
@@ -272,6 +308,18 @@
       "kind": "design",
       "locator": "docs/specs/2026-09-14-shared-text-interaction-engine-design.md",
       "title": "2026-09-14-shared-text-interaction-engine-design.md"
+    },
+    "ART-19dc4a90-2577-4812-87ba-92e4aa70bed1": {
+      "id": "ART-19dc4a90-2577-4812-87ba-92e4aa70bed1",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-16-secure-record-publication-design.md",
+      "title": "2026-10-16-secure-record-publication-design.md"
+    },
+    "ART-1ab07ae4-7440-46c8-8fff-a49f2f79b599": {
+      "id": "ART-1ab07ae4-7440-46c8-8fff-a49f2f79b599",
+      "kind": "code",
+      "locator": "src/lua_wallet_core.cpp",
+      "title": "lua_wallet_core.cpp"
     },
     "ART-1ad41a56-8b01-4b4c-a332-afd0be19295f": {
       "id": "ART-1ad41a56-8b01-4b4c-a332-afd0be19295f",
@@ -333,11 +381,29 @@
       "locator": "docs/plans/2026-08-16-workflow-graph-ux.md",
       "title": "2026-08-16-workflow-graph-ux.md"
     },
+    "ART-2214dbc9-e99f-4d23-a6b1-0fb104c8a0bb": {
+      "id": "ART-2214dbc9-e99f-4d23-a6b1-0fb104c8a0bb",
+      "kind": "implementation_spec",
+      "locator": "docs/dev/notes/yojimbo.md",
+      "title": "yojimbo.md"
+    },
+    "ART-22d99a03-460a-46fe-aa20-b62439903658": {
+      "id": "ART-22d99a03-460a-46fe-aa20-b62439903658",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-16-secure-record-publication.md",
+      "title": "2026-10-16-secure-record-publication.md"
+    },
     "ART-23600410-0a5d-46b3-94d0-bd38cd5c4184": {
       "id": "ART-23600410-0a5d-46b3-94d0-bd38cd5c4184",
       "kind": "design",
       "locator": "docs/specs/2026-10-02-snackbar-system-design.md",
       "title": "2026-10-02-snackbar-system-design.md"
+    },
+    "ART-242142dd-a4cd-41d9-93fd-2841ea5ae122": {
+      "id": "ART-242142dd-a4cd-41d9-93fd-2841ea5ae122",
+      "kind": "code",
+      "locator": "src/record_publication_selinux.cpp",
+      "title": "record_publication_selinux.cpp"
     },
     "ART-244bad55-88a6-46d3-bdc4-a15135458edf": {
       "id": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
@@ -479,6 +545,12 @@
       "locator": "assets/lua/activity-surface-boundary.fnl",
       "title": "activity-surface-boundary.fnl"
     },
+    "ART-3458fa3a-9111-4028-b48e-22f61e7394c8": {
+      "id": "ART-3458fa3a-9111-4028-b48e-22f61e7394c8",
+      "kind": "design",
+      "locator": "docs/sdk/modules/http.md",
+      "title": "http.md"
+    },
     "ART-34d05186-5b15-45ab-9ecd-1a376dbb74fb": {
       "id": "ART-34d05186-5b15-45ab-9ecd-1a376dbb74fb",
       "kind": "test",
@@ -534,6 +606,12 @@
       "locator": "docs/plans/2026-07-25-sandbox-scene-activity.md",
       "title": "2026-07-25-sandbox-scene-activity.md"
     },
+    "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb": {
+      "id": "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb",
+      "kind": "code",
+      "locator": "src/record_publication.cpp",
+      "title": "record_publication.cpp"
+    },
     "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d": {
       "id": "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d",
       "kind": "code",
@@ -576,6 +654,12 @@
       "locator": "docs/specs/2026-09-28-sdk-docs-design.md",
       "title": "2026-09-28-sdk-docs-design.md"
     },
+    "ART-3fa49fcb-9383-4cae-8ca3-3f52f4edfa57": {
+      "id": "ART-3fa49fcb-9383-4cae-8ca3-3f52f4edfa57",
+      "kind": "test",
+      "locator": "tests/test_record_publication_bridge_driver.cpp",
+      "title": "test_record_publication_bridge_driver.cpp"
+    },
     "ART-3fde2196-8a5a-49ca-a240-632e22b301dc": {
       "id": "ART-3fde2196-8a5a-49ca-a240-632e22b301dc",
       "kind": "implementation_spec",
@@ -587,6 +671,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-08-13-activity-camera-boundary-design.md",
       "title": "2026-08-13-activity-camera-boundary-design.md"
+    },
+    "ART-4190b4cd-a9d9-48f5-b4a3-b56005aa786f": {
+      "id": "ART-4190b4cd-a9d9-48f5-b4a3-b56005aa786f",
+      "kind": "design",
+      "locator": "docs/dev/subsystems/ssh.md",
+      "title": "ssh.md"
     },
     "ART-4220c66d-51fb-4e94-8565-b273df89c255": {
       "id": "ART-4220c66d-51fb-4e94-8565-b273df89c255",
@@ -744,6 +834,12 @@
       "locator": "assets/lua/tests/test-temporal-recurrence-rfc5545.fnl",
       "title": "test-temporal-recurrence-rfc5545.fnl"
     },
+    "ART-51d85afb-2c4a-4bea-87fe-dbe6d2233087": {
+      "id": "ART-51d85afb-2c4a-4bea-87fe-dbe6d2233087",
+      "kind": "code",
+      "locator": "src/realtime/auth_ticket.cpp",
+      "title": "auth_ticket.cpp"
+    },
     "ART-5261621d-08b2-468e-967e-ddf871cd65eb": {
       "id": "ART-5261621d-08b2-468e-967e-ddf871cd65eb",
       "kind": "design",
@@ -793,6 +889,12 @@
       "locator": "assets/lua/tests/test-hosted-app-workspace-mount.fnl",
       "title": "test-hosted-app-workspace-mount.fnl"
     },
+    "ART-5654b33c-1342-43e3-8399-1ef36a307102": {
+      "id": "ART-5654b33c-1342-43e3-8399-1ef36a307102",
+      "kind": "design",
+      "locator": "docs/dev/features/record-publication-selinux.md",
+      "title": "record-publication-selinux.md"
+    },
     "ART-56cf7349-20ea-4b25-9360-5a176b366502": {
       "id": "ART-56cf7349-20ea-4b25-9360-5a176b366502",
       "kind": "code",
@@ -810,6 +912,12 @@
       "kind": "code",
       "locator": "assets/lua/panel-transfer.fnl",
       "title": "panel-transfer.fnl"
+    },
+    "ART-5a8fc541-47f2-445d-a327-0db413cc0ceb": {
+      "id": "ART-5a8fc541-47f2-445d-a327-0db413cc0ceb",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-17-wine-posix-publication-design.md",
+      "title": "2026-10-17-wine-posix-publication-design.md"
     },
     "ART-5b69bbcf-1031-4e10-90ce-119cbbab54d6": {
       "id": "ART-5b69bbcf-1031-4e10-90ce-119cbbab54d6",
@@ -840,6 +948,12 @@
       "kind": "code",
       "locator": "assets/lua/app-host/workspace-mount.fnl",
       "title": "workspace-mount.fnl"
+    },
+    "ART-5e795d89-a390-44d4-8c6b-4a1d5c99b562": {
+      "id": "ART-5e795d89-a390-44d4-8c6b-4a1d5c99b562",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-http.fnl",
+      "title": "test-http.fnl"
     },
     "ART-5facf444-9ed7-45a4-915a-17074742f5f3": {
       "id": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
@@ -883,17 +997,35 @@
       "locator": "docs/dev/features/kernel-system.md",
       "title": "kernel-system.md"
     },
+    "ART-64b196fe-489d-4d82-bae1-cc801ab8d801": {
+      "id": "ART-64b196fe-489d-4d82-bae1-cc801ab8d801",
+      "kind": "code",
+      "locator": "src/ssh_backend_libssh.cpp",
+      "title": "ssh_backend_libssh.cpp"
+    },
     "ART-656502be-dd4f-43e2-8f88-80f094f98dec": {
       "id": "ART-656502be-dd4f-43e2-8f88-80f094f98dec",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-09-17-graph-presentation-islands.md",
       "title": "2026-09-17-graph-presentation-islands.md"
     },
+    "ART-6617acaf-72aa-420d-85f4-521d5a659dd8": {
+      "id": "ART-6617acaf-72aa-420d-85f4-521d5a659dd8",
+      "kind": "code",
+      "locator": "assets/lua/entities/record-files.fnl",
+      "title": "record-files.fnl"
+    },
     "ART-66f388cd-a50d-416f-9578-429290d71bfb": {
       "id": "ART-66f388cd-a50d-416f-9578-429290d71bfb",
       "kind": "test",
       "locator": "assets/lua/tests/test-workflow-graph.fnl",
       "title": "test-workflow-graph.fnl"
+    },
+    "ART-68aee138-59f9-4a45-96bf-828b8a1f1c98": {
+      "id": "ART-68aee138-59f9-4a45-96bf-828b8a1f1c98",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-05-ssh-real-backend-validation.md",
+      "title": "2026-10-05-ssh-real-backend-validation.md"
     },
     "ART-6914537d-119d-42fa-b617-076831934bb3": {
       "id": "ART-6914537d-119d-42fa-b617-076831934bb3",
@@ -1154,6 +1286,18 @@
       "locator": "assets/lua/virtual-input.fnl",
       "title": "virtual-input.fnl"
     },
+    "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a": {
+      "id": "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-04-ssh-integration-foundation-design.md",
+      "title": "2026-10-04-ssh-integration-foundation-design.md"
+    },
+    "ART-82166858-b6dd-479c-9ad6-2c510250886d": {
+      "id": "ART-82166858-b6dd-479c-9ad6-2c510250886d",
+      "kind": "code",
+      "locator": "src/lua_http.cpp",
+      "title": "lua_http.cpp"
+    },
     "ART-82610317-b66c-449b-bd73-2c163b385450": {
       "id": "ART-82610317-b66c-449b-bd73-2c163b385450",
       "kind": "implementation_spec",
@@ -1239,11 +1383,23 @@
       "locator": "docs/specs/2026-07-27-activity-owned-presentation-design.md",
       "title": "2026-07-27-activity-owned-presentation-design.md"
     },
+    "ART-8c18986e-2cc8-481a-b1c0-c21e7692df5f": {
+      "id": "ART-8c18986e-2cc8-481a-b1c0-c21e7692df5f",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-wallet.fnl",
+      "title": "test-wallet.fnl"
+    },
     "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21": {
       "id": "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-15-reload-boundary-contract.md",
       "title": "2026-10-15-reload-boundary-contract.md"
+    },
+    "ART-8d29ee8c-6279-424d-a1ad-d8eb9027fa2b": {
+      "id": "ART-8d29ee8c-6279-424d-a1ad-d8eb9027fa2b",
+      "kind": "code",
+      "locator": "assets/lua/ssh/fleet.fnl",
+      "title": "fleet.fnl"
     },
     "ART-8ddcce73-ebff-48d4-8ecc-1b26d941057a": {
       "id": "ART-8ddcce73-ebff-48d4-8ecc-1b26d941057a",
@@ -1268,6 +1424,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-08-06-sandbox-interaction-modes-design.md",
       "title": "2026-08-06-sandbox-interaction-modes-design.md"
+    },
+    "ART-91e5af93-4406-45cf-8af0-926459792dd0": {
+      "id": "ART-91e5af93-4406-45cf-8af0-926459792dd0",
+      "kind": "design",
+      "locator": "docs/sdk/modules/realtime.md",
+      "title": "realtime.md"
     },
     "ART-92b0d083-625a-4c23-a556-c116c8a98178": {
       "id": "ART-92b0d083-625a-4c23-a556-c116c8a98178",
@@ -1353,6 +1515,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-workflow-runner.fnl",
       "title": "test-workflow-runner.fnl"
+    },
+    "ART-99b6603a-0ef5-48f2-b0fd-e1112b5b5a5d": {
+      "id": "ART-99b6603a-0ef5-48f2-b0fd-e1112b5b5a5d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-05-ssh-real-backend-validation-design.md",
+      "title": "2026-10-05-ssh-real-backend-validation-design.md"
     },
     "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de": {
       "id": "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de",
@@ -1494,6 +1662,12 @@
       "locator": "assets/lua/temporal/pattern.fnl",
       "title": "pattern.fnl"
     },
+    "ART-aa08d48f-f72d-4ba2-85a0-b0633d48835d": {
+      "id": "ART-aa08d48f-f72d-4ba2-85a0-b0633d48835d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-21-sse-closure-finalizers-design.md",
+      "title": "2026-10-21-sse-closure-finalizers-design.md"
+    },
     "ART-aa0c3dcd-6340-4226-b355-1ed58007541b": {
       "content_digest": "ce1f0aad8d5e5239ac14670f60ec26758d06dc363f9bd483ed7cb538d61e3904",
       "id": "ART-aa0c3dcd-6340-4226-b355-1ed58007541b",
@@ -1573,6 +1747,12 @@
       "locator": "docs/specs/2026-09-25-temporal-ecosystem-design.md",
       "title": "2026-09-25-temporal-ecosystem-design.md"
     },
+    "ART-b1d3324b-7f49-442d-b299-0daa27ed1328": {
+      "id": "ART-b1d3324b-7f49-442d-b299-0daa27ed1328",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-wallet-core.fnl",
+      "title": "test-wallet-core.fnl"
+    },
     "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b": {
       "id": "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b",
       "kind": "implementation_spec",
@@ -1585,11 +1765,23 @@
       "locator": "docs/specs/2026-09-26-3d-snake-scene-view-design.md",
       "title": "2026-09-26-3d-snake-scene-view-design.md"
     },
+    "ART-b440892f-c936-4728-8614-6e4d791cdee8": {
+      "id": "ART-b440892f-c936-4728-8614-6e4d791cdee8",
+      "kind": "code",
+      "locator": "src/lua_http_server.cpp",
+      "title": "lua_http_server.cpp"
+    },
     "ART-b5564ea2-0a21-419b-93cf-224f8f2f569b": {
       "id": "ART-b5564ea2-0a21-419b-93cf-224f8f2f569b",
       "kind": "test",
       "locator": "assets/lua/tests/test-cef-browser-smoke.fnl",
       "title": "test-cef-browser-smoke.fnl"
+    },
+    "ART-b57e0b35-40d7-4a3b-8571-fb80c48e421e": {
+      "id": "ART-b57e0b35-40d7-4a3b-8571-fb80c48e421e",
+      "kind": "design",
+      "locator": "docs/dev/features/wallet-system.md",
+      "title": "wallet-system.md"
     },
     "ART-b60a9bcb-c2df-4edd-acd4-a9ca6f291821": {
       "id": "ART-b60a9bcb-c2df-4edd-acd4-a9ca6f291821",
@@ -1634,6 +1826,12 @@
       "locator": "assets/lua/kernels.fnl",
       "title": "kernels.fnl"
     },
+    "ART-b9600357-f69b-4ebb-a163-6c155362ef58": {
+      "id": "ART-b9600357-f69b-4ebb-a163-6c155362ef58",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-17-wine-posix-publication.md",
+      "title": "2026-10-17-wine-posix-publication.md"
+    },
     "ART-ba3026b1-a006-4e87-beab-c505ad4c8225": {
       "id": "ART-ba3026b1-a006-4e87-beab-c505ad4c8225",
       "kind": "code",
@@ -1646,6 +1844,12 @@
       "kind": "test",
       "locator": "scripts/tests/test_requirements_store.py",
       "title": "test_requirements_store.py"
+    },
+    "ART-baab5bac-c781-42cf-8802-0b450a3e30bb": {
+      "id": "ART-baab5bac-c781-42cf-8802-0b450a3e30bb",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-http-server.fnl",
+      "title": "test-http-server.fnl"
     },
     "ART-bab79ca0-e323-4535-904e-a484b7526ddf": {
       "id": "ART-bab79ca0-e323-4535-904e-a484b7526ddf",
@@ -1696,6 +1900,12 @@
       "locator": "assets/lua/tests/test-agent-presets-mcp.fnl",
       "title": "test-agent-presets-mcp.fnl"
     },
+    "ART-bfed02d7-651d-456d-ab78-c34a0e9c6359": {
+      "id": "ART-bfed02d7-651d-456d-ab78-c34a0e9c6359",
+      "kind": "test",
+      "locator": "tests/test_record_publication.cpp",
+      "title": "test_record_publication.cpp"
+    },
     "ART-c0031ccc-d3e5-4e6f-9d76-68fac2707823": {
       "id": "ART-c0031ccc-d3e5-4e6f-9d76-68fac2707823",
       "kind": "code",
@@ -1714,6 +1924,12 @@
       "kind": "design",
       "locator": "docs/dev/features/hosted-runtime-apps.md",
       "title": "hosted-runtime-apps.md"
+    },
+    "ART-c1d86207-1de9-41fa-b9c2-7ccff179bdc9": {
+      "id": "ART-c1d86207-1de9-41fa-b9c2-7ccff179bdc9",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-ssh-fleet.fnl",
+      "title": "test-ssh-fleet.fnl"
     },
     "ART-c20aab34-3d24-4b03-a593-6dd07ef62772": {
       "id": "ART-c20aab34-3d24-4b03-a593-6dd07ef62772",
@@ -1782,6 +1998,12 @@
       "locator": "assets/lua/workflows/runner.fnl",
       "title": "runner.fnl"
     },
+    "ART-c9790bb6-3dce-4f05-8175-250ef62c7269": {
+      "id": "ART-c9790bb6-3dce-4f05-8175-250ef62c7269",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-wallet-store.fnl",
+      "title": "test-wallet-store.fnl"
+    },
     "ART-c9825d99-1a08-450e-9485-fab27e06dfb1": {
       "id": "ART-c9825d99-1a08-450e-9485-fab27e06dfb1",
       "kind": "implementation_spec",
@@ -1829,6 +2051,12 @@
       "kind": "code",
       "locator": "assets/lua/llm/agent/session-migration.fnl",
       "title": "session-migration.fnl"
+    },
+    "ART-cf931130-4d25-4b85-b161-d0e1b9a9e37c": {
+      "id": "ART-cf931130-4d25-4b85-b161-d0e1b9a9e37c",
+      "kind": "test",
+      "locator": "tests/test_realtime_core.cpp",
+      "title": "test_realtime_core.cpp"
     },
     "ART-d20ad50d-595e-49be-baf8-44154f340fb3": {
       "id": "ART-d20ad50d-595e-49be-baf8-44154f340fb3",
@@ -2018,6 +2246,12 @@
       "locator": "docs/specs/2026-09-27-hosted-app-command-controls-design.md",
       "title": "2026-09-27-hosted-app-command-controls-design.md"
     },
+    "ART-e3cf4cca-ecb8-4788-aaa9-058c87c4d95a": {
+      "id": "ART-e3cf4cca-ecb8-4788-aaa9-058c87c4d95a",
+      "kind": "code",
+      "locator": "assets/lua/wallet-store.fnl",
+      "title": "wallet-store.fnl"
+    },
     "ART-e45ff73c-07a5-4808-aba4-3803d86ce78b": {
       "id": "ART-e45ff73c-07a5-4808-aba4-3803d86ce78b",
       "kind": "test",
@@ -2067,6 +2301,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-09-14-virtual-input-shared-input-policies.md",
       "title": "2026-09-14-virtual-input-shared-input-policies.md"
+    },
+    "ART-eaf14fbb-0e74-4745-ac6d-b80deeec04c5": {
+      "id": "ART-eaf14fbb-0e74-4745-ac6d-b80deeec04c5",
+      "kind": "design",
+      "locator": "docs/sdk/modules/http-server.md",
+      "title": "http-server.md"
     },
     "ART-eb44c628-5574-4d18-b3b1-6938d8a64fb6": {
       "id": "ART-eb44c628-5574-4d18-b3b1-6938d8a64fb6",
@@ -2146,6 +2386,12 @@
       "locator": "assets/lua/tests/test-string-entity-search.fnl",
       "title": "test-string-entity-search.fnl"
     },
+    "ART-f198a641-ef21-44a8-bbf4-262a35a95f4f": {
+      "id": "ART-f198a641-ef21-44a8-bbf4-262a35a95f4f",
+      "kind": "test",
+      "locator": "tests/test_ssh_sftp_finalization.cpp",
+      "title": "test_ssh_sftp_finalization.cpp"
+    },
     "ART-f1ef454e-c88a-4deb-bb2a-ce0a077b2b58": {
       "id": "ART-f1ef454e-c88a-4deb-bb2a-ce0a077b2b58",
       "kind": "design",
@@ -2177,11 +2423,23 @@
       "locator": "assets/lua/tests/test-graph-map.fnl",
       "title": "test-graph-map.fnl"
     },
+    "ART-f45a3b74-f747-4eb6-977a-108ea98ea8a9": {
+      "id": "ART-f45a3b74-f747-4eb6-977a-108ea98ea8a9",
+      "kind": "test",
+      "locator": "tests/test_record_publication_selinux.cpp",
+      "title": "test_record_publication_selinux.cpp"
+    },
     "ART-f47cc99b-3c0c-47b7-9e50-4d221962e497": {
       "id": "ART-f47cc99b-3c0c-47b7-9e50-4d221962e497",
       "kind": "design",
       "locator": "docs/dev/features/app-distribution.md",
       "title": "app-distribution.md"
+    },
+    "ART-f4a267df-9fde-4bec-aec7-70b0763fa62d": {
+      "id": "ART-f4a267df-9fde-4bec-aec7-70b0763fa62d",
+      "kind": "code",
+      "locator": ".github/workflows/test.yml",
+      "title": "test.yml"
     },
     "ART-f4a83d1c-7c1c-4101-82fc-23a1bf2437eb": {
       "id": "ART-f4a83d1c-7c1c-4101-82fc-23a1bf2437eb",
@@ -2231,6 +2489,12 @@
       "locator": "docs/dev/widget-ownership-and-teardown.md",
       "title": "widget-ownership-and-teardown.md"
     },
+    "ART-f81d6003-7cfa-4789-8112-2896de59a96a": {
+      "id": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-04-ssh-integration-foundation.md",
+      "title": "2026-10-04-ssh-integration-foundation.md"
+    },
     "ART-f8788ba4-449f-493d-978e-ba2fb78bb726": {
       "content_digest": "04f24b168b51e88159958ea3f09bc8f88d35062cc1ec1e8967bce32d3ac00355",
       "id": "ART-f8788ba4-449f-493d-978e-ba2fb78bb726",
@@ -2250,6 +2514,24 @@
       "kind": "code",
       "locator": "CMakeLists.txt",
       "title": "CMakeLists.txt"
+    },
+    "ART-f9a375ce-2a37-47eb-8101-0d5ac60ad33b": {
+      "id": "ART-f9a375ce-2a37-47eb-8101-0d5ac60ad33b",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-29-sftp-success-finalization.md",
+      "title": "2026-10-29-sftp-success-finalization.md"
+    },
+    "ART-fb087150-e44d-4955-b439-e152dce21cf7": {
+      "id": "ART-fb087150-e44d-4955-b439-e152dce21cf7",
+      "kind": "code",
+      "locator": "assets/lua/wallet.fnl",
+      "title": "wallet.fnl"
+    },
+    "ART-fb1b4dfe-06fa-4144-bb74-c6b29b1d5ebf": {
+      "id": "ART-fb1b4dfe-06fa-4144-bb74-c6b29b1d5ebf",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-entity-record-persistence.fnl",
+      "title": "test-entity-record-persistence.fnl"
     },
     "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788": {
       "id": "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788",
@@ -17358,6 +17640,1842 @@
       "source": "ART-c9fad950-ddcb-4f54-85a4-2d2686122074",
       "target": "ART-6a305a1b-be18-453c-903a-2447c59a210a",
       "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-36ada402-2bd8-4002-9d44-f3725c3a897a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N1 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N1 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ca35527b-5bcc-4498-86ee-d1b86348bcb8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N1; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-04-ssh-integration-foundation.md"
+      },
+      "rationale": "Actual implementation plan addresses N1; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-98237528-6b60-44b4-a341-a1c1faa35861",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N2 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N2 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a",
+      "target": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-99839177-2dd0-4d4f-a35b-dc372cb1b555",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N2; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-04-ssh-integration-foundation.md"
+      },
+      "rationale": "Actual implementation plan addresses N2; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "target": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b1cd2a91-16ad-4adf-ba0f-5259f2cc4494",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N3 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N3 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a",
+      "target": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-58eac95e-79e5-4fdd-88a0-b80cc99a6e4e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N3; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-04-ssh-integration-foundation.md"
+      },
+      "rationale": "Actual implementation plan addresses N3; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "target": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-694fdb8f-82b0-4a86-b490-8bf8798529d2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-04-ssh-integration-foundation.md"
+      },
+      "rationale": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+      "retracted": false,
+      "source": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "target": "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fb29a146-86aa-4a7c-a7ef-c3abcb978e40",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N4 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-05-ssh-real-backend-validation-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N4 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-99b6603a-0ef5-48f2-b0fd-e1112b5b5a5d",
+      "target": "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-31421f6d-c039-43f1-a49d-6206220b609f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N4; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-05-ssh-real-backend-validation.md"
+      },
+      "rationale": "Actual implementation plan addresses N4; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-68aee138-59f9-4a45-96bf-828b8a1f1c98",
+      "target": "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-183ae322-c0e6-4dfc-8bce-fcbaf7a532e9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-05-ssh-real-backend-validation.md"
+      },
+      "rationale": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+      "retracted": false,
+      "source": "ART-68aee138-59f9-4a45-96bf-828b8a1f1c98",
+      "target": "ART-99b6603a-0ef5-48f2-b0fd-e1112b5b5a5d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-df9a6435-6a2a-4024-b2e5-2d9d1270e824",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N6 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N6 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-19dc4a90-2577-4812-87ba-92e4aa70bed1",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2317d31e-5a5c-422d-b1af-7ef9a5d51749",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N6; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-16-secure-record-publication.md"
+      },
+      "rationale": "Actual implementation plan addresses N6; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-22d99a03-460a-46fe-aa20-b62439903658",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4870a707-54d4-4781-80fa-cea4effead08",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N7 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N7 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-19dc4a90-2577-4812-87ba-92e4aa70bed1",
+      "target": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dcc4ddef-6800-4ebc-984e-cb2ba1624239",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N7; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-16-secure-record-publication.md"
+      },
+      "rationale": "Actual implementation plan addresses N7; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-22d99a03-460a-46fe-aa20-b62439903658",
+      "target": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d32ccae0-e8f5-412c-aa3d-9c2655199fdd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-16-secure-record-publication.md"
+      },
+      "rationale": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+      "retracted": false,
+      "source": "ART-22d99a03-460a-46fe-aa20-b62439903658",
+      "target": "ART-19dc4a90-2577-4812-87ba-92e4aa70bed1",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f93419ba-3c7a-49f7-9553-21257338a9e9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N8 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-17-wine-posix-publication-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N8 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-5a8fc541-47f2-445d-a327-0db413cc0ceb",
+      "target": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c93c7202-01e1-443c-ad04-ec261dbece1e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N8; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-17-wine-posix-publication.md"
+      },
+      "rationale": "Actual implementation plan addresses N8; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-b9600357-f69b-4ebb-a163-6c155362ef58",
+      "target": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-75eba15e-eeb5-436c-b17c-c1e5bf37fa0a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-17-wine-posix-publication.md"
+      },
+      "rationale": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+      "retracted": false,
+      "source": "ART-b9600357-f69b-4ebb-a163-6c155362ef58",
+      "target": "ART-5a8fc541-47f2-445d-a327-0db413cc0ceb",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a6e1fc47-58c0-4b85-bc8d-a020a4079d93",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full principal contract defines the bounded N11 behavior; historical validation statements are not fresh observations.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-21-sse-closure-finalizers-design.md"
+      },
+      "rationale": "Full principal contract defines the bounded N11 behavior; historical validation statements are not fresh observations.",
+      "retracted": false,
+      "source": "ART-aa08d48f-f72d-4ba2-85a0-b0633d48835d",
+      "target": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e33189bf-a952-4557-ac41-a93076470cfd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan addresses N11; plan steps/checkmarks confer no satisfaction.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-21-sse-closure-finalizers.md"
+      },
+      "rationale": "Actual implementation plan addresses N11; plan steps/checkmarks confer no satisfaction.",
+      "retracted": false,
+      "source": "ART-07fd3b6c-6965-4758-aa1d-83ea1376dcdc",
+      "target": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c7c42e95-fe1f-438b-9a04-4faf580a5700",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-21-sse-closure-finalizers.md"
+      },
+      "rationale": "Matching actual plan implements the selected design; retains original revisions and explicitly corrected publication authority.",
+      "retracted": false,
+      "source": "ART-07fd3b6c-6965-4758-aa1d-83ea1376dcdc",
+      "target": "ART-aa08d48f-f72d-4ba2-85a0-b0633d48835d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a6c0cdb2-c1f1-4ab2-b858-fb228c5db312",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N1; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/subsystems/ssh.md"
+      },
+      "rationale": "Inspected current contract documents N1; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-4190b4cd-a9d9-48f5-b4a3-b56005aa786f",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0092fb9e-8239-4c82-a624-df4a69954f70",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N2; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/subsystems/ssh.md"
+      },
+      "rationale": "Inspected current contract documents N2; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-4190b4cd-a9d9-48f5-b4a3-b56005aa786f",
+      "target": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bbd9763c-bfb3-4f47-b2f8-6b38fee18100",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N3; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/subsystems/ssh.md"
+      },
+      "rationale": "Inspected current contract documents N3; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-4190b4cd-a9d9-48f5-b4a3-b56005aa786f",
+      "target": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-95c7235d-25b2-4f9b-b12f-0c20066882a4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N5; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/subsystems/ssh.md"
+      },
+      "rationale": "Inspected current contract documents N5; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-4190b4cd-a9d9-48f5-b4a3-b56005aa786f",
+      "target": "REQ-ba697587-cf4f-481f-8b1c-980236da6490",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-edd2ca6b-d49d-4a04-ba0a-d3d4df33a312",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N5; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-29-sftp-success-finalization.md"
+      },
+      "rationale": "Inspected current contract documents N5; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-f9a375ce-2a37-47eb-8101-0d5ac60ad33b",
+      "target": "REQ-ba697587-cf4f-481f-8b1c-980236da6490",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-85e55817-7927-4cab-9e37-21b9e627f5af",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N6; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/record-publication.md"
+      },
+      "rationale": "Inspected current contract documents N6; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-0bfda210-75ca-4df7-8cf2-3b6063983460",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eb5af491-cd67-481f-af3d-fb2f057c967d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N7; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/record-publication.md"
+      },
+      "rationale": "Inspected current contract documents N7; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-0bfda210-75ca-4df7-8cf2-3b6063983460",
+      "target": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7df1e676-0345-4d09-b551-756ddc3a1718",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N8; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/record-publication.md"
+      },
+      "rationale": "Inspected current contract documents N8; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-0bfda210-75ca-4df7-8cf2-3b6063983460",
+      "target": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-295713e9-46b3-459d-a07a-91a0af5e0aee",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N9; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/record-publication-selinux.md"
+      },
+      "rationale": "Inspected current contract documents N9; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-5654b33c-1342-43e3-8399-1ef36a307102",
+      "target": "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c8a6256a-2304-498c-bed4-37da88911a41",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N10; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http.md"
+      },
+      "rationale": "Inspected current contract documents N10; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-3458fa3a-9111-4028-b48e-22f61e7394c8",
+      "target": "REQ-e65ba9e6-11f9-400d-b1bd-1205f4572f27",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-40512ebc-1fc8-404c-8862-b5da264aff47",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N11; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http-server.md"
+      },
+      "rationale": "Inspected current contract documents N11; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-eaf14fbb-0e74-4745-ac6d-b80deeec04c5",
+      "target": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d97ca2e8-c126-4cb5-850a-a6da49150db8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N12; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/realtime.md"
+      },
+      "rationale": "Inspected current contract documents N12; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-91e5af93-4406-45cf-8af0-926459792dd0",
+      "target": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-017e9d59-ff93-45b0-9975-744e57299cf9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N13; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/realtime.md"
+      },
+      "rationale": "Inspected current contract documents N13; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-91e5af93-4406-45cf-8af0-926459792dd0",
+      "target": "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1c9c15cd-7706-488b-b7b4-daf67dcf357b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N12; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Inspected current contract documents N12; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-2214dbc9-e99f-4d23-a6b1-0fb104c8a0bb",
+      "target": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8db0ee08-0cef-49c6-ad20-bc908a15a166",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N13; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Inspected current contract documents N13; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-2214dbc9-e99f-4d23-a6b1-0fb104c8a0bb",
+      "target": "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2b61a242-8d4e-4efa-a78f-1f0de653c80b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Inspected current contract documents N14; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/wallet-system.md"
+      },
+      "rationale": "Inspected current contract documents N14; implementation/status descriptions are separately qualified in audit, not proof of completion.",
+      "retracted": false,
+      "source": "ART-b57e0b35-40d7-4a3b-8571-fb80c48e421e",
+      "target": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a9f06d42-5dc9-413a-a709-a670ff81efa3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Service100\u2013229 exposes structured errors/redaction, optional factory and validation; representative source, not complete lifecycle verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/ssh_service.cpp"
+      },
+      "rationale": "Service100\u2013229 exposes structured errors/redaction, optional factory and validation; representative source, not complete lifecycle verification.",
+      "retracted": false,
+      "source": "ART-179d6b3a-71d8-464c-b913-0d518b30b9b6",
+      "target": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-777da634-3e71-4b8e-835a-1cefcc5ea7d0",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Upload881\u20131003/download1005\u20131104 implement byte transfers and checked completion; broader auth/shell/tunnel code not exhaustively inspected.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/ssh_backend_libssh.cpp"
+      },
+      "rationale": "Upload881\u20131003/download1005\u20131104 implement byte transfers and checked completion; broader auth/shell/tunnel code not exhaustively inspected.",
+      "retracted": false,
+      "source": "ART-64b196fe-489d-4d82-bae1-cc801ab8d801",
+      "target": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1e5c1948-248b-4197-961e-67ebbcedbb65",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "881\u20131117 finishes local I/O, consumes checked remote close, frees SFTP then rechecks activity before separate successful notifications.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/ssh_backend_libssh.cpp"
+      },
+      "rationale": "881\u20131117 finishes local I/O, consumes checked remote close, frees SFTP then rechecks activity before separate successful notifications.",
+      "retracted": false,
+      "source": "ART-64b196fe-489d-4d82-bae1-cc801ab8d801",
+      "target": "ART-f9a375ce-2a37-47eb-8101-0d5ac60ad33b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-59539c06-dea2-4236-b7f4-021e1efd873e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "1\u2013190 validates options/passes trust policy/redacts result secrets; complete scheduler/clock behavior not established by this sample.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/ssh/fleet.fnl"
+      },
+      "rationale": "1\u2013190 validates options/passes trust policy/redacts result secrets; complete scheduler/clock behavior not established by this sample.",
+      "retracted": false,
+      "source": "ART-8d29ee8c-6279-424d-a1ad-d8eb9027fa2b",
+      "target": "ART-f81d6003-7cfa-4789-8112-2896de59a96a",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-960d554a-7a94-4dd1-8554-a0ef72286577",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "356\u2013357 enables both strict SSH fixture/backend variables for Linux test; static declaration, not CI execution.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:.github/workflows/test.yml"
+      },
+      "rationale": "356\u2013357 enables both strict SSH fixture/backend variables for Linux test; static declaration, not CI execution.",
+      "retracted": false,
+      "source": "ART-f4a267df-9fde-4bec-aec7-70b0763fa62d",
+      "target": "ART-68aee138-59f9-4a45-96bf-828b8a1f1c98",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-320ad26b-f8eb-4a3f-ac2c-72319b74ea3d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "260\u2013404 retained private POSIX handles/byte and policy validation/rename;1234\u20131388 cleanup and immediate commit latch. Native Windows branch not newly fully audited.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/record_publication.cpp"
+      },
+      "rationale": "260\u2013404 retained private POSIX handles/byte and policy validation/rename;1234\u20131388 cleanup and immediate commit latch. Native Windows branch not newly fully audited.",
+      "retracted": false,
+      "source": "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb",
+      "target": "ART-22d99a03-460a-46fe-aa20-b62439903658",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8361e737-2df0-4a13-b40f-5e8e53c005f6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full77: read-only open injection, native payload publication and canonical JSON publisher forwarding cleanup; owning-store transition code is a separate trace gap.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/entities/record-files.fnl"
+      },
+      "rationale": "Full77: read-only open injection, native payload publication and canonical JSON publisher forwarding cleanup; owning-store transition code is a separate trace gap.",
+      "retracted": false,
+      "source": "ART-6617acaf-72aa-420d-85f4-521d5a659dd8",
+      "target": "ART-22d99a03-460a-46fe-aa20-b62439903658",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2e88eea4-4cd2-4dba-9e9a-4b880cd4406a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "1234\u20131388 shared phased operation and Wine dispatch implement plan Task4; no fresh Wine execution.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/record_publication.cpp"
+      },
+      "rationale": "1234\u20131388 shared phased operation and Wine dispatch implement plan Task4; no fresh Wine execution.",
+      "retracted": false,
+      "source": "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb",
+      "target": "ART-b9600357-f69b-4ebb-a163-6c155362ef58",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-af5bc01e-c6a4-4533-92c7-21e6d0fccca3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "270\u2013349 cleanup-only retirement and committed-error accumulation implement synchronous driver boundary; full loader/authority/harness remain untraced here.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/record_publication_wine_driver.h"
+      },
+      "rationale": "270\u2013349 cleanup-only retirement and committed-error accumulation implement synchronous driver boundary; full loader/authority/harness remain untraced here.",
+      "retracted": false,
+      "source": "ART-07921f0a-c67c-4636-9b5b-465fec5ef366",
+      "target": "ART-b9600357-f69b-4ebb-a163-6c155362ef58",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-44a9f69c-d89f-4b99-9c59-94d1c4c16f50",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "470\u2013513 distinct private SseSend/SseClose/SseOnClose types preserve existing captures/API; no broad HttpServer ownership redesign.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/lua_http_server.cpp"
+      },
+      "rationale": "470\u2013513 distinct private SseSend/SseClose/SseOnClose types preserve existing captures/API; no broad HttpServer ownership redesign.",
+      "retracted": false,
+      "source": "ART-b440892f-c936-4728-8614-6e4d791cdee8",
+      "target": "ART-07fd3b6c-6965-4758-aa1d-83ea1376dcdc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5360e172-cfbd-49f2-aa19-cfd2e5680d31",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "950\u20131012 verified-ticket scope/remaining-lifetime token path and1450\u20131529 public feature command validation sampled against actual working plan.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/realtime/core.cpp"
+      },
+      "rationale": "950\u20131012 verified-ticket scope/remaining-lifetime token path and1450\u20131529 public feature command validation sampled against actual working plan.",
+      "retracted": false,
+      "source": "ART-04055c4e-1788-49a3-9c09-8d254730cf05",
+      "target": "ART-2214dbc9-e99f-4d23-a6b1-0fb104c8a0bb",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4c000578-3be9-45bd-961c-153834e7d980",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full232 validates bounded canonical ticket payload/signature and validity window; dev/local signer is not production identity integration.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/realtime/auth_ticket.cpp"
+      },
+      "rationale": "Full232 validates bounded canonical ticket payload/signature and validity window; dev/local signer is not production identity integration.",
+      "retracted": false,
+      "source": "ART-51d85afb-2c4a-4bea-87fe-dbe6d2233087",
+      "target": "ART-2214dbc9-e99f-4d23-a6b1-0fb104c8a0bb",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a2dc6281-1b8d-450f-b431-a2a3135c410e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "515\u2013664 actual unavailable backend, public-header isolation, invalid IDs, single cancel/timeout and late-event assertions using fake backend; no real SSH execution.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_ssh_service.cpp"
+      },
+      "rationale": "515\u2013664 actual unavailable backend, public-header isolation, invalid IDs, single cancel/timeout and late-event assertions using fake backend; no real SSH execution.",
+      "retracted": false,
+      "source": "ART-0ce8ce31-ac0d-4b9c-b171-0886edc223b2",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d52ebaf5-961f-4266-b909-4103a536147e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "515\u2013664 actual unavailable backend, public-header isolation, invalid IDs, single cancel/timeout and late-event assertions using fake backend; no real SSH execution.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_ssh_service.cpp"
+      },
+      "rationale": "515\u2013664 actual unavailable backend, public-header isolation, invalid IDs, single cancel/timeout and late-event assertions using fake backend; no real SSH execution.",
+      "retracted": false,
+      "source": "ART-0ce8ce31-ac0d-4b9c-b171-0886edc223b2",
+      "target": "ART-179d6b3a-71d8-464c-b913-0d518b30b9b6",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-54dd0d99-23a3-428d-a1af-f7a491cd5861",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "200\u2013472 assertions gate real close/free, require no success while blocked and close<free<complete<success; binary/empty, injected close errors, primary local errors and cancel/timeout/session-close winners. Test definition only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_ssh_sftp_finalization.cpp"
+      },
+      "rationale": "200\u2013472 assertions gate real close/free, require no success while blocked and close<free<complete<success; binary/empty, injected close errors, primary local errors and cancel/timeout/session-close winners. Test definition only.",
+      "retracted": false,
+      "source": "ART-f198a641-ef21-44a8-bbf4-262a35a95f4f",
+      "target": "REQ-ba697587-cf4f-481f-8b1c-980236da6490",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f1a2ee2c-9305-4d57-9f90-ab51fc5994ae",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "200\u2013472 assertions gate real close/free, require no success while blocked and close<free<complete<success; binary/empty, injected close errors, primary local errors and cancel/timeout/session-close winners. Test definition only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_ssh_sftp_finalization.cpp"
+      },
+      "rationale": "200\u2013472 assertions gate real close/free, require no success while blocked and close<free<complete<success; binary/empty, injected close errors, primary local errors and cancel/timeout/session-close winners. Test definition only.",
+      "retracted": false,
+      "source": "ART-f198a641-ef21-44a8-bbf4-262a35a95f4f",
+      "target": "ART-64b196fe-489d-4d82-bae1-cc801ab8d801",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5a784e9c-1fb4-49a4-852c-f7596a4d391c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-ssh-fleet.fnl"
+      },
+      "rationale": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+      "retracted": false,
+      "source": "ART-c1d86207-1de9-41fa-b9c2-7ccff179bdc9",
+      "target": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-74b7ce79-03da-452f-8f5b-a04f076ba748",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-ssh-fleet.fnl"
+      },
+      "rationale": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+      "retracted": false,
+      "source": "ART-c1d86207-1de9-41fa-b9c2-7ccff179bdc9",
+      "target": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-384f7332-8258-4261-af3c-a15a7fac277a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-ssh-fleet.fnl"
+      },
+      "rationale": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+      "retracted": false,
+      "source": "ART-c1d86207-1de9-41fa-b9c2-7ccff179bdc9",
+      "target": "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e4494d94-b6b4-4df1-9ea4-13faf6750dec",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-ssh-fleet.fnl"
+      },
+      "rationale": "100\u2013238 actual fake-transport timeout/cancel, secret-redaction, SDK structured-result and malformed-option assertions; no remote fleet measurement.",
+      "retracted": false,
+      "source": "ART-c1d86207-1de9-41fa-b9c2-7ccff179bdc9",
+      "target": "ART-8d29ee8c-6279-424d-a1ad-d8eb9027fa2b",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a92828dd-2ecb-4748-a38f-48c374bd3d6f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "658\u2013832 actual precommit old-byte preservation, committed cleanup diagnostics, foreign-entry preservation, nested attempts, substitution and child umask022/002 layout assertions; not all2227 lines audited or platform tests executed.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication.cpp"
+      },
+      "rationale": "658\u2013832 actual precommit old-byte preservation, committed cleanup diagnostics, foreign-entry preservation, nested attempts, substitution and child umask022/002 layout assertions; not all2227 lines audited or platform tests executed.",
+      "retracted": false,
+      "source": "ART-bfed02d7-651d-456d-ab78-c34a0e9c6359",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cb3572b2-dda0-4543-bfd2-d2bdaa0419b7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "658\u2013832 actual precommit old-byte preservation, committed cleanup diagnostics, foreign-entry preservation, nested attempts, substitution and child umask022/002 layout assertions; not all2227 lines audited or platform tests executed.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication.cpp"
+      },
+      "rationale": "658\u2013832 actual precommit old-byte preservation, committed cleanup diagnostics, foreign-entry preservation, nested attempts, substitution and child umask022/002 layout assertions; not all2227 lines audited or platform tests executed.",
+      "retracted": false,
+      "source": "ART-bfed02d7-651d-456d-ab78-c34a0e9c6359",
+      "target": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ca3a36cc-c019-48ed-8581-96acb94421d8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "658\u2013832 actual precommit old-byte preservation, committed cleanup diagnostics, foreign-entry preservation, nested attempts, substitution and child umask022/002 layout assertions; not all2227 lines audited or platform tests executed.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication.cpp"
+      },
+      "rationale": "658\u2013832 actual precommit old-byte preservation, committed cleanup diagnostics, foreign-entry preservation, nested attempts, substitution and child umask022/002 layout assertions; not all2227 lines audited or platform tests executed.",
+      "retracted": false,
+      "source": "ART-bfed02d7-651d-456d-ab78-c34a0e9c6359",
+      "target": "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-37298777-a1b8-4b5b-8ec6-dcad827d985c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "80\u2013239 actual native-adapter driver assertions: bounded fresh frames, no replay, nested binary/raw-byte paths, ordered hooks, present-empty errors and authority-loss cancellation; host definition not installed Wine proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication_bridge_driver.cpp"
+      },
+      "rationale": "80\u2013239 actual native-adapter driver assertions: bounded fresh frames, no replay, nested binary/raw-byte paths, ordered hooks, present-empty errors and authority-loss cancellation; host definition not installed Wine proof.",
+      "retracted": false,
+      "source": "ART-3fa49fcb-9383-4cae-8ca3-3f52f4edfa57",
+      "target": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-792c3b12-8dba-4cd3-9c5e-8697fcb8a8f1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "80\u2013239 actual native-adapter driver assertions: bounded fresh frames, no replay, nested binary/raw-byte paths, ordered hooks, present-empty errors and authority-loss cancellation; host definition not installed Wine proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication_bridge_driver.cpp"
+      },
+      "rationale": "80\u2013239 actual native-adapter driver assertions: bounded fresh frames, no replay, nested binary/raw-byte paths, ordered hooks, present-empty errors and authority-loss cancellation; host definition not installed Wine proof.",
+      "retracted": false,
+      "source": "ART-3fa49fcb-9383-4cae-8ca3-3f52f4edfa57",
+      "target": "ART-07921f0a-c67c-4636-9b5b-465fec5ef366",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-12a9960d-568d-4acc-818c-39f10c625897",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "80\u2013239 actual native-adapter driver assertions: bounded fresh frames, no replay, nested binary/raw-byte paths, ordered hooks, present-empty errors and authority-loss cancellation; host definition not installed Wine proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication_bridge_driver.cpp"
+      },
+      "rationale": "80\u2013239 actual native-adapter driver assertions: bounded fresh frames, no replay, nested binary/raw-byte paths, ordered hooks, present-empty errors and authority-loss cancellation; host definition not installed Wine proof.",
+      "retracted": false,
+      "source": "ART-3fa49fcb-9383-4cae-8ca3-3f52f4edfa57",
+      "target": "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-712a60de-990d-4137-974e-feb26663ed0f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "1\u2013150 actual mount-option/unknown-xattr/full-label mismatch/no-setter assertions; real labelled-default/task/path branch conditional on host labels, not unqualified enforcing coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication_selinux.cpp"
+      },
+      "rationale": "1\u2013150 actual mount-option/unknown-xattr/full-label mismatch/no-setter assertions; real labelled-default/task/path branch conditional on host labels, not unqualified enforcing coverage.",
+      "retracted": false,
+      "source": "ART-f45a3b74-f747-4eb6-977a-108ea98ea8a9",
+      "target": "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6b527482-f1ed-4a35-97a9-14cc7f1e754d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "1\u2013150 actual mount-option/unknown-xattr/full-label mismatch/no-setter assertions; real labelled-default/task/path branch conditional on host labels, not unqualified enforcing coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_record_publication_selinux.cpp"
+      },
+      "rationale": "1\u2013150 actual mount-option/unknown-xattr/full-label mismatch/no-setter assertions; real labelled-default/task/path branch conditional on host labels, not unqualified enforcing coverage.",
+      "retracted": false,
+      "source": "ART-f45a3b74-f747-4eb6-977a-108ea98ea8a9",
+      "target": "ART-242142dd-a4cd-41d9-93fd-2841ea5ae122",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-558427bd-92d7-4cc5-a02f-0714f4fa21db",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "59\u2013133 actual create/update/replace text/link matrix checks native completion/cache/revision before once-only notification and committed cleanup/notification error detached results; source assertions only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-entity-record-persistence.fnl"
+      },
+      "rationale": "59\u2013133 actual create/update/replace text/link matrix checks native completion/cache/revision before once-only notification and committed cleanup/notification error detached results; source assertions only.",
+      "retracted": false,
+      "source": "ART-fb1b4dfe-06fa-4144-bb74-c6b29b1d5ebf",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8753aea2-94ac-42ad-80a8-ced9df01a8e2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "59\u2013133 actual create/update/replace text/link matrix checks native completion/cache/revision before once-only notification and committed cleanup/notification error detached results; source assertions only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-entity-record-persistence.fnl"
+      },
+      "rationale": "59\u2013133 actual create/update/replace text/link matrix checks native completion/cache/revision before once-only notification and committed cleanup/notification error detached results; source assertions only.",
+      "retracted": false,
+      "source": "ART-fb1b4dfe-06fa-4144-bb74-c6b29b1d5ebf",
+      "target": "ART-6617acaf-72aa-420d-85f4-521d5a659dd8",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-baca0f8c-7105-41d2-8e07-23132e33daab",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "59\u2013133 actual create/update/replace text/link matrix checks native completion/cache/revision before once-only notification and committed cleanup/notification error detached results; source assertions only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-entity-record-persistence.fnl"
+      },
+      "rationale": "59\u2013133 actual create/update/replace text/link matrix checks native completion/cache/revision before once-only notification and committed cleanup/notification error detached results; source assertions only.",
+      "retracted": false,
+      "source": "ART-fb1b4dfe-06fa-4144-bb74-c6b29b1d5ebf",
+      "target": "ART-3972d276-c99d-4043-b2b0-9fe7ddc017eb",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1eef90af-5a2a-4a9c-b148-35553a12f86b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full24 asserts missing URL throws and unknown cancellation returns false; not full HTTP network/stream/timeout verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-http.fnl"
+      },
+      "rationale": "Full24 asserts missing URL throws and unknown cancellation returns false; not full HTTP network/stream/timeout verification.",
+      "retracted": false,
+      "source": "ART-5e795d89-a390-44d4-8c6b-4a1d5c99b562",
+      "target": "REQ-e65ba9e6-11f9-400d-b1bd-1205f4572f27",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-40b936d8-64f2-410e-9433-f204f4cb9805",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full24 asserts missing URL throws and unknown cancellation returns false; not full HTTP network/stream/timeout verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-http.fnl"
+      },
+      "rationale": "Full24 asserts missing URL throws and unknown cancellation returns false; not full HTTP network/stream/timeout verification.",
+      "retracted": false,
+      "source": "ART-5e795d89-a390-44d4-8c6b-4a1d5c99b562",
+      "target": "ART-82166858-b6dd-479c-9ad6-2c510250886d",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ddd26e93-5965-4a59-b73c-8d7449931e65",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "330\u2013519 actual distinct GC metatables, two payloads, dot/colon errors/returns, once-only dispatched close and weak-root collection before server stop assertions; no fresh lifecycle run.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-http-server.fnl"
+      },
+      "rationale": "330\u2013519 actual distinct GC metatables, two payloads, dot/colon errors/returns, once-only dispatched close and weak-root collection before server stop assertions; no fresh lifecycle run.",
+      "retracted": false,
+      "source": "ART-baab5bac-c781-42cf-8802-0b450a3e30bb",
+      "target": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-86076144-bf0a-4cdc-9cfb-ca27068ba067",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "330\u2013519 actual distinct GC metatables, two payloads, dot/colon errors/returns, once-only dispatched close and weak-root collection before server stop assertions; no fresh lifecycle run.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-http-server.fnl"
+      },
+      "rationale": "330\u2013519 actual distinct GC metatables, two payloads, dot/colon errors/returns, once-only dispatched close and weak-root collection before server stop assertions; no fresh lifecycle run.",
+      "retracted": false,
+      "source": "ART-baab5bac-c781-42cf-8802-0b450a3e30bb",
+      "target": "ART-b440892f-c936-4728-8614-6e4d791cdee8",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cac67735-ec79-4c4d-ba37-39827fa8aa3b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_realtime_core.cpp"
+      },
+      "rationale": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+      "retracted": false,
+      "source": "ART-cf931130-4d25-4b85-b161-d0e1b9a9e37c",
+      "target": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bd418a12-27cb-416b-b1eb-578a8983b361",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_realtime_core.cpp"
+      },
+      "rationale": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+      "retracted": false,
+      "source": "ART-cf931130-4d25-4b85-b161-d0e1b9a9e37c",
+      "target": "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b3fa7623-f5ed-4385-bbf4-e6f7617afc03",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_realtime_core.cpp"
+      },
+      "rationale": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+      "retracted": false,
+      "source": "ART-cf931130-4d25-4b85-b161-d0e1b9a9e37c",
+      "target": "ART-04055c4e-1788-49a3-9c09-8d254730cf05",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3f4a8f98-3b3a-49aa-95a3-517ad03d4a59",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_realtime_core.cpp"
+      },
+      "rationale": "Full228 asserts registry uniqueness/order, invalid lifecycle, deterministic ticket roundtrip/signature, wrong secret, expired/future windows and canonical allowlist; no real packet exchange or production auth proof.",
+      "retracted": false,
+      "source": "ART-cf931130-4d25-4b85-b161-d0e1b9a9e37c",
+      "target": "ART-51d85afb-2c4a-4bea-87fe-dbe6d2233087",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-80b08b45-5a82-4741-8653-3c45441d5c6e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full66 defines mnemonic validation/generation and deterministic native coin derivation assertions; does not call wallet.fnl transfer signer or establish encrypted persistence.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-wallet-core.fnl"
+      },
+      "rationale": "Full66 defines mnemonic validation/generation and deterministic native coin derivation assertions; does not call wallet.fnl transfer signer or establish encrypted persistence.",
+      "retracted": false,
+      "source": "ART-b1d3324b-7f49-442d-b299-0daa27ed1328",
+      "target": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-586b2aea-7855-4a73-8a44-ee9fdcfbafe1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full135 actual injected-keyring save/load/reopen/missing-secret assertions; not encryption, OS keyring security or RPC/transaction verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-wallet-store.fnl"
+      },
+      "rationale": "Full135 actual injected-keyring save/load/reopen/missing-secret assertions; not encryption, OS keyring security or RPC/transaction verification.",
+      "retracted": false,
+      "source": "ART-c9790bb6-3dce-4f05-8175-250ef62c7269",
+      "target": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eea08dbf-d0f3-46d5-b176-b6452d97c350",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full135 actual injected-keyring save/load/reopen/missing-secret assertions; not encryption, OS keyring security or RPC/transaction verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-wallet-store.fnl"
+      },
+      "rationale": "Full135 actual injected-keyring save/load/reopen/missing-secret assertions; not encryption, OS keyring security or RPC/transaction verification.",
+      "retracted": false,
+      "source": "ART-c9790bb6-3dce-4f05-8175-250ef62c7269",
+      "target": "ART-e3cf4cca-ecb8-4788-aaa9-058c87c4d95a",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-99cdbed8-9d24-4c15-b223-4b5c00c5ea93",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N2 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Explicit N2 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-aae297ac-a98b-47fd-94af-9c0776b8d9eb",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N2 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Explicit N2 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "target": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e6d9867a-fa01-4ffd-b569-bd2d53419519",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N2 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Explicit N2 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "target": "ART-81f36dbd-37a4-47a6-a61d-a99b29010c1a",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8cde155f-d1ae-4fab-8a2d-7e61dba07ebe",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-605a725a-981f-441b-b0fe-8bd80c8e3e94",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "target": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f1f34e8f-1d0c-48f8-9be9-a1215bf87b77",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "target": "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3b166f0e-8b84-433b-aee9-20ffc8a15d3a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "target": "ART-19dc4a90-2577-4812-87ba-92e4aa70bed1",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d25d9ded-fc37-4cb0-8adc-a31f4ac5e2a9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Explicit N7 policy applies only to the documented owning operations/backend subset, not a universal security sandbox or transitive goal inheritance.",
+      "retracted": false,
+      "source": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "target": "ART-5a8fc541-47f2-445d-a327-0db413cc0ceb",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-665a8385-50cf-4766-92f4-bdccc80e7869",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N1 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Documented N1 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-afc8ed6b-e266-48f7-aca3-0532412f1090",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N1 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Documented N1 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "target": "REQ-80869160-7ee8-4062-902d-b90f0d9507aa",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3a298f70-cab0-406a-9014-bb59643c325a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N3 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Documented N3 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a3bfe659-5c7b-4b04-a8e1-2e20b352722f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N4 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-05-ssh-real-backend-validation-design.md"
+      },
+      "rationale": "Documented N4 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-23badcbb-6dc4-4a65-a011-6d4dd65938f4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N4 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-05-ssh-real-backend-validation-design.md"
+      },
+      "rationale": "Documented N4 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef",
+      "target": "REQ-b586db93-de76-4724-98dc-22359715a46f",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f34eeb43-328a-4589-94fa-6a09450883fd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N5 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-29-sftp-success-finalization.md"
+      },
+      "rationale": "Documented N5 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-ba697587-cf4f-481f-8b1c-980236da6490",
+      "target": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c89cc803-9ee9-4738-a1d0-a9b116ef93ce",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N6 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Documented N6 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3cd2e107-0553-420a-9d71-c90b15200e14",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N6 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Documented N6 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "target": "REQ-77d53d5a-9303-490e-a031-34827a59e6c6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2a73ee8a-0473-45ea-bd4e-07895930ec41",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N8 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-17-wine-posix-publication-design.md"
+      },
+      "rationale": "Documented N8 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0f5951a1-debb-4c7a-a33a-adde783d13f4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N9 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/record-publication-selinux.md"
+      },
+      "rationale": "Documented N9 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7",
+      "target": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-564ccb1e-6574-473b-8350-a558ae18ee82",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N10 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http.md"
+      },
+      "rationale": "Documented N10 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-e65ba9e6-11f9-400d-b1bd-1205f4572f27",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9cefbce9-d8a8-4f0f-ab54-80c76f86daa2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N11 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http-server.md"
+      },
+      "rationale": "Documented N11 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b12a92f5-ae47-44e5-85ad-3b5ac01ee78f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N11 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http-server.md"
+      },
+      "rationale": "Documented N11 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ef53336c-e2ca-4cbf-8418-cfa79b126690",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N12 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Documented N12 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "target": "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7ce6e1e3-e9e5-41b9-a100-84905c28ea65",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N12 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Documented N12 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "target": "REQ-c9bba90c-9d93-4f7d-a530-f79cb197ae88",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-187c5918-3a1e-41c3-a253-2f37959c5955",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N13 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Documented N13 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34",
+      "target": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6f468675-1bd9-43a3-9b83-6cd97619c65b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N14 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/wallet-system.md"
+      },
+      "rationale": "Documented N14 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "target": "REQ-5babb6e9-88c4-43f5-8904-d6321f5bf795",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-65d8e0a6-99ca-4765-9c94-9774c74c4b31",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Documented N14 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/wallet-system.md"
+      },
+      "rationale": "Documented N14 capability helps this existing contract without establishing sufficiency, shared-world permission policy, empirical goal achievement or activation.",
+      "retracted": false,
+      "source": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "target": "REQ-73f67424-c7a6-450b-a8ce-feb67ac00a14",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e32fec55-4702-484d-8aa3-a8f6aa699a80",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full45 actual deterministic Nova derivation, invalid mnemonic and generated-valid mnemonic assertions; signer/RPC/encryption not tested here.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-wallet.fnl"
+      },
+      "rationale": "Full45 actual deterministic Nova derivation, invalid mnemonic and generated-valid mnemonic assertions; signer/RPC/encryption not tested here.",
+      "retracted": false,
+      "source": "ART-8c18986e-2cc8-481a-b1c0-c21e7692df5f",
+      "target": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a09f54b9-d445-46d0-9f08-65807f2abd5d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "15\u201331 calls actual Wallet.create-arbitrumnova and validate-mnemonic; excludes transfer signer.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-wallet.fnl"
+      },
+      "rationale": "15\u201331 calls actual Wallet.create-arbitrumnova and validate-mnemonic; excludes transfer signer.",
+      "retracted": false,
+      "source": "ART-8c18986e-2cc8-481a-b1c0-c21e7692df5f",
+      "target": "ART-fb087150-e44d-4955-b439-e152dce21cf7",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-090135b2-64bb-4f8a-8d5d-d02e5365b66e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Full66 actual wallet-core mnemonic/HDWallet coin address assertions exercise native binding1\u2013216; this is definition evidence, not execution or secret-storage proof.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-wallet-core.fnl"
+      },
+      "rationale": "Full66 actual wallet-core mnemonic/HDWallet coin address assertions exercise native binding1\u2013216; this is definition evidence, not execution or secret-storage proof.",
+      "retracted": false,
+      "source": "ART-b1d3324b-7f49-442d-b299-0daa27ed1328",
+      "target": "ART-1ab07ae4-7440-46c8-8fff-a49f2f79b599",
+      "type": "exercises"
     }
   ],
   "requirements": {
@@ -17421,6 +19539,34 @@
       "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
       "revision": 1,
       "statement": "Expose runtime-only graph string-entity text search over persisted Markdown through a replaceable backend, initially literal case-insensitive ripgrep, materializing only explicitly selected result entities."
+    },
+    "REQ-053caeb4-23d8-4610-84f1-76198705bdc9": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Unknown and changed host keys reject by default; ask emits a structured challenge and accepts only explicit reject/accept-once/accept-and-store decisions, with storage only when chosen."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Passwords/passphrases and credential material do not appear in URLs, logs, errors, events or fleet results; the core does not persist credentials. Caller-specific explicit trust policy is preserved rather than hidden fleet acceptance."
+        }
+      ],
+      "classification": "constraint",
+      "history": [],
+      "id": "REQ-053caeb4-23d8-4610-84f1-76198705bdc9",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "No credential material in URLs, logs, structured errors, or operation result",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "SSH transport and fleet consumers must make host trust choices explicit and prevent credential disclosure or persistence by the transport core."
     },
     "REQ-073f900a-38d1-4658-9d90-9853515a6a10": {
       "acceptance_criteria": [
@@ -18031,6 +20177,34 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Preserve historical development records and browsing without fabricating or bulk-migrating historical product requirements."
+    },
+    "REQ-272f39ab-d520-4410-89e8-0b4061474db1": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "One generic runtime supports app/headless/client/server/mixed use; required vendored transport absence fails build rather than soft-disable. Native I/O uses worker threads, script callbacks use main-thread queue, shutdown joins workers with owned payloads."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Register unique versioned feature IDs in deterministic order, offer/ack/activate/deactivate per session; activation is idempotent, version mismatch explicit, and payloads flow only while active through reliable-ordered or unreliable-unordered channels. Closed handles and misconfiguration fail loudly; no gameplay/world-replication or Matrix room schema is implied."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-272f39ab-d520-4410-89e8-0b4061474db1",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "support hot-plug feature activation after a client is already connected",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Provide default-on native realtime client/server transport with versioned feature registries, reliable/unreliable payloads and session-local hot-plug activation independent of future Matrix world replication."
     },
     "REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc": {
       "acceptance_criteria": [
@@ -19044,6 +21218,34 @@
       "revision": 1,
       "statement": "Enable user-owned infrastructure with self-hosted and federated sync, communication, identity and software distribution."
     },
+    "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Generate/validate mnemonics, derive Nova accounts and sign documented ETH/ERC20 transfers; create/load/recover/switch wallet, display address/balance, and submit through chain42170 RPC with explicit results/errors."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Persist and reopen wallet mnemonics and addresses under the documented encrypted-JSON protection contract; retain active-wallet metadata and use canonical atomic JSON updates. Verify storage confidentiality independently of mnemonic/address derivation or stub-keyring lifecycle assertions."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-873a51aa-5042-4aca-b8a2-4fdf2fc1bd93",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Crypto wallet with mnemonic generation, Arbitrum Nova transfers, transaction signing, and encrypted persistence.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/wallet-system.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Provide wallet-core-backed mnemonic validation/generation, Arbitrum Nova account and transfer signing, persisted wallet lifecycle and RPC/UI workflows with the documented encrypted persistence intent."
+    },
     "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57": {
       "acceptance_criteria": [
         {
@@ -19132,6 +21334,39 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Reconcile all task intents against original authority and existing obligations before choosing solutions, without synthetic bug or maintenance requirements."
+    },
+    "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Use an exclusively created or nofollow-opened verified private persistent .space-publication anchor and independent attempt: POSIX effective-owner0700/record0600, or native Windows non-reparse local expected-owner/protected owner-only DACL. Reject unsafe/uninspectable collisions without chmod/takeover."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Preserve supported POSIX UID/GID/mode and native Windows owner/group/ordered allow-deny DACL, refusing unsupported/unreadable ACL/xattr policy except the explicitly documented Linux SELinux subset; never broaden access or use public-write-then-restrict."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Pin directory/file identities; use handle-relative creation/replacement and identity-checked nonrecursive attempt cleanup. Retain the anchor, leave substituted/foreign entries and other attempts untouched. No production subprocess, global umask mutation, parent chmod, hostile-same-identity protection or remote-filesystem guarantee."
+        }
+      ],
+      "classification": "constraint",
+      "history": [],
+      "id": "REQ-9794c7d6-c8f7-41bb-8da0-7260bbcbb740",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "establish confidentiality before bytes",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Record publication must establish confidentiality before bytes, preserve supported destination policy and confine namespace mutation and cleanup to verified owned handles."
     },
     "REQ-990b8657-d70b-4a7c-9589-c4255e7a6431": {
       "acceptance_criteria": [
@@ -19249,6 +21484,34 @@
       "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
       "revision": 1,
       "statement": "Provide declaratively composable 2D/3D widgets with explicit measurement/layout, dirty tracking and depth ordering, keeping direct widget-child lifetime ownership distinct from layout links."
+    },
+    "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Register routes before one-shot listen, return actual bound port, reject invalid method/bind/late routes; handler exceptions become500. Stop closes streams and fails pending requests503."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "SSE send/close/on-close preserve colon/dot scanning, invalid-argument errors and return values; on-close dispatches once on the Lua thread. Distinct callable GC identities and releasing stream/callback references followed by full collections before server stop/destruction do not corrupt retained streams."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-9bccdaa9-3aa3-4dae-b5dd-9698f1056896",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "supports server-sent event streams",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http-server.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Provide native HTTP GET/POST routes and SSE streams whose script API, callback identities and GC/shutdown lifecycle remain safe and explicit."
     },
     "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed": {
       "acceptance_criteria": [
@@ -19438,6 +21701,39 @@
       "revision": 2,
       "statement": "Provide ICU/CLDR-backed localized parsing/formatting and explicit non-Gregorian calendar conversion, retaining finite locale/calendar corpus choices and separation from primitive elapsed-time semantics."
     },
+    "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Public headers expose opaque Space IDs/options/events without libssh handles; canonical Lua keys reject malformed options. Disabled or absent libssh retains the module and structured unavailable-backend errors."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Ordered agent/private-key/password auth, stdout/stderr streaming and remote exit status, SFTP progress/bytes, optional PTY write/resize/close and local/remote tunnel lifecycle operate through the public API; unsupported tunnel shapes and invalid/closed IDs fail structurally."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Long-running operations support cancellation/timeouts and exactly one terminal winner; shutdown cancels work, closes owned resources, joins workers and prevents dropped-runtime callbacks. Phase1 is Linux-first, not server/jump-host or Windows/macOS runtime certification."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Implement a full phase-1 transport foundation",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Provide Space-owned backend-neutral asynchronous SSH client APIs for C++ and Lua/Fennel, covering session/auth, streaming exec, byte-preserving SFTP, shell channels and tunnels with explicit lifecycle outcomes."
+    },
     "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b": {
       "acceptance_criteria": [
         {
@@ -19536,6 +21832,44 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Support richer world actors including avatars and vehicles and host multiple game-like experiences in editable shared worlds."
+    },
+    "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Select Wine internally, validate the owned PE/Unix pair identity/binding before each BEGIN and pin module lifetime; missing/incompatible/tampered support fails explicitly without relaxed native fallback. Host UID/GID/modes are authoritative, not emulated ACL fidelity."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Use exact phase/sequence continuations, copied payload and nonrecycled contexts; final validation/rename/commit latch are uninterrupted. Cancellation/authority loss cannot resume publication; snapshot and cleanup remain available, cleanup-hook failure cannot suppress cleanup, and known commit survives recoverable adapter/authority/diagnostic errors."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Keep represented-token guard bounded and fail on unsupported/query/close states without treating it as sandbox/foreign-UID proof. Irrecoverable post-dispatch state or unretirable ownership is fatal, not fabricated not-committed or a new unknown-outcome API."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c4",
+          "text": "Guarded local validation exercises actual host private modes under both umasks, unsupported metadata, namespace changes, exact overwrite and fresh-process store reopen with stale-edit/cache/revision/notification assertions. Admit publication then application using independently bounded one-shot purpose grants; incomplete/replayed evidence cannot promote. Native Windows assertions remain separate; foreign-UID denial requires configured real identities and positive controls."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-b475a8a1-068d-4640-8305-f4e3799e0a6f",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "The user requires real persistent record publication under local Wine",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-17-wine-posix-publication-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Support real persistent private record publication under the admitted Linux-x86_64/win64 matched-Wine9 environment through the shared in-process POSIX operation without relaxing native Windows policy."
     },
     "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb": {
       "acceptance_criteria": [
@@ -19663,6 +21997,67 @@
       "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
       "revision": 1,
       "statement": "Provide file-scale text viewing and editing with lazy source reads, overlay edits and viewport rendering without eagerly loading unchanged file content or substituting whole-buffer InputModel storage."
+    },
+    "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Validate nonempty ticket/subject/scope, nonzero client ID, issue/expiry window, canonical sorted unique allowed features, bounded transport fields and signature; invalid/expired/future tickets fail explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Mint tokens only from verified tickets for server scope and known allowed features, clamp lifetime to remaining validity, and gate session feature activation by allowlist. Wildcard binds require concrete advertised addresses; Matrix discovery and product permission policy remain separate upstream integration."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "server-scope is enforced both when minting tokens and when accepting clients",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/yojimbo.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Gate realtime connect tokens and feature activation with verified scoped signed tickets while keeping development-ticket helpers distinct from a production identity or shared-world permission system."
+    },
+    "REQ-ba697587-cf4f-481f-8b1c-980236da6490": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Uploads check size/seek/read/close including valid partial EOF; downloads check flush and close. Local failures report local-file-error, remote-close failure remote-file-error; cleanup never replaces a primary transfer error."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Close is mutex-protected/idempotent and consumes the handle even on error; do not retry/double-close. Keep parent SSH alive through SFTP free, then recheck activity before sftp-complete or operation-success."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Cancellation/timeouts remain independently arbitrated terminal winners, not cleanup barriers; sftp-complete and operation-success are separately arbitrated, not atomic. Void sftp_free completion is not a durability/fsync or all-internal-free-errors guarantee."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-ba697587-cf4f-481f-8b1c-980236da6490",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Success-only cleanup guarantee.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-29-sftp-success-finalization.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Publish successful SFTP transfer notifications only after checked local finalization, checked consumed remote-file close and transfer SFTP-session teardown, preserving primary failures and terminal winners."
     },
     "REQ-c4a1cf46-f729-4123-adc1-d08c15413759": {
       "acceptance_criteria": [
@@ -20114,6 +22509,72 @@
       "revision": 1,
       "statement": "Keep runtime temporal parsing, formatting, scheduling and migration offline, using deterministic local data with reviewed dependency/data provenance and license metadata before shipping."
     },
+    "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Default/custom production text/link constructors create, update and replace exact content under umask022/002 and home0750/inner0775 without parent permission or process-global umask changes; native Windows overwrites existing files without delete-first/copy fallback."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Native payload publication checks writes/completion/readback/identity, performs final byte/link/security validation after hooks and atomically commits with immediate sticky committed state and no intervening callback. Precommit failures preserve destination/cache/revision."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "After commit publish cache/revision and attempt normal notification once before disclosing committed cleanup/notification errors with detached result; editor committed baseline advances. Cleanup/close errors never imply rollback or blind retry; no power-loss/external-writer transaction guarantee."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c4",
+          "text": "JSONUtils remains canonical: serialize once, publish! receives path/payload and forwards true plus cleanup diagnostic; RecordFiles writes through native publisher, read injection remains read-only; obsolete draft callback/options are rejected without aliases."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Ordinary default editing must continue to work",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-16-secure-record-publication-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Publish private owning-store records atomically through retained native handles with truthful precommit, committed-cleanup and notification outcomes while preserving ordinary default editing."
+    },
+    "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Linux PR CI installs libssh-dev/openssh-server/openssh-client and enables strict fixture/backend checks that fail rather than skip when either is unavailable; local default missing dependencies report skips/unavailable-backend explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Windows cross-build requests vcpkg libssh and requires its pkg-config module; macOS Homebrew dependency is documented. Indexed SDK low-level exec and bounded fleet examples correspond to named tests; no macOS CI or native Windows real-fixture guarantee is implied."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-d838a166-664f-437e-8a03-8eedc6ce44ef",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "SSH remains optional for normal local builds",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-05-ssh-real-backend-validation-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Require real libssh and disposable OpenSSH validation in Linux PR CI while retaining optional local SSH builds and documented platform dependency paths and tested SDK examples."
+    },
     "REQ-d93ee4a3-2df9-4628-8735-88f467b5a38c": {
       "acceptance_criteria": [
         {
@@ -20146,6 +22607,62 @@
       "rationale": "Authorized bounded H baseline after semantic/provenance comparison of all71 records at ledger45; distinct from Core/Live/Workspace goals and contextual leader commands. Proposed only, not activation, repair or empirical achievement. Source and sampled coverage gaps retained in Task3 H report.",
       "revision": 1,
       "statement": "Support opt-in hosted run-async progress and cancellable invocations while preserving synchronous behavior and suppressing stale callbacks after terminal results or lifecycle cleanup."
+    },
+    "REQ-dac6f6aa-b260-4aab-9b08-22990f744097": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Honor requested concurrency, per-host timeout/cancel and supplied known-host policy; return one result per host with host/port/username/ok/exit-status/stdout/stderr/error-code/error/duration-ms, without credential fields or secret-bearing error text."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-dac6f6aa-b260-4aab-9b08-22990f744097",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Fleet helpers are a convenience layer, not a separate transport.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-04-ssh-integration-foundation-design.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Compose bounded-concurrency SSH fleet execution over the public transport with per-host structured results, timeouts and cancellation."
+    },
+    "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Accept exactly bounded stable security.selinux bytes with complete label-presence baselines; refuse other xattrs and denied/malformed/unstable reads. Existing destination stage matches full original label before bytes, after mode reproduction and final hook, with no repair."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "New labelled records require the pinned canonical parent and same traditional seclabel tmpfs mount without context overrides. Fresh positive file-context defaults win; only authenticated negative lookup permits name-aware kernel fallback; inspection/loading/matching errors refuse."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Recheck task/fscreate state, mount/policy/enforcement/parent/default provenance against acquisition baselines before publication. Use the pinned corrected private lookup dependency without unpatched system fallback; other platforms/capability-absent Wine retain refusal, not predicted support or atomic privileged-policy-change protection."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "Space never writes a SELinux xattr",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/record-publication-selinux.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "On capability-enabled native Linux publication, accept only the documented read-only SELinux label/default-authority subset without relabeling or silently accepting unsupported metadata."
     },
     "REQ-deaf85e4-b680-42b4-a5cc-5aad12840c9a": {
       "acceptance_criteria": [
@@ -20268,6 +22785,34 @@
       "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
       "revision": 1,
       "statement": "Provide world-local retained HomeWorld activities whose isolated surface slots and sessions explicitly own presentation, interactions and persisted state rather than inheriting the Sandbox workspace."
+    },
+    "REQ-e65ba9e6-11f9-400d-b1bd-1205f4572f27": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Requests return numeric IDs and support method/body/headers/timeouts/redirects; require nonempty URL. Poll returns response id/ok/status/error/body/headers; callbacks dispatch through runtime polling and noncallback completions remain buffered until consumed."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Streaming requires a callback, delivers byte chunks then terminal done; accepted cancellation reports cancelled explicitly and unknown cancellation returns false."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-e65ba9e6-11f9-400d-b1bd-1205f4572f27",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-N",
+        "date": "2026-10-30",
+        "excerpt": "submits asynchronous HTTP client requests",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/sdk/modules/http.md"
+      },
+      "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
+      "revision": 1,
+      "statement": "Expose engine-owned asynchronous HTTP requests with polling and callback delivery, streaming chunks, cancellation and explicit response/error data."
     },
     "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461": {
       "acceptance_criteria": [
@@ -20608,7 +23153,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 53,
+  "revision": 57,
   "schema_version": 1,
   "verifications": [
     {
