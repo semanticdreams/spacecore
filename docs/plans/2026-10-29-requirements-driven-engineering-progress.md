@@ -934,3 +934,62 @@ source replay remains required; static prompt tests alone prove no agent behavio
   over the entire new BASE..HEAD, including all additions/ledger/projection/progress.
   Later finishing full gate and guarded integration remain controller-owned. No
   fetch/push/PR/merge or destructive Git operation is authorized or performed here.
+
+### REQ-FINAL-READINESS — later review-metadata reconciliation
+
+- New substantive assignment, supervisor/strict SDD, `juicyrebel/scoter`; verified
+  clean BASE `72f709517249205567425541c04c7644a2f449d0` before changes. Assigned
+  implementer session identifier not exposed, author correction_used=0. No prior
+  correction allowance, verdict, range or fix/consultation budget is reset.
+- Conclusion: clarification/already-covered existing obligation. Current controller
+  dispatch authenticates retained original review and baseline/replay payloads plus
+  execution/capture evidence. Actual criterion/source inspection supports a grounded
+  explicit reassessment of `REQ-49e62b92-aada-447d-9d15-531625fa0dcc` revision 1,
+  not new policy/design or inferred satisfaction. Prior anchored evidence and this
+  ledger's prior observations/assessments remain unchanged.
+- Independent full evidence-range review `ses_e73a588e6ffeaFlmJNiXLhcaUC`: valid raw
+  pass, correction_used=0, complete `954b3007..72f70951`; its cannot-verify points
+  were reconciled by the controller from retained original records. That pass does
+  not cover this new range, which requires another exact-range independent review.
+- Whole-branch original reviewer `ses_e73daf36effecE5Qs8sDqOl8YZ`, correction_used=0,
+  reviewed source lines 1–2802 and 9223–11606 of the immutable ledger. Same original
+  reviewer independently verified both Important fixes over `7488959a..954b3007`;
+  controller reports no unresolved material findings. Task 5 reviewer
+  `ses_e7601615fffeNHdP1mh12CHBTl`, retained correction_used=0, independently audited
+  fix-1 complete. Historical byte/membership corroboration already executed using
+  appropriate capture snapshots, including earlier pending progress, resolves the
+  two bounded reviewers' scoped evidence gaps. Their `requires_human` dispositions
+  were evidence gaps, not unresolved policy choices. No live compliance inferred.
+- Exact coordinate reconciliation: the retained whole-branch ledger diff chunk has
+  **six header lines**, so chunk2809=source2803. Actual read-only stripping of headers/
+  added-line prefixes reproduces `git show 7488959a:docs/requirements/ledger.json`
+  byte-for-byte (11606 source lines). Supplemental/bounded sessions are distinct
+  valid full JSON payloads, correction_used=0 **each**:
+  `ses_e73c34cf0ffegtG7wPCaS1aNZB` chunk2809–4408 → source2803–4402;
+  `ses_e73c0f9e4ffeSjwDK8LAUrT43y` chunk4409–6008 → source4403–6002;
+  `ses_e73c0f9afffe4MxgX7wgiJCO4Q` chunk6009–7608 → source6003–7602;
+  `ses_e73c0f984ffe98jZfRJ4x7fMPa` chunk7609–9228 → source7603–9222.
+  With the original source ranges, coverage is contiguous 1–11606. The prior apparent
+  six-line gap/counter uncertainty is resolved by later authenticated information;
+  prior anchored uncertainty is retained as history, never silently rewritten.
+- Explicit author judgment: satisfied **for the present analytical/static workflow
+  and scoped artifact-review obligation**, based on actual supervisor/reviewer/shared
+  skill/fast/live safeguards, exact-range independent review records, coordinate
+  corroboration and validation. Not from tests alone, not approval of this new
+  assessment, not universal future/live behavior. No remaining genuine missing
+  obligation identified in this scope. Existing mandatory future independent reviews,
+  consultation/debugging/handoff/fix-cap/capability boundaries and fast/live exceptions
+  remain unchanged; no permission/model/runtime edits or user artifact-approval gate.
+- Focused unchanged workflow contracts rerun: **34 passed**. Progress is a material
+  docs dependency, so the earlier two docs observations become stale until actual
+  revalidation/new append-only observations. Assigned CLI transactions refresh only
+  the changed registered progress snapshot; new safe evidence and projection are
+  separately anchored/validated outputs, not an endless self-reference loop. Full
+  requirements/docs checks and final three-constraint readiness query are recorded
+  in the new safe evidence/private author report after actual execution. Compile/
+  Space constraints not applicable; constraint impact **not applicable**.
+- Next transition: validated self-reviewed task-only checkpoint; independent review
+  of the complete new BASE..HEAD, including additions/canonical/projection/progress.
+  Empirical methodology goal/actual merge remain pending; scoped readiness grants no
+  permissions or integration authority. Later finishing gate remains separate. No
+  fetch/push/merge/rebase/reset/clean/amend/discard/publication authorized or performed.
