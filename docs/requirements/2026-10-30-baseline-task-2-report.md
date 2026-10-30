@@ -801,3 +801,199 @@ Only the five assigned tracked files are changed; private evidence is ignored an
 excluded. Staged diff/whitespace/privacy inspection precedes the local checkpoint;
 no extra requirements-suite run is needed for documentation-only additions after
 the revision40 successful gate.
+
+## Task 2/T completion — complete representative Task2 baseline
+
+**DONE for assigned T reconciliation; Task2's representative baseline is complete
+and ready for independent review, not every micro-contract verified or approved.**
+All original100 source rows now accounted (72G/19A/9T). Earlier partial/G/A reports
+above remain unchanged historical author records. No restart or task-wide budget
+reset; passing slices do not discharge the original full Task2 review.
+
+### Identity and requirements reconciliation
+
+- Actor `implementer/baseline-task-2-T`, this fresh bounded session; no platform
+  session UUID supplied. Controller supervisor, strict lane, ordinary checkpoint.
+- Branch `juicyrebel/ridley`; clean intake HEAD/continuation BASE
+  `bfcb6f2890abe0a3985f1e17bd13e7641b9de2bc`, ledger40. Original Task2 BASE
+  `c4322c63735c51a347e2c928c83614718a2b616f`; source F
+  `fec176453c88fa1c47f22b7fe1d447dfe0ba281b`; reviewed design
+  `6fd7c0bcdc16444d18ad4332662eb6c4da0f5b52`. Read private brief first, including
+  global constraints, then controller bounded source-findings table.
+- Full T review range `bfcb6f28..T_HEAD`; original full Task2 range
+  `c4322c63..T_HEAD` remains owed. T_HEAD is the local commit containing this append,
+  subject `docs(requirements): complete representative Task2 text baseline`;
+  resolve with `git log --format='%H %s' bfcb6f28..HEAD` (no circular literal SHA).
+
+Used **requirements-reconciliation**: **missing representation / refinement**,
+not behavior implementation. Independently compared52 existing canonical statements
+and provenance,132 artifact locators, and full text-revision/lazy-editor/save
+criteria. CLI searches for shared text/caret/next word/2026-09-14 returned no
+matches (literal-only, not semantic proof). Existing editor/file-save/string-revision
+IDs retained unchanged; bounded anchor navigation already lives in Lazy editor c1.
+Shared command architecture/compatibility, narrow w semantics and storage-neutral
+widget policy are distinct grounded contracts; no document-per-requirement quota.
+Audit governors remain the same six revision1 IDs listed above. Authority is full
+tracked design text and original Git objects, `justified_interpretation`, not a
+fabricated user conversation or source completion label. No normative revision,
+activation, assessment, criterion observation or conflict disposition added.
+No consultation trigger requiring dependent repair was encountered; unresolved
+source/caller gaps are retained, not silently reconciled or acted across.
+Next transition is independent exact-range review, then controller Task2 acceptance.
+
+### Actual canonical transactions and IDs
+
+Real CLI `python3 scripts/requirements.py apply --repo-root . --stdin` only;
+in-memory envelopes, actual returned IDs and exact expected revisions:
+
+| Expected → returned | Result |
+| --- | --- |
+|40→41|3 proposed revision1 requirements with scoped analytical criteria/provenance|
+|41→42|21 artifacts:2 designs,2 implementation specs,10 code,7 test definitions|
+|42→43|55 explicit links:6 addresses,2 realizes,13 implements,16 verifies,15 exercises,3 contributes_to|
+
+Totals **55 requirements/153 artifacts/413 relations**; T delta3/21/55.
+Aggregate Task2 delta since31:27 requirements/127 artifacts/251 relations.
+All prior52 requirements/132 artifacts/358 relations,17 assessments/63
+verifications/0 conflict dispositions unchanged. No source history is rewritten.
+
+|Alias|Exact requirement ID|Distinct scope|
+|---|---|---|
+|T1|REQ-e97a2474-dd88-4105-94c7-600ef82d0778|Storage-independent port-only normal command semantics, eager compatibility and explicit missing-operation errors|
+|T2|REQ-a1d40674-4128-4aed-8031-e4efcc843bdc|Lowercase normal-mode w, exact whitespace/ASCII keyword/punctuation classes, no-next-word no-move, streaming lazy scan|
+|T3|REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732|Shared focus/caret/key/geometry policy without moving lazy data/save ownership|
+
+T1 contributes to Workspace `REQ-1d7a72a9-2614-4508-955f-ffd0455546f8`;
+T2/T3 contribute to T1 without sufficiency. No new product constraint or inherited
+methodology applicability invented. Existing Lazy editor
+`REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c` and File save
+`REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4` gain viewer/widget assertions and
+code→actual lazy plan traces. String revision
+`REQ-77d53d5a-9303-490e-a031-34827a59e6c6` and its evidence remain unchanged;
+file-token conflicts are not string-store UUID revisions.
+
+|Artifact|Exact ID|
+|---|---|
+|Shared engine design|ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900|
+|Shared policy design|ART-2a5bc403-592d-46ee-bccd-abaff9ad632c|
+|Shared engine implementation plan|ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e|
+|Shared policy implementation plan|ART-e9c56330-6148-409a-b09f-768bb5642273|
+|text-editing-port.fnl|ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d|
+|text-normal-commands.fnl|ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6|
+|text-state.fnl|ART-1eda3201-7458-4e6d-a7e2-80886f17a121|
+|text-input-focus-policy.fnl|ART-ec7ec23e-8e94-4fe2-a742-25c2a3d73b13|
+|text-input-caret-policy.fnl|ART-fc54e87c-5a5b-4f49-ad25-02e568d77e5a|
+|text-input-key-policy.fnl|ART-8467d6a8-a450-4b68-8143-01e4f05b0724|
+|text-input-geometry.fnl|ART-6ce490b5-8a2b-4b70-b582-150cb366f0ae|
+|virtual-input.fnl|ART-81c18e25-3180-48c1-8b59-6c00888ecbe4|
+|graph/nodes/fs-file-viewer.fnl|ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab|
+|graph/view/views/fs-file-viewer.fnl|ART-94d8ef33-785a-4fcf-ac4a-bbc0c166c7a2|
+|test-text-editing-port.fnl|ART-4c172618-88a6-4e17-a1fd-f241e126f76d|
+|test-text-normal-commands.fnl|ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca|
+|virtual-input-word-motion.fnl|ART-e08a832d-8840-4fee-95bb-8c12fc7bd0a3|
+|virtual-input-parity.fnl|ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9|
+|test-fs-file-viewer.fnl|ART-621582b4-38a6-4b9e-ac7f-0ded4572f662|
+|test-virtual-input.fnl|ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5|
+|e2e/test-fs-file-viewer-virtual-input.fnl|ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0|
+
+Code paths above are under `assets/lua/`, tests under `assets/lua/tests/`.
+Exact locators/directions and all relation IDs are in canonical ledger/index.
+Reuse existing lazy design/plan/source/buffer/test artifacts, no duplicate registration
+or invented code→requirement edge. No audit page registered as measurement evidence.
+
+### Independent primary-source depth and separate status axes
+
+Full reads: all3 T designs (lazy1–276, engine1–174, policy1–136), shared engine
+plan1–269 and policy plan1–327; features shared-text-interaction-engine1–121,
+text-input-policies1–62, lazy-text-buffer-virtual-input1–97. Other plans independently
+sampled through opening/global/interface/assertion contracts: lazy1–200 (predecessor
+full1–625 retained), usability1–250/710, anchors1–220/545, parity1–240/630. Later
+tasks in those three supplementary plans are not claimed read. Every9 row gives
+its own source-specific disposition; no date/name-based supersession.
+
+Original Git `log F --` both shared designs gives introductions
+`623bc67c5a950a75209a7dc330bdbd4c2539e0f4` and
+`22aac4e0ad15df2716e2940aa2d9d8b99d96d7cc`; both original blobs read fully via
+`git show`. They already state the eager oracle, port boundary, narrow w and
+font/style error contract. Current feature pages corroborate architecture but do
+not authorize dropping missing-font strictness. Earlier local VirtualInput-only
+facade is retained historical solution; explicit new engine text moves backend
+branching to the port, not blanket supersession of prior navigation intent.
+
+|Scope|Inspected production presence|Actual assertion definitions|Concrete remaining limits|
+|---|---|---|---|
+|T1|Full port1–494, normal commands1–268, TextState1–166: backend detection in adapter, handlers only port calls, routing shell|Full test-port1–289 and normal-commands1–278: eager positions/preferred column/delete clamp; virtual bounded delegation and named missing ops; prefixes/hints/mode|Virtual-style port tests are stubs, not real lazy storage parity. Whole Input/InputModel/state/insert matrix not newly proven|
+|T2|Port class/run scanner; buffer1095–1178 chunk scalar scan; VirtualInput706–721 updates cursor/preferred column/anchors|Full real word-motion1–249: punctuation/newline/whitespace,100k-word/EOF max-request16, concat guard4096, no full logical scans; normal tests139–174 reject W/Shift+w|Port parity244–273 stubs virtual target and skips punctuation sequence, covered separately by real widget tests. Word helper90–92 asserts visibility only, not containment. No latency/whole-runtime result|
+|T3|Four policy modules read fully; VirtualInput695–824/1035–1192 plus cited callsites: focus, caret, direct keys, geometry|Parity283–346/388–579: focus-hidden, disconnect once/order, mode color/width, direct normal edits/arrows refused, lazy/rotated geometry; fixtures sampled|Policy caret7–24/36–49 permits metric/font fallbacks while design50–51 requires explicit failure for required data. Full caller/font initialization reachability uninspected: concrete unresolved strictness gap, not invented policy or established runtime defect|
+|Existing Lazy editor/File save|Full viewer node1–52/view1–190; sampled VirtualInput construction/drop/key/save; reuse buffer/source traces|Full viewer tests1–306: shared buffer, dirty/saved/conflict/error, actual disk strings and external button. Widget397–510 viewport/edit/copy/save and drop. E2E1–130/200–413 routed pointer/insert/save/exact edges/far h/l|Native final-token/rename/permissions/durability uninspected; actual key-only graph capture assertion not established. Teardown test only unregister/double-drop; production calls each drop but exhaustive child counters absent|
+|Existing bounded navigation|Existing lazy c1 reused, not duplicated|Widget1034–1134 + E2E352–399 inspected|After-$ test adds exact move before h/l; repeated h/l only checks final range; j/k resets counters before final no-scan assertion. E2E checks exact positions, not read/scan budgets. Source assertions do not close every bounded-navigation invariant|
+
+The large/tangled1192-line VirtualInput and1199-line widget test were sampled, not
+refactored or read in full. No code changes authorized. Every3 new record has some
+sampled implementation and relevant test-definition linkage (3/3), **not**3 complete
+implementations, complete criterion coverage or empirical usability/performance.
+Historical test success is not imported; fresh observations are source/ledger checks
+only. All three proposed/unassessed, criterion observations absent/currency unknown.
+Earlier concrete G/A gaps (ordered-child implementation, lifecycle/native/preview
+matrix, alt-drag docs, provider visibility, live label, notebook wrap, kernel conflict)
+remain retained. They do not justify application repair or another implicit task.
+
+### Validation, self-review and handoff
+
+1. **Compile check:** not applicable; no Fennel/C++/runtime/test edits.
+2. **Application constraints / Constraint Impact:** not applicable. Audit transaction,
+   typed-relation/history/preservation constraints checked without bypass.
+3. **Tests:** `make requirements-check` timeout600000, **348 passed in174.15s**,
+   then valid/current at43, no warnings. Separate `validate` and `render --check`
+   also passed. Coverage rationale: only executable mutations are canonical ledger
+   transactions/projection; schema/graph/revision/history/query/render tests cover
+   that surface. Product tests/builds cannot establish this audit's empirical goals
+   and were neither run nor claimed. TDD not applicable, no synthetic RED/GREEN.
+
+Preservation/manifest in-memory checks passed: all52 old requirements,132 artifacts,
+358 relations,17 assessments,63 verifications and0 conflict dispositions unchanged;
+active endpoint tuples and artifact locator/selector pairs unique. Exact frozen
+362 rows/362 unique,0 missing/extra/duplicates; T9 changed/nonT353 unchanged.
+All9 source bytes match F. No spec/plan additions, so records-index generation not
+needed. Original100 Task2 rows now accounted; this is representative semantic
+reconciliation, not all362 full-body review or every planned assertion verified.
+
+Six-ID scoped coverage (T1/T2/T3 plus existing lazy/save/string revision) and
+all-record coverage (208 registered records) at32/1000 not truncated. Combined
+context32/1000 truncates; each six individual both-direction trace narrowed to
+depth2/paths1000 still truncates. Direct canonical tuples reviewed instead; no
+complete impact/readiness clearance. Unlinked behavior/unregistered history remain
+outside complete blast radius; graph reachability is not proven dependency.
+
+Self-review checked source/criterion distinctness, exact typed directions, all
+returned IDs and viewer save versus string revision boundaries; retained weak
+assertions/fallback/native/persistence/teardown gaps rather than overstating tests.
+No architecture redesign or speculative extra contracts. A T-only repeat comparison
+found zero further justified mutations, not Task4 every-family idempotence; no
+no-op apply. Revision43 ledger SHA256
+`b9120762a1c722ccc77b585287ca559f49e103886996f36f53d7782484196d67`, index
+`b2c21410f33bc7e03cf329896227222bb7136b4138e16f38f6a7f0dc79725199`.
+
+Assigned changed files (checkpoint together):
+`docs/requirements/ledger.json` (CLI), `docs/requirements/index.md` (projection),
+`docs/requirements/2026-10-30-repository-reconciliation.md`,
+`docs/requirements/2026-10-30-repository-source-dispositions.md`, and this report.
+Private execution evidence `task2-T-source-execution-evidence.md` remains under the
+existing private task directory, ignored/not staged/not canonical measurement.
+No code/test/prompt/tooling/schema/controller-progress edits, external transient
+files, push, PR or integration. Local checkpoint is a review input, not sign-off.
+
+Retained Task2 worker checkpoints (already present, not created by T):
+- `bfa1e94ffb680ffa7546f0b210a39a0f3f0295d1` — docs(requirements): checkpoint partial graph and text traces
+- `ae4a7ddfd050e5f6658257f801f169e4a2861336` — docs(requirements): record incomplete Task 2 handoff
+- `abc8baa44b0bdf9013051e6de1f6efbc215b17a3` — docs(requirements): Reconcile bounded graph and entity baseline
+- `bfcb6f2890abe0a3985f1e17bd13e7641b9de2bc` — docs(requirements): reconcile bounded agent and workflow baseline
+
+Controller coordination checkpoint `7e65f11c8930a38637c7444c56ed56a23b22919b`
+also lies inside the original full Task2 range; it is not a worker-owned T edit.
+Final pre-checkpoint read-only assertions: all21 registered primary sources match F
+and participate in relations; all3 requirements proposed revision1 with empty
+history; predecessor report is an exact byte prefix; all116 report,41 disposition
+and30 audit REQ/ART references resolve. Ledger/index digests unchanged at43.
+Exactly the assigned five tracked files changed; diff whitespace check passed.
+No second requirements-suite run needed after reporting-only edits.

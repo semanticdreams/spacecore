@@ -2,6 +2,14 @@
 
 ## Identity, authority and current boundary
 
+**Current Task2 boundary (ledger43): complete representative Task2 baseline,
+ready for independent review, not every micro-contract verified or approved.**
+All original100 assigned source rows are accounted (G72/A19/T9). Historical
+partial/G/A entries below are retained execution history, not the latest status.
+The original complete Task2 `c4322c63735c51a347e2c928c83614718a2b616f..Task2_HEAD`
+review remains owed; passing predecessor slices do not substitute. Task3 and Task4
+remain separate pending work; no application repair or empirical outcome credit.
+
 - Task 1 author/CLI actor: `implementer/baseline-task-1`, this implementation session. Runtime session UUID was not supplied; this logical actor does not impersonate a platform session ID.
 - Controller/workflow: supervisor, strict serial implementer → independent reviewer → pass; branch `juicyrebel/ridley`.
 - Frozen source **F**: `fec176453c88fa1c47f22b7fe1d447dfe0ba281b`; Task 1 BASE: `3c9d6434897bb32a8a0ee1dc35f4e1fb740503e6`. Task checkpoint is a review input, not approval.
@@ -331,3 +339,79 @@ every-family sweep still owed. Revision40 ledger SHA256
 Next: independent complete `abc8baa4..A_HEAD` review, T continuation, then original
 Task2 full-range review. No budget reset, technical advice dispatch, new product
 observations or approval claimed.
+
+## Task 2/T — complete representative Task2 baseline
+
+Actor `implementer/baseline-task-2-T`, supervisor strict lane, branch
+`juicyrebel/ridley`, clean continuation BASE
+`bfcb6f2890abe0a3985f1e17bd13e7641b9de2bc`, same frozen F and original Task2 BASE.
+Predecessor partial/G/A history retained. Read the brief/global constraints first,
+then controller source leads and independently inspected primary contracts and
+actual assertions; explorer summaries are not authority or borrowed read depth.
+
+Requirements-reconciliation conclusion: **missing representation/refinement** of
+shared interaction contracts, not application behavior changes. All52 prior
+statements/provenance and132 artifact locators compared, with existing text criteria
+read in full and CLI literal/provenance searches. Reuse unchanged Lazy editor
+`REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c`, File save
+`REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4`, Text revision
+`REQ-77d53d5a-9303-490e-a031-34827a59e6c6`, Workspace and audit governors.
+Bounded navigation is already Lazy editor c1, not a fourth new requirement.
+
+CLI in-memory expected-revision transactions40→41→42→43 created3 proposed
+revision1 requirements,21 artifacts (2 designs/2 plans/10 code/7 tests),55 explicit
+relations (6 addresses/2 realizes/13 implements/16 verifies/15 exercises/3
+contributes_to). Totals **55 requirements/153 artifacts/413 relations**. Task2
+aggregate since31: **27 requirements/127 artifacts/251 links**. All17 assessments,
+63 verifications and every old record/history unchanged; no activation or
+assessment, including partial, inferred. No new constraint applicability or
+code→requirement shortcuts. Exact identities and trace maps are in the T report.
+
+T1 `REQ-e97a2474-dd88-4105-94c7-600ef82d0778`: shared port-only normal commands,
+eager compatibility and explicit missing operations. T2
+`REQ-a1d40674-4128-4aed-8031-e4efcc843bdc`: precisely lowercase normal-mode w,
+ASCII classes/whitespace/no-next-word behavior and streaming lazy scan, not full
+Vim. T3 `REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732`: shared focus/caret/direct-key/
+coordinate policy with backend-owned lazy data/save. T1 contributes to Workspace;
+T2/T3 help T1 without sufficiency. Original designs at623bc67c and22aac4e0 were
+read via Git and retain these contracts; later features corroborate them.
+
+Three designs/two shared plans and three current feature contracts fully read.
+Other T plans sampled to200/250/220/240 lines with full opening contracts, retaining
+predecessor full lazy-plan read separately. Actual port/normal/word/policy code,
+viewer node/view and sampled VirtualInput/buffer paths inspected. Test definitions
+cover eager/virtual adapter behavior, real lazy w, focus/caret/key/geometry parity,
+viewer save/conflict/error/external button and expanded pointer/save insertion.
+All3 new records have some implementation and test-definition presence (3/3),
+not complete implementation or criterion satisfaction. Existing lazy/save viewer
+trace gaps are narrowed, not silently declared closed. Text revision stays unchanged.
+
+Concrete residuals: test-virtual-input after-$ setup repositions exactly before
+h/l, repeated h/l checks a range, cached j/k resets counters before the final scan
+assertion. E2E exact far h/l positions do not measure scan bounds; word helper's
+caret check is visibility-only. Teardown test counts unregister/double-drop, not
+every child release (though production drop calls and focus-before-child test are
+present). Required font/style strictness in policy design versus fallback helpers
+remains unresolved without full-caller reachability; no new fallback policy or
+defect verdict. Native final-token/rename/security/durability and actual key-only
+graph persistence assertions remain uninspected boundaries, assigned downstream
+or retained for empirical follow-up, not authorization for code repair. Earlier
+G/A ordering/lifecycle/kernel/tool-visibility/live-evidence gaps remain in force.
+
+Every9 T disposition updated; non-T353 unchanged, frozen manifest362/362 unique,
+0 missing/extra/duplicate; original100 Task2 rows now accounted. `validate` and
+`render --check` valid/current at43. Compile/application constraints not applicable;
+Constraint Impact not applicable. `make requirements-check` timeout600000:348 passed
+in174.15s, output pristine. Focused ledger checks cover only schema, typed graph,
+transaction/history/query/projection changes, not app performance or goal success.
+Scoped6-ID/all coverage not truncated; context32/1000 and individual narrowed
+both-direction traces2/1000 truncate. Direct tuples inspected, no complete impact
+or readiness clearance. T-only repeat self-review found no further justified
+mutations; Task4 every-family second sweep still owed. Ledger43 SHA256
+`b9120762a1c722ccc77b585287ca559f49e103886996f36f53d7782484196d67`, index SHA256
+`b2c21410f33bc7e03cf329896227222bb7136b4138e16f38f6a7f0dc79725199`.
+
+Next: exact T continuation review and original full Task2 range review, retaining
+all earlier passes only within their ranges. Local checkpoints are review inputs,
+not approval. No restart, budget reset, fresh product observation, consultation
+dispatch, push or integration. Full evidence/depth/file list in appended T report.

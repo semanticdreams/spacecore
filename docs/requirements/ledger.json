@@ -93,11 +93,23 @@
       "locator": "docs/plans/2026-08-14-graph-authored-agent-workflows.md",
       "title": "2026-08-14-graph-authored-agent-workflows.md"
     },
+    "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900": {
+      "id": "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-14-shared-text-interaction-engine-design.md",
+      "title": "2026-09-14-shared-text-interaction-engine-design.md"
+    },
     "ART-1ca16574-87c0-4f45-8114-2089517eab3e": {
       "id": "ART-1ca16574-87c0-4f45-8114-2089517eab3e",
       "kind": "design",
       "locator": "docs/specs/2026-08-12-space-agent-live-development-reliability-design.md",
       "title": "2026-08-12-space-agent-live-development-reliability-design.md"
+    },
+    "ART-1eda3201-7458-4e6d-a7e2-80886f17a121": {
+      "id": "ART-1eda3201-7458-4e6d-a7e2-80886f17a121",
+      "kind": "code",
+      "locator": "assets/lua/text-state.fnl",
+      "title": "text-state.fnl"
     },
     "ART-21d9bd54-5822-48f1-b67c-cce768092f0c": {
       "id": "ART-21d9bd54-5822-48f1-b67c-cce768092f0c",
@@ -122,6 +134,18 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-06-string-entity-text-search.md",
       "title": "2026-10-06-string-entity-text-search.md"
+    },
+    "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e": {
+      "id": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-14-shared-text-interaction-engine.md",
+      "title": "2026-09-14-shared-text-interaction-engine.md"
+    },
+    "ART-2a5bc403-592d-46ee-bccd-abaff9ad632c": {
+      "id": "ART-2a5bc403-592d-46ee-bccd-abaff9ad632c",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-14-virtual-input-shared-input-policies-design.md",
+      "title": "2026-09-14-virtual-input-shared-input-policies-design.md"
     },
     "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c": {
       "id": "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c",
@@ -173,6 +197,12 @@
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-final-evidence-reconciliation.md",
       "title": "Final bounded evidence and explicit constraint reconciliation"
+    },
+    "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d": {
+      "id": "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d",
+      "kind": "code",
+      "locator": "assets/lua/text-editing-port.fnl",
+      "title": "text-editing-port.fnl"
     },
     "ART-3a48a48d-941a-4865-87f1-66902ad511b0": {
       "id": "ART-3a48a48d-941a-4865-87f1-66902ad511b0",
@@ -240,6 +270,12 @@
       "locator": "assets/lua/graph/outline.fnl",
       "title": "outline.fnl"
     },
+    "ART-4c172618-88a6-4e17-a1fd-f241e126f76d": {
+      "id": "ART-4c172618-88a6-4e17-a1fd-f241e126f76d",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-text-editing-port.fnl",
+      "title": "test-text-editing-port.fnl"
+    },
     "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365": {
       "id": "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365",
       "kind": "implementation_spec",
@@ -270,6 +306,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-entity-capabilities.fnl",
       "title": "test-graph-entity-capabilities.fnl"
+    },
+    "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662": {
+      "id": "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-fs-file-viewer.fnl",
+      "title": "test-fs-file-viewer.fnl"
     },
     "ART-62ec1cee-4fd4-442b-8260-68f76e2f7b7f": {
       "id": "ART-62ec1cee-4fd4-442b-8260-68f76e2f7b7f",
@@ -307,6 +349,12 @@
       "locator": "docs/specs/2026-10-14-entity-type-catalog-design.md",
       "title": "2026-10-14-entity-type-catalog-design.md"
     },
+    "ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6": {
+      "id": "ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6",
+      "kind": "code",
+      "locator": "assets/lua/text-normal-commands.fnl",
+      "title": "text-normal-commands.fnl"
+    },
     "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141": {
       "id": "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141",
       "kind": "implementation_spec",
@@ -318,6 +366,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-15-reference-lifecycle.md",
       "title": "2026-10-15-reference-lifecycle.md"
+    },
+    "ART-6ce490b5-8a2b-4b70-b582-150cb366f0ae": {
+      "id": "ART-6ce490b5-8a2b-4b70-b582-150cb366f0ae",
+      "kind": "code",
+      "locator": "assets/lua/text-input-geometry.fnl",
+      "title": "text-input-geometry.fnl"
     },
     "ART-6cf20443-413a-4a04-9f84-ebec41fab04d": {
       "id": "ART-6cf20443-413a-4a04-9f84-ebec41fab04d",
@@ -392,6 +446,12 @@
       "locator": "assets/lua/tests/test-agent-workflow-runner.fnl",
       "title": "test-agent-workflow-runner.fnl"
     },
+    "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4": {
+      "id": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "kind": "code",
+      "locator": "assets/lua/virtual-input.fnl",
+      "title": "virtual-input.fnl"
+    },
     "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f": {
       "id": "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f",
       "kind": "design",
@@ -403,6 +463,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-10-08-graph-outline-view-design.md",
       "title": "2026-10-08-graph-outline-view-design.md"
+    },
+    "ART-8467d6a8-a450-4b68-8143-01e4f05b0724": {
+      "id": "ART-8467d6a8-a450-4b68-8143-01e4f05b0724",
+      "kind": "code",
+      "locator": "assets/lua/text-input-key-policy.fnl",
+      "title": "text-input-key-policy.fnl"
     },
     "ART-851d9295-f934-4c35-b01b-1cefda8058e1": {
       "content_digest": "1654f2ff56bed0d44f9fbec9abe6394cf29dcc9d7b63f2a39280a6c940d1b456",
@@ -429,6 +495,12 @@
       "locator": "assets/lua/tests/test-graph-view-islands.fnl",
       "title": "test-graph-view-islands.fnl"
     },
+    "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0": {
+      "id": "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0",
+      "kind": "test",
+      "locator": "assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl",
+      "title": "test-fs-file-viewer-virtual-input.fnl"
+    },
     "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f": {
       "id": "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f",
       "kind": "implementation_spec",
@@ -441,11 +513,23 @@
       "locator": "assets/lua/workflows/store.fnl",
       "title": "store.fnl"
     },
+    "ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab": {
+      "id": "ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab",
+      "kind": "code",
+      "locator": "assets/lua/graph/nodes/fs-file-viewer.fnl",
+      "title": "fs-file-viewer.fnl"
+    },
     "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511": {
       "id": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
       "kind": "test",
       "locator": "assets/lua/tests/test-lazy-text-buffer.fnl",
       "title": "test-lazy-text-buffer.fnl"
+    },
+    "ART-94d8ef33-785a-4fcf-ac4a-bbc0c166c7a2": {
+      "id": "ART-94d8ef33-785a-4fcf-ac4a-bbc0c166c7a2",
+      "kind": "code",
+      "locator": "assets/lua/graph/view/views/fs-file-viewer.fnl",
+      "title": "fs-file-viewer.fnl"
     },
     "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8": {
       "content_digest": "ead09efe7782f8136b16dddeafb0581ccdb4cebe0b75f8b41e6950c34f5dc437",
@@ -489,6 +573,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-string-entity-editor.fnl",
       "title": "test-string-entity-editor.fnl"
+    },
+    "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca": {
+      "id": "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-text-normal-commands.fnl",
+      "title": "test-text-normal-commands.fnl"
     },
     "ART-a045816d-f731-48f7-84d6-1bd452779143": {
       "id": "ART-a045816d-f731-48f7-84d6-1bd452779143",
@@ -660,6 +750,12 @@
       "locator": "assets/lua/llm/agent/session-migration.fnl",
       "title": "session-migration.fnl"
     },
+    "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5": {
+      "id": "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-virtual-input.fnl",
+      "title": "test-virtual-input.fnl"
+    },
     "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8": {
       "id": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
       "kind": "implementation_spec",
@@ -710,6 +806,18 @@
       "locator": "docs/plans/2026-10-11-dict-entity.md",
       "title": "2026-10-11-dict-entity.md"
     },
+    "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9": {
+      "id": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "kind": "test",
+      "locator": "assets/lua/tests/virtual-input-parity.fnl",
+      "title": "virtual-input-parity.fnl"
+    },
+    "ART-e08a832d-8840-4fee-95bb-8c12fc7bd0a3": {
+      "id": "ART-e08a832d-8840-4fee-95bb-8c12fc7bd0a3",
+      "kind": "test",
+      "locator": "assets/lua/tests/virtual-input-word-motion.fnl",
+      "title": "virtual-input-word-motion.fnl"
+    },
     "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf": {
       "id": "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf",
       "kind": "design",
@@ -742,11 +850,23 @@
       "locator": ".opencode/skills/requirements-reconciliation/SKILL.md",
       "title": "SKILL.md"
     },
+    "ART-e9c56330-6148-409a-b09f-768bb5642273": {
+      "id": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-14-virtual-input-shared-input-policies.md",
+      "title": "2026-09-14-virtual-input-shared-input-policies.md"
+    },
     "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e": {
       "id": "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e",
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-view-camera-persistence.fnl",
       "title": "test-graph-view-camera-persistence.fnl"
+    },
+    "ART-ec7ec23e-8e94-4fe2-a742-25c2a3d73b13": {
+      "id": "ART-ec7ec23e-8e94-4fe2-a742-25c2a3d73b13",
+      "kind": "code",
+      "locator": "assets/lua/text-input-focus-policy.fnl",
+      "title": "text-input-focus-policy.fnl"
     },
     "ART-ecc4a09b-7e50-4a80-97d3-ac3378c6fbad": {
       "id": "ART-ecc4a09b-7e50-4a80-97d3-ac3378c6fbad",
@@ -810,6 +930,12 @@
       "kind": "code",
       "locator": "assets/lua/workflows/code-executor.fnl",
       "title": "code-executor.fnl"
+    },
+    "ART-fc54e87c-5a5b-4f49-ad25-02e568d77e5a": {
+      "id": "ART-fc54e87c-5a5b-4f49-ad25-02e568d77e5a",
+      "kind": "code",
+      "locator": "assets/lua/text-input-caret-policy.fnl",
+      "title": "text-input-caret-policy.fnl"
     },
     "ART-fe7ad787-6a08-4913-ae90-76a6cc80c0cb": {
       "content_digest": "3da78ee79c26a0ceb27918a47308440a8d701fda9413e578b6120b5ec472b038",
@@ -6876,6 +7002,886 @@
       "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
       "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
       "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e9a5c77d-dba1-4b8c-a0a5-6355e786b262",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Full inspected shared text contract and scoped criteria address this obligation; not evidence of runtime success.",
+      "retracted": false,
+      "source": "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a9fe4aa8-732b-4982-b0b0-d409ddaccd36",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Full inspected shared text contract and scoped criteria address this obligation; not evidence of runtime success.",
+      "retracted": false,
+      "source": "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900",
+      "target": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-81f382f8-4d47-4aec-bd45-69eab39781f1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-virtual-input-shared-input-policies-design.md"
+      },
+      "rationale": "Full inspected shared text contract and scoped criteria address this obligation; not evidence of runtime success.",
+      "retracted": false,
+      "source": "ART-2a5bc403-592d-46ee-bccd-abaff9ad632c",
+      "target": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8e974f67-6f13-4702-89c1-ebb26bd428d5",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-14-shared-text-interaction-engine.md"
+      },
+      "rationale": "Full inspected shared text contract and scoped criteria address this obligation; not evidence of runtime success.",
+      "retracted": false,
+      "source": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2d28ae3a-013c-4fa0-abf8-5f7ab8f56b89",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-14-shared-text-interaction-engine.md"
+      },
+      "rationale": "Full inspected shared text contract and scoped criteria address this obligation; not evidence of runtime success.",
+      "retracted": false,
+      "source": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "target": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-98fcd3d3-d802-457d-b0c5-d8d1f994a2ff",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-14-virtual-input-shared-input-policies.md"
+      },
+      "rationale": "Full inspected shared text contract and scoped criteria address this obligation; not evidence of runtime success.",
+      "retracted": false,
+      "source": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "target": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-08f61213-fbd6-4e43-918d-a0b3e3ba7066",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-14-shared-text-interaction-engine.md"
+      },
+      "rationale": "Actual implementation plan explicitly specifies this design boundary and component responsibilities.",
+      "retracted": false,
+      "source": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "target": "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-886d39f5-7758-4eab-985d-f624cf500167",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-14-virtual-input-shared-input-policies.md"
+      },
+      "rationale": "Actual implementation plan explicitly specifies this design boundary and component responsibilities.",
+      "retracted": false,
+      "source": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "target": "ART-2a5bc403-592d-46ee-bccd-abaff9ad632c",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6e7255d5-56a4-4e87-bd06-2547e17ba648",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-editing-port.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d",
+      "target": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1d672b32-39f0-4b08-92cf-fc6f6aa3c699",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-normal-commands.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6",
+      "target": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-79a1b879-f83c-4038-9328-b2ace2f547e4",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-state.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-1eda3201-7458-4e6d-a7e2-80886f17a121",
+      "target": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c5bec480-1c50-47da-bf39-a23a8381def8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/lazy-text-buffer.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-a045816d-f731-48f7-84d6-1bd452779143",
+      "target": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e17e1a0f-b66a-4b88-be28-bc8e0895a41f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-input-focus-policy.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-ec7ec23e-8e94-4fe2-a742-25c2a3d73b13",
+      "target": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-72fde7df-7950-407d-b1ba-532a937dd6d0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-input-caret-policy.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-fc54e87c-5a5b-4f49-ad25-02e568d77e5a",
+      "target": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e6992640-c090-4979-b9fb-e511c078c2dd",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-input-key-policy.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-8467d6a8-a450-4b68-8143-01e4f05b0724",
+      "target": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-87b3e594-f8cf-42fb-95fb-715b571eeb99",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/text-input-geometry.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-6ce490b5-8a2b-4b70-b582-150cb366f0ae",
+      "target": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0688bbb8-9484-44e6-a1f6-bcf1349d42bc",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/virtual-input.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "target": "ART-2a394556-2241-43ba-9f4f-6ec5279c2c6e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-459320de-63d5-4471-9a3f-371ede5629cf",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/virtual-input.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "target": "ART-e9c56330-6148-409a-b09f-768bb5642273",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-30814b75-16bd-44d8-9c29-48c4eb6ce53f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/virtual-input.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "target": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b108f958-92fa-440f-8a67-d7b56082eb86",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/nodes/fs-file-viewer.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab",
+      "target": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9e3a67a5-8d0e-418d-8143-01df4dc3622a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/view/views/fs-file-viewer.fnl"
+      },
+      "rationale": "Inspected adapter/command/policy or viewer implementation realizes the sampled planned surface; native boundary and complete-caller/lifecycle gaps remain in the T report.",
+      "retracted": false,
+      "source": "ART-94d8ef33-785a-4fcf-ac4a-bbc0c166c7a2",
+      "target": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b9d31c2d-8ba7-45f6-bb87-d9f6e3a5be21",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-editing-port.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-4c172618-88a6-4e17-a1fd-f241e126f76d",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-664b4703-9296-41a2-94b4-f828798199d7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-editing-port.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-4c172618-88a6-4e17-a1fd-f241e126f76d",
+      "target": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e56f4e2e-d8b0-4618-a2a0-6410efe7caaf",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-normal-commands.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-25c27667-b727-4fce-a668-3dd7ed39d9c7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-normal-commands.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca",
+      "target": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c67b5391-e2d1-4717-83d1-156ada8a28b7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-word-motion.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-e08a832d-8840-4fee-95bb-8c12fc7bd0a3",
+      "target": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-505cb0c9-1d0f-4621-ad23-6805af5d7938",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1cf6b35b-8a4e-41e4-a48f-b6a520293e80",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c17767ef-67fc-42a1-b46c-22a9d5e18108",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-fs-file-viewer.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-95caad21-0c41-4bf5-8d01-8787eaf93033",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-fs-file-viewer.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662",
+      "target": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-331af9bb-d8a2-438a-962b-6b151f6616ee",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5cf2d0da-e47c-4ad6-a71f-20c6833b44e9",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5",
+      "target": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7d3c7694-15d4-481b-845d-fc7ddb702101",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-41f52388-2932-4f5c-825a-763d73051809",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5",
+      "target": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-04094d5f-4f58-4121-9969-618f2b17774f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3d198521-9771-4411-a9dc-451377487cd4",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0",
+      "target": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f6a6ca17-a135-4b98-8afa-ef2a78933c8a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl"
+      },
+      "rationale": "Actual assertion definitions inspected for this sampled command, focus/caret/key/geometry or viewer/save behavior. Partial criterion coverage only; not an executed result or satisfaction.",
+      "retracted": false,
+      "source": "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0",
+      "target": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-aa7ba1d1-2c2b-4b46-89e9-3f20fd75d711",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-editing-port.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-4c172618-88a6-4e17-a1fd-f241e126f76d",
+      "target": "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b4b76308-d842-45bb-a261-1e9b7e4db3a7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-normal-commands.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca",
+      "target": "ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-39bf6d52-d140-4bc4-8e1b-7845515be474",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-text-normal-commands.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca",
+      "target": "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3b031dd1-a50a-4ef3-bdd1-75805bf5eb63",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-word-motion.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e08a832d-8840-4fee-95bb-8c12fc7bd0a3",
+      "target": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3bfe3888-ff40-48f5-bae9-7ba1801d3672",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-word-motion.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e08a832d-8840-4fee-95bb-8c12fc7bd0a3",
+      "target": "ART-a045816d-f731-48f7-84d6-1bd452779143",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0ed7cf1d-0bba-44a3-ad5b-6052d95b91f6",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-73f41cca-fee2-4cc4-a3e5-2ac8e2c1f484",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "ART-ec7ec23e-8e94-4fe2-a742-25c2a3d73b13",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c9cc27d0-6993-4f28-884a-8c7711e9e5a6",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "ART-fc54e87c-5a5b-4f49-ad25-02e568d77e5a",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c972302b-e2c1-4400-8c79-5764622bc70d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "ART-8467d6a8-a450-4b68-8143-01e4f05b0724",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4dc8eb26-6b31-4340-a97e-dcc845933d3a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/virtual-input-parity.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
+      "target": "ART-6ce490b5-8a2b-4b70-b582-150cb366f0ae",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9526d1b1-540e-46c0-b950-2c8e8867251e",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-fs-file-viewer.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662",
+      "target": "ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-95f672b6-bb5b-4ae4-8ee8-e5060e09c004",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-fs-file-viewer.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662",
+      "target": "ART-94d8ef33-785a-4fcf-ac4a-bbc0c166c7a2",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ae190390-ae11-4baa-8786-26b2713b0b9d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-virtual-input.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-d352117a-c91c-48b6-9ca2-01c5bfbf30b5",
+      "target": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8d43d0dd-1017-4b28-a556-6936fc31f03d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0",
+      "target": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3e83d73d-9fa5-4900-8e1b-7ebf14593781",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl"
+      },
+      "rationale": "Inspected test fixture invokes this real implementation surface, with bounded mocks/stubs described in the T report; no execution claimed.",
+      "retracted": false,
+      "source": "ART-8a3519e8-ecda-4b8f-92bb-05cbaa03e1a0",
+      "target": "ART-94d8ef33-785a-4fcf-ac4a-bbc0c166c7a2",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8bc235d2-1cc9-4161-b13b-5bb9d8163ca1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Shared interaction or its bounded proving behavior helps the integrated editing/command contract without sufficiency or inferred satisfaction.",
+      "retracted": false,
+      "source": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "target": "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cf446d41-48cf-41ea-b164-7aa20c1cf2a0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Shared interaction or its bounded proving behavior helps the integrated editing/command contract without sufficiency or inferred satisfaction.",
+      "retracted": false,
+      "source": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6ad2a9f4-aad0-43c4-9454-d918684cb886",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Shared interaction or its bounded proving behavior helps the integrated editing/command contract without sufficiency or inferred satisfaction.",
+      "retracted": false,
+      "source": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "type": "contributes_to"
     }
   ],
   "requirements": {
@@ -7507,6 +8513,44 @@
       "revision": 1,
       "statement": "Advance strict requirements, design and implementation-spec work autonomously through independent artifact reviews while retaining safeguards and fast/live exceptions."
     },
+    "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Focus connects the active input and enters text mode; blur/disconnect releases it, normalizes mode and hides the caret. Visibility is focus-gated, not merely cursor-row visibility."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Normal mode uses caret-normal and block/glyph width; insert uses caret-insert and configured thin width, with bounded caret height. Required style/font data must fail explicitly rather than silently fall back; caller reachability and fallback compatibility remain an unresolved audit gap."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Direct widget keys do not bypass normal command or insert-state routing; intentionally supported save/copy/page shortcuts remain separate. Shared local-point, row, column and row-y geometry keeps lazy row/column-to-byte resolution local."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c4",
+          "text": "File-backed parity fixtures force tiny chunks, narrow viewports or long rows; expanded file-viewer pointer tests assert intended row/column and mode without using eager huge-file materialization."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "excerpt": "VirtualInput should reuse the same interaction and caret policies as Input",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-virtual-input-shared-input-policies-design.md"
+      },
+      "rationale": "Authorized representative Task2 T baseline after comparing existing52 requirement statements/provenance and text criteria; independent shared interaction intent, not duplicated lazy editor/save/string revision behavior, application repair or achievement. Remains proposed.",
+      "revision": 1,
+      "statement": "Reuse eager-compatible storage-neutral focus, caret, direct-key and coordinate policies for lazy text widgets while leaving byte resolution, viewport storage and save semantics with their owning backends."
+    },
     "REQ-5babb6e9-88c4-43f5-8904-d6321f5bf795": {
       "acceptance_criteria": [
         {
@@ -7834,6 +8878,39 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Evolve the existing agentic development system into goal-aware, requirements-driven engineering."
+    },
+    "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Whitespace is codepoints 9,10,11,12,13,32; keywords are ASCII A-Z,a-z,0-9 and underscore; all other non-whitespace codepoints are punctuation. Skip the current non-whitespace class run and whitespace, or initial whitespace, to land at the next non-whitespace run; no next word leaves the cursor unchanged."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Only lowercase w is bound: no W, counts, operators, visual mode, configurable iskeyword, search or repeat behavior is introduced by this obligation."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Lazy w may stream chunks until the next word or EOF but does not assemble whole-file, whole-line, eager InputModel or accumulated-prefix state; update cursor and viewport anchors after movement."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-a1d40674-4128-4aed-8031-e4efcc843bdc",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "excerpt": "If no next word exists, do not move.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Authorized representative Task2 T baseline after comparing existing52 requirement statements/provenance and text criteria; independent shared interaction intent, not duplicated lazy editor/save/string revision behavior, application repair or achievement. Remains proposed.",
+      "revision": 1,
+      "statement": "Provide precisely scoped lowercase normal-mode w through the shared text command path for eager and lazy inputs, moving forward to the next word-run start without extending to full Vim semantics."
     },
     "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b": {
       "acceptance_criteria": [
@@ -8318,6 +9395,34 @@
       "revision": 1,
       "statement": "Nonvisual graph access must remain independent of GraphMap and GraphView and must not materialize visual adapters or mutate map membership, explicit display edges, positions, selection, focus, panels or projection state."
     },
+    "REQ-e97a2474-dd88-4105-94c7-600ef82d0778": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Normal command handlers use only port operations, with key bindings, hints, prefixes and mode transitions centralized; TextState routes active input, submit and state-level concerns rather than inspecting storage."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Port adapters retain eager Input/InputModel as the compatibility oracle, isolate lazy storage primitives, and name missing required operations and input kind in explicit errors; unsupported bounded movement reports false/unbounded rather than successful no-op."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-T",
+        "date": "2026-10-30",
+        "excerpt": "This design creates an explicit shared text interaction layer",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-shared-text-interaction-engine-design.md"
+      },
+      "rationale": "Authorized representative Task2 T baseline after comparing existing52 requirement statements/provenance and text criteria; independent shared interaction intent, not duplicated lazy editor/save/string revision behavior, application repair or achievement. Remains proposed.",
+      "revision": 1,
+      "statement": "Share storage-independent normal-mode text command semantics across eager Input and lazy VirtualInput through an explicit editing port, preserving accepted eager behavior unless a file-scale difference is documented."
+    },
     "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59": {
       "acceptance_criteria": [
         {
@@ -8446,7 +9551,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 40,
+  "revision": 43,
   "schema_version": 1,
   "verifications": [
     {
