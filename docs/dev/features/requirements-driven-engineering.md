@@ -205,7 +205,7 @@ investigation. Dispositions retain authority/explanation, not proof of compatibi
 `no-recorded-blockers` grants no permissions, test pass, independent approval or merge.
 Pending unrelated strategic outcomes do not impose a global merge freeze.
 
-## Demonstrations, validation and current seed
+## Demonstrations, validation and original seed
 
 Run real temporary-repository fixtures, not mocks or keyword routing:
 
@@ -247,8 +247,8 @@ and, once the canonical seed exists, validates it and checks projection freshnes
 it never seeds missing data. `make opencode-check` includes it nonrecursively.
 No Space runtime/build change is needed for this Python/prompt/docs surface.
 
-The seed captures only this current methodology task's explicit obligations. It is
-not a migration of historical Space product goals. The reviewed design/plan and
+The original methodology seed captured only that task's explicit obligations; it
+was not a migration of historical Space product goals. Its reviewed design/plan and
 justified code/test/safe evidence references are linked. Mutable progress pages are
 not immutable measurement evidence: refresh artifact digests with `update-artifact`
 after intentional content changes and record new observations if their declared
@@ -256,6 +256,39 @@ dependencies changed. Do not overwrite retained observations to manufacture curr
 Task assessments can remain partial pending independent review and final integration.
 Empirical methodology improvement is not claimed achieved.
 
-The controller owns final guarded integration after independent Task 5 and whole-branch
-review: current remote-base evaluation, actual CI, guarded PR/queue and actual
-`mergedAt` evidence. Local fixtures, checks and checkpoints cannot substitute for it.
+The original methodology task required independent Task 5 and whole-branch review.
+Every follow-up retains its own exact-range independent review and controller-owned
+guarded integration: current remote-base evaluation, actual CI, guarded PR/queue and
+actual `mergedAt` evidence. Local fixtures, checks and checkpoints cannot substitute
+for it.
+
+## Authorized one-time repository baseline
+
+The explicit follow-up [baseline design](/specs/2026-10-30-repository-requirements-baseline-design)
+authorizes grounded product-intent reconciliation beyond the original seed, using
+the same CLI and schema, not an automatic historical import or a discovery service.
+The [consolidated audit](/requirements/2026-10-30-repository-reconciliation),
+[filename dispositions](/requirements/2026-10-30-repository-source-dispositions) and
+[Task 4 report](/requirements/2026-10-30-baseline-task-4-report) define the frozen
+source, post-source additions, canonical IDs/revisions, counts, inspected depths and
+remaining gaps. Inventory covers every documentation family and frozen spec/plan
+filename; semantic depth is representative, not proof of every micro-contract.
+
+Resume by loading the current ledger revision and comparing actual statements,
+criteria, original provenance, artifact locators/selectors and active typed relation
+tuples with these records. Reuse identities; apply only newly justified changes with
+the exact expected revision. Preserve historical normative snapshots and observations.
+After intended mutations, repeat the source-to-ledger sweep across every family and
+compare ledger/index bytes and revision. A genuinely unchanged sweep needs no no-op
+write; an omission requires reconciliation and another sweep, not replay of old
+creation requests. Mutable audit reports are not immutable measurement evidence.
+
+Stable required behavior is separate from current implementation gaps and audit
+disclosures. Proposed roadmaps remain proposed; test definitions, source status,
+trace links and local ledger/docs checks establish neither product runtime
+verification nor even partial satisfaction. Strategic usefulness, naturalness,
+performance and ownership outcomes retain missing measurement protocols/thresholds.
+Missing links mean unknown coverage, not absent functionality. Product defects and
+unresolved source contradictions return to controller reconciliation as separate
+work; this baseline does not authorize application repairs or historical policy
+retirement. Pending unrelated strategic outcomes are not a global merge freeze.

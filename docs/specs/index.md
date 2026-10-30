@@ -14,6 +14,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 ### 2026-10
 
 - 2026-10-30 — [Autonomous workflow decisions and devlog corrections](./2026-10-30-autonomous-workflow-decisions-design.md)
+- 2026-10-30 — [One-time repository requirements baseline audit](./2026-10-30-repository-requirements-baseline-design.md)
 - 2026-10-29 — [Autonomous operational handoff recovery](./2026-10-29-autonomous-handoff-recovery-design.md)
 - 2026-10-29 — [Model-neutral project agent routing](./2026-10-29-model-neutral-agent-routing-design.md)
 - 2026-10-29 — [Goal-aware requirements-driven engineering](./2026-10-29-requirements-driven-engineering-design.md)
