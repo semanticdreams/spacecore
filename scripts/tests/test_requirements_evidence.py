@@ -835,7 +835,9 @@ def test_retained_snapshots_preserve_original_required_fields(lib, inited, missi
 
 def test_superseded_mark_requires_lineage(lib, inited):
     # Terminal lifecycle mark without any retained supersedes lineage.
-    record = h.make_requirement(lifecycle="superseded")
+    record = h.make_requirement(lifecycle="superseded", history=[{
+        "kind": "transition", "from_lifecycle": "proposed", "to_lifecycle": "superseded",
+        "reason": "Replace", "authority": "Explicit intent", "actor": "test", "date": "2026-10-29"}])
     ledger = h.base_ledger()
     ledger["revision"] = 1
     ledger["requirements"][record["id"]] = record
@@ -900,10 +902,10 @@ def test_valid_multirevision_evidence_survives_load(lib, inited):
 
 
 @pytest.mark.parametrize("mutation,code", [
-    ("missing", "invalid-supersession"),
-    ("rejected-origin", "invalid-supersession"),
-    ("duplicate", "invalid-supersession"),
-    ("later-transition", "invalid-supersession"),
+    ("missing", "invalid-record"),
+    ("rejected-origin", "invalid-record"),
+    ("duplicate", "invalid-record"),
+    ("later-transition", "invalid-record"),
     ("authority", "invalid-record"),
     ("reason", "invalid-record"),
 ])

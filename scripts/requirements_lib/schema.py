@@ -228,12 +228,16 @@ def validate_acceptance_criteria(criteria, where):
 
 def validate_history(record, where):
     expected_revision = 1
+    lifecycle = "proposed"
     for index, entry in enumerate(record.get("history", [])):
         spot = f"{where}.history[{index}]"
         kind = None
         if not isinstance(entry, dict) or "kind" not in entry:
             fail("invalid-record", f"{spot} must name its kind.", {})
         kind = entry["kind"]
+        if lifecycle in ("superseded", "rejected"):
+            fail("invalid-record", f"{spot} cannot change a terminal requirement.",
+                 {"lifecycle": lifecycle})
         if kind == "revision":
             _check_keys(entry, REVISION_HISTORY_FIELDS, (), spot)
             from_rev, to_rev = entry["from_revision"], entry["to_revision"]
@@ -255,6 +259,15 @@ def validate_history(record, where):
                        "to_lifecycle": entry["to_lifecycle"]})
             if not _nonempty_string(entry["authority"], f"{spot}.authority"):
                 fail("invalid-record", f"{spot}.authority must be nonempty.", {})
+            target = entry["to_lifecycle"]
+            # Dedicated supersession records the same transition shape; graph
+            # validation separately requires its retained replacement lineage.
+            legal = target in ALLOWED_TRANSITIONS[lifecycle] or target == "superseded"
+            if entry["from_lifecycle"] != lifecycle or not legal:
+                fail("invalid-record", f"{spot} must continue the legal lifecycle sequence.",
+                     {"expected_lifecycle": lifecycle,
+                      "from_lifecycle": entry["from_lifecycle"], "to_lifecycle": target})
+            lifecycle = target
         else:
             fail("invalid-record", f"{spot}.kind must be 'revision' or 'transition'.",
                  {"kind": kind})
@@ -269,7 +282,10 @@ def validate_history(record, where):
         fail("invalid-record",
              f"{where}.history must retain every revision before the current revision.",
              {"retained_revision": expected_revision,
-              "current_revision": record["revision"]})
+               "current_revision": record["revision"]})
+    if lifecycle != record["lifecycle"]:
+        fail("invalid-record", f"{where}.lifecycle must match retained lifecycle history.",
+             {"retained_lifecycle": lifecycle, "current_lifecycle": record["lifecycle"]})
 
 
 def validate_requirement(record, where):

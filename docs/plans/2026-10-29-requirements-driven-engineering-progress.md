@@ -819,3 +819,53 @@ source replay remains required; static prompt tests alone prove no agent behavio
   byte-copy isolation, history preservation and actual new evidence correspondence.
   Next: ordinary validated task-only checkpoint and complete FIX_BASE..HEAD targeted
   re-review; all final independent review/guarded integration gates remain unchanged.
+
+### REQ-FINAL-FIX-1 — accepted whole-branch findings, fix round 1
+
+- Identity: implementer for supervisor/strict SDD on `juicyrebel/scoter`, clean
+  FIX_BASE `7488959aea343b786c08fd003f04dbe4e4074acc`; original whole-branch BASE
+  `4f607d36` unchanged. Source review session `ses_e73daf36effecE5Qs8sDqOl8YZ`,
+  correction_used=0. This is substantive repair, not delivery correction or a budget
+  reset. The implementer session identifier was not exposed in this assignment.
+- Reconciliation conclusion: two implementation defects against existing obligations,
+  not new requirements or a new exception contract. Sources: Task 1/3 shared
+  contracts, reviewed design lines 95–99 and 185–189, actual readiness/history code
+  and regressions. Explicit dispositions record explanation/authority, not scoped
+  revision-bound clearance; lifecycle originates proposed and terminal states are
+  final. Confidence is high in those existing contracts; arbitrary natural-language
+  exception applicability remains unknown, never interpreted by the tool.
+- R1-1: retain all matching dispositions as context, but keep a still-recorded
+  material explicit conflict blocking. No new exception schema, inference, global
+  clearance, ledger migration or authority transfer. Tests cover an exception
+  claimed for another scope and one retained after an endpoint normative revision.
+- R1-2: replay lifecycle alongside revision sequence from proposed; validate each
+  transition's origin/legal target, reject any revision/transition after terminal,
+  and require final lifecycle agreement. Dedicated supersession continues to use
+  existing graph lineage validation. Tests cover resurrection, false origins,
+  missing activation, no-op transitions, final mismatch, post-terminal revisions,
+  and valid interleaved revisions/activation/supersession through real operations.
+- Actual RED: focused selection 11 failed/1 passed after correcting one test request
+  to the existing supersession API. Failures showed disposition-only clearance and
+  accepted malformed lifecycle histories. GREEN: same selection 12 passed; complete
+  graph/store/scenario selection 176 passed. First requirements gate found five
+  error-precedence test mismatches, not another implementation invariant failure:
+  invalid histories now fail schema replay before graph supersession validation.
+  Updated exact error expectations; missing-lineage fixture now has a legal
+  transition so its separate lineage assertion still applies. Focused supersession
+  selection 10 passed. Complete `make requirements-check`: 332 passed in 115.95s,
+  canonical revision 19 valid and read-only projection current.
+- Additional documentation/policy-declaration check: `npm run test:scripts` in
+  `docs/` passed all 56 tests (0 failed/skipped). `git diff --check` passed.
+- Currency/ownership: no canonical ledger/projection/observation changes. Existing
+  source-dependent observations may now be stale, including docs observations
+  depending on this progress record; preserve them as history, not freshly passing
+  proof. Full ledger-coverage review remains the controller's separate work.
+  No claim of live-agent compliance, satisfaction, current full-policy validation,
+  integration or merge. No Space/Fennel compile or constraints apply; constraint
+  impact **not applicable**. All 34 workflow-contract tests are included in the gate;
+  unchanged prompts/permissions do not require a new broad policy suite here.
+- Self-review: isolated assigned changes, preserved history/identities and unchanged
+  canonical bytes; no exception interpretation or fabricated history. Next transition:
+  task-only validated local checkpoint and independent review of complete
+  FIX_BASE..HEAD. Exact commands, follow-up checks and checkpoint identity are in
+  `.superpowers/sdd/2026-10-29-requirements-driven-engineering-3c4275b7/final-fix-report.md`.

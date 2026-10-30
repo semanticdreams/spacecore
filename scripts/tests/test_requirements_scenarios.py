@@ -169,6 +169,7 @@ def test_scenario_07_conflict_disposition_readiness(scenario):
     c.op("record-conflict-disposition", relation_id=edge,
          explanation="Only manual applies in this fixture scope", authority="Fixture explicit policy")
     assert c.readiness(manual)["dispositions"][0]["relation_id"] == edge
+    assert c.readiness(manual)["status"] == "blocked"
     assert c.query("get", id=automatic)["requirement"]["lifecycle"] == "proposed"
 
 

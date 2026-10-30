@@ -1060,3 +1060,60 @@ def test_apply_rejects_empty_ops(inited):
     result = h.run_cli(inited, "apply", request=h.apply_request())
     assert result.returncode != 0
     assert result.error_code() == "invalid-request"
+
+
+def history_transition(source, target):
+    return {"kind": "transition", "from_lifecycle": source, "to_lifecycle": target,
+            "reason": "Grounded lifecycle change", "authority": "Explicit intent",
+            "actor": "test", "date": "2026-10-29"}
+
+
+@pytest.mark.parametrize("moves,final", [
+    ([("proposed", "active"), ("active", "rejected"), ("rejected", "active")], "active"),
+    ([("active", "rejected")], "rejected"),
+    ([("proposed", "proposed")], "proposed"),
+    ([], "active"),
+    ([("proposed", "active")], "proposed"),
+    ([("proposed", "active"), ("proposed", "rejected")], "rejected"),
+])
+def test_load_replays_lifecycle_history(lib, inited, moves, final):
+    record = h.make_requirement(lifecycle=final,
+        history=[history_transition(source, target) for source, target in moves])
+    ledger = h.base_ledger()
+    ledger["requirements"][record["id"]] = record
+    h.write_ledger(inited, ledger)
+    expect_error(lambda: lib.load_ledger(str(inited)), "invalid-record")
+
+
+def test_load_rejects_revision_after_terminal(lib, inited):
+    rid = create_result(inited)
+    for op in [
+        op_args("revise-requirement", id=rid, statement="Revised before rejection", reason="Clarify"),
+        op_args("transition-requirement", id=rid, to="rejected", reason="Not needed", authority="Explicit intent"),
+    ]:
+        lib.apply(str(inited), h.apply_request(op, expected_revision=h.current_revision(inited)))
+    ledger = lib.load_ledger(str(inited))
+    record = ledger["requirements"][rid]
+    revision = dict(record["history"][0], from_revision=2, to_revision=3)
+    record["history"].append(revision)
+    record["revision"] = 3
+    h.write_ledger(inited, ledger)
+    expect_error(lambda: lib.load_ledger(str(inited)), "invalid-record")
+
+
+def test_valid_interleaved_revisions_activation_and_supersession(lib, inited):
+    rid = create_result(inited)
+    for op in [
+        op_args("revise-requirement", id=rid, statement="Clarified proposal", reason="Clarify"),
+        op_args("transition-requirement", id=rid, to="active", reason="Applicable", authority="Explicit intent"),
+        op_args("revise-requirement", id=rid, statement="Clarified active obligation", reason="Clarify"),
+        op_args("supersede-requirement", old_id=rid, provenance=h.provenance(), create={"classification": "capability",
+            "statement": "Replacement obligation", "rationale": "Changed intent",
+            "provenance": h.provenance()}, reason="Replacement", authority="Explicit intent"),
+    ]:
+        lib.apply(str(inited), h.apply_request(op, expected_revision=h.current_revision(inited)))
+    record = lib.load_ledger(str(inited))["requirements"][rid]
+    assert record["lifecycle"] == "superseded"
+    assert record["revision"] == 3
+    assert [entry["kind"] for entry in record["history"]] == [
+        "revision", "transition", "revision", "transition"]

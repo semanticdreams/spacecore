@@ -206,9 +206,32 @@ def test_explicit_conflict_blocks_candidate_conflict_never_clears(graph_case):
     c.ledger["conflict_dispositions"].append({"relation_id": explicit["id"],
         "explanation": "scoped resolution", "authority": "explicit intent", "actor": "test", "date": "2026-10-29"})
     report = c.query("readiness", **args)
-    assert not report["blockers"]
-    assert report["status"] == "needs-investigation"
+    assert report["blockers"][0]["relation_id"] == explicit["id"]
+    assert report["dispositions"] == c.ledger["conflict_dispositions"]
+    assert report["status"] == "blocked"
     assert report["unknowns"]
+
+
+@pytest.mark.parametrize("revise_endpoint", [False, True])
+def test_scoped_disposition_is_not_clearance_for_other_scope_or_revision(graph_case, revise_endpoint):
+    c = graph_case
+    a, b = c.req("scope-a"), c.req("scope-b")
+    edge = c.edge("conflicts_with", a, b)
+    disposition = {"relation_id": edge["id"], "explanation": "Exception only for scope-a revision 1",
+        "authority": "explicit intent", "actor": "test", "date": "2026-10-29"}
+    c.ledger["conflict_dispositions"].append(disposition)
+    if revise_endpoint:
+        write_ledger(c.root, c.ledger)
+        requirements_lib().apply(c.root, {"actor": "test", "expected_revision": 0, "ops": [
+            {"op": "revise-requirement", "args": {"id": a, "reason": "Changed obligation",
+                "statement": "Changed scope-a obligation"}}]})
+        c.ledger = requirements_lib().load_ledger(c.root)
+    report = c.query("readiness", scope=[a if revise_endpoint else b],
+                     material_criteria=[], material_constraints=[])
+    assert report["status"] == "blocked"
+    assert report["blockers"][0]["relation_id"] == edge["id"]
+    assert report["dispositions"] == [disposition]
+    assert c.ledger["conflict_dispositions"] == [disposition]
 
 
 @pytest.mark.parametrize("args", [
@@ -434,7 +457,7 @@ def test_reconciled_excluded_routes_are_unknown_never_violation_or_clearance(gra
         c.edge("constrains", constraint, sibling)
         edge = c.edge(route, child, sibling)
         if route == "conflicts_with":
-            # Isolate applicability from the independent, scoped conflict blocker.
+            # Disposition is context, not clearance of the independent conflict.
             c.ledger["conflict_dispositions"].append({"relation_id": edge["id"],
                 "explanation": "Resolved scoped conflict", "authority": "explicit intent",
                 "actor": "test", "date": "2026-10-29"})
@@ -481,8 +504,9 @@ def test_reconciled_excluded_routes_are_unknown_never_violation_or_clearance(gra
     if route == "derived_from":
         assert any(step["relation"]["type"] == "derived_from"
                    for path in applicability["context_paths"] for step in path["steps"])
-    assert report["status"] == "needs-investigation"
-    assert not report["blockers"]
+    assert report["status"] == ("blocked" if route == "conflicts_with" else "needs-investigation")
+    assert [b["reason"] for b in report["blockers"]] == (
+        ["unresolved-material-conflict"] if route == "conflicts_with" else [])
     assert any(u.get("id") == constraint and u["reason"] == "constraint-applicability-unknown" for u in report["unknowns"])
 
 

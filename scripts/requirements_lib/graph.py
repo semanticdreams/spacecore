@@ -360,9 +360,11 @@ def readiness(ledger, root, args):
         elif edge["type"] == "conflicts_with":
             dispositions = [d for d in ledger["conflict_dispositions"] if d["relation_id"] == edge["id"]]
             if dispositions:
-                report["dispositions"].append(dispositions[-1])
-            else:
-                report["blockers"].append({"reason": "unresolved-material-conflict", "relation_id": edge["id"], "relation": edge})
+                report["dispositions"].extend(dispositions)
+            # Dispositions retain explanation/authority only. They do not bind
+            # scope or endpoint revisions, so cannot establish current exception
+            # applicability or resolve a still-recorded explicit conflict.
+            report["blockers"].append({"reason": "unresolved-material-conflict", "relation_id": edge["id"], "relation": edge})
     for rid in applicable:
         req = ledger["requirements"][rid]
         assessment = _latest_assessment(ledger, rid)
