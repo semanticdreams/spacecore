@@ -16,6 +16,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 - 2026-10-30 — [Autonomous workflow decisions and devlog corrections](./2026-10-30-autonomous-workflow-decisions-design.md)
 - 2026-10-29 — [Autonomous operational handoff recovery](./2026-10-29-autonomous-handoff-recovery-design.md)
 - 2026-10-29 — [Model-neutral project agent routing](./2026-10-29-model-neutral-agent-routing-design.md)
+- 2026-10-29 — [Goal-aware requirements-driven engineering](./2026-10-29-requirements-driven-engineering-design.md)
 - 2026-10-26 — [OpenCode session exposure through the graph — full roadmap design](./2026-10-26-opencode-session-graph-exposure-design.md)
 - 2026-10-25 — [Current-source interactive layout boundary diagnostic](./2026-10-25-current-layout-boundary-diagnostic-design.md)
 - 2026-10-25 — [GLM-default project agents with bounded GPT consultation](./2026-10-25-glm-default-expert-consultation-design.md)

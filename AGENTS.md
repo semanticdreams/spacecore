@@ -378,6 +378,30 @@ The following are actionable blockers:
   `HUMAN_DECISION_REQUIRED` with the exact GitHub setting needed instead of
   entering a stale-branch polling loop.
 
+## Requirements-driven intake
+
+Use `requirements-reconciliation` for goal/outcome, feature, intended behavior
+change, bug, maintenance, exploration and clarification requests and discrepancies
+found later. Classify intent independently of read-only/tiny/full ceremony. Inspect
+original intent/provenance, existing requirements, designs/plans, code/tests and
+evidence; record the skill's proportional conclusion in existing handoff/progress
+records. Read-only conclusions stay report-only. New intended-behavior work is
+requirements-driven; reuse existing obligations for defects and avoid synthetic
+maintenance requirements or historical bulk migration.
+
+Canonical ledger changes remain implementer-owned in strict flow. Requirements,
+design and implementation-spec artifacts receive scoped independent review over
+exact pending diffs/revisions or complete recorded ranges, followed by automatic
+transitions, not user artifact approval. Explicit intent outranks a contrary
+technical solution unless source evidence establishes a genuine unresolved policy
+choice. Ask only that focused choice, record the answer and resume automatically.
+Fast/live retain their direct-development and manual lifecycle exceptions above;
+this adds no per-change worker pipeline or mandatory extra artifacts to them.
+Run `make opencode-check` for prompt/policy changes; its nonrecursive
+`requirements-check` includes focused Python tests and, once the canonical seed
+exists, ledger validation and read-only index freshness checking. It never seeds
+missing data. Static tests establish declarations, not live-agent compliance.
+
 ## Project Structure & Modules
 
 - `src/` holds the C++17 engine modules (rendering, physics, audio, bindings). Add new systems as matching `.cpp`/`.h` pairs. Engine Lua bindings live in `src/lua_engine.cpp`.

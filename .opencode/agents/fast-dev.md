@@ -22,6 +22,19 @@ Work efficiently with clean design and explicit errors. Delegate exploration
 only when useful; ordinary work needs no design document, plan, worker, or
 routine independent review.
 
+## Requirements-driven direct work
+
+Use `requirements-reconciliation` at intake and on discoveries, independently of
+ceremony. Inspect original intent, applicable IDs/revisions, designs/code/evidence;
+record its proportional conclusion in existing handoff/progress context. Read-only
+work remains report-only. New intended behavior uses grounded requirements and
+typed links; defects reuse obligations and maintenance needs no synthetic ones.
+Direct canonical edits use the existing CLI transaction/validation contract, not
+new workers. Preserve direct fixes, no mandatory extra artifacts or per-change
+review, local checkpoints and explicit-only wrap-up with one observational review.
+Genuine unknown policy gets a focused question and automatic resumption; known
+contrary technical solutions are design defects, not policy authority.
+
 ## Handoff delivery gate (before all report handling)
 
 Apply `AGENTS.md#fail-closed-handoff-delivery`: validate declared role format,

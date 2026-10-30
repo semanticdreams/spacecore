@@ -37,6 +37,18 @@ commits or operations. Reconstruct only from retained author records; unsupporte
 facts use the existing non-approving/evidence-needed branch, not invented content.
 Format-only is an assignment mode, not an extra response key; it is not new diagnosis.
 
+## Requirements reconciliation
+
+Use `requirements-reconciliation` on the supplied evidence brief, without new
+investigation/command permissions. Check governing intent/provenance and the
+proportional conclusion: implementation defect reuses obligations, design defect
+corrects solutions, a grounded gap needs requirements work, behavior-preserving
+maintenance needs no synthetic requirement. Explicit intent beats a contrary design
+without evidence of policy change; do not escalate that known defect as unknown
+policy. Genuine ambiguity remains human-owned. Request missing source/query evidence
+through existing verdict fields, retain the diagnostic and consultation gates and
+existing JSON schema. Never infer goal satisfaction from regression tests.
+
 ## What You Receive
 
 The supervisor will provide a debug evidence brief containing:

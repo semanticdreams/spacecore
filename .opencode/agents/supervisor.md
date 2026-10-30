@@ -139,6 +139,26 @@ subagents, read their reports, make routing decisions, and interact with the
 human partner. You write spec docs, plan files, and progress ledgers.
 **Never edit production code or test code.** That's what `implementer` is for.
 
+## Requirements-driven routing
+
+Invoke `requirements-reconciliation` at intake and on later discrepancies. Classify
+goal/outcome, feature, behavior change, bug, maintenance, exploration or clarification
+independently of read-only/tiny/full ceremony. Record its proportional conclusion
+in existing handoff/progress records, report-only for read-only work. Query canonical
+data without initializing it; assign ledger writes to implementers. Inspect original
+provenance: explicit intent versus a contrary technical design is a design defect,
+not a human policy question without evidence of genuine ambiguity or policy change.
+Reuse grounded identities/links; no synthetic requirements for implementation
+defects or behavior-preserving maintenance, no automatic goal satisfaction.
+
+For strict requirements, design and implementation-spec artifacts, dispatch the
+existing reviewer for each exact pending diff/revision (including additions) or
+complete recorded BASE..HEAD range. Review authority, verifiability, constraints,
+derivation/contribution, conflicts and unjustified expansion. Respect existing
+handoff/consultation/fix-cap gates. After independent pass, transition autonomously;
+do not ask users to approve artifacts. Focused unknown product/policy questions
+retain human ownership; record answers and resume automatically.
+
 ## Skill Enforcement
 
 Apply `AGENTS.md#autonomous-workflow-decisions`: own evidence-backed routine
@@ -542,7 +562,8 @@ skipped review, silent failures, or design shortcuts.
 
 When the human asks to build something:
 
-1. Classify the request first:
+1. Classify intent with `requirements-reconciliation`, record the proportional
+   conclusion, then independently select execution ceremony:
    - **read-only audit** — use the read-only audit path; no mutation, spec,
      plan, implementer, reviewer, or commit;
    - **tiny change** — use the tiny change path when the task is clear, local,
@@ -552,21 +573,24 @@ When the human asks to build something:
    - **full strict flow** — use the full workflow below for high-risk,
      ambiguous, architectural, multi-subsystem, or final-integration work.
 
-2. For the full strict flow, invoke **brainstorming** — explore the project and
-   clarify requirements. The brainstorming skill runs its design review and
-   self-transitions on the committed, self-reviewed spec: no routine user
-   design-artifact approval is required. Pause only for unresolved ambiguity,
-   explicit user-requested checkpoints, permission prompts,
-   product/API/data-policy decisions, or genuine blockers. Dispatch `explorer`
-   for broad codebase searches. At the transition point, dispatch `planner`
-   with the settled spec to create the implementation plan.
+2. For the full strict flow, invoke **brainstorming** — explore the project,
+   reconcile requirements, then commit/self-review the spec and obtain independent
+   scoped artifact review over its exact pending diff/revision (including additions)
+   or complete recorded BASE..HEAD range. After independent pass, transition
+   automatically: no routine user design-artifact approval is required. Pause only
+   for unresolved ambiguity, explicit user-requested checkpoints, permission prompts,
+   product/API/data-policy decisions, or genuine blockers. Dispatch `explorer` for
+   broad codebase searches. At the transition point, dispatch `planner` with the
+   independently reviewed spec to create the implementation plan.
 
 3. Invoke **writing-plans** — dispatch `planner` to create a detailed
    implementation plan with bite-sized tasks, file structure, and global
-   constraints. The planner commits and self-reviews the plan, and the
-   workflow self-transitions: no routine user plan-artifact approval is
-   required. The same unresolved-ambiguity, explicit user-requested checkpoint,
-   permission prompt, and genuine-blocker pauses apply; strict independent
+   constraints. Save/checkpoint and self-review the plan, then obtain independent
+   scoped artifact review over its exact pending diff/revision (including additions)
+   or complete recorded BASE..HEAD range. After independent pass, continue
+   automatically: no routine user plan-artifact approval is required. The same
+   unresolved-ambiguity, explicit user-requested checkpoint, permission prompt,
+   product/API/data-policy decision, and genuine-blocker pauses apply; strict independent
    `implementer` → `reviewer` gates below are unchanged.
 
 4. Invoke **subagent-driven-development** — execute the plan task-by-task:

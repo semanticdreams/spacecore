@@ -7,6 +7,11 @@ Browse the project's preserved design, implementation and validation history:
   down and intended to be validated.
 - [Progress ledgers](/plans/#progress-ledgers) — what actually happened:
   checkpoints, consultations, review outcomes, failures, recoveries and integration.
+- [Requirements](/requirements/) — current-task obligations and typed trace links,
+  separate from these historical inventories. See the
+  [methodology/API guide](/dev/features/requirements-driven-engineering) and
+  [templates](/dev/notes/requirement-templates). Historical placement does not
+  establish requirement authority; no bulk backfill is required.
 
 Each index includes every regular Markdown record in its directory and nested
 directories, grouped by month with the newest dated records first. Undated records

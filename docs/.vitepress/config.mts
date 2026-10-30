@@ -4,6 +4,9 @@ const recordsSidebar = [{
   text: 'Development records',
   items: [
     { text: 'Records overview', link: '/dev/development-records' },
+    { text: 'Requirements', link: '/requirements/' },
+    { text: 'Requirements methodology', link: '/dev/features/requirements-driven-engineering' },
+    { text: 'Requirement templates', link: '/dev/notes/requirement-templates' },
     { text: 'Design specs', link: '/specs/' },
     { text: 'Implementation plans', link: '/plans/' },
     { text: 'Progress ledgers', link: '/plans/#progress-ledgers' }
@@ -40,6 +43,7 @@ export default defineConfig({
     sidebar: {
       '/plans/': recordsSidebar,
       '/specs/': recordsSidebar,
+      '/requirements/': recordsSidebar,
       '/sdk/': [
         {
           text: 'Overview',

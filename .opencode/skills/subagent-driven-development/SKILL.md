@@ -66,6 +66,22 @@ The task-capable controller handles implementer/planner `NEEDS_CONTEXT` containi
 
 Capability wrappers retain verbatim JSON/refusals; advice cannot grant authority.
 
+## Requirements reconciliation during execution
+
+Use `requirements-reconciliation` before dispatch and when discoveries arise.
+Consume independently reviewed requirements/design/implementation-spec artifacts
+over their exact revisions/ranges. Carry governing IDs/revisions, original source
+authority, artifact links, applicable constraints and verification in each brief.
+Record the proportional conclusion in existing reports/progress records; do not
+create a new ledger entity. Read-only conclusions remain report-only. Assign
+canonical mutations to implementers with expected revision and provenance and
+include ledger/index additions in exact pending-diff or complete BASE..HEAD review.
+Defects reuse obligations; maintenance needs no synthetic requirements. Return
+scope/authority discoveries to reconciliation before dependent work, preserving
+consultation, handoff, diagnostic and cap gates. Artifact pass advances automatically,
+not user artifact approval; genuine policy clarification resumes after the answer.
+Fast/live retain their direct-development exceptions, not this worker pipeline.
+
 ## Setup
 
 1. **Durable ledger:** use `.opencode/skills/subagent-driven-development/scripts/sdd-workspace --progress PLAN_FILE` to resolve `<plan-stem>-progress.md` beside a canonical plan under `docs/plans/`. This mode is read-only: it returns a non-ignored candidate path, not a created or tracked file. The controller verifies plan/task identity, branch, source/review ranges and existing ownership before creating or appending; a filename is not identity. Stop on an unrelated existing document or ambiguous ownership instead of overwriting it.
