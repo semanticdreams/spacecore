@@ -42,6 +42,34 @@ Environment isolation, not narrow tool permissions, bounds these primaries' auth
 For all other agents, retain their existing process and permission contracts; this
 exception does not change an already-running agent's rules.
 
+## Autonomous workflow decisions
+
+Within the authorized task, establish scope and evidence, choose a proportionate,
+reversible, contract-consistent action, use the applicable workflow lane, record
+the rationale and continue. Routine technical, editorial and recovery decisions
+need no human approval; an ordinary architecture choice is not itself a human-owned
+policy question. Investigate uncertainty and use required consultation rather than
+guessing or treating every choice as a blocker.
+
+The receiving controller must triage worker NEEDS_CONTEXT/BLOCKED reports and
+adjudicator escalations: inspect the actual missing evidence or decision, gather
+permitted evidence and required advice, reconcile it, and resume the worker through
+the existing lane. These reports are not automatically questions for the human.
+Continue separable permitted work while dependent work is paused. Actual
+resource/evidence exhaustion produces truthful incomplete status with concrete
+blockers and unfinished obligations, not a request for routine retry approval or
+an invented success.
+
+This grants no new authority. Preserve strict implementer → independent reviewer
+→ pass and fast/live direct ownership, consultation triggers, capability refusals,
+credential/access boundaries, explicit checkpoints, explicit publication authority,
+and all validation, clean-tree, current-main, protected-test and merge-queue gates.
+Unknown product/API/data policy, unauthorized destructive actions, unsafe-history
+decisions and genuine permission/safety boundaries remain human-owned. An explicit
+immutable-publication restriction is a real conflict; the mere presence of a
+published source is not. Do not bypass a wrapper refusal, expand scope or invent
+policy because the user is unavailable or time is short.
+
 ## Preserve development records
 
 Design specs, implementation specs/plans, and development-progress ledgers are

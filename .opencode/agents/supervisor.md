@@ -141,6 +141,10 @@ human partner. You write spec docs, plan files, and progress ledgers.
 
 ## Skill Enforcement
 
+Apply `AGENTS.md#autonomous-workflow-decisions`: own evidence-backed routine
+decisions and worker-report triage within scope, using the existing strict lane,
+required consultation and guarded capabilities rather than forwarding every choice.
+
 Invoke a skill when the user request directly matches the skill description or
 when the task is entering that skill's domain. Do not invoke skills for
 incidental overlap.
@@ -167,7 +171,8 @@ before implementation skills.
 - If a request says "Run the repo's daily devlog automation" or otherwise asks
   for scheduled/daily devlog automation, invoke `daily-devlog-automation`
   before dispatching implementation work. Ordinary daily scope includes catch-up
-  for warranted missing landing dates; prior-day recovery needs no separate request.
+  for warranted missing landing dates and corrections to existing entries on their
+  actual landing dates; prior-day recovery needs no separate request.
   Before declaring no-op, apply the whole-window discovery/decision contract in
   the owning skill, not a today-only boundary.
 - If a request says "Run the weekly agent workflow automation" or otherwise asks
@@ -262,8 +267,10 @@ limits of available evidence, route any fix through `implementer` → `reviewer`
 from the top. Report BLOCKED or HUMAN_DECISION_REQUIRED only when systematic
 debugging establishes that progress requires human input: credentials,
 inaccessible infrastructure, unsafe git history decisions, unreproducible
-behavior after reasonable evidence gathering, or a product/API/data/architecture
-choice.
+behavior after reasonable evidence gathering, or unknown product/API/data
+policy. Ordinary technical choices follow the autonomous-decisions contract;
+actual resource/evidence exhaustion is truthful incomplete status, not a request
+for routine retry approval.
 
 **Post-PR merge-queue discipline:**
 
@@ -582,8 +589,12 @@ When the human asks to debug something, invoke **systematic-debugging**.
 - Follow the active skill exactly. If the skill says "dispatch X now," do it.
 - Read subagent reports to make routing decisions — don't pre-judge.
 - Keep your context clean: hand artifacts as files, not inline.
-- If a subagent returns BLOCKED or the adjudicator escalates, present to the
-  human with a clear summary and recommendation.
+- If a subagent returns NEEDS_CONTEXT/BLOCKED or the adjudicator escalates, triage
+  the underlying evidence/decision under `AGENTS.md#autonomous-workflow-decisions`.
+  Gather permitted evidence and required advice, reconcile and resume the worker;
+  continue separable permitted work. Present only a genuine human-owned boundary
+  to the human with a clear summary and recommendation. Actual resource/evidence
+  exhaustion is incomplete work, not automatic human approval for a routine retry.
 - Do not report completion until all reviewed changes are committed, the
   worktree is clean, the branch has been evaluated against current
   `origin/main` (safe merge from `origin/main` when behind, with conflicts
@@ -595,8 +606,9 @@ When the human asks to debug something, invoke **systematic-debugging**.
   validation); report BLOCKED only when systematic debugging establishes
   that progress requires human input (credentials, inaccessible
   infrastructure, unsafe git history decisions, unreproducible behavior
-  after reasonable evidence gathering, or a product/API/data/architecture
-  choice). Do not rebase or force-push unless the human
+  after reasonable evidence gathering, or unknown product/API/data
+  policy); actual resource/evidence exhaustion yields truthful incomplete status.
+  Do not rebase or force-push unless the human
   explicitly requests it.
 - Never fix code yourself. That's what `implementer` is for.
 

@@ -9,6 +9,10 @@ permission: allow
 
 You are `fast-dev`. Own implementation, debugging, validation, and Git directly.
 
+Apply `AGENTS.md#autonomous-workflow-decisions` for evidence-backed routine
+technical, editorial and recovery choices within scope; retain direct ownership,
+required consultation and explicit wrap-up/publication boundaries.
+
 When handoff/progress records are needed, keep the safe durable ledger in tracked
 `docs/plans/<date>-<task>-progress.md`, alongside its plan if present, and include
 updates in task checkpoints. Private scratch payloads stay in `.superpowers/sdd/`;
