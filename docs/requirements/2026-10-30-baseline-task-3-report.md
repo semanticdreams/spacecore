@@ -1055,3 +1055,233 @@ Checkpoint SHA/subject supplied in final handoff: review complete
 `559b8679fa6a11d83cb9c0972628ca3a97df1e1c..N_HEAD`, ledger53→57, all five files,
 plus preserved original Task3 full range when complete. Independent review still
 required; no push, PR, integration or empirical outcome approval.
+
+## Task3/D final-family intake and reconciliation
+
+Fresh bounded author/CLI actor `implementer/baseline-task-3-D` (logical identity;
+platform UUID not supplied), strict supervisor workflow, `juicyrebel/ridley`,
+clean BASE `b380de906b0d0fbcb2a030d0704e43a59bc7b59a`, ledger57. Original Task3
+BASE `c054ef5beb4ad40750133f1252585af4a1ae5c8e`; F and governing design unchanged.
+Task brief read first. Controller supplies P/H/Time(+accepted criteria fix)/N
+passes; complete original Task3 review remains owed. All121 D filename rows
+(67 plans/progress,54 specs) are assigned, not every subordinate test proven.
+
+Requirements-reconciliation conclusion: **missing representation/refinement** of
+independently meaningful development contracts, with source-specific maintenance
+reuse and retained coverage discrepancies. All114 existing statements/revisions
+and425 artifact locators compared, all12 original methodology bodies/criteria/
+provenance read. Reuse those12 unchanged, existing Core/Live/Malleable, P12 reload,
+P15 Windows launcher, H11 distribution, A6 internal live context and N8 Wine
+publication; no requirement per prompt/refactor/CI repair or historical run.
+Current AGENTS/source contracts govern. Explicit neutral-routing supersession,
+exact fast/live long-term branches and authorized journal correction are not
+inferred from filenames or historical status labels. New records remain proposed;
+no activation, verification, assessment, observation or empirical goal credit.
+
+Scope is CLI-owned ledger/index, audit/dispositions and this append only. Private
+source-Git/creation-input/response/query evidence is retained in the required
+`task3-D-source-execution-evidence.md` under the assigned ignored scratch directory.
+No agents/skills/tests/tools/CI edits, automation, model trials, runtime/service/
+credential operations or product repair. Compile/Fennel constraints/TDD are not
+applicable to this docs/ledger audit; focused ledger validation and independent
+checkpoint review are the next transition. Gaps beyond this audit return to
+controller reconciliation, not silent implementation obligations.
+
+### D canonical transactions and IDs
+
+Actual existing `apply --stdin`, in-memory requests, exact expected revisions:
+57→58 returned status ok/10 proposed requirements;58→59 ok/54 artifacts;
+59→60 ok/104 relations. Dependent IDs were reloaded from actual returned canonical
+records, not forward aliases. New requirement mix:9 capabilities/one constraint,
+all revision1/unassessed. No existing requirement, artifact, relation, history,
+assessment, verification or conflict disposition changed. No new evidence artifact,
+activation, supersession, retraction, observation or satisfaction assessment.
+
+| Alias | Actual requirement ID | Stable required behavior |
+| --- | --- | --- |
+| D1 | REQ-1708baf3-2eea-4fad-87e9-21499779a7b5 | Native compile/structural tooling and blocking proportional validation |
+| D2 | REQ-b98531ec-d08d-4a67-a019-82482e5cadd4 | Scoped role/access/capability autonomy constraint |
+| D3 | REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c | Protected-fact handoff correction and same-range independent recovery |
+| D4 | REQ-30218043-d4c2-4357-93f8-e240e289d9d1 | Neutral routing and targeted controller-mediated consultation |
+| D5 | REQ-a3c5dd45-97be-40e7-9051-86254d7223e0 | Exact long-term fast/live branches, direct/local work and explicit wrap-up |
+| D6 | REQ-d738d878-af1d-40d2-95d1-7d334b5787a5 | Verified Linux checkout instance/manual/refresh/restart lifecycle |
+| D7 | REQ-17fd48b5-638b-40d2-a079-a9cfb4473090 | Grounded inclusive daily landing-date narrative/catch-up/correction |
+| D8 | REQ-ba520473-5999-4183-abb8-de9e482108c1 | Sanitized project-wide weekly analysis and reviewed improvements |
+| D9 | REQ-626b5def-42a6-4316-b211-1374307d8918 | Linux/Windows/release validation and platform packaging support |
+| D10 | REQ-dcf95ace-b6b0-4efb-9889-87e58c2deb27 | Runtime developer test/observation tooling |
+
+New artifacts:17 designs/12 real implementation plans/16 code or guidance
+implementations/9 test definitions. Existing test.yml identity reused. New links:
+37 addresses,11 realizes,17 implements,11 verifies,12 exercises,5 constrains,
+11 inferred contributes_to. Contributions assist Core/Live or the existing
+methodology goal without sufficiency or empirical credit. D2 constrains only
+the strict authority/access aspects of D3/D4/D7/D8 and the capability design;
+it does not revoke fast/live exceptions or inherit across all reachable goals.
+All54 artifacts linked; exact ART/REL IDs are in the complete ledger/index diff.
+D10 runner has an exercises relation, not an invented implementation plan/code→REQ
+edge. Handoff source guidance is code implementing a real workflow plan, **not**
+hard runtime enforcement. Old fast design addresses the direct/local contract,
+with its topic-branch discrepancy retained rather than claiming every clause current.
+
+### D source authority, original Git and inspection limits
+
+All54 assigned spec openings F1–38 and67 plan/progress openings F1–18 were
+independently read, not merely filename-classified. All121 disposition cells now
+identify concrete reuse/grounding/support and residual depth. Deeper full designs:
+native reliability226, capabilities163, daily80, weekly226, independent-fast94,
+release naming130, Windows-main78, handoff recovery192, neutral routing143,
+autonomous decisions157. Live design remains opening38, compared with full current
+live feature315. Other plan bodies/executable snippets and historical progress
+outcomes are not claimed fully reviewed. In particular raw private trials, frozen
+Facts probes and historic Wine logs were not opened or executed.
+
+Original `git log F -- <principal paths>` and actual `git show COMMIT:path`:
+
+- `d8c6b96c0e7b414b78640ca5c46b007a36886ecf` reliability34–50 explicitly separates
+  vendored compiler, structural constraints, shared CLI/MCP and validation ladder.
+  Current AGENTS and targeted-validation source narrow broad-suite frequency by
+  behavioral risk, not compile/constraint blocking semantics.
+- `98f328eda1171768a2bb7a91033da7530e5ff159` daily1–11 and
+  `013852413f53e0300b8e62453f92fff99138a5ee` weekly1–7 independently establish
+  recurring capabilities. They are not inferred from this week's automation request.
+- `18cd226260fcfb143f1a187f95434a2dddebe6ef` neutral49–81 expressly replaces
+  universal dual-model design input and glm_proposal; current workflow198–206
+  explicitly labels old pins/protocol/results historical. Old failures remain failed.
+- `a6ad16fc61138237efd5bdff34d9e2a074b81db2` AGENTS history introduces the exact
+  long-term branch clause; current AGENTS/primaries require fast-dev and live-dev
+  separately, no topic suffix. Current workflow686–713 explicitly retains old
+  local-main conversion only as legacy strict recovery. No filename inference.
+- `c62af53b27924129e2f25aa9454ace8137bbf20f` autonomous1–30 explicitly grants
+  existing-journal correction and diagnoses obsolete byte-preservation escalation.
+  That does not erase the old41-entry retrospective's task-specific restriction
+  or any genuine immutable-publication boundary. Current daily note/skill agree.
+- Original introductions resolved: handoff `3b7897fc2fa7ef73a3169502ca14642245da1011`,
+  Windows-main `8c219198f2fe5ac085ed5f6d1a1b294c369063d5`, release names
+  `83b5f81f394289c84149d284484424b1158392cc`. Their F bodies and current contracts
+  were inspected; `windows-wine-build-and-test.md`48–81 explicitly documents the
+  PR→main/manual routing change, retaining native Windows authority. No live CI.
+
+Supplementary current family depth is listed in the dispositions overlay: includes
+root AGENTS/CLAUDE, methodology, workflow, constraints, live, tooling, weekly/daily,
+development records, build guide/subsystems, remote-control/profiling/E2E/render
+capture, hygiene and bounded Wine/harness/runtime-performance notes. These are
+not a claim to read every subordinate note, SDK/test or all journal paragraphs.
+Build/process/JIT module lists remain descriptive support for Core/Compiled/JIT,
+not automatic activation or a requirement for every native binding.
+
+### D implementation/assertion matrix — definitions READ, NOT RUN
+
+Representative presence/guidance/declaration10/10 groups and selected definition
+links10/10 are **not** complete implementations, criteria passed or runtime/agent
+compliance. Source guidance can implement an operational contract without enforcing it.
+
+| Contract | Actual implementation/assertion inspection | Concrete residual |
+| --- | --- | --- |
+| D1 | Makefile full163, tools/fennel-check full93, validation service1–170; test-fennel-validation1–200 actual valid/broken/requested-only/non-Fennel/parse/enclosing/metrics/constraint-status assertions | Full service target discovery, macro closure, CLI output, MCP bridge/risk transport and all constraint/scenario matrices untraced. No Space compile/test execution. |
+| D2 | opencode_capabilities1–210 repository/branch/sensitive-path guards; test_opencode_capabilities1–145 actual trusted-marker/unsafe-branch/envelope assertions; canonical authority sections | Not every Git/PR/recovery/repro/config guard, symlink/access ordering or effective runtime/global permissions audited. No external-config audit, remote policy or privileged operation performed. |
+| D3 | Full canonical AGENTS handoff; test_opencode_handoff_recovery_contract1–220 source guards/fixture schema examples | Offline model/source guards are not a production parser; rest of adversarial matrix and actual delivery/runtime reliability not proven. No fresh candidate or pressure evaluation. |
+| D4 | neutral design/current AGENTS; checker460–580 validates routing separately from safety; checker tests1000–1159 actual alternate/malformed/missing-role cases | Whole checker boundary matrix and exact required expert profile not exhaustively reread; syntax is not provider/variant availability or loaded-session activation. |
+| D5 | fast-dev full103/live-dev1–140 declarations; checker tests494–593 actual branch/local-only/manual-order assertions | One observational review, direct fixes and protected integration are guidance, not a live operational observation. Current broad primaries are environment-isolated, not a security sandbox. |
+| D6 | live_dev700–847 restart peer authorization/validate-before-stop/reload result/exit handling; test_live_dev1–130/253–332 actual ambiguity/path/handshake/full-profile/failed-reload-one-recovery assertions | Fake RPC/restart cases do not prove native recipe/pidfd/process/coordinator lifecycle; full847-line implementation/1340-line suite and real app integration untraced. No user app/registry/recipe access. |
+| D7 | daily skill1–200 actual inclusive narrative/UTC/run-branch/stage-only flow; Node automation tests195–354 actual no-op/catch-up/correction/current-tip assertions | Static regex checks are not semantic narrative assessment or real schedule/publication; no journal rewritten or entry generated. Whole social publisher/deduplication remains uninspected. |
+| D8 | weekly skill full138; analyzer1–180 redaction/permission classification; fixture tests1–240 actual secret-removal/friction assertions | Full read-only DB query/scoping/schema/last-half sanitizer tests and actual reports/Orca scheduling uninspected; no real session database/log read or analyzer execution. |
+| D9 | windows.yml full132; test.yml1–230; ci_test_scope full93; build.yml1–65 plus named release/publisher declarations; test_makefile_build_workflow full91 actual dry-run profile/pack assertions | Linked test covers local build/profile subset, not every platform/naming/CI criterion. Native Windows/installer, Wine, trusted download/release artifacts, all build/hygiene dependencies unexecuted. |
+| D10 | runner1–110 timeout latch/hook restoration/teardown; test-runner1–150 actual child markers/parent callbacks/jobs/filter/timeouts/safe errors; tooling/remote/profiling/render docs | Full timeout/native blocking/error path, profiler metrics/golden/render APIs and trusted remote async lifecycle unproven. Current final-frame capture only; planned scene/HUD/widget modes remain proposals. |
+
+Retained discrepancies/gaps, not criteria: constraints.md40 claims a named separate
+CI step, whereas current workflow868–869 (history `2b4e33409f6345420812e93ab7c6bb1f0a45f93c`)
+explicitly avoids duplication and actual test.yml does not have it. Underlying
+compile/constraints/CTest gate stays blocking. This is a concrete documentation
+consistency follow-up for controller reconciliation, not a request to bypass tests
+or a material unresolved technical decision needed to proceed with this audit.
+Runtime-performance1–150 reveals user mode/rule/lease policy broader than a metrics
+list; complete remaining policy/implementation traces remain a Core-family follow-up,
+not an added speculative obligation in this D assignment. Local build broker is
+explicitly design-only. No performance/cost/reliability improvement is measured here.
+
+### D validation and self-review
+
+**Compile check:** not applicable (no Fennel/C++ changes/runtime use).
+**Space constraints:** not applicable (no constraint code/baselines changed).
+**Constraint Impact: not applicable. TDD: not applicable** to docs/ledger audit.
+
+- Existing CLI `validate`, `render`, `render --check` returned ok/valid/current60.
+- `make requirements-check`, timeout600000: **348 passed in178.96s**, exit0,
+  followed by valid/current60, output pristine. Covers schema/transaction/history/
+  graph/evidence/query/projection and methodology source fixtures, not application
+  behavior or live-agent compliance. No full runtime or prompt-policy gate required
+  for unchanged code/policy; Task4 retains its full docs/index/navigation gates.
+- In-memory `load_ledger`/`git show BASE:ledger` comparison preserves all114 prior
+  requirements/425 artifacts/999 relations and17 assessments/63 verifications/0
+  conflict dispositions exactly. All10 proposed revision1; all54 artifacts linked;
+  locator/selector and active relation tuples unique. Registered source bytes equal
+  F, BASE and worktree. No synthetic currency digests or historical observation edits.
+- Frozen `git ls-tree -r -z --name-only F docs/specs docs/plans` versus exact
+  first-column filename rows:362 unique/168 specs/194 plans;0 missing/extra/duplicate,
+  order/owners preserved;121 D cells updated and241 non-D rows byte-identical.
+  All original Task3 report bytes are an exact prefix of this append-only report.
+  No new specs/plans, so spec/plan index regeneration is unnecessary in this slice.
+- CLI search at57 corroborated canonical comparison (compile/weekly/daily/handoff/
+  fast-dev0 literal matches, routing1/live-dev3); literal results never decide reuse.
+  Postwrite scoped10-ID and all603-record coverage at60 are nontruncated; D2
+  `unaddressed-constraint` is retained, not silenced by an invented assessment.
+- Combined context32/1000 and each10 both-direction trace32/1000 truncate at1000
+  paths; individual forward/backward32/1000 traces are all untruncated (forward1–10,
+  backward2–38 paths). Direct104 tuples/source roles inspected. Unlinked history,
+  artifact currency and complete global impact remain unknown; no readiness verdict.
+
+Inspection recoveries only: initial provenance display treated a dict as a list,
+then corrected to actual schema; guessed weekly-note/Windows-workflow/common-helper/
+testing/debugging paths were absent, then resolved via repository directories/Git
+inventory. No canonical apply or required test failed, no code repair was attempted.
+Self-review checked stable behavior criteria rather than current-gap acceptance,
+proper existing-ID reuse, historical versus current authority, typed directions,
+test/guidance versus enforcement and all source accounting. Large ledger/audit/
+disposition/report files were changed narrowly, without restructuring unrelated work.
+
+Ledger60 SHA256 `da43bfc43f3354e8d178dbdf7b57bffa05ac01abae9308fef4d3b1526384ffa2`;
+index SHA256 `b99e6a43792cf8d4546a9c6d42e858218c880cd6170fe5165ae52902916ffb68`.
+
+### Final representative Task3 summary and review package
+
+Original Task3 ledger43→60: **69 newly created requirements,326 newly registered
+linked artifacts,690 added typed relations**. Seven Time requirements/nine
+criterion texts revised by the accepted R1-1 fix retain original histories; D
+revises none. Cumulative totals124/479/1103,17 assessments/63 verifications unchanged.
+Slice deltas: P16/72/127, H12/76/153, Time17/77/198 (+accepted criterion fix),
+N14/47/108, D10/54/104 (requirements/artifacts/links). All12 original methodology
+obligations and shared product IDs retained. Reuse is semantic, not a new count
+target; registration counts exclude inventory-only historical records.
+
+Source accounting: Task3 **262 rows = P41/H39/Time50/N11/D121**, all at declared
+representative depth; Task2's100 make frozen362. Implementation/test sample counts
+in predecessor matrices have different denominators (capabilities versus constraints),
+so they are not summed into a misleading complete-implementation percentage. Broad
+Temporal intent versus bounded closeout, hosted launcher factory mismatch/SDK breadth,
+wallet persistence/transfer scope, security/backend/platform and strategic empirical
+gaps remain intact. D adds source-only workflow limitations/CI docs inconsistency.
+
+**Representative Task3 ready for complete original-range independent review, not
+DONE approval or integration.** Passing P/H/Time(+fix)/N slices do not substitute
+for `c054ef5beb4ad40750133f1252585af4a1ae5c8e..Task3_HEAD`, including every checkpoint,
+accepted fix and all five files. Independently inspect D's own complete
+`b380de906b0d0fbcb2a030d0704e43a59bc7b59a..D_HEAD` range, ledger57→60. Checkpoint
+SHA/subject supplied in final handoff, not self-referentially embedded here.
+Task4 every-family consistency/no-change second sweep/docs gates remain pending;
+no claim of global idempotence, actual runtime verification or user artifact approval.
+
+Complete assigned tracked files (all existing): `docs/requirements/ledger.json`
+(CLI only), `docs/requirements/index.md` (renderer only),
+`docs/requirements/2026-10-30-repository-reconciliation.md`,
+`docs/requirements/2026-10-30-repository-source-dispositions.md`,
+`docs/requirements/2026-10-30-baseline-task-3-report.md` (append only).
+Required private addition: ignored scratch `task3-D-source-execution-evidence.md`;
+not staged, checkpointed or registered. No push, PR, integration or unrelated edits.
+
+Final D-only repeat compared all10 canonical criteria/provenance and55 selected
+artifact locators (54 new/one reused) against retained source decisions: zero
+further justified D creates/revisions/transitions/links. No no-op write; revision60
+and ledger/index digests above stayed unchanged. This is not Task4's every-family
+second sweep. Final `git diff --check` passed; additions contain no private
+workstation paths or private-key blocks. Index was empty at intake; only the five
+assigned tracked paths are staged for the local checkpoint, private evidence ignored.

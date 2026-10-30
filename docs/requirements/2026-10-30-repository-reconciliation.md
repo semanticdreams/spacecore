@@ -2,6 +2,22 @@
 
 ## Identity, authority and current boundary
 
+**Current Task3 final-family boundary (ledger60): representative Task3 baseline
+ready for complete original-range independent review, NOT approved or integrated.**
+All262 Task3 filename rows accounted at explicit depth: P41/H39/Time50/N11/D121;
+together with Task2's100, the frozen manifest remains362 (168 specs/194 plans).
+D adds10 proposed requirements/54 linked artifacts/104 relations at57→60.
+Cumulative Task3 delta from original `c054ef5b` (ledger43) is69 requirements,
+326 artifacts and690 relations, with seven existing Time records/nine criterion
+texts revised by the accepted fix (retained history). Final totals124 requirements,
+479 artifacts,1103 relations;17 assessments/63 verifications preserved unchanged.
+P/H/Time(+accepted fix)/N passes are controller-supplied; D checkpoint and the
+whole `c054ef5beb4ad40750133f1252585af4a1ae5c8e..Task3_HEAD` range still need review.
+Task4 cross-family consistency, every-family no-change sweep and finishing gates
+remain pending. Historical boundary paragraphs below are retained execution history.
+No product repair, runtime/automation execution, live-agent compliance, goal credit
+or satisfaction follows from this baseline. See the appended D/final Task3 report.
+
 **Current Task3/N boundary (ledger57): all11 N filename dispositions and bounded
 networking/security/publication contracts reconciled at declared depth.** Added14
 proposed requirements,47 linked artifacts and108 typed relations; prior records,
@@ -837,3 +853,65 @@ Self-review retained stable source-grounded criteria separately from present
 status/gaps and corrected a potential wallet test-surface misattribution before
 handoff. Only five assigned tracked files changed; report is append-only and
 private evidence remains ignored. **N done at declared depth; D pending**.
+
+## Task3/D — development/validation and final representative Task3 accounting
+
+Author `implementer/baseline-task-3-D`, strict supervisor, `juicyrebel/ridley`,
+BASE `b380de906b0d0fbcb2a030d0704e43a59bc7b59a`, ledger57→60. All121 D rows
+independently reread at F:54 specs L1–38/67 plans-progress L1–18, with deeper
+principal/current contracts and actual assertions in the Task3 report. All12
+methodology requirements reused unchanged. Existing Core/Live/Malleable,
+reload/Windows launcher/distribution/internal-live/Wine contracts reused, not
+one synthetic requirement per prompt, cleanup, CI repair or historical run.
+
+New proposed revision1 D1–D10 cover native validation, scoped capability authority,
+fail-closed handoffs/replacement, neutral routing/targeted advice, identity-specific
+fast/live lifecycle, verified Linux instance control, daily narrative discovery,
+sanitized weekly analysis, release/Windows validation support, and runtime developer
+observation/testing. Exact IDs/criteria/artifact roles are in ledger/index and
+the appended Task3 report. Actual serial CLI responses:57→58 creates10;
+58→59 registers54 (reusing existing test.yml identity);59→60 adds104 typed edges
+(37 addresses/11 realizes/17 implements/11 verifies/12 exercises/5 constrains/
+11 inferred contributions). No prior record or observation changed. All new
+artifacts linked; no raw/mutable audit evidence registered as measurement.
+
+Current authoritative AGENTS/neutral-design/workflow text explicitly replaces
+historical pins/universal dual-model consultation and old fast/live topic/local-main
+policies. Original `18cd226`49–81 replaces universal consultation; current long-term
+branch text appears in original `a6ad16fc`; legacy wrapper remains strict-only.
+Original `c62af53b`1–30 explicitly authorizes journal correction; old scoped
+retrospective immutable-source instructions are preserved, not globally erased.
+Daily/weekly original introductions `98f328ed`/`01385241` establish independent
+recurring capabilities, not obligations manufactured from each scheduled request.
+Windows original `8c219198` plus current canonical Wine/hygiene notes explicitly
+move validation to main/manual while retaining native host authority; release
+original `83b5f81f` retains platform filename grammar. None is a new execution grant.
+
+Material retained discrepancy: constraints.md40 still promises a separate Linux
+CI constraints step, whereas workflow868–869 explicitly says CTest owns the gate
+without duplication and actual test.yml agrees. Makefile compile→constraints→test
+and fixture protection remain required; this docs inconsistency is not silently
+resolved by weakening D1 or editing policy here. Routing/performance pilot results,
+Wine timing/security reports, devlog histories and migration progress remain
+reported history, not fresh outcomes. Proposed local-build broker remains a
+design-only proposal; no infrastructure activation or per-refactor requirement.
+
+D's10 groups have representative implementation/guidance/declaration presence and
+selected test-definition links, not complete criterion coverage or runtime proof.
+Native MCP transport/full macro/constraint matrix, all privileged wrapper guards,
+effective loaded roles/providers, real live lifecycle/recipes, sanitizer completeness,
+schedule/publication, native Windows/installers/release packages, all profiler/
+snapshot modes and full cleanup remain unverified. D10 has no invented plan chain.
+Direct build/cross-platform/process/remote-control/profiling/E2E/development-record
+family contracts were inspected; subordinate runtime-performance modes, native/JIT
+code generation, platform/backend and old harness details retain bounded descriptive
+gaps for controller/Task4 reconciliation, not silent requirements or product repairs.
+
+Validation: compile check and Space constraints not applicable to ledger/docs-only
+changes; Constraint Impact not applicable. Existing CLI validate/render/check all
+ok60; `make requirements-check` timeout600000:348 passed in178.96s, valid/current60.
+D coverage10 and all-record coverage nontruncated; D2 has no explicit satisfied
+assessment, deliberately retained. Combined context and all both-direction32/1000
+traces truncate; individual forward/backward32/1000 traces for all10 are untruncated.
+No complete global impact/readiness claim follows. Exact manifest/preservation and
+checkpoint evidence are retained in the Task3 report; Task4 owns global idempotence.

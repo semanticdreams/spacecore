@@ -24,6 +24,12 @@
       "locator": "docs/dev/features/cef-in-world-browser.md",
       "title": "cef-in-world-browser.md"
     },
+    "ART-0197ecc2-7900-42bf-9481-5e936b955363": {
+      "id": "ART-0197ecc2-7900-42bf-9481-5e936b955363",
+      "kind": "code",
+      "locator": "assets/lua/tests/runner.fnl",
+      "title": "runner"
+    },
     "ART-023e2fcf-7b14-4a50-9670-6d253f0fc717": {
       "id": "ART-023e2fcf-7b14-4a50-9670-6d253f0fc717",
       "kind": "design",
@@ -48,6 +54,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-10-07-hierarchical-focus-navigation-design.md",
       "title": "2026-10-07-hierarchical-focus-navigation-design.md"
+    },
+    "ART-03caf7d6-39b5-4a34-b28b-4c4e323cd91b": {
+      "id": "ART-03caf7d6-39b5-4a34-b28b-4c4e323cd91b",
+      "kind": "code",
+      "locator": "Makefile",
+      "title": "Makefile"
     },
     "ART-04055c4e-1788-49a3-9c09-8d254730cf05": {
       "id": "ART-04055c4e-1788-49a3-9c09-8d254730cf05",
@@ -84,6 +96,12 @@
       "kind": "code",
       "locator": "src/record_publication_wine_driver.h",
       "title": "record_publication_wine_driver.h"
+    },
+    "ART-07bd6e4e-2877-4669-91e1-34506a35b3ef": {
+      "id": "ART-07bd6e4e-2877-4669-91e1-34506a35b3ef",
+      "kind": "code",
+      "locator": "scripts/check_opencode_permissions.py",
+      "title": "check_opencode_permissions"
     },
     "ART-07da9541-9708-4233-ba12-0405e7a10348": {
       "id": "ART-07da9541-9708-4233-ba12-0405e7a10348",
@@ -291,6 +309,12 @@
       "locator": "docs/plans/2026-09-16-windows-desktop-cli-launch.md",
       "title": "2026-09-16-windows-desktop-cli-launch.md"
     },
+    "ART-18e0dbfc-e054-4cb9-9cee-3f37bd8311fe": {
+      "id": "ART-18e0dbfc-e054-4cb9-9cee-3f37bd8311fe",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-31-weekly-agent-workflow-automation-design.md",
+      "title": "2026-07-31-weekly-agent-workflow-automation-design"
+    },
     "ART-191f0f8d-6e92-4133-b6d7-b7ca17037a77": {
       "id": "ART-191f0f8d-6e92-4133-b6d7-b7ca17037a77",
       "kind": "code",
@@ -314,6 +338,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-10-16-secure-record-publication-design.md",
       "title": "2026-10-16-secure-record-publication-design.md"
+    },
+    "ART-1a9fda19-1f40-42c0-947f-4d82a2d81f18": {
+      "id": "ART-1a9fda19-1f40-42c0-947f-4d82a2d81f18",
+      "kind": "code",
+      "locator": "assets/lua/tools/fennel-check.fnl",
+      "title": "fennel-check"
     },
     "ART-1ab07ae4-7440-46c8-8fff-a49f2f79b599": {
       "id": "ART-1ab07ae4-7440-46c8-8fff-a49f2f79b599",
@@ -465,6 +495,12 @@
       "locator": "docs/plans/2026-10-11-graph-projection-runtime.md",
       "title": "2026-10-11-graph-projection-runtime.md"
     },
+    "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a": {
+      "id": "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a",
+      "kind": "test",
+      "locator": "scripts/tests/test_check_opencode_permissions.py",
+      "title": "test_check_opencode_permissions"
+    },
     "ART-2bd8204c-1e18-49d4-bec3-71a4e9298cb4": {
       "id": "ART-2bd8204c-1e18-49d4-bec3-71a4e9298cb4",
       "kind": "implementation_spec",
@@ -557,11 +593,23 @@
       "locator": "scripts/tests/test_bundle_workflow.py",
       "title": "test_bundle_workflow.py"
     },
+    "ART-35d8affc-3f3b-4a20-83cc-b1c1c0122b3d": {
+      "id": "ART-35d8affc-3f3b-4a20-83cc-b1c1c0122b3d",
+      "kind": "design",
+      "locator": "docs/dev/features/development-tooling.md",
+      "title": "development-tooling"
+    },
     "ART-35e006a5-5696-4d0e-bf74-a0e76b0c641e": {
       "id": "ART-35e006a5-5696-4d0e-bf74-a0e76b0c641e",
       "kind": "code",
       "locator": "scripts/check-temporal-dependency-manifests.py",
       "title": "check-temporal-dependency-manifests.py"
+    },
+    "ART-363bb979-f853-4398-94b8-79214ff9552f": {
+      "id": "ART-363bb979-f853-4398-94b8-79214ff9552f",
+      "kind": "design",
+      "locator": "docs/dev/features/live-dev.md",
+      "title": "live-dev"
     },
     "ART-3645461a-10cf-49a7-b52b-1bf60cc218fc": {
       "id": "ART-3645461a-10cf-49a7-b52b-1bf60cc218fc",
@@ -641,6 +689,24 @@
       "kind": "code",
       "locator": "assets/lua/hot-reload.fnl",
       "title": "hot-reload.fnl"
+    },
+    "ART-3c498c3d-3592-4d57-bf7f-211b9774aeef": {
+      "id": "ART-3c498c3d-3592-4d57-bf7f-211b9774aeef",
+      "kind": "design",
+      "locator": "docs/dev/constraints.md",
+      "title": "constraints"
+    },
+    "ART-3cc5b1c3-87ea-4607-8806-363f3b320202": {
+      "id": "ART-3cc5b1c3-87ea-4607-8806-363f3b320202",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-31-fennel-agent-reliability-design.md",
+      "title": "2026-07-31-fennel-agent-reliability-design"
+    },
+    "ART-3cd4fa68-88d0-4c61-9401-832a61a98532": {
+      "id": "ART-3cd4fa68-88d0-4c61-9401-832a61a98532",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-05-opencode-permission-capabilities.md",
+      "title": "2026-08-05-opencode-permission-capabilities"
     },
     "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9": {
       "id": "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9",
@@ -726,6 +792,12 @@
       "locator": "assets/lua/graph/nodes/string-entity-search.fnl",
       "title": "string-entity-search.fnl"
     },
+    "ART-454e1ea1-da5e-4116-9c34-4e1477cee0be": {
+      "id": "ART-454e1ea1-da5e-4116-9c34-4e1477cee0be",
+      "kind": "code",
+      "locator": ".github/workflows/build.yml",
+      "title": "build"
+    },
     "ART-462058e2-c4a5-4ed4-810e-701a40b66396": {
       "id": "ART-462058e2-c4a5-4ed4-810e-701a40b66396",
       "kind": "design",
@@ -737,6 +809,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-10-15-uniform-graph-access-design.md",
       "title": "2026-10-15-uniform-graph-access-design.md"
+    },
+    "ART-4701eadb-f65c-41d0-a928-16c29803f5a1": {
+      "id": "ART-4701eadb-f65c-41d0-a928-16c29803f5a1",
+      "kind": "test",
+      "locator": "scripts/tests/test_opencode_handoff_recovery_contract.py",
+      "title": "test_opencode_handoff_recovery_contract"
     },
     "ART-4799f032-ff46-44d0-ae7a-afa89281c982": {
       "id": "ART-4799f032-ff46-44d0-ae7a-afa89281c982",
@@ -828,6 +906,18 @@
       "locator": "assets/lua/runtime-timers.fnl",
       "title": "runtime-timers.fnl"
     },
+    "ART-4fcfa7ae-1a30-43c7-bda7-b58f9c54bf0d": {
+      "id": "ART-4fcfa7ae-1a30-43c7-bda7-b58f9c54bf0d",
+      "kind": "test",
+      "locator": "docs/scripts/test-opencode-automation-config.mjs",
+      "title": "test-opencode-automation-config"
+    },
+    "ART-51396499-ca3f-4034-8a95-710702718a3d": {
+      "id": "ART-51396499-ca3f-4034-8a95-710702718a3d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-09-windows-main-ci-design.md",
+      "title": "2026-10-09-windows-main-ci-design"
+    },
     "ART-514497ed-0e68-4380-9d2f-19a34fb387ee": {
       "id": "ART-514497ed-0e68-4380-9d2f-19a34fb387ee",
       "kind": "test",
@@ -883,6 +973,12 @@
       "locator": "src/browser_system.cpp",
       "title": "browser_system.cpp"
     },
+    "ART-5462baf5-3788-4efe-adb7-99c612fc8b50": {
+      "id": "ART-5462baf5-3788-4efe-adb7-99c612fc8b50",
+      "kind": "code",
+      "locator": ".opencode/agents/fast-dev.md",
+      "title": "fast-dev"
+    },
     "ART-55ee4e45-d238-4b6e-a13a-1d606f9b69bd": {
       "id": "ART-55ee4e45-d238-4b6e-a13a-1d606f9b69bd",
       "kind": "test",
@@ -906,6 +1002,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-09-25-hosted-app-scene-capabilities-design.md",
       "title": "2026-09-25-hosted-app-scene-capabilities-design.md"
+    },
+    "ART-58132905-6df5-4712-849a-6aac7a905ba7": {
+      "id": "ART-58132905-6df5-4712-849a-6aac7a905ba7",
+      "kind": "code",
+      "locator": "assets/lua/llm/fennel-validation/service.fnl",
+      "title": "service"
     },
     "ART-5a504208-866e-4b71-865b-406756dfe4a2": {
       "id": "ART-5a504208-866e-4b71-865b-406756dfe4a2",
@@ -943,6 +1045,12 @@
       "locator": "docs/plans/2026-09-28-temporal-complete-library-roadmap.md",
       "title": "2026-09-28-temporal-complete-library-roadmap.md"
     },
+    "ART-5d2ecc8c-de94-4b9d-aeeb-4d6b59431ef2": {
+      "id": "ART-5d2ecc8c-de94-4b9d-aeeb-4d6b59431ef2",
+      "kind": "test",
+      "locator": "scripts/tests/test_live_dev.py",
+      "title": "test_live_dev"
+    },
     "ART-5e5c9d58-0c93-4b39-b7e7-293fd539ed66": {
       "id": "ART-5e5c9d58-0c93-4b39-b7e7-293fd539ed66",
       "kind": "code",
@@ -954,6 +1062,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-http.fnl",
       "title": "test-http.fnl"
+    },
+    "ART-5eb5bf2b-ec0f-41fa-a107-1368e0338e3d": {
+      "id": "ART-5eb5bf2b-ec0f-41fa-a107-1368e0338e3d",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-16-release-artifact-naming.md",
+      "title": "2026-09-16-release-artifact-naming"
     },
     "ART-5facf444-9ed7-45a4-915a-17074742f5f3": {
       "id": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
@@ -997,6 +1111,12 @@
       "locator": "docs/dev/features/kernel-system.md",
       "title": "kernel-system.md"
     },
+    "ART-62f3bad9-2455-4d64-9ad7-078810586346": {
+      "id": "ART-62f3bad9-2455-4d64-9ad7-078810586346",
+      "kind": "design",
+      "locator": "docs/dev/notes/daily-devlog-automation.md",
+      "title": "daily-devlog-automation"
+    },
     "ART-64b196fe-489d-4d82-bae1-cc801ab8d801": {
       "id": "ART-64b196fe-489d-4d82-bae1-cc801ab8d801",
       "kind": "code",
@@ -1026,6 +1146,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-05-ssh-real-backend-validation.md",
       "title": "2026-10-05-ssh-real-backend-validation.md"
+    },
+    "ART-68f482c1-a09a-4445-92dc-86f5e01d7fed": {
+      "id": "ART-68f482c1-a09a-4445-92dc-86f5e01d7fed",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-16-release-artifact-naming-design.md",
+      "title": "2026-09-16-release-artifact-naming-design"
     },
     "ART-6914537d-119d-42fa-b617-076831934bb3": {
       "id": "ART-6914537d-119d-42fa-b617-076831934bb3",
@@ -1129,6 +1255,12 @@
       "locator": "assets/lua/tests/test-dict-entities.fnl",
       "title": "test-dict-entities.fnl"
     },
+    "ART-6de610f9-9700-4fa0-aa96-9b3a3c93c727": {
+      "id": "ART-6de610f9-9700-4fa0-aa96-9b3a3c93c727",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-30-autonomous-workflow-decisions.md",
+      "title": "2026-10-30-autonomous-workflow-decisions"
+    },
     "ART-6e4f8ad4-5fb7-46c8-9c2e-9ae6c437f6e7": {
       "id": "ART-6e4f8ad4-5fb7-46c8-9c2e-9ae6c437f6e7",
       "kind": "code",
@@ -1153,6 +1285,12 @@
       "locator": "assets/lua/tests/test-graph-capabilities.fnl",
       "title": "test-graph-capabilities.fnl"
     },
+    "ART-6f310330-1c95-4ecb-9162-cf50cbb4ee0d": {
+      "id": "ART-6f310330-1c95-4ecb-9162-cf50cbb4ee0d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-29-autonomous-handoff-recovery-design.md",
+      "title": "2026-10-29-autonomous-handoff-recovery-design"
+    },
     "ART-6fe0d670-9578-4b4c-a92a-03065d4b6f38": {
       "id": "ART-6fe0d670-9578-4b4c-a92a-03065d4b6f38",
       "kind": "implementation_spec",
@@ -1170,6 +1308,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-08-26-workflow-preview-decomposition-design.md",
       "title": "2026-08-26-workflow-preview-decomposition-design.md"
+    },
+    "ART-70e29c1c-689b-43c2-9b0c-d3f76ec25e21": {
+      "id": "ART-70e29c1c-689b-43c2-9b0c-d3f76ec25e21",
+      "kind": "code",
+      "locator": "scripts/live_dev.py",
+      "title": "live_dev"
     },
     "ART-71206c03-2704-4ab3-a30c-5f34a10feb27": {
       "id": "ART-71206c03-2704-4ab3-a30c-5f34a10feb27",
@@ -1195,6 +1339,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-runtime-scheduler.fnl",
       "title": "test-runtime-scheduler.fnl"
+    },
+    "ART-71fc39f2-8d34-454a-843a-449a2792799f": {
+      "id": "ART-71fc39f2-8d34-454a-843a-449a2792799f",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-29-model-neutral-agent-routing-design.md",
+      "title": "2026-10-29-model-neutral-agent-routing-design"
     },
     "ART-72486334-be2b-4e63-a5d2-d5cbaeae9665": {
       "id": "ART-72486334-be2b-4e63-a5d2-d5cbaeae9665",
@@ -1274,6 +1424,12 @@
       "locator": "assets/lua/tests/test-agent-workflow-runner.fnl",
       "title": "test-agent-workflow-runner.fnl"
     },
+    "ART-7fac3836-cf08-45ba-a541-ef9a2dc2a907": {
+      "id": "ART-7fac3836-cf08-45ba-a541-ef9a2dc2a907",
+      "kind": "code",
+      "locator": "scripts/weekly_agent_workflow_analyzer.py",
+      "title": "weekly_agent_workflow_analyzer"
+    },
     "ART-80d01324-3cbb-4867-9705-c3b6df9f742e": {
       "id": "ART-80d01324-3cbb-4867-9705-c3b6df9f742e",
       "kind": "code",
@@ -1316,11 +1472,29 @@
       "locator": "docs/specs/2026-10-08-graph-outline-view-design.md",
       "title": "2026-10-08-graph-outline-view-design.md"
     },
+    "ART-83e795cb-7549-49e2-b7bb-69eda60b7224": {
+      "id": "ART-83e795cb-7549-49e2-b7bb-69eda60b7224",
+      "kind": "code",
+      "locator": ".github/workflows/windows.yml",
+      "title": "windows"
+    },
     "ART-8467d6a8-a450-4b68-8143-01e4f05b0724": {
       "id": "ART-8467d6a8-a450-4b68-8143-01e4f05b0724",
       "kind": "code",
       "locator": "assets/lua/text-input-key-policy.fnl",
       "title": "text-input-key-policy.fnl"
+    },
+    "ART-849512cb-12c6-4357-a5c0-9ab8e7a2a70a": {
+      "id": "ART-849512cb-12c6-4357-a5c0-9ab8e7a2a70a",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-05-opencode-permission-capabilities-design.md",
+      "title": "2026-08-05-opencode-permission-capabilities-design"
+    },
+    "ART-84f859a1-e567-4590-a53f-c43e48ff0b00": {
+      "id": "ART-84f859a1-e567-4590-a53f-c43e48ff0b00",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-15-fast-dev-independent-workflow-design.md",
+      "title": "2026-10-15-fast-dev-independent-workflow-design"
     },
     "ART-851d9295-f934-4c35-b01b-1cefda8058e1": {
       "content_digest": "1654f2ff56bed0d44f9fbec9abe6394cf29dcc9d7b63f2a39280a6c940d1b456",
@@ -1347,11 +1521,29 @@
       "locator": "assets/lua/app-host/workspace-command-controls.fnl",
       "title": "workspace-command-controls.fnl"
     },
+    "ART-86ed47f2-318c-4545-86ef-07c4fe6d3925": {
+      "id": "ART-86ed47f2-318c-4545-86ef-07c4fe6d3925",
+      "kind": "code",
+      "locator": "scripts/opencode_capabilities.py",
+      "title": "opencode_capabilities"
+    },
+    "ART-87672398-3b83-40c2-962b-6d90d2087957": {
+      "id": "ART-87672398-3b83-40c2-962b-6d90d2087957",
+      "kind": "design",
+      "locator": "docs/dev/features/weekly-agent-workflow-automation.md",
+      "title": "weekly-agent-workflow-automation"
+    },
     "ART-87ac31f2-bcb1-439f-974c-1538abc00f0b": {
       "id": "ART-87ac31f2-bcb1-439f-974c-1538abc00f0b",
       "kind": "design",
       "locator": "docs/specs/2026-10-26-opencode-session-graph-exposure-design.md",
       "title": "2026-10-26-opencode-session-graph-exposure-design.md"
+    },
+    "ART-87c23839-dfce-4e7b-91e6-dadf8296d874": {
+      "id": "ART-87c23839-dfce-4e7b-91e6-dadf8296d874",
+      "kind": "design",
+      "locator": "docs/dev/features/opencode-agent-workflow.md",
+      "title": "opencode-agent-workflow"
     },
     "ART-88798527-b534-4b72-8964-9436da34a712": {
       "id": "ART-88798527-b534-4b72-8964-9436da34a712",
@@ -1401,6 +1593,12 @@
       "locator": "assets/lua/ssh/fleet.fnl",
       "title": "fleet.fnl"
     },
+    "ART-8d7135fa-e0f6-4935-acc1-d939c0607c63": {
+      "id": "ART-8d7135fa-e0f6-4935-acc1-d939c0607c63",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-29-model-neutral-agent-routing.md",
+      "title": "2026-10-29-model-neutral-agent-routing"
+    },
     "ART-8ddcce73-ebff-48d4-8ecc-1b26d941057a": {
       "id": "ART-8ddcce73-ebff-48d4-8ecc-1b26d941057a",
       "kind": "code",
@@ -1412,6 +1610,24 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-08-12-space-agent-live-development-reliability.md",
       "title": "2026-08-12-space-agent-live-development-reliability.md"
+    },
+    "ART-8efba2d8-eb47-4111-ba7d-5250081b8774": {
+      "id": "ART-8efba2d8-eb47-4111-ba7d-5250081b8774",
+      "kind": "code",
+      "locator": ".opencode/skills/daily-devlog-automation/SKILL.md",
+      "title": "SKILL"
+    },
+    "ART-8f8f6298-22ba-45be-946f-90734ecddd60": {
+      "id": "ART-8f8f6298-22ba-45be-946f-90734ecddd60",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-29-daily-devlog-automation.md",
+      "title": "2026-07-29-daily-devlog-automation"
+    },
+    "ART-90638798-fac8-4054-8892-3e2e2385e37c": {
+      "id": "ART-90638798-fac8-4054-8892-3e2e2385e37c",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-29-daily-devlog-automation-design.md",
+      "title": "2026-07-29-daily-devlog-automation-design"
     },
     "ART-90abe2a8-f640-405a-a5eb-dc9fe3817c20": {
       "id": "ART-90abe2a8-f640-405a-a5eb-dc9fe3817c20",
@@ -1461,6 +1677,12 @@
       "locator": "assets/lua/graph/view/views/fs-file-viewer.fnl",
       "title": "fs-file-viewer.fnl"
     },
+    "ART-952cde58-9071-4cc9-adc9-3d52f3770e9d": {
+      "id": "ART-952cde58-9071-4cc9-adc9-3d52f3770e9d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-15-live-dev-design.md",
+      "title": "2026-10-15-live-dev-design"
+    },
     "ART-954c64a9-cc43-4dbd-82a9-5bc2f7f91d4b": {
       "id": "ART-954c64a9-cc43-4dbd-82a9-5bc2f7f91d4b",
       "kind": "code",
@@ -1472,6 +1694,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-09-25-temporal-ecosystem-core.md",
       "title": "2026-09-25-temporal-ecosystem-core.md"
+    },
+    "ART-962301e2-42b9-448f-95a9-598b3efb8895": {
+      "id": "ART-962301e2-42b9-448f-95a9-598b3efb8895",
+      "kind": "code",
+      "locator": "AGENTS.md",
+      "title": "AGENTS"
     },
     "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8": {
       "content_digest": "ead09efe7782f8136b16dddeafb0581ccdb4cebe0b75f8b41e6950c34f5dc437",
@@ -1522,11 +1750,23 @@
       "locator": "docs/specs/2026-10-05-ssh-real-backend-validation-design.md",
       "title": "2026-10-05-ssh-real-backend-validation-design.md"
     },
+    "ART-9aca74db-407f-4da1-8074-14009ca773a5": {
+      "id": "ART-9aca74db-407f-4da1-8074-14009ca773a5",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-runner.fnl",
+      "title": "test-runner"
+    },
     "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de": {
       "id": "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de",
       "kind": "design",
       "locator": "docs/dev/features/graph-capabilities.md",
       "title": "Nonvisual graph capability contract and later identity projection extension"
+    },
+    "ART-9b6cf634-9e60-4028-8679-02d955c998c9": {
+      "id": "ART-9b6cf634-9e60-4028-8679-02d955c998c9",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-15-fast-dev-independent-workflow.md",
+      "title": "2026-10-15-fast-dev-independent-workflow"
     },
     "ART-9bad9647-63a6-45a5-9bef-4e82974048dc": {
       "id": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
@@ -1650,6 +1890,12 @@
       "locator": "assets/lua/tests/test-entity-type-catalog.fnl",
       "title": "test-entity-type-catalog.fnl"
     },
+    "ART-a93e9388-03b4-45f1-bd83-607eace9a025": {
+      "id": "ART-a93e9388-03b4-45f1-bd83-607eace9a025",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-12-ci-prebuilt-runtime.md",
+      "title": "2026-10-12-ci-prebuilt-runtime"
+    },
     "ART-a9ce9785-bdb1-4e72-87d0-1a90badde487": {
       "id": "ART-a9ce9785-bdb1-4e72-87d0-1a90badde487",
       "kind": "design",
@@ -1674,6 +1920,12 @@
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-task-5-fix-2-validation.md",
       "title": "Task 5 fix 2 scoped revalidation"
+    },
+    "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c": {
+      "id": "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-15-live-dev.md",
+      "title": "2026-10-15-live-dev"
     },
     "ART-ac3ea2aa-c944-49ac-a089-e97f927dfde3": {
       "id": "ART-ac3ea2aa-c944-49ac-a089-e97f927dfde3",
@@ -1741,6 +1993,12 @@
       "locator": "assets/lua/tests/test-agent-layer.fnl",
       "title": "test-agent-layer.fnl"
     },
+    "ART-b0d93be0-0772-4532-8e35-40ebf3857c32": {
+      "id": "ART-b0d93be0-0772-4532-8e35-40ebf3857c32",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-31-fennel-agent-reliability.md",
+      "title": "2026-07-31-fennel-agent-reliability"
+    },
     "ART-b12bee5e-c2ff-47be-b9e0-24aa5e0cd421": {
       "id": "ART-b12bee5e-c2ff-47be-b9e0-24aa5e0cd421",
       "kind": "design",
@@ -1795,6 +2053,12 @@
       "locator": "docs/dev/features/temporal-complete-library.md",
       "title": "temporal-complete-library.md"
     },
+    "ART-b6dcff11-2878-4746-87c0-a4832a50d35d": {
+      "id": "ART-b6dcff11-2878-4746-87c0-a4832a50d35d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-30-autonomous-workflow-decisions-design.md",
+      "title": "2026-10-30-autonomous-workflow-decisions-design"
+    },
     "ART-b7346d33-ff24-437b-8350-29e3cf618f4c": {
       "content_digest": "4e5d899c6314dafdcf0837d6daebf62f94551f2e92add8af8f8251cfcb1914a5",
       "id": "ART-b7346d33-ff24-437b-8350-29e3cf618f4c",
@@ -1831,6 +2095,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-17-wine-posix-publication.md",
       "title": "2026-10-17-wine-posix-publication.md"
+    },
+    "ART-b9b036fb-1633-4ac4-a376-12cb773d014c": {
+      "id": "ART-b9b036fb-1633-4ac4-a376-12cb773d014c",
+      "kind": "test",
+      "locator": "scripts/tests/test_weekly_agent_workflow_analyzer.py",
+      "title": "test_weekly_agent_workflow_analyzer"
     },
     "ART-ba3026b1-a006-4e87-beab-c505ad4c8225": {
       "id": "ART-ba3026b1-a006-4e87-beab-c505ad4c8225",
@@ -2058,6 +2328,24 @@
       "locator": "tests/test_realtime_core.cpp",
       "title": "test_realtime_core.cpp"
     },
+    "ART-cfe68e92-24f6-4ec4-a7b6-47da811dbd62": {
+      "id": "ART-cfe68e92-24f6-4ec4-a7b6-47da811dbd62",
+      "kind": "code",
+      "locator": ".opencode/agents/live-dev.md",
+      "title": "live-dev"
+    },
+    "ART-d0463370-885c-4967-9b5d-48e487d88657": {
+      "id": "ART-d0463370-885c-4967-9b5d-48e487d88657",
+      "kind": "code",
+      "locator": ".opencode/skills/weekly-agent-workflow-automation/SKILL.md",
+      "title": "SKILL"
+    },
+    "ART-d09826ae-3289-441d-82f8-aaa8b1218123": {
+      "id": "ART-d09826ae-3289-441d-82f8-aaa8b1218123",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-31-weekly-agent-workflow-automation.md",
+      "title": "2026-07-31-weekly-agent-workflow-automation"
+    },
     "ART-d20ad50d-595e-49be-baf8-44154f340fb3": {
       "id": "ART-d20ad50d-595e-49be-baf8-44154f340fb3",
       "kind": "design",
@@ -2161,6 +2449,12 @@
       "locator": "assets/lua/tests/test-snackbar-host.fnl",
       "title": "test-snackbar-host.fnl"
     },
+    "ART-db8384f6-ba3d-47a0-85f7-6db1854b31ea": {
+      "id": "ART-db8384f6-ba3d-47a0-85f7-6db1854b31ea",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-09-windows-main-ci.md",
+      "title": "2026-10-09-windows-main-ci"
+    },
     "ART-dbe512bb-c8c9-49fc-a5f0-4edb1070a43e": {
       "id": "ART-dbe512bb-c8c9-49fc-a5f0-4edb1070a43e",
       "kind": "design",
@@ -2198,6 +2492,12 @@
       "locator": "docs/plans/2026-10-11-dict-entity.md",
       "title": "2026-10-11-dict-entity.md"
     },
+    "ART-e04b9ad8-cd14-45a1-9546-863f26fea771": {
+      "id": "ART-e04b9ad8-cd14-45a1-9546-863f26fea771",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-29-autonomous-handoff-recovery.md",
+      "title": "2026-10-29-autonomous-handoff-recovery"
+    },
     "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9": {
       "id": "ART-e074d49f-c9b9-4d06-9309-b18068f9b8a9",
       "kind": "test",
@@ -2216,6 +2516,12 @@
       "locator": "assets/lua/tests/virtual-input-word-motion.fnl",
       "title": "virtual-input-word-motion.fnl"
     },
+    "ART-e0ca463b-5d01-43b0-93fd-93b39447ae62": {
+      "id": "ART-e0ca463b-5d01-43b0-93fd-93b39447ae62",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-fennel-validation.fnl",
+      "title": "test-fennel-validation"
+    },
     "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf": {
       "id": "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf",
       "kind": "design",
@@ -2227,6 +2533,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-drawing-document.fnl",
       "title": "test-drawing-document.fnl"
+    },
+    "ART-e23e1b34-d4d7-422b-ab15-0f8dc62ef028": {
+      "id": "ART-e23e1b34-d4d7-422b-ab15-0f8dc62ef028",
+      "kind": "code",
+      "locator": "scripts/ci_test_scope.py",
+      "title": "ci_test_scope"
     },
     "ART-e2966d69-9ee9-4ae9-9259-3a62ac93f9c7": {
       "id": "ART-e2966d69-9ee9-4ae9-9259-3a62ac93f9c7",
@@ -2295,6 +2607,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-10-01-temporal-natural-language-design.md",
       "title": "2026-10-01-temporal-natural-language-design.md"
+    },
+    "ART-e881b8cd-2121-4125-bb0b-bb0fe187ff4c": {
+      "id": "ART-e881b8cd-2121-4125-bb0b-bb0fe187ff4c",
+      "kind": "test",
+      "locator": "scripts/tests/test_opencode_capabilities.py",
+      "title": "test_opencode_capabilities"
     },
     "ART-e9c56330-6148-409a-b09f-768bb5642273": {
       "id": "ART-e9c56330-6148-409a-b09f-768bb5642273",
@@ -2446,6 +2764,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-09-28-sdk-module-reference.md",
       "title": "2026-09-28-sdk-module-reference.md"
+    },
+    "ART-f4ecbd9b-772b-48f4-9bb4-d96f19d0609e": {
+      "id": "ART-f4ecbd9b-772b-48f4-9bb4-d96f19d0609e",
+      "kind": "test",
+      "locator": "scripts/tests/test_makefile_build_workflow.py",
+      "title": "test_makefile_build_workflow"
     },
     "ART-f4f32b9d-12a8-44fb-83ae-5246b38b716c": {
       "id": "ART-f4f32b9d-12a8-44fb-83ae-5246b38b716c",
@@ -19476,6 +19800,1670 @@
       "source": "ART-b1d3324b-7f49-442d-b299-0daa27ed1328",
       "target": "ART-1ab07ae4-7440-46c8-8fff-a49f2f79b599",
       "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-382c60bf-ab09-414a-8a67-e1e415ae8de5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-07-31-fennel-agent-reliability-design.md"
+      },
+      "rationale": "docs/specs/2026-07-31-fennel-agent-reliability-design.md documents the scoped D1 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-3cc5b1c3-87ea-4607-8806-363f3b320202",
+      "target": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ab652bc7-8756-4e74-9aa4-88d1980d961e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/constraints.md"
+      },
+      "rationale": "docs/dev/constraints.md documents the scoped D1 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-3c498c3d-3592-4d57-bf7f-211b9774aeef",
+      "target": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-03e7bfc8-e03d-4b35-b9ea-62aea50ed849",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-08-05-opencode-permission-capabilities-design.md"
+      },
+      "rationale": "docs/specs/2026-08-05-opencode-permission-capabilities-design.md documents the scoped D2 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-849512cb-12c6-4357-a5c0-9ab8e7a2a70a",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d3bc7536-40fa-46cb-8a2e-2a640bd79f0d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-30-autonomous-workflow-decisions-design.md"
+      },
+      "rationale": "docs/specs/2026-10-30-autonomous-workflow-decisions-design.md documents the scoped D2 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-b6dcff11-2878-4746-87c0-a4832a50d35d",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3173f713-c3dc-4aea-894b-7be92fd7ac04",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-30-autonomous-workflow-decisions-design.md"
+      },
+      "rationale": "docs/specs/2026-10-30-autonomous-workflow-decisions-design.md documents the scoped D7 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-b6dcff11-2878-4746-87c0-a4832a50d35d",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7139b2dc-7f63-41dc-8e57-b6169e6cdc1f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-autonomous-handoff-recovery-design.md"
+      },
+      "rationale": "docs/specs/2026-10-29-autonomous-handoff-recovery-design.md documents the scoped D3 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-6f310330-1c95-4ecb-9162-cf50cbb4ee0d",
+      "target": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ac8838bd-9755-404d-94b9-fbcf64fca08f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-model-neutral-agent-routing-design.md"
+      },
+      "rationale": "docs/specs/2026-10-29-model-neutral-agent-routing-design.md documents the scoped D4 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-71fc39f2-8d34-454a-843a-449a2792799f",
+      "target": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-efc1f8ab-fdcb-42a6-9451-0d7b6a773865",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-15-fast-dev-independent-workflow-design.md"
+      },
+      "rationale": "docs/specs/2026-10-15-fast-dev-independent-workflow-design.md documents the scoped D5 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-84f859a1-e567-4590-a53f-c43e48ff0b00",
+      "target": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-62b88fff-c6bd-4488-914f-79b241beaabd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/opencode-agent-workflow.md"
+      },
+      "rationale": "docs/dev/features/opencode-agent-workflow.md documents the scoped D1 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-87c23839-dfce-4e7b-91e6-dadf8296d874",
+      "target": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4c48e62f-2610-4ba8-ac57-760acbc60224",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/opencode-agent-workflow.md"
+      },
+      "rationale": "docs/dev/features/opencode-agent-workflow.md documents the scoped D2 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-87c23839-dfce-4e7b-91e6-dadf8296d874",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5bcd2d2b-0af7-41e3-99e9-7861428e63d5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/opencode-agent-workflow.md"
+      },
+      "rationale": "docs/dev/features/opencode-agent-workflow.md documents the scoped D3 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-87c23839-dfce-4e7b-91e6-dadf8296d874",
+      "target": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9ae23acc-ed2d-4cfd-af97-d043fa3d99e5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/opencode-agent-workflow.md"
+      },
+      "rationale": "docs/dev/features/opencode-agent-workflow.md documents the scoped D4 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-87c23839-dfce-4e7b-91e6-dadf8296d874",
+      "target": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9bd468b7-1592-4105-94c0-0d96c3009cf9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/opencode-agent-workflow.md"
+      },
+      "rationale": "docs/dev/features/opencode-agent-workflow.md documents the scoped D5 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-87c23839-dfce-4e7b-91e6-dadf8296d874",
+      "target": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-42270f5b-4cfb-4845-9ec0-6efc6d3e7c6e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/live-dev.md"
+      },
+      "rationale": "docs/dev/features/live-dev.md documents the scoped D6 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-363bb979-f853-4398-94b8-79214ff9552f",
+      "target": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eaaa9e9d-1ee6-4a9c-b2ea-4013eba7c39c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/live-dev.md"
+      },
+      "rationale": "docs/dev/features/live-dev.md documents the scoped D5 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-363bb979-f853-4398-94b8-79214ff9552f",
+      "target": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e4352998-c6e4-435b-bb0f-9407e568f18e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-15-live-dev-design.md"
+      },
+      "rationale": "docs/specs/2026-10-15-live-dev-design.md documents the scoped D6 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-952cde58-9071-4cc9-adc9-3d52f3770e9d",
+      "target": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-204380f7-3a96-45ff-b4f4-acd7edb2bcb2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-07-29-daily-devlog-automation-design.md"
+      },
+      "rationale": "docs/specs/2026-07-29-daily-devlog-automation-design.md documents the scoped D7 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-90638798-fac8-4054-8892-3e2e2385e37c",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b183bfe3-dd81-45f9-a612-afcb125d3d29",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/notes/daily-devlog-automation.md"
+      },
+      "rationale": "docs/dev/notes/daily-devlog-automation.md documents the scoped D7 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-62f3bad9-2455-4d64-9ad7-078810586346",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8966ebaf-30b8-4e68-8441-487784d6cdc2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-07-31-weekly-agent-workflow-automation-design.md"
+      },
+      "rationale": "docs/specs/2026-07-31-weekly-agent-workflow-automation-design.md documents the scoped D8 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-18e0dbfc-e054-4cb9-9cee-3f37bd8311fe",
+      "target": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8097ec8f-bff0-40c3-b6fa-a9d74f04192b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/weekly-agent-workflow-automation.md"
+      },
+      "rationale": "docs/dev/features/weekly-agent-workflow-automation.md documents the scoped D8 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-87672398-3b83-40c2-962b-6d90d2087957",
+      "target": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eb384f43-6764-409b-9069-f0045c4d438f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-09-windows-main-ci-design.md"
+      },
+      "rationale": "docs/specs/2026-10-09-windows-main-ci-design.md documents the scoped D9 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-51396499-ca3f-4034-8a95-710702718a3d",
+      "target": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f1168bed-c6a1-461a-855d-533a58123b6c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-09-16-release-artifact-naming-design.md"
+      },
+      "rationale": "docs/specs/2026-09-16-release-artifact-naming-design.md documents the scoped D9 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-68f482c1-a09a-4445-92dc-86f5e01d7fed",
+      "target": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b7c22d60-530a-4c3c-8ec6-694f21200ecb",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/development-tooling.md"
+      },
+      "rationale": "docs/dev/features/development-tooling.md documents the scoped D10 contract; historical/current clause differences and bounded inspection are retained in Task3/D, not a satisfaction assertion.",
+      "retracted": false,
+      "source": "ART-35d8affc-3f3b-4a20-83cc-b1c1c0122b3d",
+      "target": "REQ-dcf95ace-b6b0-4efb-9889-87e58c2deb27",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f83a34a4-2bf7-4f51-8e9c-380f441dc5f0",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-fennel-agent-reliability.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D1; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-b0d93be0-0772-4532-8e35-40ebf3857c32",
+      "target": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8ec2e975-bae5-4f15-98c5-3698984394de",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-fennel-agent-reliability.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-b0d93be0-0772-4532-8e35-40ebf3857c32",
+      "target": "ART-3cc5b1c3-87ea-4607-8806-363f3b320202",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0ca47d11-35b5-48aa-b744-795054537384",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-08-05-opencode-permission-capabilities.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D2; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-3cd4fa68-88d0-4c61-9401-832a61a98532",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-09e8db44-02e3-48ba-8927-4fe7c0632212",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-08-05-opencode-permission-capabilities.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-3cd4fa68-88d0-4c61-9401-832a61a98532",
+      "target": "ART-849512cb-12c6-4357-a5c0-9ab8e7a2a70a",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-657e357d-9ce4-4083-912d-d9dc6334aa49",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-30-autonomous-workflow-decisions.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D2; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-6de610f9-9700-4fa0-aa96-9b3a3c93c727",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-04f31bda-2ef3-4b96-96b7-c50bd63e07e4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-30-autonomous-workflow-decisions.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D7; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-6de610f9-9700-4fa0-aa96-9b3a3c93c727",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-072613eb-ff38-4869-93b0-80a1f93c4993",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-30-autonomous-workflow-decisions.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-6de610f9-9700-4fa0-aa96-9b3a3c93c727",
+      "target": "ART-b6dcff11-2878-4746-87c0-a4832a50d35d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e7ad7724-fc9d-4be5-b85e-eee124f3db82",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-29-autonomous-handoff-recovery.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D3; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-e04b9ad8-cd14-45a1-9546-863f26fea771",
+      "target": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5d3459aa-0ed7-4462-a395-15d734a465d7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-29-autonomous-handoff-recovery.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-e04b9ad8-cd14-45a1-9546-863f26fea771",
+      "target": "ART-6f310330-1c95-4ecb-9162-cf50cbb4ee0d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-713ee545-1ca1-4c8c-890d-53d298e4f564",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-29-model-neutral-agent-routing.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D4; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-8d7135fa-e0f6-4935-acc1-d939c0607c63",
+      "target": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-65e2e076-547b-403f-b064-2d13f470beb1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-29-model-neutral-agent-routing.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-8d7135fa-e0f6-4935-acc1-d939c0607c63",
+      "target": "ART-71fc39f2-8d34-454a-843a-449a2792799f",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7c260c8d-a42f-4e0a-9240-59d716145a09",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-fast-dev-independent-workflow.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D5; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-9b6cf634-9e60-4028-8679-02d955c998c9",
+      "target": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6ffd961b-02ad-402a-b730-98147df58d9a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-fast-dev-independent-workflow.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-9b6cf634-9e60-4028-8679-02d955c998c9",
+      "target": "ART-84f859a1-e567-4590-a53f-c43e48ff0b00",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-18a0bada-b171-4554-b962-35db5f4b9649",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-live-dev.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D6; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c",
+      "target": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1ba274c6-0dd2-4c9e-b28c-8b0f85d314d8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-live-dev.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D5; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c",
+      "target": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-50d03ee7-af21-407e-a3df-91c132cb271b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-live-dev.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c",
+      "target": "ART-952cde58-9071-4cc9-adc9-3d52f3770e9d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a34f7568-ca84-4a39-8074-39c332d048ba",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-29-daily-devlog-automation.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D7; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-8f8f6298-22ba-45be-946f-90734ecddd60",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-61b472ed-ba92-4920-a7b5-9e8ddbf0b2a0",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-29-daily-devlog-automation.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-8f8f6298-22ba-45be-946f-90734ecddd60",
+      "target": "ART-90638798-fac8-4054-8892-3e2e2385e37c",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-25ad74fd-b0fd-421b-a27a-b96d7f688179",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-weekly-agent-workflow-automation.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D8; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-d09826ae-3289-441d-82f8-aaa8b1218123",
+      "target": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9fa8e4c3-18c3-43fd-b3c2-5d39ffb86d9e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-weekly-agent-workflow-automation.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-d09826ae-3289-441d-82f8-aaa8b1218123",
+      "target": "ART-18e0dbfc-e054-4cb9-9cee-3f37bd8311fe",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4360a9b3-0a91-4c3f-94e1-c2820e44646d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-09-windows-main-ci.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D9; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-db8384f6-ba3d-47a0-85f7-6db1854b31ea",
+      "target": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3b632255-280c-453c-8240-ad1708967266",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-09-windows-main-ci.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-db8384f6-ba3d-47a0-85f7-6db1854b31ea",
+      "target": "ART-51396499-ca3f-4034-8a95-710702718a3d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a7e598dc-77e6-4e44-b7df-9bf2ee2ad73c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-09-16-release-artifact-naming.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D9; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-5eb5bf2b-ec0f-41fa-a107-1368e0338e3d",
+      "target": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6a7a39a4-5124-406d-9181-e8e76a31c4c9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-09-16-release-artifact-naming.md"
+      },
+      "rationale": "Actual implementation plan realizes its documented design direction; later contract evolution remains explicit in the audit.",
+      "retracted": false,
+      "source": "ART-5eb5bf2b-ec0f-41fa-a107-1368e0338e3d",
+      "target": "ART-68f482c1-a09a-4445-92dc-86f5e01d7fed",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fa74eeb9-dfd5-4f95-9148-323555f7c61a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-12-ci-prebuilt-runtime.md"
+      },
+      "rationale": "Inspected actual plan goal/architecture specifies work for D9; no execution or full coverage inferred.",
+      "retracted": false,
+      "source": "ART-a93e9388-03b4-45f1-bd83-607eace9a025",
+      "target": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-807a51d9-12a4-4293-b936-8d9557a8734a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-fennel-agent-reliability.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in assets/lua/tools/fennel-check.fnl; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-1a9fda19-1f40-42c0-947f-4d82a2d81f18",
+      "target": "ART-b0d93be0-0772-4532-8e35-40ebf3857c32",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-17a8f1fe-3052-43d4-a9ad-bfd39afcdcdb",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-fennel-agent-reliability.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in assets/lua/llm/fennel-validation/service.fnl; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-58132905-6df5-4712-849a-6aac7a905ba7",
+      "target": "ART-b0d93be0-0772-4532-8e35-40ebf3857c32",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1f568b41-9a59-4099-b3bf-5af706025ca3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-fennel-agent-reliability.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in Makefile; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-03caf7d6-39b5-4a34-b28b-4c4e323cd91b",
+      "target": "ART-b0d93be0-0772-4532-8e35-40ebf3857c32",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4b372acf-a22f-45fb-8768-25b9b860f5d8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-08-05-opencode-permission-capabilities.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in scripts/opencode_capabilities.py; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-86ed47f2-318c-4545-86ef-07c4fe6d3925",
+      "target": "ART-3cd4fa68-88d0-4c61-9401-832a61a98532",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1f94d835-c6fe-4223-bdaf-ae7ef294800c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-30-autonomous-workflow-decisions.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in AGENTS.md; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-962301e2-42b9-448f-95a9-598b3efb8895",
+      "target": "ART-6de610f9-9700-4fa0-aa96-9b3a3c93c727",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-23ebb8c2-6061-4ff7-a136-a3809a28d7fd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-29-model-neutral-agent-routing.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in scripts/check_opencode_permissions.py; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-07bd6e4e-2877-4669-91e1-34506a35b3ef",
+      "target": "ART-8d7135fa-e0f6-4935-acc1-d939c0607c63",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-58a494ff-7da7-4f8e-90b2-47d3d96fd9de",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-fast-dev-independent-workflow.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .opencode/agents/fast-dev.md; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-5462baf5-3788-4efe-adb7-99c612fc8b50",
+      "target": "ART-9b6cf634-9e60-4028-8679-02d955c998c9",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d6853df8-ee45-4507-afb2-a792cd31a451",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-live-dev.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .opencode/agents/live-dev.md; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-cfe68e92-24f6-4ec4-a7b6-47da811dbd62",
+      "target": "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-29a974d8-e191-4075-90e7-0619158cb51b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-15-live-dev.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in scripts/live_dev.py; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-70e29c1c-689b-43c2-9b0c-d3f76ec25e21",
+      "target": "ART-aa26007c-3a79-43d0-9426-acd5c1e3be2c",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-81a9e16e-0d36-4692-8f88-b7069165228e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-29-daily-devlog-automation.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .opencode/skills/daily-devlog-automation/SKILL.md; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-8efba2d8-eb47-4111-ba7d-5250081b8774",
+      "target": "ART-8f8f6298-22ba-45be-946f-90734ecddd60",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-78b8acc3-c737-4539-a923-71a384534f57",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-weekly-agent-workflow-automation.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .opencode/skills/weekly-agent-workflow-automation/SKILL.md; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-d0463370-885c-4967-9b5d-48e487d88657",
+      "target": "ART-d09826ae-3289-441d-82f8-aaa8b1218123",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-157bff6e-4c92-4955-ad27-56b4026ec6fe",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-07-31-weekly-agent-workflow-automation.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in scripts/weekly_agent_workflow_analyzer.py; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-7fac3836-cf08-45ba-a541-ef9a2dc2a907",
+      "target": "ART-d09826ae-3289-441d-82f8-aaa8b1218123",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ba1ee99c-884b-406f-b932-6fbb4f7d2405",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-09-windows-main-ci.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .github/workflows/windows.yml; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-83e795cb-7549-49e2-b7bb-69eda60b7224",
+      "target": "ART-db8384f6-ba3d-47a0-85f7-6db1854b31ea",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0e8a143d-2524-4a30-b950-28efeb34c0b8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-09-16-release-artifact-naming.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .github/workflows/build.yml; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-454e1ea1-da5e-4116-9c34-4e1477cee0be",
+      "target": "ART-5eb5bf2b-ec0f-41fa-a107-1368e0338e3d",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e1269af0-4dc1-4576-9163-74c08ee1a5ce",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-12-ci-prebuilt-runtime.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in .github/workflows/test.yml; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-f4a267df-9fde-4bec-aec7-70b0763fa62d",
+      "target": "ART-a93e9388-03b4-45f1-bd83-607eace9a025",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a4181fd5-4b19-4dc1-a264-9905bae35f24",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/plans/2026-10-12-ci-prebuilt-runtime.md"
+      },
+      "rationale": "Representative implementation/declaration of the actual plan in scripts/ci_test_scope.py; source presence only, with inspection limits retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-e23e1b34-d4d7-422b-ab15-0f8dc62ef028",
+      "target": "ART-a93e9388-03b4-45f1-bd83-607eace9a025",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a713a01d-fa27-47c8-a130-3b6bfcad8229",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#fail-closed-handoff-delivery"
+      },
+      "rationale": "Canonical fail-closed section implements handoff recovery guidance, not a production runtime parser.",
+      "retracted": false,
+      "source": "ART-962301e2-42b9-448f-95a9-598b3efb8895",
+      "target": "ART-e04b9ad8-cd14-45a1-9546-863f26fea771",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-de7e1e46-5a1f-4eca-8713-a7ad8e85d83a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "assets/lua/tests/test-fennel-validation.fnl"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D1; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-e0ca463b-5d01-43b0-93fd-93b39447ae62",
+      "target": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fb2c251d-561e-4d71-b24f-3795a6d53c0e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "assets/lua/tests/test-fennel-validation.fnl"
+      },
+      "rationale": "Inspected tests call or inspect assets/lua/llm/fennel-validation/service.fnl; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-e0ca463b-5d01-43b0-93fd-93b39447ae62",
+      "target": "ART-58132905-6df5-4712-849a-6aac7a905ba7",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-573664ff-23fd-4fb2-8b49-04f28ee3f6e9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_opencode_capabilities.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D2; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-e881b8cd-2121-4125-bb0b-bb0fe187ff4c",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fa05dccf-11a1-4494-a319-e036b160b309",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_opencode_capabilities.py"
+      },
+      "rationale": "Inspected tests call or inspect scripts/opencode_capabilities.py; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-e881b8cd-2121-4125-bb0b-bb0fe187ff4c",
+      "target": "ART-86ed47f2-318c-4545-86ef-07c4fe6d3925",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fa083def-74dc-49f3-8984-953792bf11a6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_opencode_handoff_recovery_contract.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D3; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-4701eadb-f65c-41d0-a928-16c29803f5a1",
+      "target": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d89d88ac-164f-45f2-b469-5acb389b685e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_opencode_handoff_recovery_contract.py"
+      },
+      "rationale": "Inspected tests call or inspect AGENTS.md; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-4701eadb-f65c-41d0-a928-16c29803f5a1",
+      "target": "ART-962301e2-42b9-448f-95a9-598b3efb8895",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4b849632-4017-4cdf-91c4-d2bda1bd4a3e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_check_opencode_permissions.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D4; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a",
+      "target": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-310f1dff-7ad9-47b3-94cb-78dd94455657",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_check_opencode_permissions.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D5; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a",
+      "target": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8d3b30b0-f61c-4e5a-8064-f64b7d76ea55",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_check_opencode_permissions.py"
+      },
+      "rationale": "Inspected tests call or inspect scripts/check_opencode_permissions.py; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a",
+      "target": "ART-07bd6e4e-2877-4669-91e1-34506a35b3ef",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c11434a1-95e5-448c-a9e1-5b6fef60df13",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_check_opencode_permissions.py"
+      },
+      "rationale": "Inspected tests call or inspect .opencode/agents/fast-dev.md; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a",
+      "target": "ART-5462baf5-3788-4efe-adb7-99c612fc8b50",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d5655fff-446a-464d-a31c-6ad8b663a6be",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_check_opencode_permissions.py"
+      },
+      "rationale": "Inspected tests call or inspect .opencode/agents/live-dev.md; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-2b0feb63-b39e-403b-8b92-a90166d1d57a",
+      "target": "ART-cfe68e92-24f6-4ec4-a7b6-47da811dbd62",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-be3e663c-2b2f-4255-b9c8-efe702619315",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_live_dev.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D6; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-5d2ecc8c-de94-4b9d-aeeb-4d6b59431ef2",
+      "target": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-76c1b708-cf62-43d1-97f6-b76b39ec017b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_live_dev.py"
+      },
+      "rationale": "Inspected tests call or inspect scripts/live_dev.py; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-5d2ecc8c-de94-4b9d-aeeb-4d6b59431ef2",
+      "target": "ART-70e29c1c-689b-43c2-9b0c-d3f76ec25e21",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-604b66f1-bd96-4878-b8ee-4cecc8753302",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/scripts/test-opencode-automation-config.mjs"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D7; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-4fcfa7ae-1a30-43c7-bda7-b58f9c54bf0d",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a9f0fb5a-d92c-4173-b2fd-4130ffd5dbe5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/scripts/test-opencode-automation-config.mjs"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D2; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-4fcfa7ae-1a30-43c7-bda7-b58f9c54bf0d",
+      "target": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5e6508a3-2943-4c20-b4c0-96dc6d83ad8f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/scripts/test-opencode-automation-config.mjs"
+      },
+      "rationale": "Inspected tests call or inspect .opencode/skills/daily-devlog-automation/SKILL.md; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-4fcfa7ae-1a30-43c7-bda7-b58f9c54bf0d",
+      "target": "ART-8efba2d8-eb47-4111-ba7d-5250081b8774",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-256e6fd2-099b-41a8-92a4-5aa90c64dff1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/scripts/test-opencode-automation-config.mjs"
+      },
+      "rationale": "Inspected tests call or inspect AGENTS.md; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-4fcfa7ae-1a30-43c7-bda7-b58f9c54bf0d",
+      "target": "ART-962301e2-42b9-448f-95a9-598b3efb8895",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a46c8c9b-90c5-4b37-9d9b-1b12d5644e28",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_weekly_agent_workflow_analyzer.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D8; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-b9b036fb-1633-4ac4-a376-12cb773d014c",
+      "target": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-696880ca-014e-41b1-9dd3-650c2d596e14",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_weekly_agent_workflow_analyzer.py"
+      },
+      "rationale": "Inspected tests call or inspect scripts/weekly_agent_workflow_analyzer.py; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-b9b036fb-1633-4ac4-a376-12cb773d014c",
+      "target": "ART-7fac3836-cf08-45ba-a541-ef9a2dc2a907",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4f988251-d7db-4db0-bbe1-4bb0a3fd6d2e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_makefile_build_workflow.py"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D9; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-f4ecbd9b-772b-48f4-9bb4-d96f19d0609e",
+      "target": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-deda0e17-d3b6-4167-a671-240d0e3b4fc2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "scripts/tests/test_makefile_build_workflow.py"
+      },
+      "rationale": "Inspected tests call or inspect Makefile; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-f4ecbd9b-772b-48f4-9bb4-d96f19d0609e",
+      "target": "ART-03caf7d6-39b5-4a34-b28b-4c4e323cd91b",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-11d40766-c87e-4bdf-9416-77037a9be847",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "assets/lua/tests/test-runner.fnl"
+      },
+      "rationale": "Inspected assertion definitions cover a bounded part of D10; static contracts/fixtures are not live-agent compliance or an executed result.",
+      "retracted": false,
+      "source": "ART-9aca74db-407f-4da1-8074-14009ca773a5",
+      "target": "REQ-dcf95ace-b6b0-4efb-9889-87e58c2deb27",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7b58fa16-87b8-4fa6-8863-ff56f2672c0e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "assets/lua/tests/test-runner.fnl"
+      },
+      "rationale": "Inspected tests call or inspect assets/lua/tests/runner.fnl; assertion scope and fixture limitations retained in Task3/D.",
+      "retracted": false,
+      "source": "ART-9aca74db-407f-4da1-8074-14009ca773a5",
+      "target": "ART-0197ecc2-7900-42bf-9481-5e936b955363",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4020f3b3-e5ac-4c11-981a-b2dd3dd4f23f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#autonomous-workflow-decisions"
+      },
+      "rationale": "Only assigned strict-flow authority/access aspects are constrained; identity-scoped fast/live exceptions and human policy remain unchanged.",
+      "retracted": false,
+      "source": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "target": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-df5e8111-8b96-447a-8ced-768e86bc8148",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#autonomous-workflow-decisions"
+      },
+      "rationale": "Only assigned strict-flow authority/access aspects are constrained; identity-scoped fast/live exceptions and human policy remain unchanged.",
+      "retracted": false,
+      "source": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "target": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6aa05dc6-dfff-4bc2-8385-fff679e2e5e3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#autonomous-workflow-decisions"
+      },
+      "rationale": "Only assigned strict-flow authority/access aspects are constrained; identity-scoped fast/live exceptions and human policy remain unchanged.",
+      "retracted": false,
+      "source": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "target": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-28cec7b6-b543-43ad-9474-8bfb31f11fb5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#autonomous-workflow-decisions"
+      },
+      "rationale": "Only assigned strict-flow authority/access aspects are constrained; identity-scoped fast/live exceptions and human policy remain unchanged.",
+      "retracted": false,
+      "source": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "target": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a50fdfd8-9c71-4882-91a7-9b216bbe0bab",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#autonomous-workflow-decisions"
+      },
+      "rationale": "Guarded capability design is subject to role/access boundaries, without inferring universal graph inheritance.",
+      "retracted": false,
+      "source": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "target": "ART-849512cb-12c6-4357-a5c0-9ab8e7a2a70a",
+      "type": "constrains"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-33b6c9b2-6490-4a6c-ba15-3461a78e4574",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/development-tooling.md"
+      },
+      "rationale": "Development validation/observation helps Core stability without proving empirical quality or sufficiency.",
+      "retracted": false,
+      "source": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-76ff90a6-a75b-4b0c-bf52-e729436c555a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/development-tooling.md"
+      },
+      "rationale": "Development validation/observation helps Core stability without proving empirical quality or sufficiency.",
+      "retracted": false,
+      "source": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-1b3ce5c4-c15b-4d29-aaac-364ecbf54476",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/development-tooling.md"
+      },
+      "rationale": "Development validation/observation helps Core stability without proving empirical quality or sufficiency.",
+      "retracted": false,
+      "source": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-7a6fe41c-07b1-4f2d-abb9-56ad01fd43b7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/development-tooling.md"
+      },
+      "rationale": "Development validation/observation helps Core stability without proving empirical quality or sufficiency.",
+      "retracted": false,
+      "source": "REQ-dcf95ace-b6b0-4efb-9889-87e58c2deb27",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-9f043215-adb1-431b-b573-a0b7d759a876",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md"
+      },
+      "rationale": "Safe evidence-driven workflow supports existing methodology goal without establishing actual improvement.",
+      "retracted": false,
+      "source": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-243375e9-7205-4cc3-ad71-0e4b6b517c74",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md"
+      },
+      "rationale": "Safe evidence-driven workflow supports existing methodology goal without establishing actual improvement.",
+      "retracted": false,
+      "source": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-8d214545-69e5-4d09-bcfa-2760c13334e7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md"
+      },
+      "rationale": "Safe evidence-driven workflow supports existing methodology goal without establishing actual improvement.",
+      "retracted": false,
+      "source": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-cbe0cd53-2ac3-4c75-b074-add1a0ca7cc0",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md"
+      },
+      "rationale": "Safe evidence-driven workflow supports existing methodology goal without establishing actual improvement.",
+      "retracted": false,
+      "source": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-4567219e-6404-4869-bdb8-cecee4d0b5c5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md"
+      },
+      "rationale": "Safe evidence-driven workflow supports existing methodology goal without establishing actual improvement.",
+      "retracted": false,
+      "source": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-d661eb18-87ef-4775-9980-7a61ead90e92",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md"
+      },
+      "rationale": "Safe evidence-driven workflow supports existing methodology goal without establishing actual improvement.",
+      "retracted": false,
+      "source": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "target": "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-d265d3bd-ae04-47fd-b248-2d742dc1b1be",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/live-dev.md"
+      },
+      "rationale": "Explicit validated refresh supports live programming, not empirical achievement or whole-world rollback.",
+      "retracted": false,
+      "source": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "contributes_to"
     }
   ],
   "requirements": {
@@ -19822,6 +21810,39 @@
       "revision": 2,
       "statement": "Provide explicit idempotent migrations from legacy persisted timestamp schemas to canonical temporal representations, with safe load/save boundaries and loud malformed-data diagnostics rather than automatic broad startup rewrites."
     },
+    "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Compile repository or explicit Fennel files through the Space runtime using canonical asset/module/macro paths; reject malformed inputs with actionable diagnostics and nonzero failure, without unsupported system interpreters."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Run compile checks before relevant blocking constraints and focused Fennel tests; every constraint status other than pass blocks. Preserve reviewed baselines and repair stale constraints together with intentional contract changes rather than bypassing them."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Expose read-only compile, constraints-by-file, parse, enclosing-form and metrics services through shared CLI/MCP behavior. Select focused checks by behavioral surface, build when native/runtime freshness requires it, and broaden for high-risk or plan/reviewer-required validation."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-1708baf3-2eea-4fad-87e9-21499779a7b5",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "Compiler-backed Fennel check; Structural constraints; Agent validation ladder",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-07-31-fennel-agent-reliability-design.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Provide project-native vendored-Fennel compile and read-only structural tooling with a blocking compile-to-constraints-to-focused-tests validation ladder and risk-proportionate broader checks."
+    },
     "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb": {
       "acceptance_criteria": [
         {
@@ -19854,6 +21875,39 @@
       "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
       "revision": 1,
       "statement": "Default controller-driven development reload to the app-root lifecycle, allowing only explicitly audited narrow boundaries and preserving truthful scheduling, state and recovery limits."
+    },
+    "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Pin fetched origin/main and inspect every first-parent landing day inclusively from the latest journal date and its actual narrative through the pinned tip; attribute work by UTC landing, not author date, filename or run date. Account covered/skipped/created/corrected dates before no-op and rediscover if pre-PR main changes."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Write only warranted meaningful work as frontmatter, one dated heading and one brief contextual paragraph with useful inline links and a compression pass; preserve accurate existing narrative/date/attribution while correcting omissions. Explicit immutable-publication restrictions remain boundaries."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Use guarded dated-branch preparation, stage-only complete pending-diff review before commit, generated indexes and docs validation, then protected PR/queue through actual merge. Scheduler completion or index presence alone proves neither narrative coverage nor publication."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-17fd48b5-638b-40d2-a079-a9cfb4473090",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "No-op requires a fully examined interval and no unresolved meaningful work, not merely a quiet run date.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/notes/daily-devlog-automation.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Produce concise source-grounded daily development narratives for every warranted uncovered UTC mainline landing date, including catch-up and authorized existing-entry correction, through reviewed docs validation and protected publication rather than filler or commit lists."
     },
     "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84": {
       "acceptance_criteria": [
@@ -20094,6 +22148,39 @@
       "revision": 1,
       "statement": "Enable persistent multi-user shared spaces for collaboration, communication and social interaction."
     },
+    "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Retain immutable original/corrected payloads, identity and separate spent correction counter. Spend the one allowance before dispatch; format-only redelivery performs no operations and cannot alter findings, verdict, evidence or range. Never salvage, alias or infer approval from valid formatting."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Quarantine exhausted, stale, changed-fact or unavailable-author deliveries; authorize actual independent replacement on the same verified complete range with failure ancestry, trusted sources, global obligations, established findings, pending advice and task-wide counts retained."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Usable adverse reviews retain fixes/consultation/adjudication, not favorable replacement. After two same-signature substantive failures record a concrete changed strategy before retry; threshold alone never terminates a task. Expert answers and capability refusals remain excluded from formatter repair."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-206dd9c6-f2a4-4d49-8302-95ea8ed8b57c",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "Reject the unusable delivery, not the overall task.",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#fail-closed-handoff-delivery"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Validate role-specific handoff format, identity and complete source/review range before semantic handling, allowing one protected-fact same-author format correction and autonomous independent replacement of unusable assessments without review shopping or budget resets."
+    },
     "REQ-260bf539-61dc-404e-b182-0692acbf744d": {
       "acceptance_criteria": [
         {
@@ -20294,6 +22381,39 @@
       "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
       "revision": 1,
       "statement": "Provide independently scoped actionable snackbar feedback with widget-free queue/timer policy and exactly owned layout-native hosts that avoid dynamic HUD chrome."
+    },
+    "REQ-30218043-d4c2-4357-93f8-e240e289d9d1": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Require all17 project roles with well-formed independently editable model and variant scalar frontmatter, no enforced provider/tier/equality pins or duplicated model IDs in instruction bodies; retain role safety and require restart to load reviewed changes."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Consult for the same material failure after one focused repair, unresolved evidenced material technical conflict, or critical unresolved permissions/security/irreversible-data boundary before crossing it. Ordinary evidenced design needs no universal dispatch; optional bounded advice is not a prerequisite."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Preserve canonical request fields including proposal, inspect original sources, reconcile material advice before dependent work, reuse unchanged decisions, and resume the original worker for its assessment. Expert advice cannot implement, approve, publish or override human policy or capability refusals."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-30218043-d4c2-4357-93f8-e240e289d9d1",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "Both model: and variant: frontmatter lines are authoritative and may later be edited independently",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-29-model-neutral-agent-routing-design.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Keep project-role routing configuration independent of instruction policy and use controller-mediated evidence-triggered expert consultation before dependent work while preserving worker ownership and independent review."
     },
     "REQ-30fb38a5-7025-4607-8c51-90426f387b6f": {
       "acceptance_criteria": [
@@ -20917,6 +23037,39 @@
       "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
       "revision": 1,
       "statement": "Provide generic nested focus entry/exit and level-bounded traversal while preserving explicit container focus versus interior-widget focus."
+    },
+    "REQ-626b5def-42a6-4316-b211-1374307d8918": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Keep exact required test check on PR/main/merge_group with full native checks for main/merge_group; use trusted successful main-push runtime artifacts only for eligible nonnative PRs and fall back to full native validation if resolution fails."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Run Windows cross-build/package/Wine smoke plus artifact-only native Windows fast suite on main pushes and manual dispatch, separately from Linux PR/queue gate and release packaging; native Windows remains authoritative for host/installer behavior, not replaced by Wine."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Publish supported full/minimal Linux and Windows ZIP/installer outputs under space-<os>-<arch>[-<role>][-<variant>].<ext>, retaining Debian amd64 and Windows setup role; keep release writes scoped and missing artifacts explicit failures. Local minimal/CEF-off and explicit full packaging remain distinct."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-626b5def-42a6-4316-b211-1374307d8918",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "Keep Windows regressions close to the responsible change by running Windows validation on every push to main.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-10-09-windows-main-ci-design.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Maintain explicit Linux integration, post-merge/manual Windows runtime validation and release packaging workflows with trustworthy runtime provenance, stable platform artifact names and loud failures rather than platform coverage inferred from static declarations."
     },
     "REQ-72d4e8fc-6aad-4018-a7f6-f2d3c8e6f61a": {
       "acceptance_criteria": [
@@ -21701,6 +23854,39 @@
       "revision": 2,
       "statement": "Provide ICU/CLDR-backed localized parsing/formatting and explicit non-Gregorian calendar conversion, retaining finite locale/calendar corpus choices and separation from primitive elapsed-time semantics."
     },
+    "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Use fast-dev only on fast-dev and live-dev only on live-dev; preserve unrelated state and default strict supervisor. Direct edits/fixes/local commits waive mandatory planning/worker/per-change review ceremony, not technical standards, targeted consultation or risk-appropriate validation."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Ordinary completion or commit requests never authorize publication. Explicit wrap-up reviews all accumulated commits and final diff with base/head evidence; callers fix directly, self-review and revalidate, with no mandatory independent re-review per fix."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Block integration on material findings or required failures; preserve clean/current-base and protected PR/queue gates, poll to actual mergedAt and verify merge SHA in freshly fetched origin/main, without direct main push, rebase or force-push."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-a3c5dd45-97be-40e7-9051-86254d7223e0",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "These branches are single long-term branches (exactly those names, no topic suffix)",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#fast-dev-workflow-exception"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Permit only user-selected fast-dev and live-dev primaries to develop directly on their respective exact long-term branches with local checkpoints, deferring publication to explicit wrap-up with one observational whole-branch review and protected actual-merge evidence."
+    },
     "REQ-a52d3004-cba7-4cf1-95b0-4f78107166d8": {
       "acceptance_criteria": [
         {
@@ -22025,6 +24211,72 @@
       "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
       "revision": 1,
       "statement": "Gate realtime connect tokens and feature activation with verified scoped signed tickets while keeping development-ticket helpers distinct from a production identity or shared-world permission system."
+    },
+    "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Strict Git/GitHub/configuration/reproduction operations use their dedicated exact capability surfaces, prove repository/branch/clean-state and applicable protection prerequisites, and return structured outcomes without granting workers publication, delegation or broader external access."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Keep sensitive auth/token/secret/keyring material excluded from permitted artifact reads and sanitized analysis; web research is isolated from local mutation. Missing capability wiring or unknown authority fails explicitly, not via broad fallback."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Controllers gather permitted evidence and triage worker blockers, continue separable authorized work, and report evidenced exhaustion truthfully; routine reversible technical/editorial choices do not require human permission. Fast/live retain only their explicitly identity-scoped exceptions."
+        }
+      ],
+      "classification": "constraint",
+      "history": [],
+      "id": "REQ-b98531ec-d08d-4a67-a019-82482e5cadd4",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "This grants no new authority. Preserve strict implementer \u2192 independent reviewer \u2192 pass and fast/live direct ownership, consultation triggers, capability refusals, credential/access boundaries",
+        "origin": "justified_interpretation",
+        "source_reference": "AGENTS.md#autonomous-workflow-decisions"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Keep autonomous development actions within assigned role and access authority: strict privileged operations use bounded fail-closed capabilities and retained wrapper evidence, without bypassing refusals or human-owned safety, credentials, policy and unsafe-history boundaries."
+    },
+    "REQ-ba520473-5999-4183-abb8-de9e482108c1": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Analyze this project across its worktrees with a read-only allowlisted deterministic analyzer; exclude unrelated projects/auth/credential/account data and redact secrets before model/report consumption. Unsupported schema, unsafe evidence or unavailable required sources fail closed."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Compare prior reports and report date/range, sources/redaction, findings/confidence, implemented versus deferred changes, validation and follow-up signals; never expose raw session/database/log/tool dumps."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Keep supervisor default and schedule trigger small; use dated weekly branches and implementer/reviewer gates with stage-only review-first handoffs, diagnose required validation failures, and publish only through verified protected PR/queue policy. Do not implement ambiguous recommendations merely to fill a weekly run."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-ba520473-5999-4183-abb8-de9e482108c1",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "automatically implements high-confidence improvements through the normal reviewed workflow, and publishes a full report in the repo docs",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/specs/2026-07-31-weekly-agent-workflow-automation-design.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Support scheduled project-wide weekly agent workflow analysis over sanitized evidence and prior reports, implementing justified high-confidence improvements through ordinary review/validation and publishing explicit deferred recommendations and safe reports."
     },
     "REQ-ba697587-cf4f-481f-8b1c-980236da6490": {
       "acceptance_criteria": [
@@ -22509,6 +24761,39 @@
       "revision": 1,
       "statement": "Keep runtime temporal parsing, formatting, scheduling and migration offline, using deterministic local data with reviewed dependency/data provenance and license metadata before shipping."
     },
+    "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Discover and verify checkout/kernel instance identity without process scanning or legacy guesses; ask selection on multiple matches, start only when no uncertain identity blocks it, and preserve ordinary user settings."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Establish manual mode before live edits and explicitly refresh only after validation; use rebuild/restart for native changes and restart for preserved control/macros changes, reestablishing manual mode after replacement."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Serialize identity/request/action-matched deferred operations; pending acceptance is not completion. Keep recipes private, verify restart provenance before stop, and retain failed reload plus at-most-one recovery result with nonzero failure even after successful recovery."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-d738d878-af1d-40d2-95d1-7d334b5787a5",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "Establish manual mode and verify status before editing: no filesystem watching and no hooks.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/live-dev.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Provide Linux checkout-scoped verified live-development instance control with manual-before-edit, explicit validated app-root refresh, safe restart/rebuild provenance and truthful retained operation and recovery outcomes."
+    },
     "REQ-d7b86ad4-66ff-41cb-b18a-763404658fe1": {
       "acceptance_criteria": [
         {
@@ -22630,6 +24915,39 @@
       "rationale": "Authorized bounded N baseline after canonical semantic/provenance comparison at ledger53; stable source-grounded behavior, not current status/gaps, activation, product repair or achievement. Source evolution and sampled coverage limits retained in Task3 N report.",
       "revision": 1,
       "statement": "Compose bounded-concurrency SSH fleet execution over the public transport with per-host structured results, timeouts and cancellation."
+    },
+    "REQ-dcf95ace-b6b0-4efb-9889-87e58c2deb27": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Support module test discovery/assertion/reporting with bounded timeout handling and packaged child-runtime selection, plus deterministic golden-image E2E comparisons; do not turn missing required capabilities or failed assertions into quiet success."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Expose frame timing, folded-stack profiling and render captures for explicit diagnosis; keep sampling/diagnostic observations separate from measured performance improvements."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Provide explicit trusted remote-control evaluation and async result inspection without enabling untrusted endpoints; disk-only compile/constraint/tests must not be reported as successful live app refresh or smoke validation."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-dcf95ace-b6b0-4efb-9889-87e58c2deb27",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-D",
+        "date": "2026-10-30",
+        "excerpt": "Regression prevention requires deterministic snapshot testing. Live debugging requires remote code evaluation.",
+        "origin": "justified_interpretation",
+        "source_reference": "docs/dev/features/development-tooling.md"
+      },
+      "rationale": "Grounded development contract, independently compared with existing methodology/product obligations; historical source evolution and sample limits retained in Task3/D report. No activation or satisfaction inferred.",
+      "revision": 1,
+      "statement": "Provide runtime-focused developer testing and observation tools including module-based timeout-aware tests, deterministic E2E snapshots, frame/render capture and stack profiling, and explicit trusted remote-control evaluation."
     },
     "REQ-dd6ea39d-4d05-400c-b24f-5f4eeef706d7": {
       "acceptance_criteria": [
@@ -23153,7 +25471,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 57,
+  "revision": 60,
   "schema_version": 1,
   "verifications": [
     {
