@@ -1,7 +1,7 @@
 ---
 description: Converts an approved direction into a bounded, executable implementation plan with acceptance criteria and validation scope
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 35
 permission:
@@ -98,12 +98,19 @@ advances autonomously; do not request user artifact approval or mutate the ledge
     justified by behavioral surface and risk; include enclosing form repair
     guidance when delimiter or parse errors are in scope.
 
-Consultation exception: follow `AGENTS.md` for every architecture/software-design/
-system-contract decision, including local/UI design. First produce a GLM proposal;
-if no unchanged reconciled decision covers it, return **NEEDS_CONTEXT** and a
-`consultation_request` instead of finished-plan Markdown. Include `decision_scope`,
+Consultation exception: follow the `AGENTS.md` expert consultation contract.
+Ordinary design decisions need evidence-backed rationale, not expert dispatch,
+including local/UI design. When a mandatory trigger applies — the same material
+failure after one focused repair (evidenced by reproduction, validation or a
+violated invariant), an evidenced unresolved material technical conflict, or a
+critical unresolved security/permissions or irreversible-data technical boundary
+before acting across it — first state a `proposal` with responsibilities and
+invariant; if no unchanged reconciled decision covers it, return **NEEDS_CONTEXT**
+and a `consultation_request` instead of finished-plan Markdown. Controllers may
+also request bounded advice on consequential technical uncertainty. Include
+`decision_scope`,
 `trigger`, `question`, original `sources`, `invariant`, `evidence`, nullable
-`attempted_fix`, nonempty `glm_proposal`, and `decision_needed`. The controller
+`attempted_fix`, nonempty `proposal`, and `decision_needed`. The controller
 dispatches `expert-advisor` and returns evidenced reconciliation before dependent
 implementation; you have no delegation authority. Unresolved product/API/data
 policy stays human-owned. Advice is not final plan approval.

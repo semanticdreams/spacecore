@@ -14,17 +14,21 @@ ROOT = Path(__file__).resolve().parents[2]
 SKILL = ROOT / ".opencode/skills/requirements-reconciliation/SKILL.md"
 AGENTS = "supervisor planner implementer reviewer debug-advisor fast-dev-reviewer fast-dev live-dev".split()
 SKILLS = "brainstorming writing-plans subagent-driven-development systematic-debugging finishing-a-development-branch".split()
-# Task 4 must not alter model/variant/permissions (or other role configuration).
-# Deliberate future configuration changes must explicitly update these pins.
+# Protect every nonrouting frontmatter byte, including mode and permissions.
+# These fixed fingerprints come from trusted parent 2692081f79b6898deb6822a161360086d428f1bc,
+# after verifying its full-frontmatter hashes against the original Task 4 pins.
+# Only top-level model/variant lines are excluded: their presence and syntax are
+# independently guarded by check_opencode_permissions.py and its mutation tests.
+# Never regenerate expected configuration from the current role files.
 FRONTMATTER = dict(zip(AGENTS, [
-    "5f6865b2e67e117ee1a2e86930de3721f87a642c0b12028e8ae68a38e3d38399",
-    "8e4a4e6992ecbed663f7a46753ad8205411e32295031e7e00b64670ee3cd1b0c",
-    "45121cf5806585df6f0e261ed6e8c45182b140b789c4505aad33c54a25e34cce",
-    "04c299cb851598f93e1571e25d33dacf19b0b15db80ac084893e8a1fad10c821",
-    "321abc26a52e0d11b3207e2c923594ab99721240fd5fa348e51c36d75a926ee7",
-    "367d68d5ab9dc7165cbaddfff3513ad79d042dcfbb21d3d08811fc7203b96830",
-    "8a58560fc0093ac752c0696ac8a6aca7541dbbd35c2c19d16c37f64520e2b6e3",
-    "7da0acf8bd975ab7aa22e92b94a68c2fa6e95d078b7e8600fa5ccd42b439bbdf",
+    "0c5356f5fc4bc38041d42aeb66026449499cfa033148dcaaa19a1655b8dc4b89",
+    "3ea1a597a44232b4363f5e6cddf28d1b04aa32373cf2dde407fe7c01a3bfb31f",
+    "e92ddc220756d86d9cc7d29efb1fa1081c1ed0c1194a960c91daf34a0a7f4c98",
+    "5c55b760eb62d6d94c5a9036f170ec550b3212630d72dae1d6af597cba1e817d",
+    "263487c1ca81f82de997f544326ee7b5ef814723f87dd956e39757896bb27141",
+    "28e02a1866f7a1c46018fac96d84a53660d5022a55873e9b82d2c2c6e4b68c7d",
+    "e159d07483db7490553a7c5248e68f760880163d24a4147adba0834ad5d5da9b",
+    "fbc800fc5478ffc5beddec61dae08f09ba9975fe056ffeeaf42923e259433787",
 ]))
 
 
@@ -69,10 +73,37 @@ def test_assigned_touchpoints_discover_shared_skill(path):
     assert "requirements-reconciliation" in (ROOT / path).read_text()
 
 
+def assert_role_configuration(name, text):
+    front = re.sub(r"(?m)^(?:model|variant):[^\n]*\n", "", text.split("---", 2)[1])
+    assert hashlib.sha256(front.encode()).hexdigest() == FRONTMATTER[name]
+
+
 @pytest.mark.parametrize("name", AGENTS)
 def test_role_configuration_unchanged(name):
+    assert_role_configuration(name, (ROOT / f".opencode/agents/{name}.md").read_text())
+
+
+@pytest.mark.parametrize("name", AGENTS)
+def test_routing_edits_do_not_change_protected_configuration(name):
     text = (ROOT / f".opencode/agents/{name}.md").read_text()
-    assert hashlib.sha256(text.split("---", 2)[1].encode()).hexdigest() == FRONTMATTER[name]
+    for key, value in (("model", "example-provider/another-model"), ("variant", "another-variant")):
+        changed = re.sub(rf"(?m)^{key}:[^\n]*$", f"{key}: {value}", text)
+        assert changed != text
+        assert_role_configuration(name, changed)
+
+
+@pytest.mark.parametrize("name", AGENTS)
+def test_every_nonrouting_frontmatter_line_remains_protected(name):
+    text = (ROOT / f".opencode/agents/{name}.md").read_text()
+    before, front, after = text.split("---", 2)
+    lines = front.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        if not line.strip() or re.match(r"^(?:model|variant):", line):
+            continue
+        changed = lines.copy()
+        changed[index] = line.rstrip("\n") + " changed\n"
+        with pytest.raises(AssertionError):
+            assert_role_configuration(name, before + "---" + "".join(changed) + "---" + after)
 
 
 def test_autonomous_independent_artifact_review_contract():

@@ -47,7 +47,7 @@ NEEDS_CONTEXT rather than absorbing or unstaging unrelated work.
 3. Perform Catch-up Discovery and Decision below against the fetched main snapshot.
 4. Apply the meaningful-change filter to every candidate in that window, comparing actual narratives rather than source presence.
 5. A no-op must satisfy the whole-window accounting in Catch-up Discovery and Decision; only then stop without edits, commits, pushes, or PRs.
-6. For each warranted missing landing date, dispatch `implementer` to create the journal entry, regenerate indexes, and run local validation, explicitly using the stage-only/no-commit handoff above. Preserve pre-existing dated sources; unresolved work on an existing source follows the decision table below.
+6. For each warranted landing date, dispatch `implementer` to create a missing entry or correct an existing entry on its actual landing date, using the stage-only/no-commit handoff above. Regenerate indexes and run local validation; follow the preservation contract and decision table below.
 7. Dispatch `reviewer` over the complete assigned staged content before commit and before push. Every fix dispatch repeats stage-only/no-commit and is followed by refreshed staged review.
 8. The supervisor commits only the exact independently approved, locally validated staged devlog automation content and verifies a clean tree before any safe merge. Preserve unrelated state; do not bypass the wrapper's clean-tree guard.
 9. Dispatch `git-integrator` to fetch `origin` and confirm the automation branch has accounted for current `origin/main`. If behind, use the safe-merge wrapper when permitted. Route conflicts or regenerated docs repairs through the stage-only/no-commit handoff above: implementer locally validates, reviewer inspects the refreshed complete assigned staged diff, then supervisor commits only approved content and verifies a clean tree. Do not rebase or force-push unless the human explicitly requests it.
@@ -94,14 +94,20 @@ request merely because the landing date predates the run.
 | --- | --- |
 | Missing dated source + meaningful uncovered work | Create one brief entry for that landing date. |
 | Already covered or not meaningful | Skip with a concise reason; do not create filler. |
-| Meaningful uncovered work on an existing published source | Preserve the source and request a human publication-treatment decision; do not rewrite it or misdate the work. |
+| Meaningful uncovered work on an existing published source | Autonomously correct the entry on its actual landing date through the same stage-only implementation, validation and independent review; do not misdate the work. |
 | Uncertain evidence or boundary | Investigate; fail closed with the unresolved question if uncertainty remains, not guess or no-op. |
 
-Preserve all pre-existing dated journal sources byte-for-byte. An existing source
+Preserve accurate narrative, useful links, dates/frontmatter and attribution when
+correcting an existing entry; retain one short narrative paragraph and the
+compression/style pass. Source presence alone does not require human approval.
+An explicit immutable-publication restriction is a real conflict: surface the
+restriction and decision needed rather than overriding it. Follow
+`AGENTS.md#autonomous-workflow-decisions` without bypassing capability or policy
+boundaries. An existing source
 with unresolved meaningful work is not a successful no-op. No-op requires a fully
 examined interval and no unresolved meaningful work. Report the pinned tip,
 inclusive boundary, and concise covered/skipped reasons for the whole window,
-including any created dates or unresolved publication decisions. Keep this evidence
+including created/corrected dates and any unresolved explicit restriction. Keep this evidence
 in normal review handoffs; introduce no persistent ledger or state schema.
 
 ## Landing-Date Attribution
@@ -172,7 +178,9 @@ are committed and the tree is clean, re-fetch `origin`, recheck current
 Report BLOCKED or HUMAN_DECISION_REQUIRED only when systematic debugging
 establishes that progress requires credentials, inaccessible infrastructure,
 unsafe git history decisions, unreproducible behavior after reasonable evidence
-gathering, or a product/API/data/architecture choice.
+gathering, or unknown product/API/data policy. Ordinary technical/editorial recovery
+choices follow `AGENTS.md#autonomous-workflow-decisions`; actual resource/evidence
+exhaustion produces truthful incomplete status, not routine retry approval.
 
 ## Commit, Push, and PR
 

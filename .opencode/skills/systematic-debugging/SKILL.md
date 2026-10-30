@@ -13,14 +13,14 @@ description: Use when encountering any bug, test failure, or unexpected behavior
 
 Selected fast-dev/live-dev retain direct diagnosis/edits/fixes under their exact
 `AGENTS.md` exception, not the strict worker/advisor pipeline below. That exemption
-does not waive narrow dual-model advice: every architecture/software-design/system-
-contract decision (including local/UI) needs GLM proposal, GPT critique of original
-sources and evidenced reconciliation before dependent implementation. Reuse
-unchanged reconciled decisions; material design/contract/assumption changes reopen
-them. Same material failure after one focused repair, critical unresolved boundaries
-and evidenced material technical conflicts also trigger scoped `expert-advisor`
-advice before further dependent work. Initial syntax repair/TDD RED/routine
-follow-through alone stay GLM. Unknown product/API/data policy is human-owned.
+does not waive targeted expert consultation. Ordinary design decisions need
+evidence-backed rationale, not expert dispatch, including local/UI design; reuse
+unchanged reconciled decisions and material design/contract/assumption changes
+reopen them. The same material failure after one focused repair, critical
+unresolved boundaries and evidenced material technical conflicts also trigger
+scoped `expert-advisor` advice before further dependent work. Initial syntax
+repair and expected TDD RED stay routine. Unknown product/API/data policy is
+human-owned.
 Live-dev establishes manual mode before edits and explicitly refreshes validated
 code changes; consultation alone requires no lifecycle action.
 
@@ -48,6 +48,13 @@ review. One same-author format-only redelivery, marked spent before dispatch, is
 not a code-fix round. Valid delivery resumes the ordinary handler, not approval;
 exhausted/stale/untrusted delivery blocks without a budget reset. Direct primaries
 retain direct fixes; report-only repair triggers no live app setup or refresh.
+Quarantined delivery is not the task's end: apply the canonical `Autonomous
+operational recovery` rule before replaying work — authorize replacement work
+for the missing/unusable assessment on the same verified branch and base/head
+range, record immutable failure ancestry and every preserved obligation, and
+keep task-wide failure counts and budgets; recovery is not a budget reset,
+review shopping or approval. Missing records block only the replacement
+dispatch while they are gathered autonomously.
 
 ## The Iron Law
 
@@ -232,8 +239,8 @@ You MUST complete each phase before proceeding to the next.
 
 ### Phase 3.5: Diagnostic Advisor Gate
 
-**In strict debugging, the independent GLM diagnostic-advisor gate remains mandatory
-before implementing any fix. It is not a GPT call for every fix.**
+**In strict debugging, the independent diagnostic-advisor gate remains mandatory
+before implementing any fix. It is not expert advice on every fix.**
 
 0. **Ensure the artifact directory exists** (keeps debug files out of git):
    ```
@@ -249,7 +256,8 @@ before implementing any fix. It is not a GPT call for every fix.**
    - Proposed minimal fix (scope, files, approach)
    - Exact validation command that would confirm the fix
 
-2. **Dispatch the `debug-advisor`** (`opencode-go/glm-5.3-flash`, variant `high`). Provide only the evidence
+2. **Dispatch the `debug-advisor`** (`model`/`variant` are configured in the
+   role frontmatter). Provide only the evidence
    brief path and relevant source-file paths. The advisor is read-only — it
    judges the diagnosis, it does not re-investigate.
 
@@ -257,15 +265,15 @@ before implementing any fix. It is not a GPT call for every fix.**
 
    - **needs_consultation** → handle before `confirmed` or any normal transition.
      The controller dispatches `expert-advisor` with the canonical
-     `consultation_request` from `AGENTS.md` (including nonempty `glm_proposal`
+     `consultation_request` from `AGENTS.md` (including nonempty `proposal`
      for design/contract decisions and inspectable original sources/diffs).
      Record critique/evidenced reconciliation in the brief; resolve/validate
-     material findings or escalate to the human. Return that evidence to the
-     GLM advisor for its own diagnostic verdict. Denied worker delegation is a
-     pending request, not a finding, blanket blocker or confirmation. Unavailable
-     advice/unanswered necessary decisions block dependent work. One bounded
-     question per scope; reconsult only with new material evidence, never loop
-     for approval or move the whole fix to GPT.
+      material findings or escalate to the human. Return that evidence to the
+      advisor for its own diagnostic verdict. Denied worker delegation is a
+      pending request, not a finding, blanket blocker or confirmation. Unavailable
+      advice/unanswered necessary decisions block dependent work. One bounded
+      question per scope; reconsult only with new material evidence, never loop
+      for approval or move the whole fix elsewhere.
    - **confirmed** → proceed to Phase 4.1 (Prepare). The evidence brief
      becomes the basis for the debug-fix brief.
    - **needs_more_evidence** → run the specific commands the advisor
@@ -282,9 +290,10 @@ before implementing any fix. It is not a GPT call for every fix.**
     starting a new implementation round. The advisor re-evaluates with the
     additional data.
 
-   If the same material failure remains after one focused repair, obtain scoped
-   expert advice before another repair, even if the next GLM diagnosis is confident.
-   Advice never replaces the ordinary GLM gate or grants approval/permissions.
+   If the same material failure after one focused repair still reproduces,
+   violates validation or an invariant, obtain scoped expert advice before
+   another repair, even if the next diagnosis is confident.
+   Advice never replaces the ordinary diagnostic gate or grants approval/permissions.
 
 ### Phase 4: Implementation
 
@@ -362,10 +371,10 @@ Global constraints:
 
 Handle reviewer `status: needs_consultation` in full or targeted verification
 before normal findings/verified/pass routing. Use the Phase 3.5 pending handler
-and resume that GLM reviewer with the reconciled evidence. Handle adjudicator
+and resume that reviewer with the reconciled evidence. Handle adjudicator
 `needs_consultation` the same way before accept/park/escalate or breaker routing.
 Requests alone do not consume a fix round, reset/bypass caps or replace the
-independent GLM implementer → reviewer → pass requirement. Same-material-failure
+independent implementer → reviewer → pass requirement. Same-material-failure
 advice precedes another repair; caps below still apply.
 
 If review status is `candidates_found` with Critical or Important findings:
@@ -467,7 +476,7 @@ If you catch yourself thinking:
 | **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
 | **2. Pattern** | Find working examples, compare | Identify differences |
 | **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **3.5 Advisor Gate** | Write evidence brief, dispatch GLM debug-advisor; handle triggered expert requests first | Diagnosis confirmed with necessary decisions reconciled |
+| **3.5 Advisor Gate** | Write evidence brief, dispatch debug-advisor; handle triggered expert requests first | Diagnosis confirmed with necessary decisions reconciled |
 | **4. Implementation** | Dispatch implementer, review, fix loop, verify | Bug resolved, review clean, tests pass |
 
 ## When Process Reveals "No Root Cause"

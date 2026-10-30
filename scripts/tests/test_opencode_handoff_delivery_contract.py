@@ -30,7 +30,7 @@ def section(path, heading):
     ("correction_used=0/1", "separate from the identity", "not an attempt in the key", "before dispatch"),
     ("declared role format", "required fields", "identity", "range", "before consultation, verdict, fix, cap or completion"),
     ("Valid initial and corrected deliveries", "ELIGIBLE_FOR_NORMAL_HANDLING", "semantic", "not approval", "framing"),
-    ("original GLM author", "retained author records", "precise delivery errors", "original and corrected payloads separately"),
+    ("original author", "retained author records", "precise delivery errors", "original and corrected payloads separately"),
     ("No caller-side fence stripping", "aliases", "defaults", "partial verdict salvage"),
     ("No verdict, findings, evidence or range facts", "unambiguous assignment metadata"),
     ("format-only is an assignment mode", "not an extra JSON response key", "no universal new status or field"),
@@ -38,7 +38,7 @@ def section(path, heading):
     ("missing/changed/stale/untrusted scope", "author unavailable", "new worker", "paper SHAs"),
     ("one invalid correction", "no second", "rename", "redispatch", "Duplicates do not reset"),
     ("new authorized substantive scope/range", "actual new work", "normal review flow", "not an automatic fresh-review loophole"),
-    ("GPT expert answers", "capability wrapper JSON/refusals", "rerun privileged operations"),
+    ("Expert-submitted answers", "capability wrapper JSON/refusals", "rerun privileged operations"),
     ("neither consumes nor resets", "code-fix", "consultation budgets", "before dependent implementation"),
     ("direct edits/fixes", "local checkpoints", "explicit wrap-up", "one observational review", "no app manual setup or refresh"),
 ])

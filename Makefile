@@ -153,7 +153,7 @@ requirements-check:
 
 opencode-check: requirements-check
 	python3 scripts/check_opencode_permissions.py --repo-root .
-	python3 -m pytest scripts/tests/test_check_opencode_permissions.py scripts/tests/test_opencode_capabilities.py scripts/tests/test_opencode_git_integrate.py scripts/tests/test_opencode_pr_operator.py scripts/tests/test_opencode_windows_ci_repro.py scripts/tests/test_opencode_windows_ci_policy_docs.py scripts/tests/test_live_dev.py scripts/tests/test_sdd_workspace.py
+	python3 -m pytest scripts/tests/test_check_opencode_permissions.py scripts/tests/test_opencode_capabilities.py scripts/tests/test_opencode_git_integrate.py scripts/tests/test_opencode_pr_operator.py scripts/tests/test_opencode_windows_ci_repro.py scripts/tests/test_opencode_windows_ci_policy_docs.py scripts/tests/test_opencode_handoff_recovery_contract.py scripts/tests/test_live_dev.py scripts/tests/test_sdd_workspace.py
 
 download-models-data:
 	wget -O assets/data/models-dot-dev.json https://models.dev/api.json

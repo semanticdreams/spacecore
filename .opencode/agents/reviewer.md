@@ -1,7 +1,7 @@
 ---
 description: Performs independent full reviews and targeted fix verification without editing code
 mode: subagent
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 variant: high
 steps: 55
 permission:
@@ -248,16 +248,18 @@ Return only one valid JSON object, with no Markdown fence.
 
 ### Pending consultation (all modes, before an ordinary verdict)
 
-Follow `AGENTS.md`: new/materially changed architecture, software-design or
-system-contract decisions require a GLM proposal and bounded GPT critique before
-dependent implementation, even for local/UI work. Reuse unchanged reconciled
-decisions. The same material failure after one focused repair, critical unresolved
-boundaries and material technical conflicts also trigger consultation. `task: deny`
+Follow the `AGENTS.md` expert consultation contract. Ordinary design decisions
+need evidence-backed rationale but no expert dispatch, including local/UI work.
+Reuse unchanged reconciled decisions. The same material failure after one
+focused repair (evidenced by reproduction, validation or a violated invariant),
+a critical unresolved security/permissions or irreversible-data boundary, and
+evidenced unresolved material technical conflicts (an ordinary reviewer finding
+is not automatically such a conflict) also trigger consultation. `task: deny`
 means return the request to the controller, not a blanket blocker, invented finding
 or approval. Preserve the supplied review mode (`full`, `verify`, `ci_review`).
 The controller dispatches `expert-advisor`, reconciles, and returns the evidence
 for you to finish your own review. Pending requests never count as pass/verified.
-Use the canonical request fields; `glm_proposal` is nonempty for design/contract
+Use the canonical request fields; `proposal` is nonempty for design/contract
 decisions, otherwise nullable. Example:
 
 ```json
@@ -273,7 +275,7 @@ decisions, otherwise nullable. Example:
     "invariant": "Failed saves leave current content attached",
     "evidence": ["The proposed transition changes detach ordering"],
     "attempted_fix": null,
-    "glm_proposal": "Save and validate first; transfer ownership only on success.",
+    "proposal": "Save and validate first; transfer ownership only on success.",
     "decision_needed": "Reconcile ownership and failure guarantees"
   }
 }

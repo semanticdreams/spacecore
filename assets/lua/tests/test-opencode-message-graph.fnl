@@ -29,6 +29,7 @@
 (local PartViews (require :graph/view/views/opencode-session-message-part))
 (local InfoViews (require :graph/view/views/opencode-session-message-info))
 (local MessageViews (require :graph/view/views/opencode-session-message))
+(local json (require :json))
 
 (fn test-message-node-projects-parent-snapshot []
   (local parent (ready-parent-with-messages))
@@ -171,6 +172,87 @@
   (built.drop))
 
 (table.insert tests {:name "opencode part node renders lossless tool fields" :fn test-part-node-renders-lossless-tool-fields})
+
+(fn part-view-inputs [built]
+  (if (= (type built.inputs) :function) (built:inputs) built.inputs))
+
+(fn part-section-text [inputs index]
+  (local input (. inputs index))
+  (input.buffer:get-text))
+
+(fn test-part-fallbacks-show-json-in-inputs []
+  (local cases [{:id "p1" :type "step-start" :snapshot "snapshot-1"}
+               {:id "p1" :type "step-finish" :tokens {:input 12 :output 34} :cost 0.5}
+               {:id "p1" :type "future-part" :nested {:flag false :values [1 2 3]}
+                :payload (string.rep "data" 200)}
+               {:id "p1" :nested {:flag false}}
+               {:id "p1" :type "patch" :files ["example.fnl"] :hash "hash-1"}])
+  (each [_ part (ipairs cases)]
+    (local parent (make-ready-message-parent [part]))
+    (local graph (fake-parent-graph))
+    (tset graph.nodes "opencode-session-message:ses_1/msg-b" parent)
+    (local node (PartNode {:session-id "ses_1" :message-id "msg-b" :part-id "p1"}))
+    (node:mount graph)
+    (local expected (json.dumps part))
+    (each [_ builder (ipairs [PartViews.Preview PartViews.View])]
+      (local built ((builder node {}) (make-view-ctx)))
+      (local inputs (part-view-inputs built))
+      (assert (= (length inputs) 6))
+      (each [_ input (ipairs inputs)]
+        (assert (not input.editable?) "part JSON inputs must remain read-only")
+        (assert (not (string.find (input.buffer:get-text) "see raw part" 1 true))))
+      (local expected-content
+        (if (= part.type "patch") (json.dumps {:files part.files :hash part.hash}) expected))
+      (assert (= (part-section-text inputs 1) expected-content)
+              "fallback Content must contain the JSON, not a pointer placeholder")
+      (assert (= (part-section-text inputs 2) expected)
+              "fallback Detail must contain the complete part JSON")
+      (assert (= (part-section-text inputs 6) expected))
+      (assert (= (part-section-text inputs 3) "(not a tool part)"))
+      (built:drop))
+    (assert (= (json.dumps part) expected) "display must not mutate the source part")
+    (node:drop)))
+
+(fn test-part-json-inputs-follow-parent-snapshots []
+  (each [_ builder (ipairs [PartViews.Preview PartViews.View])]
+    (local first {:id "p1" :type "step-start" :snapshot "before"})
+    (local parent (make-ready-message-parent [first]))
+    (local graph (fake-parent-graph))
+    (tset graph.nodes "opencode-session-message:ses_1/msg-b" parent)
+    (local node (PartNode {:session-id "ses_1" :message-id "msg-b" :part-id "p1"}))
+    (node:mount graph)
+    (local built ((builder node {}) (make-view-ctx)))
+    (local inputs (part-view-inputs built))
+    (assert (= (part-section-text inputs 1) (json.dumps first)))
+    (local replacement {:id "p1" :type "step-finish" :tokens {:output 42} :cost 0})
+    (set parent.message.parts [replacement])
+    (parent.changed:emit parent)
+    (each [_ index (ipairs [1 2 6])]
+      (assert (= (part-section-text inputs index) (json.dumps replacement))
+              "JSON input must update with the current parent snapshot"))
+    (local unchanged (. inputs 1 :buffer))
+    (parent.changed:emit parent)
+    (assert (= (. inputs 1 :buffer) unchanged) "identical JSON must retain its buffer")
+    (set parent.state :loading)
+    (parent.changed:emit parent)
+    (each [_ input (ipairs inputs)]
+      (assert (string.find (input.buffer:get-text) "Waiting for the parent snapshot" 1 true)))
+    (set parent.state :ready)
+    (set parent.message.parts [])
+    (parent.changed:emit parent)
+    (assert (= node.state :absent))
+    (each [_ input (ipairs inputs)]
+      (assert (string.find (input.buffer:get-text) "Not in the current snapshot" 1 true)))
+    (set parent.message.parts [replacement])
+    (parent.changed:emit parent)
+    (assert (= node.state :ready))
+    (each [_ index (ipairs [1 2 6])]
+      (assert (= (part-section-text inputs index) (json.dumps replacement))))
+    (built:drop)
+    (node:drop)))
+
+(table.insert tests {:name "opencode part fallbacks display JSON directly in read-only inputs" :fn test-part-fallbacks-show-json-in-inputs})
+(table.insert tests {:name "opencode part JSON inputs track parent snapshots and availability" :fn test-part-json-inputs-follow-parent-snapshots})
 
 (fn test-parts-node-lists-validated-parts-and-opens-them []
   (local parent (make-ready-message-parent

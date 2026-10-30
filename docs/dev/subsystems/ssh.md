@@ -80,6 +80,29 @@ Credential material must not appear in URLs, logs, structured errors, or result 
 
 Every long-running operation returns an operation ID. Callers can cancel with `ssh.cancel`, and per-operation `timeout-ms` values produce explicit timeout terminal states. Cancellation reports `operation-cancelled` with `error-code="cancelled"`.
 
+## SFTP finalization
+
+For a successful upload or download, the libssh backend finishes checked local
+I/O, closes the remote file with a checked result, and frees the transfer's SFTP
+session **before** publishing `sftp-complete` or `operation-success`. Uploads
+check size/seek, distinguish read errors from valid EOF (including a partial final
+buffer), and check local close. Downloads check both flush and close. This is an
+I/O-completion guarantee, not an `fsync` or durable-storage promise.
+
+Local read/finalization failures report `local-file-error`; remote close failures
+report `remote-file-error`. Cleanup does not replace a primary transfer error.
+Remote close consumes its handle even on error: the per-file mutex protects an
+idempotent, cached close result, and the handle is never retried. Explicit close
+precedes SFTP free even if cancellation retains another shared reference. Parent
+SSH ownership remains alive throughout teardown. `sftp_free` returns void, so
+the guarantee is that teardown finished, not that every internal free failure
+can be reported.
+
+Cancellation and timeouts remain independently arbitrated terminal winners,
+**not cleanup barriers**. Activity is rechecked after blocking finalization;
+`sftp-complete` and `operation-success` remain separate events, not an atomic
+pair. This does not make arbitrary concurrent operations on one SSH session safe.
+
 ## Fennel fleet helper
 
 `(require :ssh.fleet)` exposes `exec` and `cancel`. `ssh.fleet.exec` accepts a host array plus `{ :command ... :concurrency ... :timeout-ms ... :env ... }` and returns one result per host with `host`, `port`, `username`, `ok`, `exit-status`, `stdout`, `stderr`, `error-code`, `error`, and `duration-ms`.
@@ -93,6 +116,20 @@ SKIP_KEYRING_TESTS=1 XDG_DATA_HOME=/tmp/space/tests/xdg-data SPACE_DISABLE_AUDIO
 ```
 
 The fixture creates all files under `/tmp/space/tests/ssh-fixture-*`, generates ephemeral user and host keys, supplies fixture environment variables to `tests.test-ssh-integration:main`, including positive preallocated local and remote tunnel listen ports, and exits successfully with a clear skip message only when OpenSSH tools are unavailable. After the tools are present, fixture startup failures are reported as nonzero errors.
+
+On Linux with libssh, `space_ssh_sftp_finalization` runs native real-backend
+regressions through the same disposable fixture (required, never skipped):
+
+```bash
+SPACE_TEST_REQUIRE_SSH_BACKEND=1 SPACE_TEST_REQUIRE_SSH_FIXTURE=1 ctest --test-dir build -R '^space_ssh_sftp_finalization$' --output-on-failure
+```
+
+Executable-local GNU linker wrappers gate real close/free calls to verify
+success ordering, cancellation/timeout arbitration and resource lifetimes in
+both transfer directions. Separately labelled close-error injection calls real
+close once before returning an error; a test-only local descriptor invalidation
+exercises non-EOF upload read failure. Binary/empty bytes, invalid local paths,
+buffered `/dev/full` finalization and primary-error preservation are covered.
 
 ## Current status and future work
 

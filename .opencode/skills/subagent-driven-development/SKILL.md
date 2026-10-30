@@ -9,12 +9,14 @@ Execute plan by dispatching the **implementer** subagent per task, a task review
 
 **Why subagents:** Each role has a specialized prompt and the right model for its job. The controller constructs exactly what each subagent needs — no inherited session context.
 
-## Model Selection
+## Role routing
 
-All ordinary project roles use `opencode-go/glm-5.3-flash`, variant `high`.
-Only read-only `expert-advisor` uses `openai/gpt-6.1-sol` high. Project roles, not
-inherited built-in/hidden/global agents, are covered; use project `explorer` for
-exploration. Fix-loop retries keep the GLM implementer, including rounds 4-5.
+Every project role's `model:` and `variant:` frontmatter lines under
+`.opencode/agents/` are authoritative routing configuration, editable without
+checker, policy or test pin changes; instruction bodies never carry model
+identities. Project roles, not inherited built-in/hidden/global agents, are
+covered; use project `explorer` for exploration. Fix-loop retries keep the same
+implementer, including rounds 4-5.
 
 ## Handoff delivery preflight
 
@@ -23,36 +25,44 @@ cap or completion transitions for every received report, including targeted/CI
 and adjudication. One same-author format-only redelivery, marked spent before
 dispatch, is not a code-fix round. Valid delivery resumes the ordinary handler,
 not approval; exhausted/stale/untrusted delivery blocks without a budget reset.
+Quarantined delivery is not the task's end: apply the canonical `Autonomous
+operational recovery` rule before replaying work — authorize replacement work
+for the missing/unusable assessment on the same verified branch and base/head
+range, record immutable failure ancestry and every preserved obligation, and
+keep task-wide failure counts and budgets; recovery is not a budget reset,
+review shopping or approval. Missing records block only the replacement
+dispatch while they are gathered autonomously.
 
 ## Pending consultation handler
 
 Apply the canonical `AGENTS.md` contract before normal report/review/fix/cap
-transitions. Every architecture/software-design/system-contract decision needs a
-GLM proposal, bounded GPT critique of original sources and evidenced reconciliation
-before dependent implementation, including confident local/UI/internal design.
-Reuse unchanged reconciled decisions; reopen material design/contract/assumption
-changes. The same material failure after one focused repair also requires advice
+transitions. Mandatory expert triggers are evidenced: the same material failure
+after one focused repair, an evidenced unresolved material technical conflict, and
+a critical unresolved security/permissions or irreversible-data technical boundary
+before acting across it. Ordinary design decisions still need evidence-backed
+rationale but no expert dispatch, including local/UI/internal design. Reuse
+unchanged reconciled decisions; reopen material design/contract/assumption
+changes. The same material failure after one focused repair requires advice
 before another repair; initial syntax/typo repair, expected TDD RED and routine
-follow-through alone do not. Critical unresolved boundaries/evidenced material
-technical conflicts trigger advice; unknown product/API/data policy is human-owned.
+follow-through alone do not. Unknown product/API/data policy is human-owned.
 
 The task-capable controller handles implementer/planner `NEEDS_CONTEXT` containing
 `consultation_request`, reviewer (full/targeted/CI) or adjudicator
 `status: needs_consultation`, and diagnostic `verdict: needs_consultation` first:
 
-1. Validate the canonical request fields, including nonempty `glm_proposal` for
+1. Validate the canonical request fields, including nonempty `proposal` for
    design/contract decisions. Workers keep delegation denied; this is a pending
-   request, not a finding, blanket role blocker, approval or full GPT task.
+   request, not a finding, blanket role blocker, approval or a whole-task rerun.
 2. Dispatch `expert-advisor` for that one question with inspectable original
-   sources/diffs and evidence, not only the GLM summary.
+   sources/diffs and evidence, not only the requesting worker's summary.
 3. Record scope/proposal/evidence/critique and evidenced reconciliation in existing
    handoff/progress artifacts. Resolve/validate material findings or escalate to
    the human. Unavailable advice or unanswered necessary decisions block dependent
    work. Reconsult only for genuinely new material evidence; do not loop for approval.
-4. Return the decision/evidence to the original GLM worker to finish its own
+4. Return the decision/evidence to the original worker to finish its own
    report/review/adjudication. Resume the interrupted transition only after its
    normal verdict; expert advice is not pass/verified/confirmed. Requests alone do
-   not consume repair rounds, reset fix caps or replace independent GLM review.
+   not consume repair rounds, reset fix caps or replace independent review.
 
 Capability wrappers retain verbatim JSON/refusals; advice cannot grant authority.
 

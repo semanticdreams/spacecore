@@ -136,27 +136,29 @@
   (if (= (type accessor) :function) (accessor) accessor))
 
 (fn edge-identity [edge]
-  (local label (if edge.label edge.label "?"))
-  (.. (. edge.source :key) ">" (. edge.target :key) ":" label))
+  (.. edge.source.key "->" edge.target.key))
 
-(fn add-deduped-edge [edges edge]
-  ;; Mirrors the real map's dedupe: re-adding an equivalent edge returns
-  ;; the existing edge instead of inserting a duplicate.
+(fn add-deduped-edge [graph edge]
+  ;; Real-map explicit identity is endpoint-only. Re-adding replaces the
+  ;; record rather than adding another edge, even when its label differs.
   (local key (edge-identity edge))
-  (var existing nil)
-  (each [_ e (ipairs edges)]
-    (when (and (not existing) (= (edge-identity e) key))
-      (set existing e)))
+  (local existing (. graph.edge-map key))
   (if existing
-      existing
       (do
-        (table.insert edges edge)
-        edge)))
+        (each [i e (ipairs graph.edges)]
+          (when (= e existing) (tset graph.edges i edge)))
+        ;; Real-map add-edge replacement emits edge-added alongside record replacement.
+        (when graph.edge-added
+          (graph.edge-added:emit {:edge edge})))
+      (table.insert graph.edges edge))
+  (tset graph.edge-map key edge)
+  edge)
 
 (fn fake-parent-graph []
-  (local graph {:resolved [] :edges [] :nodes {} :removals []
+  (local graph {:resolved [] :edges [] :edge-map {} :nodes {} :removals []
                 :islands {} :island-history []
-                :node-added (Signal) :topology-installed (Signal)
+                :node-added (Signal) :edge-added (Signal)
+                :topology-installed (Signal)
                 :node-replaced (Signal) :node-removed (Signal)})
   (set graph.lookup (fn [_self key] (. graph.nodes key)))
   (set graph.upsert-island
@@ -190,10 +192,11 @@
              existing
              (do
                (local created (make-session-node (make-client-stub)))
+               (set created.key key)
                (tset graph.nodes key created)
                created))))
   (set graph.add-edge
-       (fn [_self edge] (add-deduped-edge graph.edges edge)))
+       (fn [_self edge] (add-deduped-edge graph edge)))
   (set graph.remove-nodes
        (fn [_self nodes opts]
          (table.insert graph.removals {:nodes nodes :opts opts})))

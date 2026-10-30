@@ -25,11 +25,12 @@ Live-dev establishes manual mode before editing and explicitly refreshes after
 validated changes, with no filesystem watching or lifecycle confirmation prompts.
 The default `supervisor` is unchanged.
 
-This routine-advisor exemption **does not waive** mandatory **dual-model** input
-on architecture/software-design/system-contract decisions or triggered difficult
-questions below. Advice is narrow, not a worker pipeline or second full review.
-Live manual mode is required before edits; validated code changes require explicit
-refresh. Consultation alone does not require app lifecycle actions.
+This routine-advisor exemption **does not waive targeted expert consultation**:
+its direct ownership and one observational wrap-up review do not remove
+consultation triggers. Ordinary design decisions still need
+evidence-backed rationale without expert dispatch. Live manual mode is required
+before edits; validated code changes require explicit refresh. Consultation alone
+does not require app lifecycle actions.
 Wrap-up uses one observational `fast-dev-reviewer` review of the whole branch;
 fixes are direct, followed by self-review and revalidation, not mandatory
 independent re-review per fix. Use raw Git/GitHub for this authorized lifecycle.
@@ -40,6 +41,34 @@ required validation failures; diagnose and fix them rather than bypass them.
 Environment isolation, not narrow tool permissions, bounds these primaries' authority.
 For all other agents, retain their existing process and permission contracts; this
 exception does not change an already-running agent's rules.
+
+## Autonomous workflow decisions
+
+Within the authorized task, establish scope and evidence, choose a proportionate,
+reversible, contract-consistent action, use the applicable workflow lane, record
+the rationale and continue. Routine technical, editorial and recovery decisions
+need no human approval; an ordinary architecture choice is not itself a human-owned
+policy question. Investigate uncertainty and use required consultation rather than
+guessing or treating every choice as a blocker.
+
+The receiving controller must triage worker NEEDS_CONTEXT/BLOCKED reports and
+adjudicator escalations: inspect the actual missing evidence or decision, gather
+permitted evidence and required advice, reconcile it, and resume the worker through
+the existing lane. These reports are not automatically questions for the human.
+Continue separable permitted work while dependent work is paused. Actual
+resource/evidence exhaustion produces truthful incomplete status with concrete
+blockers and unfinished obligations, not a request for routine retry approval or
+an invented success.
+
+This grants no new authority. Preserve strict implementer → independent reviewer
+→ pass and fast/live direct ownership, consultation triggers, capability refusals,
+credential/access boundaries, explicit checkpoints, explicit publication authority,
+and all validation, clean-tree, current-main, protected-test and merge-queue gates.
+Unknown product/API/data policy, unauthorized destructive actions, unsafe-history
+decisions and genuine permission/safety boundaries remain human-owned. An explicit
+immutable-publication restriction is a real conflict; the mere presence of a
+published source is not. Do not bypass a wrapper refusal, expand scope or invent
+policy because the user is unavailable or time is short.
 
 ## Preserve development records
 
@@ -58,43 +87,48 @@ handoff payloads may remain private, with safe progress summaries tracked.
 This applies to every workflow, including fast-dev/live-dev, but does not make
 extra design/planning documents mandatory for otherwise small changes.
 
-## GLM-default consultation contract
+## Targeted expert consultation contract
 
-All sixteen existing project roles use `opencode-go/glm-5.3-flash`, with
-variant `high`: supervisor, planner, implementer, reviewer, debug-advisor, adjudicator,
-explorer, web-researcher, config-auditor, git-integrator, github-operator,
-pr-recovery-operator, windows-ci-reproducer, fast-dev, live-dev, fast-dev-reviewer.
-Only `expert-advisor` uses `openai/gpt-6.1-sol`, variant `high`, read-only subagent.
-This covers project roles only, not inherited built-in/hidden/global agents.
-Use project `explorer` and named workers, not built-in general/explore as an
-implicit model fallback. Restart OpenCode after the reviewed rollout; running
-sessions retain their loaded roles and must not claim they already use GLM.
+Every project role's `model:` and `variant:` frontmatter lines in `.opencode/agents/`
+are authoritative routing configuration; both lines are required, syntax-validated,
+editable independently, and never duplicated in instruction bodies. The required
+project roles are supervisor, fast-dev, live-dev, planner, implementer, reviewer,
+fast-dev-reviewer, debug-advisor, adjudicator, explorer, web-researcher,
+config-auditor, git-integrator, github-operator, pr-recovery-operator,
+windows-ci-reproducer and expert-advisor. This covers project roles only, not
+inherited built-in/hidden/global agents. Use project `explorer` and named workers,
+not built-in general/explore as an implicit model fallback. Restart OpenCode after
+the reviewed rollout; running sessions retain their loaded roles and must not
+claim they already use new routing.
 
-### When both models are mandatory
+### When expert advice is mandatory
 
-- **Every architecture, software-design or system-contract decision**, before
-  dependent implementation: responsibilities, boundaries, abstractions, state or
-  resource ownership, interfaces, data flow, failure/lifetime guarantees and
-  persistence semantics. This includes meaningful local, internal and UI design,
-  even when confident and no failure has occurred; pilot failures are examples,
-  not the limit of this rule.
-- A critical unresolved permissions/security boundary or irreversible-data
-  question before acting, or a material technical conflict supported by sources.
 - The **same material failure after one focused repair**, shown by reproduction,
-  validation or a violated invariant: consult before another repair.
+  validation or a violated invariant: consult via `expert-advisor` before another
+  dependent repair.
+- An evidenced unresolved material technical conflict; an ordinary reviewer
+  finding or normal design choice is not automatically such a conflict.
+- A critical unresolved permissions/security boundary or irreversible-data
+  question before acting across it.
 
-Routine execution/review/diagnosis, expected TDD RED, an initial syntax/typo repair,
-cosmetic naming, and mechanical follow-through on an unchanged reconciled design
-stay GLM. Collect missing evidence directly when permitted. Unknown product/API/
-data policy is **HUMAN_DECISION_REQUIRED**; GPT does not set policy.
+Controllers may request one bounded consultation for consequential technical
+uncertainty; optional advice is never a universal prerequisite. Ordinary design
+decisions still need evidence-backed rationale and unchanged reuse of reconciled
+decisions, but not expert dispatch — do not recreate universal consultation on
+material changes without a current reason. Routine execution/review/diagnosis,
+expected TDD RED, an initial syntax/typo repair, cosmetic naming, and mechanical
+follow-through on an unchanged reconciled design stay ordinary work. Collect
+missing evidence directly when permitted. Unknown product/API/data policy is
+**HUMAN_DECISION_REQUIRED**; the expert does not set policy.
 
 ### One bounded question, evidence, reconciliation and reuse
 
-GLM first states its proposal, responsibilities/contracts, invariant and rationale.
-The task-capable controller (supervisor or selected fast-dev/live-dev) dispatches
-`expert-advisor` for one question, not a whole task or implementation. Supply
-inspectable original source/diff paths or excerpts and validation evidence, not
-only the cheaper model's conclusions. The expert inspects original evidence.
+The requesting worker first states its proposal, responsibilities/contracts,
+invariant and rationale. The task-capable controller (supervisor or selected
+fast-dev/live-dev) dispatches `expert-advisor` for one question, not a whole task
+or implementation. Supply inspectable original source/diff paths or excerpts and
+validation evidence, not only summary conclusions. The expert inspects original
+evidence.
 
 Every `consultation_request` has exactly these fields:
 
@@ -107,25 +141,26 @@ Every `consultation_request` has exactly these fields:
   "invariant": "Failed saves leave the current child attached and usable",
   "evidence": ["current detach precedes the fallible save"],
   "attempted_fix": null,
-  "glm_proposal": "Validate and save before detaching; transfer ownership only on success, preserving the existing owner on failure.",
+  "proposal": "Validate and save before detaching; transfer ownership only on success, preserving the existing owner on failure.",
   "decision_needed": "Confirm the ownership/failure contract before implementation"
 }
 ```
 
-`attempted_fix` is nullable. `glm_proposal` is required and nonempty for design,
+`attempted_fix` is nullable. `proposal` is required and nonempty for design,
 architecture or contract decisions; it may be null for other triggers. Expert
 output has `decision_scope`, `status` (`answered`, `insufficient_evidence`,
 `requires_human`), `finding`, `evidence`, `action`.
 
-GLM records scope, proposal, original evidence, GPT critique and **evidenced
-reconciliation before dependent implementation** in existing handoff/progress
-artifacts. Resolve and validate material findings or escalate to the human;
-preference is not grounds to dismiss a material objection. One consultation per
-decision scope. Reuse unchanged reconciled decisions without repeat GPT tax;
-material design/contract/assumption changes reopen the decision. Reconsultation
-otherwise requires genuinely new material evidence, not another try for approval.
-Unavailable expert, insufficient evidence or an unanswered necessary decision
-blocks dependent work. Gather permitted evidence or ask the human; do not loop.
+The requesting controller records scope, proposal, original evidence, expert
+critique and **evidenced reconciliation before dependent implementation** in
+existing handoff/progress artifacts. Resolve and validate material findings or
+escalate to the human; preference is not grounds to dismiss a material objection.
+One consultation per decision scope. Reuse unchanged reconciled decisions without
+a repeat consultation tax; material design/contract/assumption changes reopen the
+decision. Reconsultation otherwise requires genuinely new material evidence, not
+another try for approval. Unavailable expert, insufficient evidence or an
+unanswered necessary decision blocks dependent work. Gather permitted evidence or
+ask the human; do not loop.
 
 ### Fail-closed handoff delivery
 
@@ -142,7 +177,7 @@ Record in existing handoff/progress artifacts (not a new tracking subsystem):
 - `correction_used=0/1`, separate from the identity, not an attempt in the key.
 - Immutable original and corrected payloads separately, delivery errors and state.
 
-For an initial eligible malformed delivery with the original GLM author available
+For an initial eligible malformed delivery with the original author available
 and retained author records supporting unchanged facts, stop dependent actions.
 Mark `correction_used=1` **before dispatch**, then resume that same author once with
 the original assignment/role contract, retained facts and precise delivery errors.
@@ -160,20 +195,71 @@ bookkeeping is not a worker response-schema extension. Revalidate the correction
 against the unchanged declared contract, identity/range and protected facts before
 ordinary semantic handling; successful serialization alone grants no verdict.
 
-Block dependent work for missing/changed/stale/untrusted scope, changed substantive
-facts, or author unavailable; do not paper over gaps with paper SHAs or a new worker
-impersonating the author. After one invalid correction, block: no second request,
-rename or redispatch reset. Duplicates do not reset the allowance. A genuinely
-new authorized substantive scope/range requires explicit actual new work through
-the normal review flow, not laundering the old invalid report and not an automatic
-fresh-review loophole. Escalation may gather context but cannot manufacture a verdict.
+Autonomous operational recovery: **Reject the unusable delivery, not the
+overall task.** An exhausted-correction, changed-fact, stale-snapshot or
+unavailable-author delivery is quarantined with immutable failure ancestry, and
+the task continues autonomously under existing permissions: an unusable
+delivery is evidence about that delivery, never by itself a human permission
+question. The receiving controller (supervisor or selected `fast-dev`/`live-dev`)
+authorizes explicit replacement work — usually a fresh worker, never
+impersonation — to complete a missing or unusable assessment on the same
+verified branch and base/head range; no artificial commit or range change is
+required. Before replacement dispatch, record in existing handoff/progress
+artifacts: predecessor identity and immutable failure ancestry, verified
+current local snapshot and complete assigned range, original requirements and
+global constraints, observed failure with diagnosis and a concrete changed
+strategy, trusted source/diff references with required independent
+investigation, established findings and pending consultations/adjudications,
+separately labelled untrusted leads from unusable reports for later
+verification, and continuing task-wide failure counts with
+fix/consultation/resource accounting.
 
-GPT expert answers and capability wrapper JSON/refusals are excluded from this GLM
-repair path: do not rewrite expert evidence/refusals or rerun privileged operations
-as a formatter. Existing expert one-question/new-material-evidence gates and
-capability refusals remain unchanged. Delivery repair neither consumes nor resets
-code-fix rounds or consultation budgets, and cannot defer required both-model
-design input before dependent implementation.
+Recovery stays budget- and scope-safe. These counts and obligations are
+task-wide across authors, sessions and decomposition; each genuinely new
+delivery receives its own ordinary format-correction allowance, which refunds
+no ancestor allowance or substantive fix/consultation/resource budget. Usable
+adverse assessments are not replaceable for review shopping: they keep the
+ordinary fixes, consultation and adjudication route; replacement work must
+cover the same complete range, and passing fragments never substitute for
+whole-range review. At two task-wide failures with the same signature — a
+format-only correction is not a substantive attempt — record a concrete changed
+strategy (gather evidence, narrower output, decomposition, or a different
+inspection method) before another dispatch; unchanged blind retries are
+refused, not the task. An attempt count alone never terminates the task: the
+threshold only forces a changed strategy, and truthful stopping still requires
+the evidenced actual resource/evidence blockers or the absence of a permitted
+productive next step — never a bare number. Missing obligation records or facts block only the
+replacement dispatch while they are gathered autonomously — evidence gathering,
+not a human permission question. Evidenced actual resource/tool exhaustion,
+evidence unavailable after permitted diagnosis, or no permitted productive next
+step produce truthful incomplete status, not approval, stating the concrete
+blocker, attempted strategies, retained state and unfinished obligations
+without requesting routine retry or replan authorization. Genuine
+product/API/data-policy, credential, safety, permission or unsafe-history
+decisions remain human-owned.
+
+A delivery with missing/changed/stale/untrusted scope, changed substantive facts
+or an author unavailable is quarantined — that delivery, not the task: block
+dependent work on that delivery, do not paper over gaps with paper SHAs or a new
+worker impersonating the author, and recover the task under the autonomous rule
+above.
+
+After one invalid correction there is no second request to the same author;
+**Duplicates do not reset the allowance**, and neither does a rename or a
+redispatch. A genuinely new authorized substantive scope/range requires
+explicit actual new work through the normal review flow, not laundering the old
+invalid report and not an automatic fresh-review loophole. Strict work still
+requires implementer → independent reviewer → pass; a fast/live replacement of
+an unusable observational report completes that wrap-up obligation instead of
+opening review shopping. Escalation may gather context but cannot manufacture a
+verdict.
+
+Expert-submitted answers and capability wrapper JSON/refusals are excluded from
+this report-repair path: do not rewrite expert evidence/refusals or rerun
+privileged operations as a formatter. Existing expert one-question/new-material-
+evidence gates and capability refusals remain unchanged. Delivery repair neither
+consumes nor resets code-fix rounds or consultation budgets, and cannot defer
+required design input before dependent implementation.
 
 Fast/live retain direct edits/fixes, local checkpoints, explicit wrap-up and one
 observational review. Same-author format-only redelivery is not a new full review
@@ -198,18 +284,18 @@ blanket role blocker or permission to label a request pass/confirmed/complete:
 
 Controllers handle these branches **before** pass/verified/confirmed, finding
 fix dispatch, cap/adjudication decisions or normal completion. Dispatch the
-expert, reconcile with evidence, then return the decision to the original GLM
-worker to finish its own assessment; advice never substitutes for that verdict.
+expert, reconcile with evidence, then return the decision to the original worker
+to finish its own assessment; advice never substitutes for that verdict.
 Requests alone do not consume a repair round or bypass a fix cap. Capability
 workers preserve verbatim wrapper JSON; controllers handle technical advice
 separately and never override wrapper refusals or human-owned choices.
 
-Strict work remains GLM implementer → independent GLM reviewer → pass. The
-ordinary GLM diagnostic-advisor gate remains mandatory in strict debugging;
-it is not GPT on every fix. Fast/live continue direct edits/fixes and one
-observational GLM whole-branch wrap-up review, not a second mandatory GPT review.
-Expert advice grants no edit, approval, checkpoint, publication or permission
-authority and does not replace testing or independent review.
+Strict work remains implementer → independent reviewer → pass. The ordinary
+diagnostic-advisor gate remains mandatory in strict debugging; it is not expert
+advice on every fix. Fast/live continue direct edits/fixes and one observational
+whole-branch wrap-up review, not a second mandatory full review. Expert advice
+grants no edit, approval, checkpoint, publication or permission authority and
+does not replace testing or independent review.
 
 ## Branch Convention
 
