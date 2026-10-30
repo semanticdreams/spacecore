@@ -10113,7 +10113,18 @@
     },
     {
       "confidence": "explicit",
-      "history": [],
+      "history": [
+        {
+          "action": "update",
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "prior": {
+            "confidence": "explicit",
+            "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy."
+          },
+          "reason": "Accepted Task3 cleanup: replace irrelevant asset-precedence rationale with the inspected source-specific ownership contract; preserve endpoints, confidence, provenance and history."
+        }
+      ],
       "id": "REL-47e17926-6b92-43f1-85d0-bcd800024884",
       "provenance": {
         "actor": "implementer/baseline-task-3-P",
@@ -10122,7 +10133,7 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/widget-ownership-and-teardown.md"
       },
-      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "rationale": "Widget ownership note13\u201319 and41\u201360 distinguishes Layout links from direct composite-child ownership and recursive drop, addressing the widget composition and teardown obligation without asset-lookup policy.",
       "retracted": false,
       "source": "ART-f7d4db46-b9fa-44ed-a4d5-6f915a5df20a",
       "target": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
@@ -10130,7 +10141,18 @@
     },
     {
       "confidence": "explicit",
-      "history": [],
+      "history": [
+        {
+          "action": "update",
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "prior": {
+            "confidence": "explicit",
+            "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy."
+          },
+          "reason": "Accepted Task3 cleanup: replace irrelevant asset-precedence rationale with the inspected source-specific ownership contract; preserve endpoints, confidence, provenance and history."
+        }
+      ],
       "id": "REL-514b9b0c-6a65-48a4-930e-96306ad6933f",
       "provenance": {
         "actor": "implementer/baseline-task-3-P",
@@ -10139,7 +10161,7 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-25-sandbox-scene-activity-design.md"
       },
-      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "rationale": "Sandbox scene design5\u201325 and42\u201375 assigns default 3D workspace content exclusively to retained Sandbox slots; other activities start empty and inactive slots neither render nor interact, addressing retained activity/session ownership.",
       "retracted": false,
       "source": "ART-f318ef34-fa79-4779-9e23-a9fc78f89fe7",
       "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
@@ -10147,7 +10169,18 @@
     },
     {
       "confidence": "explicit",
-      "history": [],
+      "history": [
+        {
+          "action": "update",
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "prior": {
+            "confidence": "explicit",
+            "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy."
+          },
+          "reason": "Accepted Task3 cleanup: replace irrelevant asset-precedence rationale with the inspected source-specific ownership contract; preserve endpoints, confidence, provenance and history."
+        }
+      ],
       "id": "REL-39089c29-b03a-468a-95e8-66faa8b81249",
       "provenance": {
         "actor": "implementer/baseline-task-3-P",
@@ -10156,7 +10189,7 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-27-activity-owned-presentation-design.md"
       },
-      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "rationale": "Activity-owned presentation design24\u201332 and52\u201366 requires activity-owned cameras, controls, service state and render targets with no implicit presentation inheritance, while explicitly shared domain data remains shared.",
       "retracted": false,
       "source": "ART-8b9f95be-06da-4494-b968-38eb132502fe",
       "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
@@ -22898,7 +22931,7 @@
         {
           "applicability": "analytical",
           "id": "c2",
-          "text": "Normal mode uses caret-normal and block/glyph width; insert uses caret-insert and configured thin width, with bounded caret height. Required style/font data must fail explicitly rather than silently fall back; caller reachability and fallback compatibility remain an unresolved audit gap."
+          "text": "Normal mode uses caret-normal and block/glyph width; insert uses caret-insert and configured thin width, with bounded caret height. Required style/font data must fail explicitly rather than silently fall back."
         },
         {
           "applicability": "analytical",
@@ -22912,7 +22945,50 @@
         }
       ],
       "classification": "behavior",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Focus connects the active input and enters text mode; blur/disconnect releases it, normalizes mode and hides the caret. Visibility is focus-gated, not merely cursor-row visibility."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Normal mode uses caret-normal and block/glyph width; insert uses caret-insert and configured thin width, with bounded caret height. Required style/font data must fail explicitly rather than silently fall back; caller reachability and fallback compatibility remain an unresolved audit gap."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "Direct widget keys do not bypass normal command or insert-state routing; intentionally supported save/copy/page shortcuts remain separate. Shared local-point, row, column and row-y geometry keeps lazy row/column-to-byte resolution local."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c4",
+                "text": "File-backed parity fixtures force tiny chunks, narrow viewports or long rows; expanded file-viewer pointer tests assert intended row/column and mode without using eager huge-file materialization."
+              }
+            ],
+            "classification": "behavior",
+            "provenance": {
+              "actor": "implementer/baseline-task-2-T",
+              "date": "2026-10-30",
+              "excerpt": "VirtualInput should reuse the same interaction and caret policies as Input",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-virtual-input-shared-input-policies-design.md"
+            },
+            "rationale": "Authorized representative Task2 T baseline after comparing existing52 requirement statements/provenance and text criteria; independent shared interaction intent, not duplicated lazy editor/save/string revision behavior, application repair or achievement. Remains proposed.",
+            "statement": "Reuse eager-compatible storage-neutral focus, caret, direct-key and coordinate policies for lazy text widgets while leaving byte resolution, viewport storage and save semantics with their owning backends."
+          },
+          "reason": "Task4 separates stable source-grounded acceptance from time-bound audit disclosure, preserving the disclosure in rationale and audit history.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
       "lifecycle": "proposed",
       "provenance": {
@@ -22922,8 +22998,8 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-14-virtual-input-shared-input-policies-design.md"
       },
-      "rationale": "Authorized representative Task2 T baseline after comparing existing52 requirement statements/provenance and text criteria; independent shared interaction intent, not duplicated lazy editor/save/string revision behavior, application repair or achievement. Remains proposed.",
-      "revision": 1,
+      "rationale": "Authorized representative Task2 T baseline after comparing existing52 requirement statements/provenance and text criteria; independent shared interaction intent, not duplicated lazy editor/save/string revision behavior, application repair or achievement. Remains proposed. Task4 clarification: Caller reachability and fallback compatibility remain an unresolved audit gap, not an alternative acceptance policy.",
+      "revision": 2,
       "statement": "Reuse eager-compatible storage-neutral focus, caret, direct-key and coordinate policies for lazy text widgets while leaving byte resolution, viewport storage and save semantics with their owning backends."
     },
     "REQ-5babb6e9-88c4-43f5-8904-d6321f5bf795": {
@@ -23973,7 +24049,7 @@
         {
           "applicability": "analytical",
           "id": "c3",
-          "text": "Subscribe before snapshot, coalesce invalidations until metadata and transcript both settle, reject old epochs/generations and post-drop callbacks, and bound delayed reconnect with explicit errors; provider storage continuity remains unproven."
+          "text": "Subscribe before snapshot, coalesce invalidations until metadata and transcript both settle, reject old epochs/generations and post-drop callbacks, and bound delayed reconnect with explicit errors."
         },
         {
           "applicability": "analytical",
@@ -23982,7 +24058,50 @@
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Well-formed graph keys hydrate adapters without network-dependent loader disappearance; fetches use the current provider, distinguish unavailable/not-found/absent/stale and preserve complete decoded payloads with current-vs-last-known labeling."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Explicit abort/delete suppress duplicate submissions, retain separate acknowledged/error results and never retry ambiguous writes; acknowledgment is not observed termination, current config is not historical session-effective config."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "Subscribe before snapshot, coalesce invalidations until metadata and transcript both settle, reject old epochs/generations and post-drop callbacks, and bound delayed reconnect with explicit errors; provider storage continuity remains unproven."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c4",
+                "text": "Message/part collections own automatic ordered-list presentation islands as the documented bounded exception to click-only children: hydrate before publication, preserve presentation state on restore/replacement, retain existing explicit edge metadata and do not treat membership as server truth."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-2-A",
+              "date": "2026-10-30",
+              "excerpt": "the OpenCode server owns all session data. Space stores only ephemeral snapshots in node adapters and artifact references in run records.",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-26-opencode-session-graph-exposure-design.md"
+            },
+            "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+            "statement": "Expose OpenCode-server-owned sessions through ephemeral graph snapshots and message/part/info projections, retaining explicit freshness/failure states and bounded live invalidation lifetimes."
+          },
+          "reason": "Task4 separates stable source-grounded acceptance from time-bound audit disclosure, preserving the disclosure in rationale and audit history.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126",
       "lifecycle": "proposed",
       "provenance": {
@@ -23992,8 +24111,8 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-26-opencode-session-graph-exposure-design.md"
       },
-      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
-      "revision": 1,
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation. Task4 clarification: Provider storage continuity remains unproven; removing this audit disclosure from the criterion does not certify provider replacement or storage isolation.",
+      "revision": 2,
       "statement": "Expose OpenCode-server-owned sessions through ephemeral graph snapshots and message/part/info projections, retaining explicit freshness/failure states and bounded live invalidation lifetimes."
     },
     "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2": {
@@ -24133,11 +24252,49 @@
         {
           "applicability": "analytical",
           "id": "c3",
-          "text": "Comprehensive module/API and example correctness requires source-by-source coverage review; catalog presence alone is not completeness or successful use."
+          "text": "Complete per-module references cover the public native registrations and Fennel facades with source-correct APIs and practical examples using canonical imports."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Module catalog is primary; flat canonical pages document import/source/API/examples/errors/platform/related modules/search terms, grounded in native registrations and public Fennel facades rather than historical Python prototypes."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Aliases are search terms not invented imports; keep builder tutorials/guides/examples/app-host references and link to internals without promising undefined SDK stability/versioning."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "Comprehensive module/API and example correctness requires source-by-source coverage review; catalog presence alone is not completeness or successful use."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-H",
+              "date": "2026-10-30",
+              "excerpt": "The corrected SDK design must make module reference the center of gravity.",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-sdk-module-reference-design.md"
+            },
+            "rationale": "Authorized bounded H baseline after semantic/provenance comparison of all71 records at ledger45; distinct from Core/Live/Workspace goals and contextual leader commands. Proposed only, not activation, repair or empirical achievement. Source and sampled coverage gaps retained in Task3 H report.",
+            "statement": "Provide consumer-facing SDK module references with canonical imports, public APIs, practical examples and explicit errors/platform limits, retaining app/host tutorials and contracts as secondary learning paths."
+          },
+          "reason": "Task4 separates stable source-grounded acceptance from time-bound audit disclosure, preserving the disclosure in rationale and audit history.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-b586db93-de76-4724-98dc-22359715a46f",
       "lifecycle": "proposed",
       "provenance": {
@@ -24147,8 +24304,8 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-sdk-module-reference-design.md"
       },
-      "rationale": "Authorized bounded H baseline after semantic/provenance comparison of all71 records at ledger45; distinct from Core/Live/Workspace goals and contextual leader commands. Proposed only, not activation, repair or empirical achievement. Source and sampled coverage gaps retained in Task3 H report.",
-      "revision": 1,
+      "rationale": "Authorized bounded H baseline after semantic/provenance comparison of all71 records at ledger45; distinct from Core/Live/Workspace goals and contextual leader commands. Proposed only, not activation, repair or empirical achievement. Source and sampled coverage gaps retained in Task3 H report. Task4 clarification: Source-by-source module/API and example correctness review remains incomplete; catalog presence alone is not completeness or successful use. Original SDK design5\u201323,105\u2013138 grounds the stable completeness obligation.",
+      "revision": 2,
       "statement": "Provide consumer-facing SDK module references with canonical imports, public APIs, practical examples and explicit errors/platform limits, retaining app/host tutorials and contracts as secondary learning paths."
     },
     "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c": {
@@ -24166,11 +24323,49 @@
         {
           "applicability": "analytical",
           "id": "c3",
-          "text": "The graph filesystem viewer uses a viewport-only VirtualInput while small Input/InputModel controls retain their existing behavior; full widget/integration coverage must be independently inspected."
+          "text": "The graph filesystem viewer uses a viewport-only VirtualInput while small Input/InputModel controls retain their existing behavior."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "File-backed viewport and ordinary anchor-relative navigation use bounded reads and preserve partial/unknown indexing information rather than falling back to whole-file reads."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Edits and selection compose original and added spans, with UTF-8 positions and LF/CRLF behavior; untouched invalid source bytes survive save."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "The graph filesystem viewer uses a viewport-only VirtualInput while small Input/InputModel controls retain their existing behavior; full widget/integration coverage must be independently inspected."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-2",
+              "date": "2026-10-30",
+              "excerpt": "Represent edits without loading unchanged file content into memory.",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+            },
+            "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
+            "statement": "Provide file-scale text viewing and editing with lazy source reads, overlay edits and viewport rendering without eagerly loading unchanged file content or substituting whole-buffer InputModel storage."
+          },
+          "reason": "Task4 separates stable source-grounded acceptance from time-bound audit disclosure, preserving the disclosure in rationale and audit history.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
       "lifecycle": "proposed",
       "provenance": {
@@ -24180,8 +24375,8 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
       },
-      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
-      "revision": 1,
+      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim. Task4 clarification: Full widget/integration coverage remains incompletely inspected; the existing Task2 source/assertion bounds apply, not a new product behavior or satisfaction claim.",
+      "revision": 2,
       "statement": "Provide file-scale text viewing and editing with lazy source reads, overlay edits and viewport rendering without eagerly loading unchanged file content or substituting whole-buffer InputModel storage."
     },
     "REQ-b7174458-fa8e-49a3-b8c0-196e9ea7ba34": {
@@ -24654,11 +24849,49 @@
         {
           "applicability": "analytical",
           "id": "c3",
-          "text": "The feature summary separately promises PUB/SUB kernel exchange and persisted input/output history with command/startup fields; reconcile this against the REQ/REP id/name/cmd/cwd detailed contract with explicit authority before claiming complete coverage. Current code alone cannot supersede the summary."
+          "text": "Provide the feature-summary kernel-to-kernel ZMQ PUB/SUB exchange and persisted input/output history with command and startup-input configuration fields."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Definitions persist and graph management exposes lifecycle and execution results/errors; detailed contract includes immutable internal kernel 0, generated user IDs, name ambiguity errors and multiple subprocess instances."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "The detailed execution contract uses connection-file bootstrapping and ZMQ request/reply with code/registers/error fields, selecting the latest running instance and surfacing missing-instance/spawn/timeout/protocol failures."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "The feature summary separately promises PUB/SUB kernel exchange and persisted input/output history with command/startup fields; reconcile this against the REQ/REP id/name/cmd/cwd detailed contract with explicit authority before claiming complete coverage. Current code alone cannot supersede the summary."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-2-A",
+              "date": "2026-10-30",
+              "excerpt": "Kernels are persisted as JSON files, with history tracking and instance lifecycle management.",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/kernel-system.md"
+            },
+            "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+            "statement": "Provide persistent graph-visible computational kernel definitions and managed live execution instances for internal Fennel and subprocess code, retaining unresolved communication/history intent instead of declaring it superseded."
+          },
+          "reason": "Task4 separates stable source-grounded acceptance from time-bound audit disclosure, preserving the disclosure in rationale and audit history.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3",
       "lifecycle": "proposed",
       "provenance": {
@@ -24668,9 +24901,9 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/kernel-system.md"
       },
-      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
-      "revision": 1,
-      "statement": "Provide persistent graph-visible computational kernel definitions and managed live execution instances for internal Fennel and subprocess code, retaining unresolved communication/history intent instead of declaring it superseded."
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation. Task4 clarification: Unresolved original-source conflict: feature summary27\u201332 promises PUB/SUB/history/command/startup inputs while detailed note and current sampled code use REQ/REP and id/name/cmd/cwd. Both source commitments remain represented; no authority to retire either was found. This criterion is unverified, not a requirement merely to disclose the conflict.",
+      "revision": 2,
+      "statement": "Provide persistent graph-visible computational kernel definitions and managed live execution instances for internal Fennel and subprocess code, with the documented communication, history and lifecycle capabilities."
     },
     "REQ-d18f3582-daff-4140-ba91-cfcbea82c7a7": {
       "acceptance_criteria": [
@@ -25264,11 +25497,49 @@
         {
           "applicability": "analytical",
           "id": "c3",
-          "text": "Ask-risk calls do not execute while pending or denied; approval binds the exact tool/source/arguments and a changed argument set needs a separate decision. Historical hidden-tool guidance remains an unresolved visibility discrepancy, not an inferred ban on current exposure."
+          "text": "Ask-risk calls do not execute while pending or denied; approval binds the exact tool/source/arguments and a changed argument set needs a separate decision."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-4",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Pure preset definitions resolve context and session Auto/On/Off overrides deterministically; high-risk defaults require explicit enabling and sync removes only its own tools, rejecting unmanaged collisions."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "The shared tool surface converts active definitions for MCP and client-side providers without making the lifecycle runner choose providers; exposing a tool is not approval to execute it."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "Ask-risk calls do not execute while pending or denied; approval binds the exact tool/source/arguments and a changed argument set needs a separate decision. Historical hidden-tool guidance remains an unresolved visibility discrepancy, not an inferred ban on current exposure."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-2-A",
+              "date": "2026-10-30",
+              "excerpt": "AgentToolSurface is the shared source of active tool definitions and local `call` behavior, so all providers obey the same preset and approval rules.",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/agent-layer-design.md"
+            },
+            "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+            "statement": "Expose context-aware provider-agnostic preset capabilities through MCP and client-side tool definitions while retaining user overrides, registry ownership and execution-time risk approval."
+          },
+          "reason": "Task4 separates stable source-grounded acceptance from time-bound audit disclosure, preserving the disclosure in rationale and audit history.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
       "lifecycle": "proposed",
       "provenance": {
@@ -25278,8 +25549,8 @@
         "origin": "justified_interpretation",
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/agent-layer-design.md"
       },
-      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
-      "revision": 1,
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation. Task4 clarification: Historical hidden-tool guidance versus current tool exposure remains an unresolved visibility discrepancy; execution approval is stable required behavior, not evidence that visibility is reconciled.",
+      "revision": 2,
       "statement": "Expose context-aware provider-agnostic preset capabilities through MCP and client-side tool definitions while retaining user overrides, registry ownership and execution-time risk approval."
     },
     "REQ-f70d19dc-3924-41e2-967b-3ead2be76dc7": {
@@ -25471,7 +25742,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 60,
+  "revision": 61,
   "schema_version": 1,
   "verifications": [
     {

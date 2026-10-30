@@ -64,8 +64,11 @@ This section will eventually show short demos. The current planned gallery label
 ## Project State
 
 Browse [development records](/dev/development-records) and the current
-[requirements index](/requirements/) for methodology obligations and trace links,
-not inferred historical product requirements or proof of achieved outcomes.
+[requirements index](/requirements/) for grounded obligations and trace links.
+The authorized [repository baseline audit](/requirements/2026-10-30-repository-reconciliation)
+and [source dispositions](/requirements/2026-10-30-repository-source-dispositions)
+distinguish complete filename accounting from representative semantic depth,
+proposed work and unresolved coverage gaps—not proof of achieved outcomes.
 
 - [x] 3D runtime with scene rendering, physics, spatial widgets, and embedded surfaces
 - [x] Fennel + C++ runtime with the current layout and widget system

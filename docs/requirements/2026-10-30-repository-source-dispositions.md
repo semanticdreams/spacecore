@@ -1,5 +1,60 @@
 # Frozen repository source dispositions
 
+## Final Task4 boundary (ledger61)
+
+All **362 frozen filename rows** remain exactly once:168 specs/194 plans, excluding
+only the two root indexes. Tasks2/3 complete-range independent passes were supplied
+by the controller at Task4 intake. Historical pending statements below describe
+their execution times; **Task4 and whole-work review/integration remain pending**.
+Final dispositions:277 S,63 O,14 G (H's grounded-obligation notation),6 R,2 U.
+These are source dispositions, not requirement lifecycle or satisfaction counts.
+Every S row retains its particular sampling/trace gap; S is not supersession.
+
+Task4 rechecked all19 disjoint docs-family denominators against F (sum1201), all
+eight source-owner groups, current canonical provenance/IDs, locator/selector
+uniqueness and active typed tuples. The table below is the **final depth overlay**;
+the later Task1 inventory table remains original history, not a claim that later
+workers never inspected its sources. New primary source reads here are bounded
+cross-family consistency samples, not a new line-by-line repository audit.
+
+| Frozen docs membership | Files | Final semantic depth and remaining bounds |
+| --- | ---: | --- |
+| docs/ direct | 4 | Homepage and package scripts read; Task4 changes navigation only. Lock/dependency internals not audited. |
+| docs/.vitepress/ | 3 | Config1–60 (exclusions/records routing), package commands and built navigation checked; theme internals not comprehensively reviewed. |
+| docs/dev/ direct | 23 | Task2 graph/maps and Task3 ownership/constraints/build guides; Task4 graph-maps1–24, widget ownership1–100 and full development-records. Remaining subordinate bodies retain sampled depth. |
+| docs/dev/adrs/ | 7 | Graph ADR full in Task1; opening1–24 rechecked here against domain ownership. Other ADRs inventory only, no blanket retirement. |
+| docs/dev/features/ | 61 | 60 bodies plus index. Principal graph/agent/text/runtime/host/temporal/security/development contracts inspected by Tasks2/3; Task4 activities1–24, full kernel49 and full methodology. No claim every feature micro-contract is proven. |
+| docs/dev/fennel/ | 9 | Style1–24 consistency sample; language/reference guidance, not independent product authority or validation oracle overriding project rules. Remaining bodies inventory only. |
+| docs/dev/journal/ | 70 | 2026-10-29 full9 rechecked as retrospective corroboration only; other narratives inventoried, not fresh test evidence. |
+| docs/dev/notes/ | 99 | Principal graph/agent/kernel/security notes in Tasks2/3; Task4 kernels1–24 and selected agent-layer approval passages. Unread subordinate notes remain open sampling limits. |
+| docs/dev/openai/ | 410 | Index full20 rechecked: external mirror/reference, not Space intent. Endpoint bodies remain uninspected. |
+| docs/dev/project/ | 26 | Goals/milestones originally full; goals full20 rechecked. Bugs/tech-debt filename inventory remains explicit, not an exhaustive defect baseline. |
+| docs/dev/reports/ | 1 | Full15-line workflow-report index rechecked; safe report-format intent supports D8, not evidence of scheduled execution. |
+| docs/dev/subsystems/ | 9 | Tasks3 platform/input/audio/SSH/build samples; networking1–24 rechecked against N capabilities and still-proposed Matrix/services. Remaining subordinate semantics unproven. |
+| docs/dev/zai/ | 1 | Opening1–24 external provider reference; no authority, request execution or integration claim. |
+| docs/plans/ | 195 | 194 frozen rows plus root index. Every row reconsidered by Tasks2/3 at its declared depth; Task4 SFTP1–24 cross-check, no historical checklist execution. |
+| docs/specs/ | 169 | 168 frozen rows plus root index. Full principal contracts and bounded secondary openings retained; Task4 temporal umbrella1–24 plus six clarification sources and three cleanup sources rechecked. |
+| docs/requirements/ | 9 | F methodology seed preserved. All124 current statements/criteria/provenance and479 artifact identities inspected; ledger/docs validation only. Mutable reports not registered as measurement evidence. |
+| docs/scripts/ | 13 | Package entrypoints, navigation checker1–24, existing58 script tests/build/navigation checks. No tooling edit or claim to have audited every script body. |
+| docs/sdk/ | 83 | Tasks3 principal app/host/module contracts and N native APIs; Task4 index1–24 and SDK design goals/API-example passages. Source-by-source61-module completeness remains unproven. |
+| docs/user/ | 9 | Quick-start1–24 rechecked against distribution names/platform limits; remaining workflows inventoried, not executed or empirically validated. |
+
+The two U rows remain concrete **controller follow-up leads**, not baseline blockers:
+graph-filesystem interactions lacks sampled external-edit/module/native-reader
+follow-through (reuse lazy/save IDs); ordered-thought children G10 lacks an established
+association/reparent plan/code/test chain. Owner2/G identifies the original domain,
+not an outstanding Task2 assignment. Controller reconciliation owns any separately
+authorized deeper investigation; no product defect repair is implied.
+
+### Post-F accounting (outside frozen denominators)
+
+Exactly **nine added docs**: baseline design; implementation plan; controller progress;
+this disposition page; consolidated audit; Task1,Task2,Task3,Task4 reports. None is a
+new product-intent source merely because it is added. Their exact paths are in the
+Task4 report. Current docs total1210; specs170 and plans197 include their root indexes
+(169/196 source bodies respectively), requirements15. The other16 family denominators
+are unchanged. Generated indexes are modified existing paths, not additions.
+
 ## Reading this inventory
 
 Frozen source **F** = `fec176453c88fa1c47f22b7fe1d447dfe0ba281b`. Every filename row below refers to `F:<first-column path>`; line references are frozen-source lines, not current report lines. The 168 specs and 194 plan/progress files exclude only their two root `index.md` files. The later baseline design, plan and controller progress are outside that denominator and listed separately in the consolidated audit.

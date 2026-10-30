@@ -2,6 +2,83 @@
 
 ## Identity, authority and current boundary
 
+**Final Task4 boundary (ledger61): complete one-time baseline at familywide inventory
+and honest representative semantic depth, ready for independent review, not approved
+or integrated.** Controller supplies prior complete Task2/Task3 passes. Task4 preserves
+all124 requirement/479 artifact/1103 relation identities, original12 seed obligations,
+17 assessments and63 verifications. One exact-revision CLI transaction60→61 clarifies
+six existing acceptance records and three accepted relation rationales; no creates,
+links, transitions or observations. Historical boundary paragraphs below remain
+execution history. [Task4 report](./2026-10-30-baseline-task-4-report.md) is the concise
+final accounting, status/implementation denominator, contradictions, gates and
+every-family no-change sweep record. Complete Task4 and whole-work review remain owed.
+
+### Final defined counts and status
+
+- **Discovered/created:**112 distinct grounded obligation identities added since F,
+  not362 documents imported or every micro-contract discovered. Task1 16, Task2 27,
+  Task3 69; Task4 0. Final124 includes the unchanged12 original methodology IDs.
+- **Reused:**12 seed identities preserved and compared; six named audit governors
+  actively govern this task. All112 baseline IDs reused by Task4 (no recreation).
+  Source overlaps are not extra reused/created requirements.
+- **Refined/revised:**13 distinct existing baseline requirements have normative
+  revision2 (seven accepted Time corrections, six Task4 disclosure/acceptance
+  clarifications);111 remain revision1. No original seed requirement revised.
+- **Registered:**453 linked artifacts added to26 seed artifacts =479.
+  **Linked:**955 new logical relations plus148 seed =1103; Task4 revises rationale
+  on three existing relations only, adding no link. All active tuples and all
+  locator/selector tuples are unique; selectors absent for479 records.
+- **Lifecycle:**109 proposed,15 active (12 seed + three explicitly active goals).
+  Three grounded Task1 activations; no Task4 activation/supersession/retraction.
+  Strategic outcomes remain unverified; no audit assessment, even partial, added.
+- **Implementation-presence denominator:**112 new baseline obligations, not artifacts
+  or source files.95 have representative production/declaration/guidance samples
+  in the retained Task2/3 matrices;17 remain unknown at their full obligation scope
+  (16 top-down records plus G10). The95 include scoped constraints with sampled
+  enforcement/guidance, not95 complete implementations. Excluding top-down records:
+  95/96 family contracts sampled;1 unknown. Original12 methodology obligations are
+  excluded from this product/baseline presence denominator, not erased or reassessed.
+  Tests read are definitions, not executed product observations or satisfaction.
+
+### Final cross-family decisions and residuals
+
+No semantic duplicate requiring identity retirement was established. Domain-owned
+lists vs map islands/outline, generic focus vs text policy, graph leader vs hosted
+commands, app ownership vs activity-camera ownership, file-source token vs owning-store
+revision/publication, transport tickets vs Matrix permissions, and app agents vs
+development roles are distinct contracts. Goal/capability overlap is contribution,
+not derivation or proof of sufficiency. OpenCode's explicitly automatic message/part
+islands retain their bounded exception; graph materialization constraints are not
+silently inherited across contributions or applied universally.
+
+Task4 separates stable acceptance from transient audit disclosure in A4 risk approval,
+A7 OpenCode invalidation, A9 kernels, Lazy editor, Task2/T3 caret policy and H12 SDK.
+Exact IDs/revisions/source passages are in the Task4 report. Existing rationale/history
+and this audit retain visibility conflict, provider continuity, kernel PUB/SUB/history
+versus detailed REQ/REP, widget/caller reachability and incomplete SDK review. No
+contradiction is solved merely by deleting its disclosure from acceptance. Other
+criteria's explicit unsupported-surface exclusions, required verification methods
+and missing empirical protocols are **bounds**, not evidence of pass or permission
+to narrow intent. Source labels `done`/`shipped` remain historical claims only.
+
+Significant residuals remain: broad temporal RFC/ISO/ICS/ICU/migration intent versus
+bounded closeout and unintegrated standards adapters; actual hosted-launcher
+factory mismatch; wallet encrypted-persistence promise versus sampled storage;
+kernel and agent visibility source conflicts; static policy tests versus live-agent
+compliance; conditional native/browser/media/SSH/platform support; incomplete
+fault/restart/provider/SDK/user-flow and old historical subcontracts. Original
+source/Git evidence and bounded assertions are retained in Tasks2/3, not replaced
+by Task4 summaries. Controller owns separate reconciliation/repair; strategic
+usefulness/naturalness/performance/ownership measurement thresholds remain missing.
+
+Frozen362 paths and all19 docs families are accounted, not every line verified.
+There are nine post-F docs (including Task4 report); current1210 docs. The final
+disposition overlay supplies every denominator/depth and two explicit U follow-up
+owners;277 S rows also retain particular gaps rather than blanket supersession.
+No services, credentials, publication/migration operation or product runtime tests
+ran. Final ledger/docs checks and no-change evidence are in the Task4 report;
+independent exact-range review and guarded finishing/integration remain pending.
+
 **Current Task3 final-family boundary (ledger60): representative Task3 baseline
 ready for complete original-range independent review, NOT approved or integrated.**
 All262 Task3 filename rows accounted at explicit depth: P41/H39/Time50/N11/D121;
