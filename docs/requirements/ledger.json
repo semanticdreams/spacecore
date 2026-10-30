@@ -17549,16 +17549,49 @@
         {
           "applicability": "analytical",
           "id": "c1",
-          "text": "Each category in the original completion program has its public API, docs, focused tests, applicable packaged data, finite acceptance corpus and extension path identified; missing architecture is reported separately from later corpus growth."
+          "text": "Every temporal category in the documented completion program ships a production API, public documentation, focused tests, deterministic packaged data where needed, fixture or conformance coverage and an extension path."
         },
         {
           "applicability": "analytical",
           "id": "c2",
-          "text": "Full RFC5545/ICS and supported-family ISO interval semantics, ICU/CLDR-backed presentation and calendar conversion, business calendars, deterministic natural language/providers, migrations and runtime scheduling retain their documented obligations; bounded closeout smoke is not evidence of broad completion."
+          "text": "A finite acceptance corpus demonstrates the documented RFC5545 recurrence and sets, supported-family ISO intervals, ICS/VEVENT/VTIMEZONE interoperability, ICU/CLDR-backed localization and calendar conversion, business calendars, deterministic natural parsing/providers, persisted timestamp migrations and typed runtime scheduling through their public APIs, with passing focused and cross-surface conformance checks."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Each category in the original completion program has its public API, docs, focused tests, applicable packaged data, finite acceptance corpus and extension path identified; missing architecture is reported separately from later corpus growth."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Full RFC5545/ICS and supported-family ISO interval semantics, ICU/CLDR-backed presentation and calendar conversion, business calendars, deterministic natural language/providers, migrations and runtime scheduling retain their documented obligations; bounded closeout smoke is not evidence of broad completion."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "Nothing deferred",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T0; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide a complete production temporal platform across the documented temporal categories, with production APIs, documentation, focused tests, deterministic packaged data where needed, finite conformance fixtures and extension paths rather than deferred architecture."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-12548562-84c7-4256-8fcd-94881344913a",
       "lifecycle": "proposed",
       "provenance": {
@@ -17569,7 +17602,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T0; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide a complete production temporal platform across the documented temporal categories, with production APIs, documentation, focused tests, deterministic packaged data where needed, finite conformance fixtures and extension paths rather than deferred architecture."
     },
     "REQ-15f71fe3-c293-42e5-b070-a0a9a3cd43c4": {
@@ -17587,11 +17620,49 @@
         {
           "applicability": "analytical",
           "id": "c3",
-          "text": "Workflow definitions/runs are the initial integrated family; inventory-only agent-sessions, entities/code, llm/conversations and messages remain explicit integration gaps against the broader migration obligation."
+          "text": "Schema-directed load/save integration supports the inventoried workflow definitions/runs, agent-sessions, entities/code, llm/conversations and message timestamp families: canonical writes use UTC Instant strings and supported legacy timestamps load through explicit conversions. Focused integration fixtures verify canonical writes and legacy reads for each family without automatic broad startup rewrites."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Schema inventory identifies persisted timestamp fields and supported legacy examples; canonical JSON writes use UTC Instant strings and legacy integer seconds load through explicit conversions."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Schema-directed file/tree migrations validate before atomic writes, support dry-run and avoid rewriting already canonical files; errors identify schema/field/file."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "Workflow definitions/runs are the initial integrated family; inventory-only agent-sessions, entities/code, llm/conversations and messages remain explicit integration gaps against the broader migration obligation."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "Persisted timestamp migrations from legacy timestamp shapes",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T15; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide explicit idempotent migrations from legacy persisted timestamp schemas to canonical temporal representations, with safe load/save boundaries and loud malformed-data diagnostics rather than automatic broad startup rewrites."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-15f71fe3-c293-42e5-b070-a0a9a3cd43c4",
       "lifecycle": "proposed",
       "provenance": {
@@ -17602,7 +17673,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T15; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide explicit idempotent migrations from legacy persisted timestamp schemas to canonical temporal representations, with safe load/save boundaries and loud malformed-data diagnostics rather than automatic broad startup rewrites."
     },
     "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb": {
@@ -18093,11 +18164,44 @@
         {
           "applicability": "analytical",
           "id": "c2",
-          "text": "The finite interoperability corpus includes VTIMEZONE and comparison against the selected standards library; metadata-only IANA fixtures and planned libical are reported as bounded implementation, not completed custom observance or broader standards adaptation."
+          "text": "The finite interoperability corpus exercises recurring, all-day, floating, UTC and zoned events, VTIMEZONE interoperability, overrides, cancellations and invalid inputs, with semantic round trips checked against the selected vetted standards library through an isolated adapter exposing typed bindings and structured records."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Supported calendar/event records preserve distinct value modes, exclusive all-day ends, recurrence overrides and cancellations, canonical text escaping/folding and semantic parse/format round trips."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "The finite interoperability corpus includes VTIMEZONE and comparison against the selected standards library; metadata-only IANA fixtures and planned libical are reported as bounded implementation, not completed custom observance or broader standards adaptation."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "Full ICS/iCalendar ingestion and export",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T10; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide full documented ICS/iCalendar ingestion and export for calendar/VEVENT records, recurrence, overrides, cancellations, all-day/floating/UTC/zoned values and VTIMEZONE interoperability through a vetted standards layer."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-3127684f-fe5f-4c0a-a09b-50cdd5df10c0",
       "lifecycle": "proposed",
       "provenance": {
@@ -18108,7 +18212,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T10; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide full documented ICS/iCalendar ingestion and export for calendar/VEVENT records, recurrence, overrides, cancellations, all-day/floating/UTC/zoned values and VTIMEZONE interoperability through a vetted standards layer."
     },
     "REQ-32009aed-ef9f-4006-a1ae-c2d9a6bf3d4f": {
@@ -18805,11 +18909,44 @@
         {
           "applicability": "analytical",
           "id": "c2",
-          "text": "Single-expression parse rejects unsupported or ambiguous text; candidate APIs may return empty results for unsupported text, and resolve requires explicit reference context. Further phrase/locale growth is not proof of current broad natural-language coverage."
+          "text": "Single-expression parse rejects unsupported or ambiguous text; candidate APIs may return empty results for unsupported text, and resolve requires explicit reference context."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "The initial en-US/fr-FR/ja-JP corpus supports relative literals/count offsets, next weekday, weekly recurrence and bare weekday ambiguity; candidate records identify provider/locale/phrase/expression and sort deterministically."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Single-expression parse rejects unsupported or ambiguous text; candidate APIs may return empty results for unsupported text, and resolve requires explicit reference context. Further phrase/locale growth is not proof of current broad natural-language coverage."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "Broad deterministic natural-language parsing",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T13; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide deterministic corpus/provider-backed natural temporal parsing with explicit candidate identity/order, ambiguity and missing-context diagnostics and a finite locale/phrase acceptance corpus."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-7aea0ca7-b344-4a59-af68-c4ef091b010c",
       "lifecycle": "proposed",
       "provenance": {
@@ -18820,7 +18957,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T13; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide deterministic corpus/provider-backed natural temporal parsing with explicit candidate identity/order, ambiguity and missing-context diagnostics and a finite locale/phrase acceptance corpus."
     },
     "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e": {
@@ -19245,16 +19382,49 @@
         {
           "applicability": "analytical",
           "id": "c1",
-          "text": "Approved finite locale/calendar combinations have deterministic packaged data, explicit locale/calendar arguments and backed round-trip expectations where supported; unsupported combinations fail explicitly."
+          "text": "The approved finite locale/calendar combinations support ICU/CLDR-backed localized parsing and formatting over deterministic packaged data with explicit locale/calendar arguments; focused fixtures demonstrate the specified round trips and explicit failures for unsupported combinations."
         },
         {
           "applicability": "analytical",
           "id": "c2",
-          "text": "Selected CLDR-seed date styles and Gregorian/Buddhist/Japanese era conversions are documented as bounded implementation; date-only localized parse returns midnight, not restored undisplayed time fields, and missing native ICU/standards adaptation remains a coverage defect."
+          "text": "An isolated native localization adapter exposes ICU locale/calendar availability, localized parsing/formatting and packaged-data diagnostics through typed bindings or structured records. The selected date-style and Gregorian/Buddhist/Japanese-era fixtures verify explicit calendar conversions preserving time fields; date-only localized parsing returns midnight rather than reconstructing undisplayed time fields."
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Approved finite locale/calendar combinations have deterministic packaged data, explicit locale/calendar arguments and backed round-trip expectations where supported; unsupported combinations fail explicitly."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "Selected CLDR-seed date styles and Gregorian/Buddhist/Japanese era conversions are documented as bounded implementation; date-only localized parse returns midnight, not restored undisplayed time fields, and missing native ICU/standards adaptation remains a coverage defect."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "ICU/CLDR-backed localization",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T11; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide ICU/CLDR-backed localized parsing/formatting and explicit non-Gregorian calendar conversion, retaining finite locale/calendar corpus choices and separation from primitive elapsed-time semantics."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-a32c28f6-56ee-40a9-a5d5-f83b96c54caa",
       "lifecycle": "proposed",
       "provenance": {
@@ -19265,7 +19435,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T11; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide ICU/CLDR-backed localized parsing/formatting and explicit non-Gregorian calendar conversion, retaining finite locale/calendar corpus choices and separation from primitive elapsed-time semantics."
     },
     "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b": {
@@ -19499,7 +19669,7 @@
         {
           "applicability": "analytical",
           "id": "c1",
-          "text": "Support the complete documented grammar for the supported endpoint families; report selected Track6 grammar and remaining standards-conformance gaps without treating a selected subset as full broad completion."
+          "text": "Parsing, formatting and bounded repeating expansion implement the complete documented ISO interval grammar for the supported temporal endpoint families; finite conformance fixtures exercise the supported endpoint forms and rejection of invalid grammar."
         },
         {
           "applicability": "analytical",
@@ -19513,7 +19683,45 @@
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Support the complete documented grammar for the supported endpoint families; report selected Track6 grammar and remaining standards-conformance gaps without treating a selected subset as full broad completion."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "The selected instant/plain/zoned surface supports start/end, start/P, P/end, start/PT and PT/end with explicit bracketed IANA zones for zoned text, positive half-open intervals and bounded repeat expansion; P1D is not an instant exact-duration alias."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c3",
+                "text": "Calendar-period zoned repeat steps preserve civil cadence with explicit disambiguation; exact-duration steps move on the instant timeline."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "Full ISO interval and repeating-interval grammar for supported temporal endpoint families",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T8; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide ISO intervals and repeating intervals for supported temporal endpoint families, preserving half-open ordering, finite expansion and distinct exact-duration versus calendar-period and explicit-zone DST semantics."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-c4a1cf46-f729-4123-adc1-d08c15413759",
       "lifecycle": "proposed",
       "provenance": {
@@ -19524,7 +19732,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T8; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide ISO intervals and repeating intervals for supported temporal endpoint families, preserving half-open ordering, finite expansion and distinct exact-duration versus calendar-period and explicit-zone DST semantics."
     },
     "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378": {
@@ -19695,7 +19903,7 @@
         {
           "applicability": "analytical",
           "id": "c1",
-          "text": "Documented frequencies and applicable BY selectors parse/serialize and expand by candidate-set semantics with sorted BYSETPOS selection and finite COUNT/UNTIL/limit bounds; unsupported selector combinations remain visible conformance gaps."
+          "text": "Documented frequencies and applicable BY selectors parse, serialize and expand by candidate-set semantics with sorted BYSETPOS selection and finite COUNT/UNTIL/limit bounds; finite conformance fixtures exercise applicable frequency/selector combinations and invalid-rule diagnostics."
         },
         {
           "applicability": "analytical",
@@ -19704,7 +19912,40 @@
         }
       ],
       "classification": "capability",
-      "history": [],
+      "history": [
+        {
+          "actor": "implementer/baseline-task-3-Time-fix1",
+          "date": "2026-10-30",
+          "from_revision": 1,
+          "kind": "revision",
+          "prior": {
+            "acceptance_criteria": [
+              {
+                "applicability": "analytical",
+                "id": "c1",
+                "text": "Documented frequencies and applicable BY selectors parse/serialize and expand by candidate-set semantics with sorted BYSETPOS selection and finite COUNT/UNTIL/limit bounds; unsupported selector combinations remain visible conformance gaps."
+              },
+              {
+                "applicability": "analytical",
+                "id": "c2",
+                "text": "RRULE/RDATE union is deduplicated, exclusions from EXDATE/EXRULE win and output is ordered; explicit-zone expansion returns typed zoned values with reject/earliest/latest DST policy and inclusive compact UTC UNTIL, while standalone plain expansion rejects UTC UNTIL."
+              }
+            ],
+            "classification": "capability",
+            "provenance": {
+              "actor": "implementer/baseline-task-3-Time",
+              "date": "2026-10-30",
+              "excerpt": "Full RFC5545 recurrence semantics and candidate-set expansion",
+              "origin": "justified_interpretation",
+              "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
+            },
+            "rationale": "Grounded Time baseline T9; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
+            "statement": "Provide RFC5545 recurrence rule semantics and bounded recurrence-set assembly with deterministic candidate ordering, inclusions/exclusions and explicit-zone DST-aware expansion."
+          },
+          "reason": "Accepted R1-1: express source-grounded product behavior and finite completion evidence, not the current audit gap/status. Authority: original complete-library design lines7,13-24,58-63,82-109; existing bounded track contracts supply initial fixtures, not retirement of the broad obligation. Preserve criterion identities and keep current deficiencies in audit/report.",
+          "to_revision": 2
+        }
+      ],
       "id": "REQ-d0a8c552-e2dd-4a29-99c1-ca6e8c04aa10",
       "lifecycle": "proposed",
       "provenance": {
@@ -19715,7 +19956,7 @@
         "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-28-temporal-complete-library-design.md"
       },
       "rationale": "Grounded Time baseline T9; coherent documented obligation, not a per-patch import. Broad umbrella intent is retained despite bounded technical closeout; no activation, repair mandate, observation or satisfaction inferred.",
-      "revision": 1,
+      "revision": 2,
       "statement": "Provide RFC5545 recurrence rule semantics and bounded recurrence-set assembly with deterministic candidate ordering, inclusions/exclusions and explicit-zone DST-aware expansion."
     },
     "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811": {
@@ -20367,7 +20608,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 52,
+  "revision": 53,
   "schema_version": 1,
   "verifications": [
     {

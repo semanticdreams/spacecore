@@ -2,7 +2,7 @@
 
 ## Identity, authority and current boundary
 
-**Current Task3/Time boundary (ledger52): all50 Time filename dispositions and
+**Current Task3/Time boundary (ledger53 after accepted R1-1 correction): all50 Time filename dispositions and
 documented temporal/scheduler contracts reconciled at declared depth.** Added17
 proposed requirements,77 linked artifacts and198 typed relations; all prior
 records/observations retained. Broad original production temporal intent remains
@@ -712,3 +712,36 @@ reconciliation justified zero further changes; ledger/index unchanged at52.
 Every-family second sweep remains Task4. Complete evidence, file list, digests,
 limits and independent-review range are appended to the Task3 report. Ordinary
 five-file local checkpoint only, not approval or publication.
+
+### Time accepted R1-1 correction — ledger52→53
+
+Reviewer `ses_e71e8c789ffeDRQOR6FlTFFR1q` identified acceptance criteria that
+encoded the present audit gap/status instead of desired product behavior.
+FIX_BASE `93f2b4380f2a1f1d24bc303a153d3c124dac2d4a`, ordinary fix round1.
+Requirements reconciliation: **refinement correcting a requirements-artifact
+defect**, not new product scope or a synthetic repair requirement. Original
+umbrella7/13–24/58–63/82–109 and baseline61–78 require production behavior with
+finite completion evidence, independently of today’s incomplete implementation.
+No source-policy or architecture decision changed; no consultation trigger.
+
+Existing CLI revised nine criterion texts across T0(c1/c2), T8(c1), T9(c1),
+T10(c2), T11(c1/c2), T13(c2), T15(c3). Their existing IDs advance to normative
+revision2, with exact revision1 snapshots retained; other ten Time requirements
+remain revision1. Criteria now require shipped production APIs/conformance,
+standards-backed interoperability/localization and inventoried migration
+load/save integration. Removing gap-disclosure clauses means actually completing
+the missing behavior can meet the same criteria without requiring a revision
+merely because the old deficiency disappeared. Initial finite corpora and explicit
+unsupported/invalid-input boundaries remain intact; no unlimited corpus is added.
+
+All implementation gaps listed above remain **current audit findings**, not
+acceptance conditions: selected ICS/CLDR seeds, missing native adaptation,
+non-workflow migration integration and RFC/scheduler discrepancies are neither
+fixed nor assessed by this correction. Artifact/link/count inventory remains
+100 requirements/378 artifacts/891 relations, with17 assessments/63 verifications
+unchanged and no new records, relations, observations or activation. All362
+filename dispositions are unchanged in this fix. Validate/render-current53 and
+`make requirements-check` (timeout600000) passed348/348 in178.16s. Scoped gets,
+coverage, bounded context/trace and exact history/preservation checks passed
+within their recorded bounds; no readiness or product satisfaction follows.
+See appended Task3 fix report and private evidence for exact range and queries.

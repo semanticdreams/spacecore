@@ -725,3 +725,129 @@ all17 records/77 artifacts/198 links/50 dispositions and private source evidence
 Prior P/H passes do not replace the still-owed original complete Task3 review.
 **Time complete at declared depth; N/D and Task4 pending.** No publication,
 integration, product-completeness approval or new repair authority claimed.
+
+## Time fix round1 — accepted R1-1, 2026-10-30
+
+**Identity:** reviewer `ses_e71e8c789ffeDRQOR6FlTFFR1q`, accepted important
+finding R1-1; FIX_BASE `93f2b4380f2a1f1d24bc303a153d3c124dac2d4a`, branch
+`juicyrebel/ridley`, clean ledger52 intake. Ordinary validated local checkpoint,
+not stage-only; no publication/integration. Prior Time checkpoint `93f2b438`
+and all previous report entries retained. This is the first focused repair of
+this finding, not a repeated material failure or a mandatory consultation trigger.
+
+### Reconciliation and correction
+
+Conclusion: **refinement correcting a requirements-artifact defect** under existing
+intent/trace/history/evidence-separation obligations. The reviewer’s counterexample
+is valid: successful non-workflow migration or native localization must not make
+an unchanged product acceptance criterion false because a deficiency no longer
+“remains”. Likewise identifying APIs/retaining obligations is not production
+completion. Scope is only the accepted criterion correction and same-signature
+Time criteria; no product behavior, new family, implementation repair or synthetic
+requirement. Original umbrella design7/13–24/58–63/82–109 supplies production,
+adapter and finite-corpus authority; baseline design61–78 requires scoped,
+verifiable acceptance separated from implementation status. Migration design34–109
+supplies canonical representation, inventoried families and safe load/save
+boundaries; localization design125–212 supplies initial style/calendar fixtures
+and date-only midnight semantics. Broad umbrella intent still outranks the bounded
+implementation; no human policy ambiguity is introduced.
+
+Reviewed all17 Time requirement statements/criteria before mutation. The three
+named records and four additional same-signature records were corrected using
+one existing CLI `apply --stdin` transaction, actor
+`implementer/baseline-task-3-Time-fix1`, **expected52→returned53, status ok**.
+Seven existing requirements advance1→2; nine existing criterion text fields
+change, with criterion IDs/applicability and all other normative fields retained.
+The CLI retains exact prior snapshots and accepted-finding/source rationale in
+history. No replacement IDs, transitions, links, artifacts, assessments or
+observations. Existing artifact locators and all891 typed relations remain exact.
+
+| Existing Time record | Criteria revised | Product acceptance now required |
+| --- | --- | --- |
+| T0 REQ-12548562-84c7-4256-8fcd-94881344913a | c1/c2 | Each documented category ships production API/docs/tests/data/fixtures/extension path; finite acceptance corpus demonstrates the documented public temporal behaviors with focused/cross-surface conformance checks. Not identification or obligation-retention alone. |
+| T8 REQ-c4a1cf46-f729-4123-adc1-d08c15413759 | c1 | Parsing/formatting/bounded repeats implement documented supported-family grammar with finite valid/invalid conformance fixtures, not merely report missing standards behavior. |
+| T9 REQ-d0a8c552-e2dd-4a29-99c1-ca6e8c04aa10 | c1 | Applicable frequency/selector combinations implement candidate-set semantics/bounds and have conformance/invalid-rule fixtures; no requirement to retain unsupported-selector gaps. |
+| T10 REQ-3127684f-fe5f-4c0a-a09b-50cdd5df10c0 | c2 | Finite event/VTIMEZONE interoperability corpus and semantic round trips against vetted standards library through isolated typed adapter; no condition that libical remain planned or metadata-only support remain incomplete. |
+| T11 REQ-a32c28f6-56ee-40a9-a5d5-f83b96c54caa | c1/c2 | Actual ICU/CLDR-backed finite localized operations/round-trip fixtures and native adapter with typed bindings/diagnostics; selected calendar conversion preserves time fields, date-only parsing returns midnight. Missing adaptation is not acceptance. |
+| T13 REQ-7aea0ca7-b344-4a59-af68-c4ef091b010c | c2 | Retain explicit unsupported/ambiguous parse and reference-context behavior; remove commentary about present breadth as a criterion. |
+| T15 REQ-15f71fe3-c293-42e5-b070-a0a9a3cd43c4 | c3 | Inventoried workflow/agent/code/conversation/message families have schema-directed load/save integration and fixtures for canonical writes/legacy reads without broad startup rewrites. No predicate requiring integration gaps to persist. |
+
+Other ten Time criteria sets already describe behavior or enduring boundaries;
+they remain unchanged. In particular initial finite corpus restrictions,
+malformed/unsupported-input diagnostics, explicit context, exact/civil separation,
+offline provenance and trusted-provider/no-sandbox boundaries are contracts,
+not current-deficiency acceptance. No requirement for arbitrary ecosystem parity
+or unlimited locale/jurisdiction/phrase growth was introduced.
+
+**Current implementation status remains solely audit/report content.** Existing
+missing native ICU/iCalendar adaptation, selected seed corpus, non-workflow
+migration integration, RFC selector and scheduler numeric-duration discrepancies
+remain retained findings. This ledger correction repairs none of them and
+records no new runtime evidence, observations, assessments or satisfaction.
+
+### Covering validation and self-review
+
+Compile-check evidence: **not applicable**, no Fennel/native edits. Application
+constraint status: **not applicable/not run**; Constraint Impact **not applicable**.
+TDD not applicable to this docs/ledger criterion correction; source/criterion
+inspection supplied the pre-fix reproduction. Existing requirements test surface
+is the focused gate for schema/revision/history/projection preservation, not a
+temporal implementation test or empirical goal measurement.
+
+Executed commands/results:
+
+1. `python3 scripts/requirements.py validate` → valid true, status ok, revision53.
+2. `python3 scripts/requirements.py render` then `render --check` → current true53.
+3. `make requirements-check` (transparent `rtk`, timeout600000) → **348 passed in
+   178.16s**, output pristine; canonical valid/current53 afterward.
+4. Actual `load_ledger`/`git show FIX_BASE:ledger` comparison: exactly seven
+   requirements and nine criterion texts revised; stable requirement/criterion
+   IDs, analytical applicability, proposed lifecycle, statements, classifications,
+   rationale and original provenance retained. Exact revision1 prior snapshots
+   verified in each new history entry; remaining93 requirement records unchanged.
+   All378 artifacts/891 relations/17 assessments/63 verifications/0 conflict
+   dispositions unchanged. Counts remain100/378/891; no new records/links.
+5. All seven actual CLI `get` responses return requirement revision2/proposed,
+   criteria absent/unknown and observations0. Coverage over these seven IDs at
+   32/1000 returns status ok53, truncated false, findings[]; **not satisfaction or
+   readiness**. Context over seven at32/1000 truncates; narrowed T15 context1/1000
+   still depth-truncates. T11 both-direction trace1/1000 returns9 direct paths,
+   depth-truncated. Unlinked/unregistered history and omitted traversal paths
+   remain unknown. No relation changed, and direct preserved links/prior records
+   were checked independently of bounded traversal.
+6. Frozen manifest comparison through `git ls-tree -r -z --name-only F` and exact
+   FIX_BASE/source-disposition blob equality:362 unique rows exactly once;
+   all50 Time and312 non-Time rows unchanged. No source/code/test/prompt/schema
+   or source-disposition writes. Spec/plan indexes need no regeneration.
+
+Self-review: compared the new acceptance text against the reviewer’s later-success
+scenario. Removing a current deficiency no longer invalidates a criterion or
+forces a new normative revision merely to update status. Shipped public behavior,
+finite corpus/conformance evidence and safe integration are required; disclosing
+a gap cannot satisfy them. Original broader intent, fixed finite examples and
+historical unsuccessful criteria remain inspectable. No further same-signature
+Time correction justified in this sweep. Large history-sensitive files remain
+scoped/append-only; no unrelated restructuring.
+
+Assigned changed tracked files: `docs/requirements/ledger.json` (CLI only),
+`docs/requirements/index.md` (renderer only),
+`docs/requirements/2026-10-30-repository-reconciliation.md`, and
+`docs/requirements/2026-10-30-baseline-task-3-report.md` (fix append only).
+Private evidence appended at the existing `task3-Time-source-execution-evidence.md`
+path above; it remains ignored, not canonical measurement evidence. Checkpoint
+SHA/subject is supplied in final handoff; review the full
+`93f2b4380f2a1f1d24bc303a153d3c124dac2d4a..FIX_HEAD` correction, ledger52→53,
+plus preserved original Time range. Independent re-review and original whole
+Task3 range review remain required. **Time fix ready for re-review; N/D pending.**
+
+Final fix self-review also ran `git diff --check` (exit0, no output), inspected
+actual unstaged/staged diff, status and recent commit history, and confirmed the
+private evidence remains ignored. Ledger53/index SHA-256 after validation and
+read-only reconciliation:
+
+- ledger `9cb6bc8ad6aaac67ce527070d31d014e8f9f89655eb41a18a46931d48269210e`
+- index `12ac32306e455f1e636d402c00fa1b1b6bb6e775538e1ac1d7d591cc1eb07767`
+
+Original checkpoint subject: `93f2b438 docs(requirements): Reconcile bounded temporal baseline`.
+The correction checkpoint is additional review input, not approval of the initial
+or amended criterion set. No push, PR or integration performed.
