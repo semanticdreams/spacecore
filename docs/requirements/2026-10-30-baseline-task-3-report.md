@@ -246,3 +246,243 @@ execution extract retained under the assigned private task workspace as
 The single task-local checkpoint SHA/subject is supplied in the final handoff
 (resolve P_HEAD there); no self-referential checkpoint SHA is embedded in its own
 tracked contents. No later serial worker append sections existed at P intake.
+
+## H bounded continuation — identity and reconciliation
+
+Author/CLI actor `implementer/baseline-task-3-H` (logical session; no platform
+UUID supplied), supervisor strict workflow, branch `juicyrebel/ridley`, clean
+BASE `75694e9d7e33d2f091e3cb2c1cfd31dc762fe8b1`, ledger45 at intake.
+Controller reports P independently passed (16 requirements/72 artifacts/127 links).
+P report above is preserved verbatim. Frozen F and governing design are unchanged.
+Read Task3 brief first, full governing design and principal H designs/current
+contracts, all71 canonical statements/revisions/provenance and candidate criteria.
+This assignment covers only39 `3/H` filename rows and hosted/SDK/package contracts;
+Time/N/D and Task4 remain pending. No publication/integration authority.
+
+Requirements-reconciliation conclusion: **missing representation/refinement**,
+with concrete solution/coverage gaps, not product development or defect repair.
+Reuse six revision1 audit governors, Core/Live/Workspace/Spatial and existing
+widget ownership, asset overlay, Windows launcher and graph ownership contracts.
+Leader commands and text normal commands are not hosted app command equivalents;
+methodology documentation requirements are not SDK module completeness.
+Snake remains a supporting app/scene/surface/package exercise, not achievement of
+Gameplay/Shared Worlds. No synthetic per-repair requirement or automatic assessment.
+All new intent is proposed revision1 with justified-interpretation provenance;
+no activation, observations, verification or satisfaction is authorized by links.
+
+### H transaction 1 — expected45 → returned46, status ok
+
+Existing CLI `apply --stdin`, request constructed entirely in memory, created12
+requirements (11 capabilities, one ownership constraint). No external request file.
+
+| Alias | Canonical requirement | Contract |
+| --- | --- | --- |
+| H1 | REQ-2651ef26-9734-4f92-8ab0-508ae8f8fc10 | Same app factory/capabilities/facets |
+| H2 | REQ-a28a4162-fab8-4bf9-a0ae-2b8aed33a5f3 | Host process ownership constraint |
+| H3 | REQ-30fb38a5-7025-4607-8c51-90426f387b6f | Workspace mounts/adapters |
+| H4 | REQ-f70d19dc-3924-41e2-967b-3ead2be76dc7 | Scene handles/queries/cleanup |
+| H5 | REQ-b4da6c9d-6290-4213-9316-f515615bff2d | Read-only inspector snapshots |
+| H6 | REQ-d18f3582-daff-4140-ba91-cfcbea82c7a7 | Synchronous command dispatch/envelopes |
+| H7 | REQ-72d4e8fc-6aad-4018-a7f6-f2d3c8e6f61a | Scalar forms/confirmation/results/busy UI |
+| H8 | REQ-d93ee4a3-2df9-4628-8735-88f467b5a38c | Async progress/cancel/drop |
+| H9 | REQ-7392db30-9363-4909-be8f-9b50e033fe0d | Session-local run history |
+| H10 | REQ-fca0d3e2-b685-4cc8-a837-f0192b8b462c | Selected-source graph launcher |
+| H11 | REQ-deaf85e4-b680-42b4-a5cc-5aad12840c9a | Pinned-runtime distribution |
+| H12 | REQ-b586db93-de76-4724-98dc-22359715a46f | SDK module reference/builder contracts |
+
+These group coherent contracts rather than importing a requirement per historical
+patch. H7 preserves independently verifiable criteria for payload, confirmation
+and result/busy behavior. H2 applicability is only the trusted app/host ownership
+boundary; no security sandbox or universal constraint inheritance is inferred.
+Compile/Space constraints/TDD are not applicable to this docs/ledger audit.
+Validation and returned artifact/link identities follow below as executed.
+
+### H transaction 2 — expected46 → returned47, status ok
+
+Registered the39 assigned design/plan sources, three current feature contracts,
+two SDK documentation implementation samples,18 production declarations/modules
+and14 actual test definitions through the existing CLI. Artifact IDs are resolved
+from the returned canonical locator map for the dependent relation transaction;
+no aliases or guessed ART IDs are submitted. These registrations carry no fresh
+measurement evidence or inferred currency digest. Exact inventory is in the ledger
+diff; no source files are changed. Relation count and orphan checks follow below.
+
+### H transaction 3 — expected47 → returned48, status ok
+
+Added152 typed relations:55 addresses,19 realizes,26 implements,20 verifies,
+16 exercises,12 contributes_to and4 constrains. All76 new artifacts linked.
+All19 H designs and20 real plans have grounded typed roles; the unmatched Snake
+presentation repair plan addresses existing P4 rather than an invented design.
+Code-to-plan links describe representative presence, not complete implementation.
+SDK index/runtime reference are documentation implementation (`code` kind), not
+measured evidence. Six source-specific command plans support coherent H7/H8/H9
+criteria; no code-to-requirement edge or artificial plan was invented.
+
+### H transaction 4 — expected48 → returned49, status ok
+
+Self-review scoped coverage identified H11's missing purpose relation. Added
+`REL-a9f7c7d5-7b67-4a7f-8580-c3e8919ee58d`: H11 contributes_to existing Owned
+`REQ-80869160-7ee8-4062-902d-b90f0d9507aa`, deliberately **inferred**. Independent
+runtime packaging can help user-owned distribution; GitHub packaging does not
+prove self-hosting, federation or ownership achievement. No source or behavior
+changed. Final H totals: **12 requirements,76 artifacts,153 relations** (13
+contributions). Ledger49 totals **83 requirements/301 artifacts/693 relations**.
+No prior normative record, assessment, verification or history changed;17 existing
+assessments/63 verifications retained, zero new observations/evidence artifacts.
+
+## H original-source provenance, inspection and authority
+
+All19 H design bodies read in full, not only opening summaries. Full current
+feature contracts: hosted-runtime-apps332 lines, payload-forms52, distribution139.
+Full SDK app-module25, host-capabilities23, facets14, commands38, scene21 and
+packaging23 reference pages; SDK index26 and runtime module42. Other SDK module
+filenames inventoried, **not** comprehensive semantic/API review. All20 plan
+depths are explicitly bounded in39 disposition rows (generally L1–60/110); later
+executable snippets/checklists are not claimed inspected or freshly executed.
+
+Original `git log F -- <principal H designs/features>` and `git show` excerpts:
+
+| Original object/source | Actual inspected authority / reconciliation |
+| --- | --- |
+| `8a0cfb412c4f21516b0e543f9003b7e48526463f` hostable design L1–45 | Broader IDE/play/pause/inspect/publish same game intent, explicitly trusted in-process/no untrusted sandbox. |
+| `c536b31b02cce02a10bf995918503ff458b1cb15` hostable revision L1–45 | Explicit correction: same program/factory, capabilities not per-game session methods or mode branches. This is evidenced contract evolution, not inferred from later code. |
+| `8c901d5a23d3b2e6cc925daa2e7c447b54f5ecfd` distribution L19–58 | Pinned released runtime/no downstream compile; app-only system packages versus self-contained formats; no extraction/signing/macOS/auto-update promise. |
+| `83f905b57c4da60983ae17dcc9c9caf9864a8e9d` async L21–43 | Explicitly extends command surface while preserving sync, bounded one-active UI/callback cleanup and no durable jobs/auth. |
+| `249eeca955bca6788c940de6b5924be23b85e283` history L19–43 | Actual attempts, in-memory bounded text summaries, not persistent telemetry or job ownership. |
+| `d7440b3f7f7085fe0698f274387df7b038cf350b` launcher L24–53 | Exactly-one selected filesystem source, no scans/catalog/manifest/auth; explicit action rather than fs-node policy. |
+| `8f48d7c2b5d5e86eff17907206e2c59757d5254d` SDK module design L3–30 | Explicitly corrects original learning-path-first emphasis to comprehensive module lookup, retaining tutorials/app contracts. Existing SDK reference page presence cannot narrow completeness intent. |
+
+No generic Gameplay/Shared/World goal is assessed through Snake. Orthographic
+surface teaching/repair supports existing P4; no additional repair requirement.
+All original sources remain untouched; the audit's proposed requirements do not
+activate historical plans or grant execution authority.
+
+## H production/assertion evidence matrix and concrete residuals
+
+Paths are under `assets/lua/` unless explicitly prefixed. **All assertions below
+were read, not run.** Representative implementation/declaration presence12/12;
+linked actual test definitions11/12 (H12 lacks a linked test). This is neither
+12 complete implementations nor satisfied requirements. H2 has bounded fake
+controller teardown assertions, not proof of every process/global owner invariant.
+
+| Contract | Real production depth | Actual assertion depth / remaining gap |
+| --- | --- | --- |
+| H1/H2 | Full `app-host/runtime-controller.fnl`1–173 and `hosted-app-runtime.fnl`1–13; standalone160–216 | Full controller test1–193 checks host identity, registration, pause/step, drop exactly once and invalid facets; Snake hosted1–230 checks shared factory/mount/paused presentation and lifecycle quit. Complete native engine/signal/renderer/input/setup-failure matrix uninspected. |
+| H3 | Full `app-host/workspace-mount.fnl`1–93 | Full mount test1–141 asserts target order/no replacement, removed targets, failed-create child cleanup and quit during create. Embedded space-host adapter backend bodies/full panel teardown fault matrix not newly inspected or linked as implementations. |
+| H4 | Scene capability130–215 | Full test1–106 covers transforms/tag query/invalid handle/terrain proxy/recoverable despawn failure; Snake hosted217–229 checks creation/cleanup/missing scene. Full embedded backend/native collision/foreign-object semantic policy unverified. Registry-only volume query is not full physics support. |
+| H5 | Full snapshot helper1–51 | Full snapshot tests1–142 assert readable/error/unsupported rows, metadata normalization and no command invocation. `read` is app-provided code and data/schema may be shared tables; no deep immutability or arbitrary inspector purity proof. |
+| H6 | Full command runner1–185 | Runner tests20–209/410–637 include actual unique-id/self/payload/envelopes/structural validation; full session/descriptor integration not newly inspected. Only first handler return captured, no multivalue protocol. |
+| H7 | Full metadata1–54/result model1–157, schema150–180 and controls220–388 | Runner schema/metadata assertions467–637; controls410–629/650–828 cover real scalar form values, invalid number pre-dispatch, confirmation timing, reentrancy, previous-result restoration and handler cleanup. Full form-widget implementation/default/schema/UI event matrix and empirical readability not proven. |
+| H8 | Full runner1–185 and controls220–388 | Runner drop fallback424–450 asserts one cleanup/no result/late callback suppression; controls422–457 asserts one drop and unchanged state/history. Sync fallback183–201 read. Session close-all handles/teardown exception matrix remains uninspected; no job persistence. |
+| H9 | Full history model1–153 | Full model test1–116 covers order/ids/timestamps/custom trim/no raw payload/result fields/bounded text; controls439–457/518–537 covers drop/local failure. Model itself relies on caller token guards; command-id may retain arbitrary metadata, so raw command-id table/privacy generalization is not established. |
+| H10 | Full resolver1–179 and source launcher1–128 | Resolver90–249 includes nearest roots/directory absence/ambiguity; full launcher test1–204 checks loader restoration and fake panel; graph launcher100–269 asserts loader/start target/status/button via fakes. Real wrapper→controller factory calling convention is defective (below), not verified by these fragments. |
+| H11 | Full `.github/workflows/bundle.yml`315 and `scripts/app_packaging.py`217; Linux packager1–195 | Full bundle test1–110 checks declarations/pinned input/no compile/no manifest; Linux test1–165 checks staged roots, version dependencies and launcher ordering. Fake tarball has text binary: not executable packaging validation. Windows installer/ZIP/AppImage/native tools/release download/publication not executed or exhaustively traced. |
+| H12 | SDK index/runtime module full; existing `src/lua_runtime.cpp`344–350 path configuration sampled | No new SDK test artifact claimed. Module catalog/source/API/example completeness, docs navigation and build not established by this representative sample; Task4 docs gates and separate module-by-module follow-up retain that work. |
+| Existing P4 support | Orthographic surface45–143 | Full surface test1–128 asserts root resize/non-inverted projection/render-context/rebuild/drop; no actual graphical flicker or Snake visual/game-over/restart observation. |
+
+### Material retained solution/coverage discrepancies (not repairs)
+
+1. **H10 factory mismatch, static evidence.** `hosted-source-launcher.fnl`88–90
+   exports `:create (fn [_self host] ...)`, but actual controller106 calls
+   `(module.create host)`, not a colon/method call. Under that path the real host
+   binds `_self` and the wrapper forwards nil as host to selected module creation.
+   Wrapper tests76/97/118/137/159 invoke `wrapper:create host`; open-source test170–190
+   passes a fake panel that never invokes the factory. These test fragments cannot
+   establish end-to-end selected-source launch. Preserve H10 criterion2; return this
+   implementation defect to controller reconciliation for a separately authorized
+   repair/regression test, not a new requirement or silent technical narrowing.
+2. **Ownership/cleanup boundaries stay scoped.** Runner132 intentionally wraps
+   cancel hook in `pcall`; test helper82–90 throws after callback attempts and its
+   cancel test registration460 expects suppression. Drop141/143 propagates errors;
+   controls379–381 can skip root drop if invocation drop throws. No universal
+   best-effort UI cleanup claim follows. Scene drop197–202 stops on error but its
+   actual regression63–85 preserves remaining resources for retry. Complete failure
+   behavior needs separate reconciliation, not changes here or an invented sandbox.
+3. **SDK breadth remains unsatisfied.** Explicit module-reference completeness
+   intent is broader than one index and runtime-path sample. SDK facets reference7
+   loosely lists pause/resume lifecycle hooks, while principal design152–164/current
+   feature135–152 assigns pause/step to scheduler services; do not infer new required
+   lifecycle methods or certify docs/API parity. Current feature293–298 still lists
+   launcher UX as deferred before its own302–328 implemented-contract section;
+   retain the precise launcher contract, not an invented blanket deferral.
+
+These are audit findings within scope, not unresolved design decisions needed to
+mutate code. No expert dispatch trigger is invoked merely to record the evidenced
+gaps; no dependent repair is attempted. Security/credential/service operations were
+not performed. No arbitrary code loading, runtime launch or package download ran.
+
+## H validation, preservation, self-review and handoff
+
+**Compile check:** not applicable, no Fennel/C++ edits. **Application constraints:**
+not applicable. **Constraint Impact: not applicable** to application constraint
+rules; H2 records an evidenced scoped product ownership constraint without changing
+the executable constraint gate. **TDD:** not applicable, intent/trace audit only.
+
+Executed in order:
+
+1. `python3 scripts/requirements.py validate` → valid, revision49.
+2. `python3 scripts/requirements.py render` and `render --check` → current49.
+3. `make requirements-check` (via transparent `rtk`, tool timeout600000) → **348
+   passed in173.06s**, followed by canonical valid/current49. Output pristine.
+   These tests cover ledger/schema/transaction/history/query/projection contracts,
+   not hosted apps, packaging execution or SDK usability.
+4. In-memory preservation/manifest checks against full BASE and F using existing
+   `load_ledger`, `git show`, `git ls-tree -r -z --name-only F`: all71 previous
+   requirements/225 artifacts/540 relations preserved exactly as parsed records;
+  17 assessments/63 verifications/0 conflict dispositions unchanged. Active relation
+   tuples and locator/selector tuples unique; all76 new artifacts linked. Every
+   registered source file byte-equals F, BASE and current worktree.
+5. Frozen manifest remains **362 exactly once** (168 specs/194 plans),39 H rows
+   changed and323 non-H rows unchanged,0 missing/extra/duplicate. P report retained
+   as exact original byte prefix. Exactly the assigned five tracked paths differ,
+   with no pre-existing staged work. An initial private validation snippet's broad
+   first-column regex also matched32 directory inventory rows (394 total), causing
+   an assertion. Read-only diagnosis printed all extras (directories), found no
+   missing frozen file, then corrected only the snippet to match
+   `(?:docs/specs|docs/plans)/...\.md`. Same362 denominator passed unchanged;
+   no repository test/tool/manifest was altered to bypass the check.
+6. Post-write CLI `query --stdin`: scoped all12 H IDs and all384 registered records
+   coverage at32/1000 → **not truncated**. H findings are unassessed H2 constraint
+   and missing H12 test/evidence; no automatic satisfied assessment is added to
+   silence them. Whole coverage still has unsupported outcomes, missing evidence,
+   unknown artifact currency, missing design and implementation links. Unknown
+   currency is intentional: registrations are not immutable measurement evidence.
+7. Combined12-ID reconciliation-context32/1000 and narrowed H10 context32/1000
+   truncate; each12 both-direction trace32/1000 returns1000 paths/truncated. Each
+   individual trace narrowed to2/1000 returns16–100 paths but depth-truncates.
+   Direct152 new tuples were inspected at48, then the one justified contribution
+   at49. Exact `get` calls for H2/H11 and the real launcher/controller artifacts
+   resolve canonical records. No complete blast-radius/readiness claim follows.
+   Literal searches for create(host), pinned, SDK and leader commands were used
+   as post-write corroboration, not a substitute for pre-write semantic/provenance
+   comparison or proof of equivalence.
+
+Self-review: all12 actual statements/criteria and76 artifact roles compared against
+the inspected contracts,39 row dispositions and153 typed relations. Kept structural
+versus handler failures, user cancel versus lifecycle drop, registry versus native
+backend, app versus host ownership and definition versus observation separate.
+H11's purpose gap was repaired only through its justified inferred contribution;
+no other further creates/revisions/transitions/links justified in this **H-only**
+repeat sweep. Reports are large append/history-sensitive files; no restructuring.
+This is not Task4's every-family idempotence claim or product approval.
+
+At49, ledger/index SHA-256 after intended mutations and validation:
+
+- ledger `1ecec86239a17e6ad663c1edebaab7edb85b528857e0ebf22ad6f426e8ff1fc1`
+- index `ae8454bfe77818866d2be4bdf8ea51853aa725e0c087640e1134e22ec5330123`
+
+Assigned files (all existing; no additions):
+
+- `docs/requirements/ledger.json` — CLI only.
+- `docs/requirements/index.md` — renderer only.
+- `docs/requirements/2026-10-30-repository-reconciliation.md`.
+- `docs/requirements/2026-10-30-repository-source-dispositions.md`.
+- `docs/requirements/2026-10-30-baseline-task-3-report.md` — H append only.
+
+Ordinary local checkpoint, not stage-only. Review the complete
+`75694e9d7e33d2f091e3cb2c1cfd31dc762fe8b1..H_HEAD` range across all five files,
+all12 proposed records,76 artifacts/153 relations and39 dispositions. Checkpoint
+SHA/subject supplied in final handoff, not self-referentially embedded here.
+**H complete at declared depth; Task3 Time/N/D and Task4 pending.** Controller
+owns reconciliation of retained product defects and subsequent independent review;
+no push, PR, integration, runtime execution or satisfaction claimed.

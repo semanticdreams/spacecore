@@ -2,7 +2,16 @@
 
 ## Identity, authority and current boundary
 
-**Current Task3/P boundary (ledger45): all41 P filename dispositions and the
+**Current Task3/H boundary (ledger49): all39 H filename dispositions and bounded
+SDK/hosted-app/distribution contracts reconciled.** P independently passed per
+controller; its history below is retained. H adds12 proposed requirements,
+76 linked artifacts and153 relations without changing prior records or outcomes.
+Representative assertion definitions are not runtime verification. The static
+launcher factory call-convention defect and SDK completeness/platform gaps remain
+explicit in the appended H report; no application repair. H checkpoint remains an
+independent-review input. Task3 Time/N/D and Task4 remain pending.
+
+**Prior Task3/P boundary (ledger45): all41 P filename dispositions and the
 associated representative platform/runtime/world/media baseline reconciled.**
 Controller supplied Task2 FULL independent pass through `3215f2a4`; the Task2
 pending-review statements below are retained execution history. P checkpoint is
@@ -511,3 +520,75 @@ before/after. This does not discharge Task4 every-family idempotence. P complete
 at declared depth only; independent complete `c054ef5b..P_HEAD` review pending,
 remaining Task3 H/Time/N/D pending. No consultation trigger, budget reset, publication
 or integration claimed.
+
+## Task3/H — bounded hosted apps, SDK and distribution baseline
+
+Author `implementer/baseline-task-3-H`, strict supervisor workflow, BASE
+`75694e9d7e33d2f091e3cb2c1cfd31dc762fe8b1`, same branch/F/design authority.
+P independently passed per controller; earlier P pending statements are history.
+Reconciliation conclusion: missing representation/refinement, not new product
+development or application repair. All71 previous requirement identities and
+provenance compared; Core/Live/Workspace/Spatial/Owned, widget ownership, runtime
+asset lookup/Windows launch and graph ownership contracts reused, not duplicated.
+Hosted command execution is distinct from leader/text normal commands. Six audit
+governors remain unchanged. Snake repairs/examples support app/scene/surface/package
+contracts, not generic Gameplay/Shared goal satisfaction or synthetic maintenance.
+
+Serial existing CLI in-memory `apply --stdin` transactions45→46 create12 proposed
+revision1 requirements,46→47 register76 linked artifacts,47→48 add152 relations,
+48→49 add one inferred distribution→Owned contribution after self-review.
+No external request files, direct JSON/index edits, initialization, activation,
+supersession, retraction, assessment, observation or empirical achievement.
+Exact H1–H12 IDs/criteria/source history and production/assertion ranges are in the
+appended [Task3 report](./2026-10-30-baseline-task-3-report.md). Totals at49:
+83 requirements/301 artifacts/693 relations,17 assessments/63 verifications retained.
+H delta:11 capabilities/one ownership constraint;22 design/20 implementation-spec/
+20 code (including two documentation implementation samples)/14 test artifacts;
+55 addresses/19 realizes/26 implements/20 verifies/16 exercises/4 constrains/
+13 contributes_to relations (one inferred). All76 have actual typed roles.
+
+All19 H designs and principal current feature/reference contracts read fully;
+all20 historical plans sampled at stated interfaces/depths. All39 H rows now have
+source-specific disposition/limits;323 non-H rows unchanged, frozen362 exactly
+once. Representative implementation/declaration presence12/12, actual linked test
+definitions11/12, **not** complete implementations or satisfaction. H12 SDK module
+catalog/API completeness is broader than the index/runtime sample and remains
+unverified; no invented stability or aliases. Packaging declarations/Linux staging
+tests are not native Windows/AppImage/release observations. Existing P4 receives
+orthographic surface ownership/projection assertions, not empirical flicker proof.
+
+Original Git source establishes explicit hostable composition correction at
+`c536b31b`, pinned distribution intent at`8c901d5a`, bounded async/history at
+`83f905b5`/`249eeca9`, selected-source launcher at`d7440b3f` and SDK module-first
+correction at`8f48d7c2`. Broader intents are retained; old bounded non-goals do not
+silently erase later explicit extension or prove completion.
+
+Material retained defect: source launcher factory88–90 expects `(self,host)` while
+runtime-controller106 calls factory(host), forwarding nil to selected app creation.
+Direct wrapper tests use colon calls/fake panel, so their fragments miss real
+integration. H10 criterion2 stays intact; controller reconciliation owns any
+separately authorized regression/repair. Cleanup fault/metadata privacy, incomplete
+backend coverage, stale deferred-launcher prose and loose SDK lifecycle vocabulary
+remain concrete report gaps, not new policy or scope expansion. No dependent repair
+or security boundary crossing occurred; no consultation required solely to record
+these source-evidenced audit findings.
+
+Compile/application constraints/TDD not applicable; Constraint Impact not
+applicable. CLI validate/render/render-check valid/current49, `make requirements-check`
+timeout600000 **348 passed in173.06s**, then valid/current49. All prior parsed
+records/history/assessments/verifications preserved; active tuples/locators unique,
+all76 new source bytes equal F/BASE/current; P report preserved exact prefix.
+Manifest snippet initially included32 directory inventory rows, diagnosed and
+narrowed to actual spec/plan Markdown files without changing362 denominator.
+Scoped12/all384 coverage not truncated; H2 unassessed constraint and H12 missing
+test/evidence retained. Context32/1000 and all12 traces32/1000 truncate; narrowed
+individual2/1000 paths16–100 still depth-truncate. Direct assigned tuples inspected,
+not complete impact/readiness clearance. No Space/package runtime tests performed.
+
+H-only repeat source/criterion/trace self-review found zero further justified
+records/revisions/transitions/links after49; no no-op apply. Ledger/index digests:
+`1ecec86239a17e6ad663c1edebaab7edb85b528857e0ebf22ad6f426e8ff1fc1` /
+`ae8454bfe77818866d2be4bdf8ea51853aa725e0c087640e1134e22ec5330123`.
+Task4 every-family second sweep is still owed. Ordinary H checkpoint remains
+independent review input over `75694e9d..H_HEAD`, not approval. H complete at
+declared representative depth; Time/N/D and Task4 pending. No publication/integration.
