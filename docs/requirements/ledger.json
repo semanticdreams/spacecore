@@ -13,6 +13,12 @@
       "locator": "assets/lua/entities/relationships.fnl",
       "title": "relationships.fnl"
     },
+    "ART-07e3d062-f351-4ac3-8df1-aec6abf81334": {
+      "id": "ART-07e3d062-f351-4ac3-8df1-aec6abf81334",
+      "kind": "code",
+      "locator": "assets/lua/entities/string-search.fnl",
+      "title": "string-search.fnl"
+    },
     "ART-09f62b39-1c43-430e-a83f-05219d3cd5db": {
       "content_digest": "8eed1c328c494885107f755d38ec04346121737ea3210a0f1332b7c42ddb986f",
       "id": "ART-09f62b39-1c43-430e-a83f-05219d3cd5db",
@@ -33,6 +39,42 @@
       "locator": "scripts/tests/test_requirements_render.py",
       "title": "test_requirements_render.py"
     },
+    "ART-1234dc5e-771d-4791-8ed6-c5dd746ca145": {
+      "id": "ART-1234dc5e-771d-4791-8ed6-c5dd746ca145",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-reference-lifecycle-commands.fnl",
+      "title": "test-reference-lifecycle-commands.fnl"
+    },
+    "ART-12f85940-d412-453b-b93e-b34fc1e5aaab": {
+      "id": "ART-12f85940-d412-453b-b93e-b34fc1e5aaab",
+      "kind": "code",
+      "locator": "assets/lua/entities/type-catalog.fnl",
+      "title": "type-catalog.fnl"
+    },
+    "ART-244bad55-88a6-46d3-bdc4-a15135458edf": {
+      "id": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-15-explicit-graph-discovery.md",
+      "title": "2026-08-15-explicit-graph-discovery.md"
+    },
+    "ART-2482ad45-2fc2-4bea-baf2-367ac5131c9d": {
+      "id": "ART-2482ad45-2fc2-4bea-baf2-367ac5131c9d",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-17-ordered-thought-children-semantics-design.md",
+      "title": "2026-09-17-ordered-thought-children-semantics-design.md"
+    },
+    "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300": {
+      "id": "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-06-string-entity-text-search.md",
+      "title": "2026-10-06-string-entity-text-search.md"
+    },
+    "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c": {
+      "id": "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-11-graph-projection-runtime.md",
+      "title": "2026-10-11-graph-projection-runtime.md"
+    },
     "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3": {
       "content_digest": "bf7f4125a79604a95d207387811fba61273233c3715844894bf2266138695858",
       "id": "ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3",
@@ -40,12 +82,30 @@
       "locator": "scripts/tests/test_requirements_evidence.py",
       "title": "test_requirements_evidence.py"
     },
+    "ART-2fe1bbcc-6305-44b2-baf4-243cd35a6640": {
+      "id": "ART-2fe1bbcc-6305-44b2-baf4-243cd35a6640",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-graph-outline-view.fnl",
+      "title": "test-graph-outline-view.fnl"
+    },
     "ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be": {
       "content_digest": "38bca2926759125937a9cd4122a3dc181b8d41c88ec052e9ccc81c3b619c0eb1",
       "id": "ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be",
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-task-5-fix-1-validation.md",
       "title": "Task 5 fix 1 observed validation"
+    },
+    "ART-32591a81-b586-4591-a539-c45149063603": {
+      "id": "ART-32591a81-b586-4591-a539-c45149063603",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-14-entity-type-catalog.md",
+      "title": "2026-10-14-entity-type-catalog.md"
+    },
+    "ART-325fa4fb-37fa-4195-9208-9a16ec6ab13d": {
+      "id": "ART-325fa4fb-37fa-4195-9208-9a16ec6ab13d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-11-dict-entity-design.md",
+      "title": "2026-10-11-dict-entity-design.md"
     },
     "ART-36cca881-3bb5-4713-8c2c-13804304efd4": {
       "content_digest": "c38d42afcfb2d612143c39cd79cb49a667f965fac2c55059af7154b8dd8efc04",
@@ -60,11 +120,35 @@
       "locator": "assets/lua/graph/capabilities.fnl",
       "title": "capabilities.fnl"
     },
+    "ART-4537b959-600b-419a-84ee-c76e8a7866c4": {
+      "id": "ART-4537b959-600b-419a-84ee-c76e8a7866c4",
+      "kind": "code",
+      "locator": "assets/lua/graph/nodes/string-entity-search.fnl",
+      "title": "string-entity-search.fnl"
+    },
     "ART-46414157-af80-4192-8dbe-5afb6213b3e2": {
       "id": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
       "kind": "design",
       "locator": "docs/specs/2026-10-15-uniform-graph-access-design.md",
       "title": "2026-10-15-uniform-graph-access-design.md"
+    },
+    "ART-47eb2310-5c49-4968-ae8c-a4133dc2d031": {
+      "id": "ART-47eb2310-5c49-4968-ae8c-a4133dc2d031",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-15-explicit-graph-discovery-design.md",
+      "title": "2026-08-15-explicit-graph-discovery-design.md"
+    },
+    "ART-48f4eebf-7bde-460d-ade1-5ee7f356d0fd": {
+      "id": "ART-48f4eebf-7bde-460d-ade1-5ee7f356d0fd",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-commands.fnl",
+      "title": "test-commands.fnl"
+    },
+    "ART-4abeff65-6870-4885-915a-2d2fc05f3c20": {
+      "id": "ART-4abeff65-6870-4885-915a-2d2fc05f3c20",
+      "kind": "code",
+      "locator": "assets/lua/graph/outline.fnl",
+      "title": "outline.fnl"
     },
     "ART-52e4021c-9e73-475a-95fb-8904969605af": {
       "content_digest": "7f5f14f271bf5cff148cc9a1890eee3fe1f511a69e6f4767b0408b06fe3af505",
@@ -73,11 +157,53 @@
       "locator": "scripts/tests/test_requirements_demos.py",
       "title": "test_requirements_demos.py"
     },
+    "ART-537c5e24-a57f-4ac8-affe-dd8a3e30e2da": {
+      "id": "ART-537c5e24-a57f-4ac8-affe-dd8a3e30e2da",
+      "kind": "code",
+      "locator": "assets/lua/entities/dict.fnl",
+      "title": "dict.fnl"
+    },
+    "ART-5baad141-b7f8-4144-925c-208cd39d6a95": {
+      "id": "ART-5baad141-b7f8-4144-925c-208cd39d6a95",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-01-extensible-leader-command-system-design.md",
+      "title": "2026-10-01-extensible-leader-command-system-design.md"
+    },
     "ART-5facf444-9ed7-45a4-915a-17074742f5f3": {
       "id": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-entity-capabilities.fnl",
       "title": "test-graph-entity-capabilities.fnl"
+    },
+    "ART-656502be-dd4f-43e2-8f88-80f094f98dec": {
+      "id": "ART-656502be-dd4f-43e2-8f88-80f094f98dec",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-17-graph-presentation-islands.md",
+      "title": "2026-09-17-graph-presentation-islands.md"
+    },
+    "ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b": {
+      "id": "ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-06-string-entity-text-search-design.md",
+      "title": "2026-10-06-string-entity-text-search-design.md"
+    },
+    "ART-6a4f5787-fbcf-45b9-b795-59b8bcca9e2e": {
+      "id": "ART-6a4f5787-fbcf-45b9-b795-59b8bcca9e2e",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-14-entity-type-catalog-design.md",
+      "title": "2026-10-14-entity-type-catalog-design.md"
+    },
+    "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b": {
+      "id": "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-15-reference-lifecycle.md",
+      "title": "2026-10-15-reference-lifecycle.md"
+    },
+    "ART-6d9ebbac-0014-4938-a935-1c280cc54524": {
+      "id": "ART-6d9ebbac-0014-4938-a935-1c280cc54524",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-dict-entities.fnl",
+      "title": "test-dict-entities.fnl"
     },
     "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd": {
       "id": "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd",
@@ -92,11 +218,35 @@
       "locator": "docs/specs/2026-10-29-requirements-driven-engineering-design.md",
       "title": "2026-10-29-requirements-driven-engineering-design.md"
     },
+    "ART-71c70c57-b23a-4ecc-a6ff-22a44f852a90": {
+      "id": "ART-71c70c57-b23a-4ecc-a6ff-22a44f852a90",
+      "kind": "code",
+      "locator": "assets/lua/graph/view/runtime.fnl",
+      "title": "runtime.fnl"
+    },
     "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974": {
       "id": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
       "kind": "code",
       "locator": "assets/lua/entities/string.fnl",
       "title": "string.fnl"
+    },
+    "ART-77881d7a-61c4-4356-bbca-b2f3d00c4399": {
+      "id": "ART-77881d7a-61c4-4356-bbca-b2f3d00c4399",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-11-graph-projection-runtime-design.md",
+      "title": "2026-10-11-graph-projection-runtime-design.md"
+    },
+    "ART-7aeee9bb-7334-4def-9500-f0e14a72700c": {
+      "id": "ART-7aeee9bb-7334-4def-9500-f0e14a72700c",
+      "kind": "code",
+      "locator": "assets/lua/graph/view/island-presenters/ordered-list.fnl",
+      "title": "ordered-list.fnl"
+    },
+    "ART-83578537-ff54-4047-950d-e9c76170f3fc": {
+      "id": "ART-83578537-ff54-4047-950d-e9c76170f3fc",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-08-graph-outline-view-design.md",
+      "title": "2026-10-08-graph-outline-view-design.md"
     },
     "ART-851d9295-f934-4c35-b01b-1cefda8058e1": {
       "content_digest": "1654f2ff56bed0d44f9fbec9abe6394cf29dcc9d7b63f2a39280a6c940d1b456",
@@ -104,6 +254,18 @@
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-final-readiness-reconciliation.md",
       "title": "Later review-coordinate reconciliation and scoped readiness assessment"
+    },
+    "ART-855d1465-833c-4e23-850c-ff1aa9d91165": {
+      "id": "ART-855d1465-833c-4e23-850c-ff1aa9d91165",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-15-reference-lifecycle-design.md",
+      "title": "2026-10-15-reference-lifecycle-design.md"
+    },
+    "ART-88798527-b534-4b72-8964-9436da34a712": {
+      "id": "ART-88798527-b534-4b72-8964-9436da34a712",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-graph-view-islands.fnl",
+      "title": "test-graph-view-islands.fnl"
     },
     "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511": {
       "id": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
@@ -117,6 +279,18 @@
       "kind": "test",
       "locator": "scripts/tests/test_requirements_workflow_contracts.py",
       "title": "test_requirements_workflow_contracts.py"
+    },
+    "ART-9808837f-c18d-4dce-afd5-b60cd39dd351": {
+      "id": "ART-9808837f-c18d-4dce-afd5-b60cd39dd351",
+      "kind": "code",
+      "locator": "assets/lua/graph/commands.fnl",
+      "title": "commands.fnl"
+    },
+    "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de": {
+      "id": "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de",
+      "kind": "design",
+      "locator": "docs/dev/features/graph-capabilities.md",
+      "title": "Nonvisual graph capability contract and later identity projection extension"
     },
     "ART-9bad9647-63a6-45a5-9bef-4e82974048dc": {
       "id": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
@@ -136,6 +310,18 @@
       "locator": "assets/lua/lazy-text-buffer.fnl",
       "title": "lazy-text-buffer.fnl"
     },
+    "ART-a2d9d03b-e8b6-4449-96cb-453fc6e46135": {
+      "id": "ART-a2d9d03b-e8b6-4449-96cb-453fc6e46135",
+      "kind": "code",
+      "locator": "assets/lua/reference-lifecycle/init.fnl",
+      "title": "init.fnl"
+    },
+    "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b": {
+      "id": "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-01-extensible-leader-command-system.md",
+      "title": "2026-10-01-extensible-leader-command-system.md"
+    },
     "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81": {
       "content_digest": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
       "id": "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81",
@@ -150,6 +336,12 @@
       "locator": "docs/dev/notes/requirement-templates.md",
       "title": "requirement-templates.md"
     },
+    "ART-a92759da-d8f4-4ccc-9a7c-efeaf0b9f4cc": {
+      "id": "ART-a92759da-d8f4-4ccc-9a7c-efeaf0b9f4cc",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-entity-type-catalog.fnl",
+      "title": "test-entity-type-catalog.fnl"
+    },
     "ART-aa0c3dcd-6340-4226-b355-1ed58007541b": {
       "content_digest": "ce1f0aad8d5e5239ac14670f60ec26758d06dc363f9bd483ed7cb538d61e3904",
       "id": "ART-aa0c3dcd-6340-4226-b355-1ed58007541b",
@@ -163,11 +355,23 @@
       "locator": "assets/lua/graph/view/string-entity-editor.fnl",
       "title": "string-entity-editor.fnl"
     },
+    "ART-ae1f5a08-45ec-40ed-8ace-2d14df3a7191": {
+      "id": "ART-ae1f5a08-45ec-40ed-8ace-2d14df3a7191",
+      "kind": "code",
+      "locator": "assets/lua/graph/map.fnl",
+      "title": "map.fnl"
+    },
     "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea": {
       "id": "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea",
       "kind": "code",
       "locator": "assets/lua/graph/capabilities/entities.fnl",
       "title": "entities.fnl"
+    },
+    "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b": {
+      "id": "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-08-graph-outline-view.md",
+      "title": "2026-10-08-graph-outline-view.md"
     },
     "ART-b7346d33-ff24-437b-8350-29e3cf618f4c": {
       "content_digest": "4e5d899c6314dafdcf0837d6daebf62f94551f2e92add8af8f8251cfcb1914a5",
@@ -217,12 +421,30 @@
       "locator": "docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md",
       "title": "2026-08-30-lazy-text-buffer-virtual-input-design.md"
     },
+    "ART-dbf29841-3584-4ca5-a546-7b4eb04531ae": {
+      "id": "ART-dbf29841-3584-4ca5-a546-7b4eb04531ae",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-17-graph-presentation-islands-design.md",
+      "title": "2026-09-17-graph-presentation-islands-design.md"
+    },
+    "ART-dd72fe12-7742-4e78-9136-3f7ea145a7c5": {
+      "id": "ART-dd72fe12-7742-4e78-9136-3f7ea145a7c5",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-08-graph-map-camera-isolation-design.md",
+      "title": "2026-08-08-graph-map-camera-isolation-design.md"
+    },
     "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a": {
       "content_digest": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
       "id": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
       "kind": "code",
       "locator": "scripts/requirements.py",
       "title": "requirements.py"
+    },
+    "ART-e04b1a05-d0df-4904-a9ee-cc45fd133f53": {
+      "id": "ART-e04b1a05-d0df-4904-a9ee-cc45fd133f53",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-11-dict-entity.md",
+      "title": "2026-10-11-dict-entity.md"
     },
     "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf": {
       "id": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
@@ -244,12 +466,30 @@
       "locator": ".opencode/skills/requirements-reconciliation/SKILL.md",
       "title": "SKILL.md"
     },
+    "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e": {
+      "id": "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-graph-view-camera-persistence.fnl",
+      "title": "test-graph-view-camera-persistence.fnl"
+    },
+    "ART-f109955a-9de5-4ac6-8a09-82cff648ef97": {
+      "id": "ART-f109955a-9de5-4ac6-8a09-82cff648ef97",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-string-entity-search.fnl",
+      "title": "test-string-entity-search.fnl"
+    },
     "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e": {
       "content_digest": "509135d2080fa5e3eff0a3fdae358282d297166453c29391f2d2fb0c0e582de3",
       "id": "ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e",
       "kind": "test",
       "locator": "scripts/tests/test_requirements_scenarios.py",
       "title": "test_requirements_scenarios.py"
+    },
+    "ART-f3e79018-c4f8-4035-b370-a45984259711": {
+      "id": "ART-f3e79018-c4f8-4035-b370-a45984259711",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-graph-map.fnl",
+      "title": "test-graph-map.fnl"
     },
     "ART-f8788ba4-449f-493d-978e-ba2fb78bb726": {
       "content_digest": "04f24b168b51e88159958ea3f09bc8f88d35062cc1ec1e8967bce32d3ac00355",
@@ -3770,9 +4010,1290 @@
       "source": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
       "target": "ART-a045816d-f731-48f7-84d6-1bd452779143",
       "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-12bf6ac9-efe0-4c7b-a740-e9487efac63a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-15-explicit-graph-discovery-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-47eb2310-5c49-4968-ae8c-a4133dc2d031",
+      "target": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-21d04947-a557-44cf-a353-233d4a536a7a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-15-explicit-graph-discovery.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
+      "target": "ART-47eb2310-5c49-4968-ae8c-a4133dc2d031",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7066267a-134f-4458-beb9-07d48b6bd075",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-15-explicit-graph-discovery.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
+      "target": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b74c8251-045f-4252-9e60-af56047e03a2",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-graph-projection-runtime-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-77881d7a-61c4-4356-bbca-b2f3d00c4399",
+      "target": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e52de70e-1044-41be-ba67-d5906b1a7164",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-graph-projection-runtime.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c",
+      "target": "ART-77881d7a-61c4-4356-bbca-b2f3d00c4399",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9f0ecc43-d066-49f1-9501-576dd5dc2d06",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-graph-projection-runtime.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c",
+      "target": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dc2376e6-181d-4685-8384-0a7b4f9a8da7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-graph-projection-runtime-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-825f1b95-c44c-4724-9d5e-bc53de47853d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-17-graph-presentation-islands-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-dbf29841-3584-4ca5-a546-7b4eb04531ae",
+      "target": "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-43370415-25d4-46fd-87dc-501df6258bc5",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-17-graph-presentation-islands.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-656502be-dd4f-43e2-8f88-80f094f98dec",
+      "target": "ART-dbf29841-3584-4ca5-a546-7b4eb04531ae",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d3fcb4a6-7a23-4ad9-9283-6a28c9398a82",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-17-graph-presentation-islands.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-656502be-dd4f-43e2-8f88-80f094f98dec",
+      "target": "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-26febba2-c497-4d8b-9686-d23e67fdc08f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-17-graph-presentation-islands-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b6f77123-084c-4f46-be8b-67bc6ec5789a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-08-graph-outline-view-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-83578537-ff54-4047-950d-e9c76170f3fc",
+      "target": "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b6a101f4-74f6-455d-9e40-bdf070217ce3",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-08-graph-outline-view.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b",
+      "target": "ART-83578537-ff54-4047-950d-e9c76170f3fc",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ad8cc47b-0007-4164-a875-3b1ae4b14439",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-08-graph-outline-view.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b",
+      "target": "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3c9c8c8e-20c7-47bf-972d-09e3d0e5898d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-08-graph-outline-view-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3a5a9fa8-41f2-4f64-b659-b046d28168f1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-01-extensible-leader-command-system-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-5baad141-b7f8-4144-925c-208cd39d6a95",
+      "target": "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d78561db-1ba1-4032-a2b1-4ab7427df426",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-01-extensible-leader-command-system.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b",
+      "target": "ART-5baad141-b7f8-4144-925c-208cd39d6a95",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-af3c6b5c-9663-4a23-acd5-3fb1b7d55efd",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-01-extensible-leader-command-system.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b",
+      "target": "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f9c47da5-e6ca-405c-80a3-5a9f77f2592f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-01-extensible-leader-command-system-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cea4e2b1-60db-4eb2-8f73-add9c9200d28",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-06-string-entity-text-search-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b",
+      "target": "REQ-04d329ec-e1a7-49fe-9670-b816c46be005",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0cb9a5cd-e683-4c3b-916a-930e2c21e765",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-06-string-entity-text-search.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300",
+      "target": "ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-209c7ee5-8936-4866-83a5-66596f68219c",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-06-string-entity-text-search.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300",
+      "target": "REQ-04d329ec-e1a7-49fe-9670-b816c46be005",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-72bb6c3b-d749-4664-8da5-c98c6721282a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-06-string-entity-text-search-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-04d329ec-e1a7-49fe-9670-b816c46be005",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a01f7d8a-f6dd-4df2-8ebb-796200276548",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-14-entity-type-catalog-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-6a4f5787-fbcf-45b9-b795-59b8bcca9e2e",
+      "target": "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4ba1aa87-8837-484c-bfd9-2613fa36a22b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-14-entity-type-catalog.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-32591a81-b586-4591-a539-c45149063603",
+      "target": "ART-6a4f5787-fbcf-45b9-b795-59b8bcca9e2e",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3fc66fa2-1b43-4b91-833b-0d101f44e6af",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-14-entity-type-catalog.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-32591a81-b586-4591-a539-c45149063603",
+      "target": "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-500c4680-04df-4c8b-9ea6-4a225ed73044",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-14-entity-type-catalog-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ac5bbd3b-32eb-4273-8ac0-bd5f01b5f67a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-dict-entity-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-325fa4fb-37fa-4195-9208-9a16ec6ab13d",
+      "target": "REQ-3211043c-28c4-4777-aca7-d716dddb508d",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-882ecdbf-06f3-484e-8c4f-41d0a242be32",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-dict-entity.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-e04b1a05-d0df-4904-a9ee-cc45fd133f53",
+      "target": "ART-325fa4fb-37fa-4195-9208-9a16ec6ab13d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-435cdd78-d85d-48e5-a0c7-1db637b10289",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-dict-entity.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-e04b1a05-d0df-4904-a9ee-cc45fd133f53",
+      "target": "REQ-3211043c-28c4-4777-aca7-d716dddb508d",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-05f935a1-e71a-4ad1-842c-7e9af72fa5eb",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-dict-entity-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-3211043c-28c4-4777-aca7-d716dddb508d",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-499429f1-1875-4a83-b1b8-3e125a00ec97",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reference-lifecycle-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-855d1465-833c-4e23-850c-ff1aa9d91165",
+      "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ed41b05e-0537-40d5-b1d7-dd48d429bc8f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-15-reference-lifecycle.md"
+      },
+      "rationale": "Plan Goal/Architecture and inspected scope implement the same named design; historical instructions are not current audit execution authority.",
+      "retracted": false,
+      "source": "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b",
+      "target": "ART-855d1465-833c-4e23-850c-ff1aa9d91165",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4f7af125-b300-47c3-8bc0-0492a60d9201",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-15-reference-lifecycle.md"
+      },
+      "rationale": "The actual implementation plan specifies this family behavior; linkage is representative, not a claim all planned assertions were inspected or executed.",
+      "retracted": false,
+      "source": "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b",
+      "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e6448c40-5060-45a9-b15c-e64661110bd9",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reference-lifecycle-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d9ea8d33-d2df-481b-8451-65028d1954bc",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-17-ordered-thought-children-semantics-design.md"
+      },
+      "rationale": "Inspected full design contract establishes this family obligation; criteria also retain later documented refinements, not proof of achievement.",
+      "retracted": false,
+      "source": "ART-2482ad45-2fc2-4bea-baf2-367ac5131c9d",
+      "target": "REQ-1f81f38f-6167-4f28-81b4-9264ffe56245",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6e625899-2def-4161-a4fc-e5a75fdedb73",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-17-ordered-thought-children-semantics-design.md"
+      },
+      "rationale": "This scoped graph/entity contract helps the existing graph-foundation goal without proving naturalness, speed or seamlessness.",
+      "retracted": false,
+      "source": "REQ-1f81f38f-6167-4f28-81b4-9264ffe56245",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8bbdd885-df40-46e8-84ae-5c7ecd92b1f8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/graph.md"
+      },
+      "rationale": "The inspected owning-store/map/view boundary explicitly applies to this graph-exposure surface; no transitive universal applicability is inferred.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e2d5158d-e246-476f-a41c-d37922d1e9da",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/graph.md"
+      },
+      "rationale": "The inspected owning-store/map/view boundary explicitly applies to this graph-exposure surface; no transitive universal applicability is inferred.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3738ed9a-4710-4701-a2df-8a21ab646c2b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/graph.md"
+      },
+      "rationale": "The inspected owning-store/map/view boundary explicitly applies to this graph-exposure surface; no transitive universal applicability is inferred.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f01ff7eb-8710-41e0-9f24-ca37238ba73d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/graph.md"
+      },
+      "rationale": "The inspected owning-store/map/view boundary explicitly applies to this graph-exposure surface; no transitive universal applicability is inferred.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-04d329ec-e1a7-49fe-9670-b816c46be005",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fab4d912-31ef-4101-b184-ef7a079a1cc2",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/graph.md"
+      },
+      "rationale": "The inspected owning-store/map/view boundary explicitly applies to this graph-exposure surface; no transitive universal applicability is inferred.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-3211043c-28c4-4777-aca7-d716dddb508d",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-07fb8c4c-de8e-42d9-9ec2-7535f8839184",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/graph.md"
+      },
+      "rationale": "The inspected owning-store/map/view boundary explicitly applies to this graph-exposure surface; no transitive universal applicability is inferred.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a7436f65-9dbb-443b-b77c-9f2d7ef8b237",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-15-explicit-graph-discovery-design.md"
+      },
+      "rationale": "This explicit materialization solution must preserve domain ownership and user-chosen visual topology.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "ART-47eb2310-5c49-4968-ae8c-a4133dc2d031",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b0f9da2b-e6b5-41ea-bdff-61e49c224fb7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-15-explicit-graph-discovery.md"
+      },
+      "rationale": "This explicit materialization solution must preserve domain ownership and user-chosen visual topology.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d55ee037-c719-4e48-ad25-13bf852ea78f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-08-graph-map-camera-isolation-design.md"
+      },
+      "rationale": "Full goals and switching/persistence policy ground map cameras and Board/Graph isolation independently of projection-runtime mechanics.",
+      "retracted": false,
+      "source": "ART-dd72fe12-7742-4e78-9136-3f7ea145a7c5",
+      "target": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-30ecac16-b2e0-4dc9-ba6b-d35f329038b1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/view/runtime.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-71c70c57-b23a-4ecc-a6ff-22a44f852a90",
+      "target": "ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b9f301b7-5339-4969-9882-8d4c6c9dc28e",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/view/island-presenters/ordered-list.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-7aeee9bb-7334-4def-9500-f0e14a72700c",
+      "target": "ART-656502be-dd4f-43e2-8f88-80f094f98dec",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ba7e69ee-6ba2-4e79-b629-7468bcabe046",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/outline.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-4abeff65-6870-4885-915a-2d2fc05f3c20",
+      "target": "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1b9bf721-c261-42e6-a088-e384e3e6b71f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/commands.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-9808837f-c18d-4dce-afd5-b60cd39dd351",
+      "target": "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-de85d747-48a4-4499-9763-d092c7eb9180",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/entities/string-search.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-07e3d062-f351-4ac3-8df1-aec6abf81334",
+      "target": "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7fd4c9b7-8f3b-473c-808d-c80be751032b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/nodes/string-entity-search.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-4537b959-600b-419a-84ee-c76e8a7866c4",
+      "target": "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-218254d3-e57d-43d9-9408-c20be03c1b6c",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/entities/type-catalog.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-12f85940-d412-453b-b93e-b34fc1e5aaab",
+      "target": "ART-32591a81-b586-4591-a539-c45149063603",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-03a67122-de09-4c64-991e-c9bb870dc466",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/entities/dict.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-537c5e24-a57f-4ac8-affe-dd8a3e30e2da",
+      "target": "ART-e04b1a05-d0df-4904-a9ee-cc45fd133f53",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-93b71a7a-d98b-430e-b2ac-1c73c94b99eb",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/reference-lifecycle/init.fnl"
+      },
+      "rationale": "Inspected production functions implement the named plan surface; dependencies, callers and complete integration remain outside the sampled proof.",
+      "retracted": false,
+      "source": "ART-a2d9d03b-e8b6-4449-96cb-453fc6e46135",
+      "target": "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9a2e298a-fe25-4842-ad55-105422b56391",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-map.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-f3e79018-c4f8-4035-b370-a45984259711",
+      "target": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1fb7e70f-fd12-4dab-9668-c9e8078d16ae",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-map.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-f3e79018-c4f8-4035-b370-a45984259711",
+      "target": "ART-ae1f5a08-45ec-40ed-8ace-2d14df3a7191",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-15b8a6dc-864c-48bf-9cc7-b3777218cb20",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-view-camera-persistence.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e",
+      "target": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c2ad8385-7967-4df6-b2cb-54037c88f985",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-view-camera-persistence.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e",
+      "target": "ART-71c70c57-b23a-4ecc-a6ff-22a44f852a90",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-21f7e8fa-0068-4e14-8cd8-a6dcef14bd94",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-view-islands.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-88798527-b534-4b72-8964-9436da34a712",
+      "target": "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-85bbe985-9060-4db7-9639-02f643a57014",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-view-islands.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-88798527-b534-4b72-8964-9436da34a712",
+      "target": "ART-7aeee9bb-7334-4def-9500-f0e14a72700c",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-25040339-86ac-4f7c-9fc4-95d86d109a05",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-outline-view.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-2fe1bbcc-6305-44b2-baf4-243cd35a6640",
+      "target": "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-af3aa9da-67d7-45f5-bf47-fec5ad74c84b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-outline-view.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-2fe1bbcc-6305-44b2-baf4-243cd35a6640",
+      "target": "ART-4abeff65-6870-4885-915a-2d2fc05f3c20",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b7abb9f1-2a0b-4b7b-97f5-a8cc3a57aff8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-commands.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-48f4eebf-7bde-460d-ade1-5ee7f356d0fd",
+      "target": "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-922c7e5e-1cf4-49e3-bd4b-3d1cbc3d45d9",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-commands.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-48f4eebf-7bde-460d-ade1-5ee7f356d0fd",
+      "target": "ART-9808837f-c18d-4dce-afd5-b60cd39dd351",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b84ae65e-4f48-4f1f-b742-2f10a35bc4c1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-string-entity-search.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-f109955a-9de5-4ac6-8a09-82cff648ef97",
+      "target": "REQ-04d329ec-e1a7-49fe-9670-b816c46be005",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f85a8a02-8d38-4edb-acd9-9e12e68c43d8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-string-entity-search.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-f109955a-9de5-4ac6-8a09-82cff648ef97",
+      "target": "ART-07e3d062-f351-4ac3-8df1-aec6abf81334",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-acc04bc7-fe04-454e-841f-50a1e5ec61a6",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-entity-type-catalog.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-a92759da-d8f4-4ccc-9a7c-efeaf0b9f4cc",
+      "target": "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0a129e85-da41-4ff7-9f6c-08d3a68d7f78",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-entity-type-catalog.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-a92759da-d8f4-4ccc-9a7c-efeaf0b9f4cc",
+      "target": "ART-12f85940-d412-453b-b93e-b34fc1e5aaab",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5a19f978-8bf8-4945-9186-f14b9958dbab",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-dict-entities.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-6d9ebbac-0014-4938-a935-1c280cc54524",
+      "target": "REQ-3211043c-28c4-4777-aca7-d716dddb508d",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-905bb247-302a-4b0b-8feb-97ad6050d881",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-dict-entities.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-6d9ebbac-0014-4938-a935-1c280cc54524",
+      "target": "ART-537c5e24-a57f-4ac8-affe-dd8a3e30e2da",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f004b71f-8e88-4792-a5da-97dd1afe2ac3",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-reference-lifecycle-commands.fnl"
+      },
+      "rationale": "Inspected actual assertions define regression checks for part of this obligation, not a fresh run, complete criterion coverage or satisfaction.",
+      "retracted": false,
+      "source": "ART-1234dc5e-771d-4791-8ed6-c5dd746ca145",
+      "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bfaed344-fe16-4f5f-a940-9f27667e05ac",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-reference-lifecycle-commands.fnl"
+      },
+      "rationale": "Actual assertion calls exercise this production surface, directly or through its native graph/view factory; source inspection only.",
+      "retracted": false,
+      "source": "ART-1234dc5e-771d-4791-8ed6-c5dd746ca145",
+      "target": "ART-a2d9d03b-e8b6-4449-96cb-453fc6e46135",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9f30c0bf-cc8a-4667-87f8-4fb081784c34",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-string-entity-search.fnl"
+      },
+      "rationale": "L251\u2013319 explicitly test cancellation, stale callback suppression, opening and capture exclusion on the search node.",
+      "retracted": false,
+      "source": "ART-f109955a-9de5-4ac6-8a09-82cff648ef97",
+      "target": "ART-4537b959-600b-419a-84ee-c76e8a7866c4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6ff9978b-672d-4808-9407-5de873e255ef",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-map.fnl"
+      },
+      "rationale": "Map-only capture/removal/clear assertions retain backing records and separate shared graph membership; hidden-hook absence is not comprehensively proven here.",
+      "retracted": false,
+      "source": "ART-f3e79018-c4f8-4035-b370-a45984259711",
+      "target": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-63e38ab3-b719-49d7-b945-08540cc27449",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-capabilities.md"
+      },
+      "rationale": "L362\u2013381 explicitly extends incident matching/DTO projection through the link owner IdentityStore; original merge amendment 13d86a985c8e9faea3154c9bffc719c7b09b85af preserves initial no-dereference scope historically.",
+      "retracted": false,
+      "source": "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de",
+      "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-655bd68a-4b14-4eab-af27-7565ba80fb21",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-capabilities.md"
+      },
+      "rationale": "L362\u2013381 explicitly extends incident matching/DTO projection through the link owner IdentityStore; original merge amendment 13d86a985c8e9faea3154c9bffc719c7b09b85af preserves initial no-dereference scope historically.",
+      "retracted": false,
+      "source": "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de",
+      "target": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c1863e59-3de8-4734-b023-9f8f846acce6",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-graph-entity-capabilities.fnl"
+      },
+      "rationale": "L292\u2013338 preserve distinct directed link IDs, owner aliases and raw bytes through retargeted read projection; no test execution or whole lifecycle coverage inferred.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "type": "verifies"
     }
   ],
   "requirements": {
+    "REQ-04d329ec-e1a7-49fe-9670-b816c46be005": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Ripgrep uses literal ignore-case matching scoped to the string store and Markdown files; blank queries avoid backend work and duplicate matches group by entity."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Cancel previous tokens and ignore stale callbacks; errors remain distinguishable from successful empty results."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Graph capture excludes queries/results and result selection loads its entity key without creating domain links or auto-expanding all matches."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-04d329ec-e1a7-49fe-9670-b816c46be005",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Keep query text and result lists runtime-only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-06-string-entity-text-search-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Expose runtime-only graph string-entity text search over persisted Markdown through a replaceable backend, initially literal case-insensitive ripgrep, materializing only explicitly selected result entities."
+    },
     "REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6": {
       "acceptance_criteria": [
         {
@@ -3872,6 +5393,39 @@
       "revision": 1,
       "statement": "Trace requirements bidirectionally to justified designs, implementation specifications, code, tests and evidence."
     },
+    "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Nested key sequences resolve prefixes and commands with availability-derived hints; remapping changes keymap data rather than execution functions."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Empty selection does not fall back to focused or hovered nodes for preview commands; focused selection/action slots use graph focus and the same menu action list."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Map clear/removal commands are non-destructive; focus-start ensures canonical start membership then selects, focuses and centers it idempotently."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Preview commands operate on selected graph nodes only.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-01-extensible-leader-command-system-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Provide contextual declarative nested leader commands whose hints and execution share active keymap data, keeping graph preview targets selection-only and focused-node/map commands within their declared context."
+    },
     "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6": {
       "acceptance_criteria": [
         {
@@ -3927,6 +5481,34 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Connect graph, terminal, search, file/code views and basic editing into an integrated workspace workflow, including browser and media reference surfaces."
+    },
+    "REQ-1f81f38f-6167-4f28-81b4-9264ffe56245": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A parent-associated list persists direct child order across reload and supports append/reorder without graph topology becoming authoritative."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Reparenting removes/inserts the same child identity between associated lists without cloning content; generic links do not determine sibling order."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-1f81f38f-6167-4f28-81b4-9264ffe56245",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Use list entities as the authoritative primitive for ordered child membership.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-17-ordered-thought-children-semantics-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Represent ordered thought children with a domain-owned parent-associated list, keeping sibling order separate from generic links and graph-map presentation."
     },
     "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c": {
       "acceptance_criteria": [
@@ -4040,6 +5622,39 @@
       "revision": 1,
       "statement": "Separate explicit satisfaction assessments from criterion observations, preserving empirical applicability, latest results and content currency."
     },
+    "REQ-3211043c-28c4-4777-aca7-d716dddb508d": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "JSON reload preserves named slots and reference meaning; set/get/remove/rename work with explicit empty-value and rename-collision errors."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Distinct slots remain distinct even when references resolve to equal endpoints; unresolved references remain stored and may resolve later."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Graph adapters expose keyed collections without taking ownership; unchanged item mutations avoid unnecessary success signals."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-3211043c-28c4-4777-aca7-d716dddb508d",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "A dict entity is a persistent keyed collection whose values are graph-addressable keys.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-dict-entity-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Provide persistent dictionaries mapping distinct named slots to graph-addressable references, composable with string, code, list, link and identity primitives rather than inline scalar payloads."
+    },
     "REQ-3ec80f9e-aef5-4b29-88ad-0721b9951370": {
       "acceptance_criteria": [
         {
@@ -4062,6 +5677,39 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Support malleable live development with in-context widget editing and multi-repository code development, fast reload and rollback."
+    },
+    "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Loading the same key in two maps yields distinct mounted adapters; removal or selection in one map does not alter the other map."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Capture outgoing map/projection camera state before teardown and restore only the target mode; legacy camera data applies to spatial only, and malformed metadata errors explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Unsaved spatial maps center the first/start node once, not every subsequent insertion; Board and Graph cameras remain independent."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Keep spatial and outline camera/view state separate while using the same capture/restore mechanism.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-graph-projection-runtime-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Graph maps must retain independent interaction contexts over shared domain objects, with map-local adapters and separately captured spatial and outline camera/view state across switching and reload."
     },
     "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3": {
       "acceptance_criteria": [
@@ -4371,6 +6019,34 @@
       "revision": 1,
       "statement": "Report classification-aware trace coverage, honest bounded impact and explicit scoped readiness with unknowns and constraints."
     },
+    "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Graph-map capture contains materialized keys and explicit display edges, not domain payloads; opening a control does not bulk-expand hidden relationships."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Removing map membership leaves owning-domain records unchanged; nonvisual access retains its separately recorded isolation contract."
+        }
+      ],
+      "classification": "constraint",
+      "history": [],
+      "id": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Graph materialization is explicit.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-15-explicit-graph-discovery-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Graph exposure must leave domain persistence with owning systems and materialize related visual topology only through explicit user preview, view, search or action controls, not hidden bulk relationship hooks."
+    },
     "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf": {
       "acceptance_criteria": [
         {
@@ -4404,6 +6080,44 @@
       "revision": 1,
       "statement": "Evolve the existing agentic development system into goal-aware, requirements-driven engineering."
     },
+    "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Normalize owning writes through the shared IdentityStore before ordered uniqueness, retain distinct explicit aliases/named slots, and reject identity cycles/depth exhaustion without visual wrapper insertion."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Deletion visits incoming closure including unopened containers, links-to-links, aliases and dependent code workflow steps; preserve independent members/endpoints and historical runs/events, and retire the requested source last."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Morph preserves exact source text, aliases/chains and known participating map metadata without adding endpoints to unrelated maps; passive labels/previews and identity-aware relationship DTOs do not rewrite canonical references or author content."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c4",
+          "text": "Journal frozen changes before writes and resume matching pending work before world exposure; third-state edits fail explicitly, with single-writer per-file atomicity only, not multi-file or cross-process transactions."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Morph preserves links, ordered container membership, and presentation context.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reference-lifecycle-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Preserve stable logical references and presentation through string-to-code morph, and coordinate genuine deletion of supported live incoming references across owning stores, workflows and persisted worlds without deleting independent targets or rewriting history."
+    },
     "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2": {
       "acceptance_criteria": [
         {
@@ -4426,6 +6140,39 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Support richer world actors including avatars and vehicles and host multiple game-like experiences in editable shared worlds."
+    },
+    "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Validate dense ordered descriptors and unique IDs; copies isolate input/output mutations and unknown lookup errors explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Rows/actions agree with declared browser keys; navigation resolves in the containing map, missing advertised loaders error, and code rows contain bounded metadata rather than source payloads."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "App composition reuses the catalog across runtimes, publishes only after registration success and rejects conflicting replacement; nodes and sibling views release only their own subscriptions."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Menu exposure is automatic from the catalog; type declaration remains intentional.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-14-entity-type-catalog-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Derive browsable entity rows, actions and navigation from one explicit immutable catalog, including code browsing, while extension descriptors separately install owning-store loaders."
     },
     "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c": {
       "acceptance_criteria": [
@@ -4505,6 +6252,39 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Support shared worlds on Matrix with yojimbo realtime synchronization and an explicit shared-world permission model."
+    },
+    "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Island records persist identity, kind, members and presenter state per map; removing the creator or island does not delete backing member entities."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Ordered-list islands preserve stored list order, use absolute body/origin placement and translate aggregate force centers back to that origin while honoring explicit pins."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Alt member drag commits island translation on drag end; ordinary snap-back presentation does not reorder the domain list."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Domain data remains owned by domain stores. Island state is map-local presentation state.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-17-graph-presentation-islands-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Present related graph nodes as map-owned islands hosted by presenter kind, with ordered-list placement following owning-list order and independent absolute body positions rather than moving domain order into the view."
     },
     "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805": {
       "acceptance_criteria": [
@@ -4684,6 +6464,39 @@
       "revision": 1,
       "statement": "Support typed recursive many-to-many requirement relations without a fixed abstraction ladder or inferred satisfaction."
     },
+    "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Cycles/shared children emit once; incoming-only and unreachable nodes are omitted from rows without removing map membership."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Persist per-map view mode and normalized roots; root selection uses focus or exactly one selected node and reports ambiguous input explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Compact points own graph interaction while rows/labels provide layout; node open/menu/selection/focus remain available without implicit materialization."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-G",
+        "date": "2026-10-30",
+        "excerpt": "Nodes appear once at their first traversal position; later cycle or shared-node encounters are skipped.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-08-graph-outline-view-design.md"
+      },
+      "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
+      "revision": 1,
+      "statement": "Offer an outline projection of the same graph map using ordered visible roots and outgoing visible edges, emitting each reachable node only at its first depth-first traversal position."
+    },
     "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4": {
       "acceptance_criteria": [
         {
@@ -4713,7 +6526,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 33,
+  "revision": 37,
   "schema_version": 1,
   "verifications": [
     {

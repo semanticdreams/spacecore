@@ -259,3 +259,280 @@ Private retained evidence:
 actual apply returned IDs in order, successful test output, preservation/query and
 before/after digest extracts, original-source/actual-assertion excerpts. This file
 is not a tracked tool/importer, canonical evidence artifact or public raw session.
+
+## Task 2/G substantive continuation — completed bounded graph reconciliation
+
+This append preserves the predecessor's incomplete report and evidence above.
+**DONE for assigned G scope, ready for independent review; Task 2 overall remains
+incomplete.** The 19 application-agent/workflow and 9 text/input sources belong to
+later serial workers. Their obligations and the original whole Task 2 review are
+not discharged by this checkpoint. Representative gaps below are audit results,
+not an authorization for application repair or an assertion that functionality is
+absent. No review verdict, budget reset, restart or user artifact approval is claimed.
+
+### Continuation identity and reconciliation
+
+- Author/CLI actor `implementer/baseline-task-2-G`; fresh bounded worker, no platform
+  session UUID supplied. Controller supervisor, strict lane; branch
+  `juicyrebel/ridley`. Intake HEAD and continuation BASE both
+  `7e65f11c8930a38637c7444c56ed56a23b22919b`, clean worktree/index, revision33.
+- Original Task 2 BASE remains `c4322c63735c51a347e2c928c83614718a2b616f`;
+  retained checkpoints `bfa1e94ffb680ffa7546f0b210a39a0f3f0295d1` and
+  `ae4a7ddfd050e5f6658257f801f169e4a2861336` independently passed only their
+  five-record graph/text slice, per controller progress. Frozen source remains F
+  `fec176453c88fa1c47f22b7fe1d447dfe0ba281b` and reviewed design
+  `6fd7c0bcdc16444d18ad4332662eb6c4da0f5b52`.
+- Review this complete continuation `7e65f11c..G_HEAD`; original complete Task 2
+  `c4322c63..eventual_Task2_HEAD` remains owed after serial A/T completion.
+  The local commit containing this append is G_HEAD, subject
+  `docs(requirements): Reconcile bounded graph and entity baseline`.
+  Resolve its full SHA with `git log --format='%H %s' 7e65f11c..HEAD`;
+  the short final handoff enumerates it without a circular literal self-reference.
+
+Used **requirements-reconciliation**: conclusion **missing requirements / refinement
+and extension of product representation**, not product implementation. Read all33
+canonical requirement bodies/provenance and existing artifact locators at intake;
+compared meanings with Graph/Workspace/Live-development and the five predecessor
+records before creation. Neither methodology revision safety, generic access nor
+the strategic Graph goal already states map-mode isolation, domain ordered-child
+association, keyed collections or coordinated reference lifecycle criteria.
+Reuse all existing IDs unchanged, including the six revision-1 audit governors
+listed above. This task is the explicit authorized one-time baseline, not a
+historical bulk importer. Supporting fixes/maintenance do not get synthetic
+requirements, and no document-count quota determines the ten records below.
+
+Authority: full main design/feature contracts and original Git evidence, recorded
+as `justified_interpretation`, not invented user conversation. Scope and acceptance
+remain analytical and proposed; source labels such as approved/implemented do not
+activate records or imply satisfaction. No unknown product-policy choice or
+mandatory consultation trigger was established. Unchanged reconciled domain
+ownership decisions are reused. Next transition is scoped independent review,
+then serial remaining Task 2 work; do not advance Task3 yet.
+
+### Actual CLI mutations and identities
+
+All mutations used real CLI `python3 scripts/requirements.py apply --repo-root .
+--stdin`, in-memory envelopes with actor above and exact expected revisions:
+
+| Expected → returned | Actual result |
+| --- | --- |
+| 33 → 34 | Ten proposed revision-1 requirements with criteria/provenance. |
+| 34 → 35 | 39 linked-source artifacts: 11 designs, 9 implementation specs, 10 code, 9 tests. |
+| 35 → 36 | One additional design artifact for the explicit later capability feature contract. |
+| 36 → 37 | 78 explicit relations using actual returned IDs: 22 addresses, 9 realizes, 9 contributes_to, 8 constrains, 9 implements, 11 verifies, 10 exercises. |
+
+Totals now **43 requirements / 81 artifacts / 276 retained relations**. This G
+delta is **10 requirements / 40 artifacts / 78 relations**. No old requirement or
+artifact changed, no transition/revision/retraction/supersession, no assessment or
+criterion verification, no conflict disposition. Existing17 assessments and63
+verifications remain byte-equivalent as parsed records. Registration/typed edges
+are trace definitions, not runtime observations or satisfaction.
+
+| Alias | Requirement ID (all proposed revision1) | Independent family scope |
+| --- | --- | --- |
+| G1 | REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda | Domain ownership and explicit visual materialization constraint |
+| G2 | REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41 | Independent map adapters/interactions and mode-specific camera/view state |
+| G3 | REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c | Map-owned presentation islands, absolute bodies and domain list order |
+| G4 | REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20 | Outgoing first-occurrence outline projection and map-local roots |
+| G5 | REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a | Contextual declarative leader commands, hints and declared targets |
+| G6 | REQ-04d329ec-e1a7-49fe-9670-b816c46be005 | Persisted-string search with runtime-only queries/results |
+| G7 | REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb | Explicit immutable browsing catalog, separate from loader installation |
+| G8 | REQ-3211043c-28c4-4777-aca7-d716dddb508d | Persistent named dictionary references |
+| G9 | REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b | Stable-reference authoring/morph/delete/recovery and passive presentation |
+| G10 | REQ-1f81f38f-6167-4f28-81b4-9264ffe56245 | Domain-owned parent-associated ordered children, not island/outline order |
+
+Nine capability/behavior records contribute to existing Graph only without
+claiming sufficiency. G1 constrains G2/G3/G4/G6/G8/G9 and its actual explicit-discovery
+design/plan because each inspected surface exposes domains through map/view state.
+It is not a universal inherited constraint, and does not broaden the predecessor
+nonvisual Isolation requirement. G10 has a design link only: no fabricated plan,
+code or test was inserted to complete its chain. Methodology constraints do not
+automatically constrain product records.
+
+### Inspectable artifacts and depth
+
+All72 assigned manifest source files byte-match F. Every row was independently
+reconsidered and updated; other290 frozen rows are unchanged. Full main designs:
+explicit discovery, map camera isolation, islands, ordered thought children,
+extensible leader commands, string text search, outline, projection runtime,
+dictionary, catalog, reference lifecycle; also full reloadable graph-node units
+and built-in graph extensions. Original corrected uniform-access design was read
+from Git in addition to the retained predecessor reads. Full current features:
+graph foundation/browsing, graph capabilities, reference lifecycle, catalog,
+leader commands, string full-text search; full doctrine and graph-maps read.
+
+Full plans: projection-runtime L1–252 and catalog L1–311 (including composition
+remediation). Lifecycle plan L1–361 was sampled through shared contracts and
+early stages, **not** the full later stages. Every G source's L1–16 scope was
+independently read. Other supplementary specs/plans remain that opening depth
+unless explicitly deepened above/in their row. No blanket supersession, proof
+of every micro-contract, or full72-body semantic review is claimed.
+
+The following are exact registered design/plan artifact identities (path stems
+are under `docs/specs/<stem>-design.md` and `docs/plans/<stem>.md`):
+
+| Stem | Design ART ID | Implementation-spec ART ID |
+| --- | --- | --- |
+| 2026-08-15-explicit-graph-discovery | ART-47eb2310-5c49-4968-ae8c-a4133dc2d031 | ART-244bad55-88a6-46d3-bdc4-a15135458edf |
+| 2026-10-11-graph-projection-runtime | ART-77881d7a-61c4-4356-bbca-b2f3d00c4399 | ART-2a9e2550-8aff-4f9e-85b6-214af5a1a31c |
+| 2026-09-17-graph-presentation-islands | ART-dbf29841-3584-4ca5-a546-7b4eb04531ae | ART-656502be-dd4f-43e2-8f88-80f094f98dec |
+| 2026-10-08-graph-outline-view | ART-83578537-ff54-4047-950d-e9c76170f3fc | ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b |
+| 2026-10-01-extensible-leader-command-system | ART-5baad141-b7f8-4144-925c-208cd39d6a95 | ART-a516ba17-65dd-479b-85c1-c6bc11dd308b |
+| 2026-10-06-string-entity-text-search | ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b | ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300 |
+| 2026-10-14-entity-type-catalog | ART-6a4f5787-fbcf-45b9-b795-59b8bcca9e2e | ART-32591a81-b586-4591-a539-c45149063603 |
+| 2026-10-11-dict-entity | ART-325fa4fb-37fa-4195-9208-9a16ec6ab13d | ART-e04b1a05-d0df-4904-a9ee-cc45fd133f53 |
+| 2026-10-15-reference-lifecycle | ART-855d1465-833c-4e23-850c-ff1aa9d91165 | ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b |
+| 2026-09-17-ordered-thought-children-semantics | ART-2482ad45-2fc2-4bea-baf2-367ac5131c9d | None established |
+| 2026-08-08-graph-map-camera-isolation | ART-dd72fe12-7742-4e78-9136-3f7ea145a7c5 | Not registered in this representative trace |
+
+Later feature `docs/dev/features/graph-capabilities.md` is design artifact
+`ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de`, addresses existing Access and G9.
+Exact code/test artifact IDs are in the CLI-produced index/ledger and retained
+private G extracts; all use canonical source paths, no mutable audit page is
+registered as immutable measurement evidence. No code→requirement shortcut.
+
+### Separate status axes and actual assertion samples
+
+Historical product test success is **not imported** for any G record. Fresh
+observations below are source/ledger inspection only; **no product tests ran**.
+Assessments remain unset and criterion observations absent/currency unknown.
+`verifies` means an inspected test definition covers the stated sampled behavior,
+not that every criterion is covered or passed.
+
+| Scope | Actual implementation presence inspected | Actual test-definition assertions inspected | Residual coverage/outcome limits |
+| --- | --- | --- | --- |
+| G1 | `graph/map.fnl` L625–667 explicit key load/capture/install; capture delegates to ReferenceState | `test-graph-map.fnl` assertions for capture/clear L105–149 and independent adapters/removal L234–284 | Hidden-hook absence and all workflow controls not comprehensively checked; A owns workflow-specific hierarchy |
+| G2 | `graph/view/runtime.fnl` L1–245 shared mode/camera/capture/restore shell; map L613–702 sampled | `test-graph-view-camera-persistence.fnl` L71–130 stored/legacy/separate modes, L132–185 errors, L187–258 one-shot centering; map adapter assertions above | Activity/Board camera identity, switch ordering and every outer teardown caller untraced; do not infer full lifecycle proof from shell |
+| G3 | Full `graph/view/island-presenters/ordered-list.fnl`: absolute body fallback, placements, center↔origin and drag-end derivation | `test-graph-view-islands.fnl` L622–669 pin/replacement, L680–748 unique indices/capture error, L750–795 member fallback/alt-drag | Host/presenter registration and full force/persistence matrix not exhaustive; island layout is not parent-associated semantic containment |
+| G4 | Full pure `graph/outline.fnl`, outgoing ordered child index and visited DFS | `test-graph-outline-view.fnl` L354–407 outgoing/incoming/cycle/shared/root capture assertions; fixture and shared method declarations L1–160 read | Full compact rendering/hit/teardown, measured marker layout and realistic visual usability remain unproven |
+| G5 | `graph/commands.fnl` L1–180 resolver/availability/selected/focused command factories | `test-commands.fnl` L1–51 nested keymap/available execution; L241–324 shared hints/focus-selection availability | Command tests use bounded stubs for provider calls; native leader/input/full menu/map action integration not exhaustively inspected |
+| G6 | Full `entities/string-search.fnl` and `graph/nodes/string-entity-search.fnl` backend, sequence cancellation and result loading | `test-string-entity-search.fnl` L130–222 options/blank/dedup/filter/Windows paths; L251–319 token/stale/open/capture exclusion | Real ripgrep process/IO, all UI routes and late-drop callbacks not comprehensively evaluated; no live search performance claim |
+| G7 | Full `entities/type-catalog.fnl` validation, ordered copies and lookup | Full `test-entity-type-catalog.fnl` L23–123 actual order/isolation/errors/built-in manifest assertions | Code browser/Main publication, registry rollback, sibling views and same owning provider end-to-end not newly traced; catalog metadata is not CRUD |
+| G8 | `entities/dict.fnl` L1–130 codecs/snapshots and L160–311 owning CRUD/item normalization, copy-before-write and factory | `test-dict-entities.fnl` L55–145 creation/reload/item operations/errors/no-op/removal error; L147–185 graph API/referenced edges sampled | Distinct-slot semantics grounded but full equal-terminal UI/provenance matrix not proven; deletion uses G9, not historical physical-delete name |
+| G9 | Full coordinator `reference-lifecycle/init.fnl` plus existing provider `graph/capabilities/entities.fnl` L1–165, including terminal DTO conversion L60–65 | `test-reference-lifecycle-commands.fnl` L22–209 unopened cleanup/closure/container/alias/morph/history/source-last; existing `test-graph-entity-capabilities.fnl` L292–338 raw bytes/aliases/direction/cursor | Coordinator owner implementations, board/inactive-world/native publication/restart faults and passive UI preview/editor cleanup not exhaustively traced; historical list-edge tag loss and same-endpoint dict provenance coalescing remain documented limitations |
+| G10 | No parent-association/reparent implementation identified by this bounded audit | No justified test link established | Unknown implementation, not absence proven. List order/island/outline support cannot stand in for domain parent-associated children |
+
+Nine of ten G records have **some sampled implementation presence**; G1 is
+constraint inspection, not an implementation module. G10 remains unknown. This
+9/10 is a declared sampling denominator, **not** nine complete implementations,
+criterion satisfaction or repository-wide coverage. All10 have grounded design
+links; nine have some test definition linkage (including G1 map-only checks).
+Empirical Graph naturalness/speed/seamlessness remains unverified, with the
+existing missing measurement protocol/threshold unchanged.
+
+### Original Git reconciliation: later identity projection, initial scope retained
+
+The predecessor's discrepancy is resolved as an **evidenced later contract
+extension**, not a retroactive rewrite or product defect verdict:
+
+1. Original corrected uniform-access design at
+   `545f36051effc5fe73cb3fcca34e1be58c2097ff` explicitly says “Limit this
+   example to direct stored links; no identity dereference or recursive traversal.”
+   First-family implementation contract in
+   `6be4ffa104fa21ea2437d8e2b014dc290852ea89` likewise says no identity traversal.
+2. Original lifecycle design introduction
+   `f2002a6000afd8ff546e6a9a4d9d60bc99a9f765`, L169–186, preserves upstream
+   chains and requires “Reconcile link projections against resolved identities
+   and link IDs ... including upstream-alias consumers.” Original plan
+   `373f0ab94cad7dd66813785918c4b80efff8eeca`, L206–236 (current F L211–236),
+   explicitly changes link queries to resolved endpoints/traversed dependencies
+   and keeps reads nonauthoring. This is lifecycle authority, not by itself proof
+   of a nonvisual DTO change.
+3. `git log --full-history -m -S 'the current terminal keys' F --
+   docs/dev/features/graph-capabilities.md` locates merge amendment
+   `13d86a985c8e9faea3154c9bffc719c7b09b85af`. Its original combined diff
+   explicitly replaces no-identity-traversal wording with terminal DTO projection
+   through the link owner's **exact** IdentityStore. Original feature L355–374,
+   current F L362–381, preserves persisted stable keys/explicit aliases and every
+   distinct directed link ID, with no visual loader or allocating ensure on read.
+   This is original tracked amendment evidence, not extrapolation from test names.
+4. Current provider L60–65 and actual assertions L292–338 independently confirm
+   the defined implementation/test surface: retargeted DTOs preserve direction,
+   all three raw link files remain byte-equal, cursor binds submitted subject,
+   creation still rejects unsupported alias endpoints. No runtime pass inferred.
+
+The initial no-dereference slice remains historically true; the added feature
+artifact records the later extension beside it. Existing Access/Isolation
+normative revision1 and original artifacts/relations stay unchanged. Passive
+list/notebook/link presentation is grounded separately in current lifecycle
+feature L56–71 and supplementary plan opening constraints: terminal display must
+not author data or replace deliberate aliases. Actual full UI assertions are an
+explicit sampling gap, not filled by the DTO test link.
+
+One narrower documentation inconsistency remains recorded, not repaired:
+`docs/dev/graph-maps.md` L188 says alt-drag moves the aggregate “during the drag,”
+whereas the dedicated member-drag plan L13–16, doctrine L96–103 and actual
+`test-graph-view-islands.fnl` L784–795 require only the dragged member to move
+until drag end. G3 c3 follows those more specific, mutually corroborating
+interaction sources. No live behavior was observed; this is a source-consistency
+gap, not authority to change product code or silently edit the historical plan.
+
+### Validation, self-review, retained execution evidence and handoff
+
+- **Compile check:** not applicable; no `.fnl`, C++, runtime, product tests or host
+  scaffolding changed. **Application constraints:** not applicable.
+  **Constraint Impact: not applicable** to application feature work; G1 is a
+  newly represented product constraint with explicit limited applicability.
+- **Tests:** `make requirements-check`, timeout600000, **348 passed in174.99s**;
+  canonical `valid:true` and projection `current:true` at revision37, no warnings.
+  This focused gate covers the only executable changes: ledger schema/typed graph,
+  revision safety, retained history, queries and rendered projection. A product
+  compile/full suite would not establish this audit's empirical goals and was not run.
+- In-memory preservation checks against continuation BASE: all33 old requirements,
+  41 old artifacts, 198 old relations, 17 assessments, 63 verifications and zero
+  conflict dispositions unchanged. Active typed tuples and locator/selector tuples
+  unique; all ten new requirements proposed revision1. No direct JSON/index editing.
+- Exact frozen `.md` filename set: **362/362 unique, zero missing/extra/duplicates**;
+  G72/72 rows updated, non-G290 unchanged. All72 actual source bytes match F.
+  No spec/plan additions, so no records-index regeneration required.
+- Ten-ID scoped `coverage` and all-record `coverage` at depth32/paths1000:
+  `truncated:false`. G10 honestly reports `missing-linked-evidence`; G1 reports
+  `unaddressed-constraint` because there is no explicit satisfied assessment.
+  Ten-ID `reconciliation-context` at depth32/paths1000 is truncated. Each ten-ID
+  individual both-direction `trace` narrowed to depth2/paths1000 remains depth
+  truncated; direct canonical tuples inspected instead. No complete impact or
+  readiness clearance. Unknown: unlinked behavior/unregistered history is outside
+  complete blast radius.
+- Self-review compared semantic distinctness, all new criteria and source/typed
+  endpoints, especially ordered semantic lists versus islands versus outline,
+  catalog versus loader installation, graphical ignore-case ripgrep versus
+  nonvisual case-sensitive literal search, initial versus later identity scope,
+  and per-file recovery versus multi-file atomicity. Kept missing owner/UI/native
+  chains explicit rather than inventing code→requirement edges or evidence credit.
+  Retained the specific alt-drag documentation inconsistency above rather than
+  mistaking a broad summary sentence for supersession of the dedicated contract.
+- Local inspection-command recoveries: an initial context query exceeded an
+  overly narrow1000ms allowance and passed with30000ms; relation preflight assumed
+  a dictionary where canonical relations are a list, corrected before any apply;
+  first custom manifest assertion included32 directory-family rows, corrected to
+  the frozen spec/plan `.md` set and passed. Patches with nonexistent context
+  lines were rejected without changes; corrected contextual patches applied.
+  These were inspection/serialization mistakes, not product test failures,
+  repeated material invariant failures or a reason to weaken a repository gate.
+- Repeated source-to-criterion/typed-tuple self-review for this bounded G slice
+  identifies no further justified records/links. No no-op write and no claim of
+  Task4 every-family idempotence. At revision37 the canonical digests are ledger
+  `52aabd333824dadfdb9afe2d349bed9a45b2b31fd8f7c048081e8da7c5907215`, index
+  `44303460342241e20175cafff39da4ffa412da80161599719bfc670b086efb23`;
+  final read-only/diff checks must retain these bytes.
+- TDD: not applicable to a ledger/docs baseline with no application behavior change.
+
+Assigned files changed (all checkpointed together):
+`docs/requirements/ledger.json`, `docs/requirements/index.md`,
+`docs/requirements/2026-10-30-repository-reconciliation.md`,
+`docs/requirements/2026-10-30-repository-source-dispositions.md`, and this report.
+No controller progress, historical design/plan, source/test, prompt, tool, schema
+or infrastructure edits. No unrelated worktree/index entries changed. Private
+`task2-G-execution-source-evidence.md` in the existing scratch directory retains
+actual transaction IDs/counts, query/test/preservation outputs and original Git
+commands/excerpts for independent review; not staged or canonical measurement evidence.
+
+This G checkpoint is an ordinary local review input, **not sign-off**. Whole Task2
+review remains required and Task3 must await A/T completion and Task2 acceptance.
+
+Final pre-checkpoint checks: separate CLI `validate` and `render --check` again
+returned valid/current at37. Ledger/index SHA-256 values above remained unchanged;
+all predecessor report bytes are preserved as an exact prefix, all60 referenced
+REQ/ART identities in this report resolve, and `git diff --check` passed with
+exactly the five assigned tracked files changed. No second requirements-suite run
+was needed for reporting-only edits after the successful revision37 gate.

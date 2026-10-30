@@ -10,6 +10,28 @@ Owners: **2/G** graph/entities; **2/A** application agents/workflows/MCP; **2/T*
 
 Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. The description in each row paraphrases that inspected Goal and names the specific missing trace. This is enough to identify a solution/evidence candidate, not enough to infer current applicability or completion. Spec depth is **opening intent/context only**, with exact inspected lines stated per row. Uninspected remainder, implementation and tests are explicitly outside Task 1 semantic coverage. Later owners must inspect original full contracts before canonical linkage. Concrete missing traces are not assertions of missing functionality.
 
+### Task 2/G continuation depth and identities
+
+The 72 **2/G** rows below were reconsidered at continuation BASE `7e65f11c`
+against ledger 33, then updated at ledger 37. `G1`–`G10` are report-only shorthand,
+not a hierarchy or new schema: G1 ownership/explicit materialization
+`REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda`; G2 independent maps/projections
+`REQ-3fbb0fc8-8b5f-406e-993d-be340d962e41`; G3 islands
+`REQ-cce7be1b-f1a4-4fea-a3d3-e89fd1b2812c`; G4 outline
+`REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20`; G5 contextual commands
+`REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a`; G6 string search
+`REQ-04d329ec-e1a7-49fe-9670-b816c46be005`; G7 immutable browsing catalog
+`REQ-b4ba940f-acb9-41f0-a4c5-7e11f63dfbdb`; G8 dictionary references
+`REQ-3211043c-28c4-4777-aca7-d716dddb508d`; G9 lifecycle/passive presentation
+`REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b`; G10 domain ordered children
+`REQ-1f81f38f-6167-4f28-81b4-9264ffe56245`. All are proposed revision 1,
+without assessment/verification. G10 has design linkage only, not an invented
+implementation plan. See the appended G section of the Task 2 report for exact
+artifact IDs, assertion ranges, source-history reconciliation and remaining gaps.
+`G L1–16` means independently reread opening scope/architecture only; it is not
+a full semantic review. Supporting refinements and concrete gaps intentionally
+remain rather than turning every filename into a requirement or declaring it obsolete.
+
 ## Plans and progress (194 frozen paths)
 
 | Source | Family/owner | Disposition | Inspected passage and resulting ID or concrete gap |
@@ -51,54 +73,54 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/plans/2026-08-04-hud-control-button-spacing.md` | 3/P | S | L5: remove horizontal gaps retaining sizing; spacing assertions untraced. |
 | `docs/plans/2026-08-04-hud-right-rail-transparent-strip.md` | 3/P | S | L5: rail-only reserve with projected panel; parent-layout tests untraced. |
 | `docs/plans/2026-08-05-opencode-permission-capabilities.md` | 3/D | S | L5: guarded operations without wider role authority; wrapper tests untraced. |
-| `docs/plans/2026-08-06-graph-sidebar-node-finder.md` | 2/G | S | L5: node finder and idempotent Add Start; recovery traces missing. |
+| `docs/plans/2026-08-06-graph-sidebar-node-finder.md` | 2/G | S | G L1–16: sidebar membership controls versus view reveal/open callbacks; supports G2/G5 and graph-maps sidebar contract. Finder widget assertion chain not sampled. |
 | `docs/plans/2026-08-06-sandbox-interaction-modes.md` | 3/P | S | L5: exclusive Fly/Walk/Move/Grab; mode transition tests untraced. |
-| `docs/plans/2026-08-07-graph-ux-polish.md` | 2/G | S | L5: sidebar/theme/restored-map IDs; persistence and UX traces missing. |
+| `docs/plans/2026-08-07-graph-ux-polish.md` | 2/G | S | G L1–16: restrained theme and integer-like restored map IDs, explicitly not relaxed safe-map IDs. Supporting G2 solution; truncation/color and restored-float assertions remain untraced. |
 | `docs/plans/2026-08-07-opencode-capability-preflight.md` | 3/D | S | L5: missing wrapper/agent preflight; failure-path tests untraced. |
-| `docs/plans/2026-08-08-graph-activity-theme-panel-ux.md` | 2/G | S | L5: theme responsiveness/bounded panels; theme/geometry tests untraced. |
-| `docs/plans/2026-08-08-graph-map-camera-isolation.md` | 2/G | S | L5: separate map camera persistence; switch/reload tests untraced. |
+| `docs/plans/2026-08-08-graph-activity-theme-panel-ux.md` | 2/G | S | G L1–16: theme edge defaults, bounded panels and activity dock lifecycle, not domain mutations. Supports G2; per-edge overrides/panel-size/dock assertions not sampled. |
+| `docs/plans/2026-08-08-graph-map-camera-isolation.md` | 2/G | S | G L1–16: stable live camera plus map-specific metadata; G2 also grounded by full camera design. Camera persistence assertions L71–258 sampled; activity-switch and Board camera implementation remain untraced here. |
 | `docs/plans/2026-08-10-light-theme-layering.md` | 3/P | S | L5: subtle tonal tokens without widget API changes; visual evidence missing. |
 | `docs/plans/2026-08-12-opencode-runtime-artifact-access.md` | 3/D | S | L5: inspect safe runtime artifacts preserving secrets; access contract untraced. |
 | `docs/plans/2026-08-12-space-agent-live-development-reliability.md` | 2/A | S | L5: session-scoped live development context; reconnect/live-disk distinctions untraced. |
 | `docs/plans/2026-08-13-activity-camera-boundary.md` | 3/P | S | L5: prevent cross-activity camera/raycast mutation; boundary tests untraced. |
-| `docs/plans/2026-08-14-activity-aware-world-graph-exposure.md` | 2/G | S | L5: activity-aware scene/HUD/canvas discovery; stale-key mapping untraced. |
+| `docs/plans/2026-08-14-activity-aware-world-graph-exposure.md` | 2/G | S | G L1–16: world/activity/surface hierarchy and sandbox-key hydration migration preserve activity ownership, supporting G1. Graph-maps migration table read; WorldData and native surface mutation assertions deferred to platform owner. |
 | `docs/plans/2026-08-14-graph-authored-agent-workflows.md` | 2/A | S | L5: durable workflows outside graph-map ownership; persistence/authoring traces missing. |
 | `docs/plans/2026-08-14-workflow-user-flow-polish.md` | 2/A | S | L5: Start-to-run workflow authoring; complete-path assertions untraced. |
-| `docs/plans/2026-08-15-explicit-graph-discovery.md` | 2/G | S | L5: remove get-edges materialization; explicit discovery tests untraced. |
+| `docs/plans/2026-08-15-explicit-graph-discovery.md` | 2/G | S | G L1–16: actual plan realizes full explicit-discovery design and addresses G1. Definitions then per-definition runs are deliberate controls, not hidden fan-out. Workflow control assertions remain 2/A scope. |
 | `docs/plans/2026-08-15-workflow-backed-agent-sessions.md` | 2/A | S | L5: sidebar chats as long-lived runs; chat continuity tests untraced. |
 | `docs/plans/2026-08-16-workflow-graph-ux.md` | 2/A | S | L5: workflow visual control surfaces; node action traces missing. |
 | `docs/plans/2026-08-26-workflow-preview-decomposition.md` | 2/A | S | L5: compact previews with explicit explorers; discovery traces missing. |
-| `docs/plans/2026-08-29-graph-filesystem-file-interactions.md` | 2/G | S | L5: external edit/module nodes/lazy viewer; file interaction tests untraced. |
+| `docs/plans/2026-08-29-graph-filesystem-file-interactions.md` | 2/G | S | G L1–16: generic path adapter versus explicit file-interaction rows and bounded viewer. Supports G1; existing lazy-editor/save IDs reused rather than duplicating file-scale requirements. External-edit/module actions and native window reader remain concrete gaps. |
 | `docs/plans/2026-08-30-lazy-text-buffer-virtual-input.md` | 2/T | S | Task 2 full L1–625: lazy source/buffer/widget/viewer plan; ART-9bad9647-63a6-45a5-9bef-4e82974048dc realizes its design, with source/buffer code traces. REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c and REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4; buffer assertions inspected, widget/native/viewer completeness still uninspected. |
 | `docs/plans/2026-09-06-virtual-input-file-viewer-usability.md` | 2/T | S | L5: Vim routing/clipping/caret; regression assertions untraced. |
-| `docs/plans/2026-09-07-graph-titlebar-kind-badges.md` | 2/G | S | L5: badges without topology changes; compact/full-view tests untraced. |
+| `docs/plans/2026-09-07-graph-titlebar-kind-badges.md` | 2/G | S | G L1–16: render-time titlebar badge metadata, compact points unchanged. G1 ownership-compatible presentation refinement; badge normalization/dialog-prefix assertions not sampled, no separate micro-requirement imported. |
 | `docs/plans/2026-09-10-virtual-input-lazy-anchor-navigation.md` | 2/T | S | L5: bounded h/l/j/k after far jumps; navigation cost evidence missing. |
 | `docs/plans/2026-09-10-virtual-input-navigation-parity.md` | 2/T | S | L5: Input parity retaining lazy clipping; parity tests untraced. |
-| `docs/plans/2026-09-14-reloadable-graph-node-units.md` | 2/G | S | L5: graph extension reload vertical prototype; lifecycle preservation tests untraced. |
+| `docs/plans/2026-09-14-reloadable-graph-node-units.md` | 2/G | S | G L1–16 plus full paired design: vertical loader/adapter/preview/morph refresh and owner handles, supporting existing live-development goal and G1. Full ModuleUnit/reload seam assertion chain remains a declared representative-depth gap. |
 | `docs/plans/2026-09-14-shared-text-interaction-engine.md` | 2/T | S | L5: shared editing port/normal commands; lowercase-w proving test untraced. |
 | `docs/plans/2026-09-14-virtual-input-shared-input-policies.md` | 2/T | S | L5: shared focus/caret policies; eager/lazy equivalence untraced. |
-| `docs/plans/2026-09-15-built-in-graph-extensions.md` | 2/G | S | L5: one descriptor installation mechanism; built-in migration coverage untraced. |
-| `docs/plans/2026-09-15-graph-node-menu-separators.md` | 2/G | S | L5: general versus node-specific menu actions; separator assertions untraced. |
+| `docs/plans/2026-09-15-built-in-graph-extensions.md` | 2/G | S | G L1–16 and full design: one descriptor mechanism, no central forwarding registrar; G1/G7 ownership context, not catalog-driven loader installation. Built-in full scheme/hydration/reload assertions not independently sampled. |
+| `docs/plans/2026-09-15-graph-node-menu-separators.md` | 2/G | S | G L1–16: menu manager preserves separators; GraphView composes general actions then adapter actions. Supports G5 shared action-list semantics; divider routing/rendering assertions remain untraced. |
 | `docs/plans/2026-09-15-runtime-fennel-directory-modules.md` | 3/P | S | L5: embedded directory macro/module paths; launch-path tests untraced. |
-| `docs/plans/2026-09-15-string-entity-create-child.md` | 2/G | S | L5: child/link creation plus map placement; atomic authoring tests untraced. |
+| `docs/plans/2026-09-15-string-entity-create-child.md` | 2/G | S | G L1–16: owning child/link creation then same-map reveal via derived edge. Reuse Access/text-revision IDs; later graph-capabilities L422–439 explicitly disclaims compensating committed work, so no atomic multi-record promise. Child failure assertions not newly sampled. |
 | `docs/plans/2026-09-16-bugsink-sentry-error-reporting.md` | 3/P | S | L5: vendored Sentry reporting after DSN init; error-path bindings untraced. |
 | `docs/plans/2026-09-16-merged-pr-followup-branch.md` | 3/D | S | L5: deterministic follow-up branch; already-merged recovery tests untraced. |
 | `docs/plans/2026-09-16-release-artifact-naming.md` | 3/D | S | L5: consistent Linux/Windows artifact names; packaging assertions untraced. |
 | `docs/plans/2026-09-16-runtime-asset-overlay.md` | 3/P | S | L5: project overlays before built-ins; fallback resolution tests untraced. |
 | `docs/plans/2026-09-16-windows-desktop-cli-launch.md` | 3/P | S | L5: desktop exe and console companion; launcher behavior untraced. |
 | `docs/plans/2026-09-16-windows-packaged-fast-suite.md` | 3/D | S | L5: portable packaged child/path fixtures; exact failure repair trace missing. |
-| `docs/plans/2026-09-17-graph-presentation-islands.md` | 2/G | S | L5: map-owned ordered-list islands; layout ownership tests untraced. |
+| `docs/plans/2026-09-17-graph-presentation-islands.md` | 2/G | S | G L1–16: registered actual plan realizes full island design and addresses G3. Ordered-list presenter and island assertions sampled; domain parent-child association is distinct G10 with implementation unknown. |
 | `docs/plans/2026-09-17-space-app-distribution.md` | 3/H | S | L5: apps download pinned runtimes; packaging chain untraced. |
 | `docs/plans/2026-09-18-fix-snake-presentation.md` | 3/H | S | L5: upright/scaled Snake and stable status; example-specific evidence only, tests untraced. |
 | `docs/plans/2026-09-18-graphical-snake-example.md` | 3/H | S | L5: 2D widget Snake; example-to-runtime teaching contract untraced. |
 | `docs/plans/2026-09-18-snake-example-template.md` | 3/H | S | L5: independent app template; no general gameplay obligation inferred. |
 | `docs/plans/2026-09-18-snake-orthographic-ui-surface.md` | 3/H | S | L5: reusable orthographic UI surface; reusable host tests untraced. |
-| `docs/plans/2026-09-23-independent-island-bodies.md` | 2/G | S | L5: absolute map-local island positions; persistence coordinate tests untraced. |
-| `docs/plans/2026-09-23-island-member-drag-handles.md` | 2/G | S | L5: alt-drag moves island; normal snap-back tests untraced. |
-| `docs/plans/2026-09-24-list-entity-compact-labels.md` | 2/G | S | L5: unnamed list label suppression preserving IDs; label cases untraced. |
-| `docs/plans/2026-09-24-movable-graph-islands.md` | 2/G | S | L5: aggregate islands movable by default; force-layout tests untraced. |
+| `docs/plans/2026-09-23-independent-island-bodies.md` | 2/G | S | G L1–16: absolute body position, not source-node anchor; supports G3 criterion c2. Presenter L52–77 and old-format member-fallback assertion L750–771 inspected; complete persistence chain not sampled. |
+| `docs/plans/2026-09-23-island-member-drag-handles.md` | 2/G | S | G L1–16: presenter derives new body at alt-drag end; supports G3 c3. Actual second-member drag L773–795 preserves other members during drag and moves on drop; non-alt matrix remains untraced. |
+| `docs/plans/2026-09-24-list-entity-compact-labels.md` | 2/G | S | G L1–16: explicit compact-label opt-out while retaining raw key access; presentation-only under G1. Compact label rendering cases not sampled; do not confuse this with identity terminal-label semantics in G9. |
+| `docs/plans/2026-09-24-movable-graph-islands.md` | 2/G | S | G L1–16: aggregate participant replaces implicit membership pins, not C++ solver redesign. Supports G3; replacement/pin cleanup assertions L622–669 sampled, complete force movement matrix remains unknown. |
 | `docs/plans/2026-09-24-stale-merged-pr-recovery.md` | 3/D | S | L5: guarded follow-up push/PR recovery; capability invariants untraced. |
-| `docs/plans/2026-09-25-force-layout-island-behavior.md` | 2/G | S | L5: center-anchored forces with body-origin persistence; coordinate conversion tests untraced. |
+| `docs/plans/2026-09-25-force-layout-island-behavior.md` | 2/G | S | G L1–16: visual-center force anchor converts back to persisted origin, explicit pins excluded. G3; actual presenter L90–117 conversion inspected, exhaustive force/runtime cache assertions not sampled. |
 | `docs/plans/2026-09-25-hostable-space-apps.md` | 3/H | S | L5: runtime compositions over host capabilities; host/app ownership tests untraced. |
 | `docs/plans/2026-09-25-hosted-app-scene-capabilities.md` | 3/H | S | L5: app-owned scene CRUD/cleanup; sandbox independence tests untraced. |
 | `docs/plans/2026-09-25-hosted-app-workspace-adapters.md` | 3/H | S | L5: HUD/canvas/scene workspace adapters; mounting/composition tests untraced. |
@@ -134,8 +156,8 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/plans/2026-09-29-opencode-ci-diagnostics-tooling.md` | 3/D | S | L5: CI logs/repo-local vcpkg bootstrap; safe bootstrap tests untraced. |
 | `docs/plans/2026-09-30-temporal-full-iso-intervals.md` | 3/Time | S | L5: selected ISO zoned/exact/period endpoints; DST policies untraced. |
 | `docs/plans/2026-09-30-temporal-recurrence-set-zoned.md` | 3/Time | S | L5: finite sets/zones/UTC UNTIL; ambiguity cases untraced. |
-| `docs/plans/2026-10-01-extensible-leader-command-system.md` | 2/G | S | L5: nested leader/keymaps and preview commands; command resolution tests untraced. |
-| `docs/plans/2026-10-01-graph-enter-preview.md` | 2/G | S | L5: Enter expands inline preview; full-view activation distinction untraced. |
+| `docs/plans/2026-10-01-extensible-leader-command-system.md` | 2/G | S | G L1–16: actual plan realizes full command design/addresses G5; provider selection gating and actual keymap/hint assertions traced. Leader state dispatch and all legacy keys not exhaustively inspected. |
+| `docs/plans/2026-10-01-graph-enter-preview.md` | 2/G | S | G L1–16: idempotent focused Enter expansion versus explicit full-view opening. Supporting G5 navigation context, not selected-preview fallback. Focus activation runtime/assertions remain untraced. |
 | `docs/plans/2026-10-01-temporal-business-calendar.md` | 3/Time | S | L5: deterministic US-FED corpus; holiday coverage bounds untraced. |
 | `docs/plans/2026-10-01-temporal-ics-icalendar.md` | 3/Time | S | L5: selected VCALENDAR/VEVENT corpus; unsupported ICS forms untraced. |
 | `docs/plans/2026-10-01-temporal-localization-calendar.md` | 3/Time | S | L5: CLDR seed facades; locale/calendar breadth untraced. |
@@ -143,39 +165,39 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/plans/2026-10-01-temporal-natural-language.md` | 3/Time | S | L5: three-locale candidate parsing; ambiguity/context tests untraced. |
 | `docs/plans/2026-10-02-runtime-scheduler.md` | 3/Time | S | L5: typed scheduler retaining RuntimeTimers; timer compatibility tests untraced. |
 | `docs/plans/2026-10-02-snackbar-system-implementation-plan.md` | 3/P | S | L5: scoped reusable snackbar host; lifetime/policy assertions untraced. |
-| `docs/plans/2026-10-03-graph-selection-leader-commands.md` | 2/G | S | L5: keyboard selection edits; selection semantics untraced. |
+| `docs/plans/2026-10-03-graph-selection-leader-commands.md` | 2/G | S | G L1–16: focused-node operations through native selector with map-owned persisted selection; supports G5. Actual availability/hint assertions L276–324 inspected; full selector integration remains untraced. |
 | `docs/plans/2026-10-03-temporal-closeout.md` | 3/Time | S | L5: bounded smoke, not ecosystem equivalence; cannot retire broader intent without source authority. |
-| `docs/plans/2026-10-04-graph-leader-command-expansion.md` | 2/G | S | L5: focused/view/map commands; preserved preview/selection tests untraced. |
+| `docs/plans/2026-10-04-graph-leader-command-expansion.md` | 2/G | S | G L1–16: same pointer/numeric action list and bounded focused/view/map commands; G5 plus G2 map context. Provider resolver/gating code inspected; complete action slot and map manager assertion chains not sampled. |
 | `docs/plans/2026-10-04-ssh-integration-foundation.md` | 3/N | S | L5: isolated libssh async/fleet APIs; backend availability tests untraced. |
-| `docs/plans/2026-10-05-focus-start-node-command.md` | 2/G | S | L5: ensure/select/focus/center start; idempotent command tests untraced. |
+| `docs/plans/2026-10-05-focus-start-node-command.md` | 2/G | S | G L1–16: focus-start orchestrates existing Add Start then reveal options, not a new loader API. Included in G5 c3; graph-maps action semantics read, full actual command assertion not newly sampled. |
 | `docs/plans/2026-10-05-opencode-fast-development-flow.md` | 3/D | S | L5: interactive lane with strict default; later lane authority untraced. |
 | `docs/plans/2026-10-05-ssh-real-backend-validation.md` | 3/N | S | L5: real Linux SSH CI; fixture versus real backend observations untraced. |
 | `docs/plans/2026-10-06-fast-dev-local-main-wrap-up.md` | 3/D | S | L5: local-main guarded conversion; current branch contract applicability untraced. |
-| `docs/plans/2026-10-06-string-entity-text-search.md` | 2/G | S | L5: graph-native ripgrep search; stale search result handling untraced. |
+| `docs/plans/2026-10-06-string-entity-text-search.md` | 2/G | S | G L1–16: actual plan realizes full search design/addresses G6. Backend and node implementations plus options/grouping/cancellation/stale/capture assertions traced; actual ripgrep process and UI submission runtime not executed. |
 | `docs/plans/2026-10-07-hierarchical-focus-navigation.md` | 3/P | S | L5: generic entry/exit focus scopes; focus restoration tests untraced. |
-| `docs/plans/2026-10-08-graph-outline-view.md` | 2/G | S | L5: map roots/outgoing outline traversal; cycle and root tests untraced. |
+| `docs/plans/2026-10-08-graph-outline-view.md` | 2/G | S | G L1–16: actual plan realizes full outline design/addresses G4; pure projection and L354–407 actual traversal/cycle/root assertions inspected. Later point-owned interaction and measured layout are refinements, not supersession. |
 | `docs/plans/2026-10-08-windows-ci-speedups.md` | 3/D | S | L5: separate validation from packaging; release preservation tests untraced. |
 | `docs/plans/2026-10-09-github-workflow-cleanup.md` | 3/D | S | L5: workflow permissions/pins/trust; protection assertions untraced. |
-| `docs/plans/2026-10-09-outline-compact-projection.md` | 2/G | S | L5: points own interactions, not rows; hit-target tests untraced. |
+| `docs/plans/2026-10-09-outline-compact-projection.md` | 2/G | S | G L1–16: compact point owns click/focus/select, whitespace miss; G4 c3 reflects this later refinement. Shared projection code/teardown matrix not fully read, no visual correctness claim. |
 | `docs/plans/2026-10-09-windows-main-ci.md` | 3/D | S | L5: post-merge/manual Windows validation; historical required-check changes untraced. |
-| `docs/plans/2026-10-11-dict-entity.md` | 2/G | S | L5: persistent keyed collections; entity reference tests untraced. |
-| `docs/plans/2026-10-11-graph-projection-runtime.md` | 2/G | S | L5: shared lifecycle/separate projections; state isolation assertions untraced. |
+| `docs/plans/2026-10-11-dict-entity.md` | 2/G | S | G L1–16: actual plan realizes full dictionary design/addresses G8. Owning persistence/mutation paths and JSON reload/item-error/no-op assertions sampled; full dictionary UI not inspected. Later stable writes reuse G9. |
+| `docs/plans/2026-10-11-graph-projection-runtime.md` | 2/G | S | G full L1–252: mode-specific persistence and shared runtime, selection, activity adapters; G2. Runtime code and camera regression assertions inspected; complete activity/teardown caller matrix remains unknown. |
 | `docs/plans/2026-10-11-opencode-mcp-bridge-core.md` | 2/A | S | L5: policy-neutral shared mechanism; distinct client contracts untraced. |
 | `docs/plans/2026-10-12-ci-prebuilt-runtime.md` | 3/D | S | L5: trusted minimal runtime reuse; native-impact classification untraced. |
-| `docs/plans/2026-10-12-outline-marker-box.md` | 2/G | S | L5: measured box around layered points; interaction-owner tests untraced. |
-| `docs/plans/2026-10-12-tree-view-outline.md` | 2/G | S | L5: measured TreeView instead of stride; row layout tests untraced. |
-| `docs/plans/2026-10-14-entity-type-catalog.md` | 2/G | S | L5: explicit catalog including code entities; browser/catalog parity untraced. |
+| `docs/plans/2026-10-12-outline-marker-box.md` | 2/G | S | G L1–16: stable measured marker footprint, not uniform row height; G4 presentation refinement. Marker glyph/selection layout assertions and visual evidence remain untraced. |
+| `docs/plans/2026-10-12-tree-view-outline.md` | 2/G | S | G L1–16: generic measured TreeView with graph-specific compact interaction retained; G4 solution refinement. Generic widget implementation belongs to platform; no widget quality proof imported. |
+| `docs/plans/2026-10-14-entity-type-catalog.md` | 2/G | S | G full L1–311 including composition-helper addendum: actual plan realizes full catalog design/addresses G7. Catalog code and mutation-isolation/order/validation assertions traced; complete Main publication/rollback and sibling-view matrix untraced. |
 | `docs/plans/2026-10-15-fast-dev-independent-workflow.md` | 3/D | S | L5: direct checkpoints/explicit wrap-up; publication authority tests untraced. |
-| `docs/plans/2026-10-15-graph-capabilities.md` | 2/G | S | Task 2 full L1–254: corrected contract authority plus Tasks 1–4; ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf realizes ART-46414157-af80-4192-8dbe-5afb6213b3e2. Five production files and three actual test-definition bodies traced; no fresh runtime verification or native publication audit. |
+| `docs/plans/2026-10-15-graph-capabilities.md` | 2/G | S | Predecessor full L1–254 and G L1–16 retain ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf / ART-46414157-af80-4192-8dbe-5afb6213b3e2 and Access/Isolation/revision IDs. Later DTO identity extension confirmed at 13d86a98, not retroactively part of the original plan. No fresh product/native verification. |
 | `docs/plans/2026-10-15-live-dev.md` | 3/D | S | L5: checkout-scoped verified app refresh; manual lifecycle assertions untraced. |
-| `docs/plans/2026-10-15-reference-lifecycle.md` | 2/G | S | L5: morph preserves relationships/delete cleans incoming references; deletion closure untraced. |
+| `docs/plans/2026-10-15-reference-lifecycle.md` | 2/G | S | G L1–361: shared ownership/frozen-image protocol, identity operations, owning normalization and coordinator interfaces; registered plan realizes full design/addresses G9. L211–236 requires resolved endpoints; later DTO amendment independently confirmed. Tasks after361 not fully read; owner/recovery coverage remains representative. |
 | `docs/plans/2026-10-15-reload-boundary-contract.md` | 3/P | S | L5 opening: root-default development reload; audited narrow reload boundary needs full-body inspection. |
-| `docs/plans/2026-10-16-link-endpoint-presentation.md` | 2/G | S | L5: preserve aliases/hide generated IDs; endpoint snapshot tests untraced. |
-| `docs/plans/2026-10-16-reference-lifecycle-composition-placement.md` | 2/G | S | L5: lifecycle composition without structural debt; placement constraints untraced. |
-| `docs/plans/2026-10-16-reference-lifecycle-deferred-morph.md` | 2/G | S | L5: resume pending actions after source retirement; deferred dispatch tests untraced. |
-| `docs/plans/2026-10-16-reference-lifecycle-full-gate-repairs.md` | 2/G | S | L5: repair full-suite lifecycle failures; retained native assertions untraced. |
-| `docs/plans/2026-10-16-reference-lifecycle-reload-merge.md` | 2/G | S | L5: merge preserving both reload contracts; parent regression union untraced. |
-| `docs/plans/2026-10-16-reference-presentation-extension.md` | 2/G | S | L5: terminal labels/notebook preview ownership; authoring-data preservation untraced. |
+| `docs/plans/2026-10-16-link-endpoint-presentation.md` | 2/G | S | G L1–16: display terminal meaning without writes/allocations, preserve deliberate aliases and canonical-pair Swap; G9 c3. Snapshot/side-specific UI assertions remain untraced, not called satisfied by DTO tests. |
+| `docs/plans/2026-10-16-reference-lifecycle-composition-placement.md` | 2/G | S | G L1–16: behavior-preserving placement in existing composition and HomeWorld helper, Main sequencing retained. Maintenance supporting G9, no synthetic requirement. Structural/baseline measures not revalidated here. |
+| `docs/plans/2026-10-16-reference-lifecycle-deferred-morph.md` | 2/G | S | G L1–16: deferred read-only builder admitted inside serialized coordinator; G9 recovery refinement. Actual init L276–313 inspected, but source-retired frontend/restart assertions not sampled. |
+| `docs/plans/2026-10-16-reference-lifecycle-full-gate-repairs.md` | 2/G | S | G L1–16: finite FXAA mock, fixture ownership and duplicate outline selection cleanup; maintenance supporting G2/G9. Opaque mode-state retention remains contractual, not re-proven by historical gate wording. |
+| `docs/plans/2026-10-16-reference-lifecycle-reload-merge.md` | 2/G | S | G L1–16: preserve 21 registrations while extracting injected root-fixture support. Merge maintenance, not new product intent or G9 satisfaction; exact parent regression union not independently audited. |
+| `docs/plans/2026-10-16-reference-presentation-extension.md` | 2/G | S | G L1–16 and full current lifecycle feature L56–71: passive list labels and concrete-owner notebook previews cause zero writes, preserving canonical aliases/order; G9 c3. Full actual preview/provider/callback assertion chain remains untraced. |
 | `docs/plans/2026-10-16-secure-record-publication.md` | 3/N | S | L5: private publication/default editing via native draft APIs; overwrite/migration tests untraced. |
 | `docs/plans/2026-10-16-windows-validation-diagnostics.md` | 3/D | S | L5: remove Wine-helper contamination; trusted reproduction provenance untraced. |
 | `docs/plans/2026-10-16-wine-suite-lifecycle.md` | 3/D | S | L5: finite suite budget/isolated server cleanup; unrelated-prefix safety untraced. |
@@ -247,48 +269,48 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/specs/2026-08-04-hud-control-button-spacing-design.md` | 3/P | U | L5 opening: height-aligned chrome; which remaining inter-button gaps are removed? Full sizing contract uninspected. |
 | `docs/specs/2026-08-04-hud-right-rail-transparent-strip-design.md` | 3/P | U | L5 opening: center toolbar and extended right rail; what reserve excludes transparent panel space? Full geometry uninspected. |
 | `docs/specs/2026-08-05-opencode-permission-capabilities-design.md` | 3/D | U | L5 opening: fewer permission prompts; which capability guards preserve role authority? Full permission contract uninspected. |
-| `docs/specs/2026-08-06-graph-sidebar-node-finder-design.md` | 2/G | S | L5: offscreen nodes and missing start impair discovery; recovery-idempotence tests untraced. |
+| `docs/specs/2026-08-06-graph-sidebar-node-finder-design.md` | 2/G | S | G L1–16: single-click reveal versus double-click open and idempotent standalone Add Start. Supports G2/G5; full finder widget and camera selection assertions remain untraced. |
 | `docs/specs/2026-08-06-sandbox-interaction-modes-design.md` | 3/P | U | L5 opening: three independent toolbar controls; what transition model makes modes exclusive? Full mode contract uninspected. |
-| `docs/specs/2026-08-07-graph-ux-polish-design.md` | 2/G | U | L5: four follow-up finder issues; which layout/theme/ID invariants are material? Enumerated issues uninspected. |
+| `docs/specs/2026-08-07-graph-ux-polish-design.md` | 2/G | S | G L1–16 now reads four issues: label truncation, empty finder width, neutral theme, float map-2.0 rejection. Supporting G2 solution/defect history; exact widget and restored-ID fixes/assertions not sampled. |
 | `docs/specs/2026-08-07-opencode-capability-preflight-design.md` | 3/D | U | L5 opening: privileged operations routed to workers; what missing-configuration checks fail closed? Full preflight uninspected. |
-| `docs/specs/2026-08-08-graph-activity-theme-panel-ux-design.md` | 2/G | U | L5: four remaining graph UX issues; which panel bounds and theme transitions are required? Issue list uninspected. |
-| `docs/specs/2026-08-08-graph-map-camera-isolation-design.md` | 2/G | S | L5: Board/Graph leakage and one shared map camera; map-local persistence tests untraced. |
+| `docs/specs/2026-08-08-graph-activity-theme-panel-ux-design.md` | 2/G | S | G L1–16 now identifies theme edges, bounded full panels, dock persistence and inline titles. G2 supporting presentation context; actual geometry/theme transitions remain unknown, not a new per-issue requirement set. |
+| `docs/specs/2026-08-08-graph-map-camera-isolation-design.md` | 2/G | S | G full L1–126: registered design addresses G2; stable camera restoration, per-map metadata and one-shot centering. Camera tests L71–258 inspected; Board/Graph activity identity and every teardown path not independently traced. |
 | `docs/specs/2026-08-10-light-theme-layering-design.md` | 3/P | S | L5: distinguish pale surfaces with subtle layering; visual acceptance observation absent. |
 | `docs/specs/2026-08-12-space-agent-live-development-reliability-design.md` | 2/A | U | L5 opening: internal OpenCode/MCP unit tools; what reconnect/live-disk invariants are required? Full session contract uninspected. |
 | `docs/specs/2026-08-13-activity-camera-boundary-design.md` | 3/P | U | L5 opening: recurring camera ownership defects; which mandatory boundary prevents cross-activity access? Full invariant uninspected. |
-| `docs/specs/2026-08-14-activity-aware-world-graph-exposure-design.md` | 2/G | S | L5: old world-level scene keys reflect older ownership; new discovery key trace missing. |
+| `docs/specs/2026-08-14-activity-aware-world-graph-exposure-design.md` | 2/G | S | G L1–16: activity sessions, not world root, own surface data; supports G1. Full graph-maps migration table distinguishes topology normalization from scene ownership. WorldData and key migration implementation/assertions not sampled. |
 | `docs/specs/2026-08-14-graph-authored-agent-workflows-design.md` | 2/A | S | L5: primary graph orchestration independent of worlds/maps; workflow persistence traces missing. |
 | `docs/specs/2026-08-14-workflow-user-flow-polish-design.md` | 2/A | S | L5: discover/create/edit/connect runnable workflow; end-to-end authoring definitions untraced. |
-| `docs/specs/2026-08-15-explicit-graph-discovery-design.md` | 2/G | U | L5 opening: one explicit materialization model; what operations replace hidden edge hooks? Full discovery contract uninspected. |
+| `docs/specs/2026-08-15-explicit-graph-discovery-design.md` | 2/G | S | G full L1–134: explicit preview/search/action controls replace hidden bulk hooks, preserving owning stores. Registered design addresses G1; map capture/clear assertions sampled, workflow hierarchy-specific coverage remains with 2/A. |
 | `docs/specs/2026-08-15-workflow-backed-agent-sessions-design.md` | 2/A | U | L5 opening: converge sidebar chat/workflows; what preserves session interaction continuity? Full long-lived run contract uninspected. |
 | `docs/specs/2026-08-16-workflow-graph-ux-design.md` | 2/A | U | L5 opening: removal of hidden hooks; which explicit actions form editor/control surfaces? Full UX slice uninspected. |
 | `docs/specs/2026-08-26-workflow-preview-decomposition-design.md` | 2/A | U | L5 opening: crowded workflow previews; which child explorer nodes own steps/runs? Full decomposition uninspected. |
-| `docs/specs/2026-08-29-graph-filesystem-file-interactions-design.md` | 2/G | U | L5: fs:path adapters; which file-type interactions are authoritative versus examples? Full action contract uninspected. |
+| `docs/specs/2026-08-29-graph-filesystem-file-interactions-design.md` | 2/G | U | G L1–16: regular files incorrectly appeared as empty directories in original context. Explicit interaction-row architecture read in paired plan; concrete external-edit/module-action/native-reader traces remain uninspected. Reuse lazy editor/save IDs, no new file capability claim. |
 | `docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md` | 2/T | S | Task 2 full L1–276, original introduction 995ed2feeb22a71b86fe25ce396e180aa66a20b2 inspected: overlay edits, bounded viewport and explicit conflict-preserving saves. ART-dafc623b-133c-4c39-9056-0bb08134675b addresses REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c / REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4. Small-control compatibility and full native/widget/viewer assertions remain a concrete coverage gap. |
-| `docs/specs/2026-09-07-graph-titlebar-kind-badges-design.md` | 2/G | S | L5: kinds in full/preview views but unchanged compact points; badge/color scope tests untraced. |
-| `docs/specs/2026-09-14-reloadable-graph-node-units-design.md` | 2/G | S | L5: owned paths/lifecycle with graph topology separate from adapters; preservation tests untraced. |
+| `docs/specs/2026-09-07-graph-titlebar-kind-badges-design.md` | 2/G | S | G L1–16: titlebar kind metadata, compact point rendering explicitly unchanged. G1 supporting presentation refinement; fallback badge normalization/color/dialog assertions remain unknown. |
+| `docs/specs/2026-09-14-reloadable-graph-node-units-design.md` | 2/G | S | G full L1–108: owner-safe loader/morph handles, rollback, visible refresh and unload preserving topology. Supports existing live-development goal/G1; concrete registry/ModuleUnit vertical test chain not sampled, no plugin security claim. |
 | `docs/specs/2026-09-14-shared-text-interaction-engine-design.md` | 2/T | S | L5: expanding modal editing beyond divergent widgets; shared port contract untraced. |
 | `docs/specs/2026-09-14-virtual-input-shared-input-policies-design.md` | 2/T | S | L5 opening: eager Input/InputModel accepted behavior oracle; parity surface untraced. |
-| `docs/specs/2026-09-15-built-in-graph-extensions-design.md` | 2/G | S | L5: runtime extension seam versus built-in loader aggregation; one-install-path evidence missing. |
-| `docs/specs/2026-09-15-graph-node-menu-separators-design.md` | 2/G | S | L1–28: general actions first, first-class separator; menu-manager propagation tests untraced. |
+| `docs/specs/2026-09-15-built-in-graph-extensions-design.md` | 2/G | S | G full L1–111: explicitly one descriptor installation mechanism, low-level loader primitive retained. G1/G7 context; catalog intentionally does not install loaders. Absence of legacy central registrar and complete family coverage not freshly proven. |
+| `docs/specs/2026-09-15-graph-node-menu-separators-design.md` | 2/G | S | G L1–16 plus retained prior L1–28: general graph actions separated from node actions. Supports G5 shared action ownership; divider close/click behavior remains untraced rather than inferred from command tests. |
 | `docs/specs/2026-09-15-runtime-fennel-directory-modules-design.md` | 3/P | S | L5: flat-only embedded path misses directory init modules; native launch test trace missing. |
-| `docs/specs/2026-09-15-string-entity-create-child-design.md` | 2/G | S | L5: grow hierarchy without manual child/link creation; persisted child/link/map traces missing. |
+| `docs/specs/2026-09-15-string-entity-create-child-design.md` | 2/G | S | G L1–16: child plus directed link and same-map reveal. Reuse Access/text-revision IDs and graph-capabilities later explicit partial-outcome contract. This link-created hierarchy does not establish G10 parent-associated ordered-list implementation. |
 | `docs/specs/2026-09-16-bugsink-sentry-error-reporting-design.md` | 3/P | S | L1–28: entrypoint-owned native SDK reporting; no production test events; init/failure traces missing. No service contacted. |
 | `docs/specs/2026-09-16-merged-pr-followup-branch-design.md` | 3/D | U | L5 opening: finishing stuck after prior merge; what stale-head evidence authorizes follow-up? Full recovery guards uninspected. |
 | `docs/specs/2026-09-16-release-artifact-naming-design.md` | 3/D | U | L5 opening: split packaging names; which canonical filenames/platform mappings apply? Full naming table uninspected. |
 | `docs/specs/2026-09-16-runtime-asset-overlay-design.md` | 3/P | S | L5 opening: reusable executable runtime; project/built-in overlay precedence untraced. |
 | `docs/specs/2026-09-16-windows-desktop-cli-launch-design.md` | 3/P | S | L5: console-subsystem exe context; desktop/CLI output/exit behavior untraced. |
-| `docs/specs/2026-09-17-graph-presentation-islands-design.md` | 2/G | S | L5: domain-independent graph-native ordered-list presentations; topology/view ownership tests untraced. |
-| `docs/specs/2026-09-17-ordered-thought-children-semantics-design.md` | 2/G | S | L5: nested thought semantics from primitive entities, not UX polish; ordering/persistence traces missing. |
+| `docs/specs/2026-09-17-graph-presentation-islands-design.md` | 2/G | S | G full L1–200: registered design addresses G3, map-owned presenter-kind state rather than domain-specific GraphView branches. Later absolute-position/aggregate force refinements retained; representative presenter/drag assertions inspected, general presenter failure matrix unknown. |
+| `docs/specs/2026-09-17-ordered-thought-children-semantics-design.md` | 2/G | U | G full L1–91: registered design addresses proposed G10. Parent-associated domain lists own order, reparent preserves identity; link order/island layout/outline traversal are not substitutes. No actual association/reparent plan, implementation or test chain established; explicitly unknown rather than missing functionality asserted. |
 | `docs/specs/2026-09-17-space-app-distribution-design.md` | 3/H | U | L5 opening: runtime versus default Fennel app; what distribution boundary permits independent apps? Full packaging contract uninspected. |
 | `docs/specs/2026-09-18-graphical-snake-example-design.md` | 3/H | S | L5 opening: Snake engine-window example; example-specific graphics not general gameplay achievement. |
 | `docs/specs/2026-09-18-snake-example-template-design.md` | 3/H | S | L5 opening: reusable app-distribution teaching example; copyable-template assertions untraced. |
 | `docs/specs/2026-09-18-snake-orthographic-ui-surface-design.md` | 3/H | S | L5: custom snake/surface context; supported reusable UI surface boundary untraced. |
-| `docs/specs/2026-09-23-independent-island-bodies-design.md` | 2/G | S | L5 opening: persisted map-local presentation records; body/anchor conversion untraced. |
-| `docs/specs/2026-09-23-island-member-drag-handles-design.md` | 2/G | U | L5 opening: independent island bodies; which member drags translate aggregate versus snap back? Full interaction contract uninspected. |
-| `docs/specs/2026-09-24-list-entity-compact-labels-design.md` | 2/G | U | L5 opening: labels derive from custom entity data; which unnamed cases suppress IDs? Full label contract uninspected. |
+| `docs/specs/2026-09-23-independent-island-bodies-design.md` | 2/G | S | G L1–16 and paired plan architecture: independent absolute bodies under G3; source node is initial placement convenience only. Actual presenter fallback and old-format assertion inspected; all restore compatibility cases not sampled. |
+| `docs/specs/2026-09-23-island-member-drag-handles-design.md` | 2/G | S | G L1–16 identifies accidental first-member handle and normal snap-back; paired plan specifies explicit alt-drag-end operation. G3, actual second-member drag assertion traced; full design remainder not read. |
+| `docs/specs/2026-09-24-list-entity-compact-labels-design.md` | 2/G | S | G L1–16: unnamed raw IDs are presentation noise, not invalid data; paired plan preserves raw access with compact opt-out. G1-compatible refinement, not lifecycle identity-label policy. Full rendering assertions not sampled. |
 | `docs/specs/2026-09-24-stale-merged-pr-recovery-design.md` | 3/D | U | L5 opening: normal push/PR path; which stale merged branch recovery is guarded? Full failure contract uninspected. |
-| `docs/specs/2026-09-25-force-layout-island-behavior-design.md` | 2/G | S | L1–28: aggregate visual center, independent pinned/expanded members; coordinate/pin tests untraced. |
+| `docs/specs/2026-09-25-force-layout-island-behavior-design.md` | 2/G | S | G L1–16 plus retained prior L1–28: origin-versus-center and explicit-pin exceptions. Supports G3; presenter conversion and replacement pin assertions inspected, no full solver/projection correctness claim. |
 | `docs/specs/2026-09-25-hostable-space-apps-design.md` | 3/H | U | L5 opening: independent apps already run; which runtime facets separate app from host? Full hosting contract uninspected. |
 | `docs/specs/2026-09-25-hosted-app-scene-capabilities-design.md` | 3/H | U | L5 opening: hosted workspace apps; which app-owned scene operations and teardown guarantees apply? Full capability uninspected. |
 | `docs/specs/2026-09-25-hosted-app-workspace-adapters-design.md` | 3/H | U | L5 opening: metadata-exporting runtime contract; how do HUD/canvas/scene adapters mount compositions? Full adapter contract uninspected. |
@@ -324,8 +346,8 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/specs/2026-09-29-opencode-ci-diagnostics-tooling-design.md` | 3/D | U | L5 opening: two PR191 diagnostics blockers; which log/bootstrap contract resolves them? Full blocker evidence uninspected. |
 | `docs/specs/2026-09-30-temporal-full-iso-intervals-design.md` | 3/Time | U | L5 opening: landed provider/RFC layers claim; which ISO endpoint corpus and DST policies apply? Full selected Track 6 uninspected. |
 | `docs/specs/2026-09-30-temporal-recurrence-set-zoned-design.md` | 3/Time | U | L5 opening: previous temporal tracks claim; which set assembly/zone ambiguities are bounded? Full set contract uninspected. |
-| `docs/specs/2026-10-01-extensible-leader-command-system-design.md` | 2/G | S | L5: extend small modal leader set to selection previews; keymap resolution tests untraced. |
-| `docs/specs/2026-10-01-graph-enter-preview-design.md` | 2/G | U | L5: two node activation paths; which Enter versus full-view behavior remains? Path definitions uninspected. |
+| `docs/specs/2026-10-01-extensible-leader-command-system-design.md` | 2/G | S | G full L1–141: registered design addresses G5, contextual providers/declarative keys/shared hints and selection-only preview target. Actual provider and keymap/hint assertions sampled; complete input dispatch untouched/unexecuted. |
+| `docs/specs/2026-10-01-graph-enter-preview-design.md` | 2/G | S | G L1–16: focused Enter should match compact double-click preview intent, full view stays explicit. Supports G5 interaction context; paired plan explicitly idempotent. Actual focus activation assertions untraced. |
 | `docs/specs/2026-10-01-temporal-business-calendar-design.md` | 3/Time | S | L5: deliberately small holiday corpus despite category closeout; broad completeness cannot follow. Corpus tests untraced. |
 | `docs/specs/2026-10-01-temporal-ics-icalendar-design.md` | 3/Time | U | L5 opening: previous recurrence/interval tracks claim; which VEVENT fields and unsupported forms are explicit? Full ICS corpus uninspected. |
 | `docs/specs/2026-10-01-temporal-localization-calendar-design.md` | 3/Time | U | L5 opening: previous temporal layers claim; which locale/calendar seed versus full CLDR breadth is intended? Full corpus uninspected. |
@@ -333,33 +355,33 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/specs/2026-10-01-temporal-natural-language-design.md` | 3/Time | S | L5: deterministic candidates/ambiguity/context diagnostics; three-locale breadth versus general NLP untraced. |
 | `docs/specs/2026-10-02-runtime-scheduler-design.md` | 3/Time | S | L5: typed Fennel scheduling surface; scheduler/timer ownership tests untraced. |
 | `docs/specs/2026-10-02-snackbar-system-design.md` | 3/P | S | L5: reusable brief actionable feedback across HUD/independent apps; policy/lifetime tests untraced. |
-| `docs/specs/2026-10-03-graph-selection-leader-commands-design.md` | 2/G | U | L5 opening: existing selected preview actions; which selection set operations are added? Full command definitions uninspected. |
+| `docs/specs/2026-10-03-graph-selection-leader-commands-design.md` | 2/G | S | G L1–16 and full leader feature: focused selection select/add/remove/toggle/clear are distinct from selected previews. G5; actual availability assertions inspected, native selector integration still representative-depth gap. |
 | `docs/specs/2026-10-03-temporal-closeout-design.md` | 3/Time | S | L5: bounded closeout explicitly excludes ecosystem equivalence/full standards; authority to narrow earlier intent not established. |
-| `docs/specs/2026-10-04-graph-leader-command-expansion-design.md` | 2/G | U | L5 opening: existing preview commands; which focused/view/map operations preserve old commands? Full expansion uninspected. |
+| `docs/specs/2026-10-04-graph-leader-command-expansion-design.md` | 2/G | S | G L1–16 and full leader feature: focused actions, view navigation and map operations extend existing p/s namespaces. G5 includes declared-context non-destructive commands; complete numeric/menu/map command assertions not sampled. |
 | `docs/specs/2026-10-04-ssh-integration-foundation-design.md` | 3/N | S | L5 opening: reusable SSH foundation for ecosystem; native backend/platform scope untraced. |
-| `docs/specs/2026-10-05-focus-start-node-command-design.md` | 2/G | U | L5 opening: current Spacemacs graph commands; how is start ensured/focused without duplicate materialization? Full action uninspected. |
+| `docs/specs/2026-10-05-focus-start-node-command-design.md` | 2/G | S | G L1–16 and graph-maps L594–596: reuse Add Start before reveal, not a new automatic seed. G5 c3; end-to-end command camera assertion not newly inspected. |
 | `docs/specs/2026-10-05-opencode-fast-development-flow-design.md` | 3/D | U | L5 opening: strict workflow context; which interactive exemptions retain safeguards? Full original lane uninspected. |
 | `docs/specs/2026-10-05-ssh-real-backend-validation-design.md` | 3/N | S | L5: close validation gap after SSH foundation; actual backend observations not inferred from definitions. |
 | `docs/specs/2026-10-06-fast-dev-local-main-wrap-up-design.md` | 3/D | U | L5 opening: first interactive implementation context; which old local-main path remains applicable? Full later policy comparison needed. |
-| `docs/specs/2026-10-06-string-entity-text-search-design.md` | 2/G | S | L5: graph-native body-text search; search result/edit identity traces missing. |
+| `docs/specs/2026-10-06-string-entity-text-search-design.md` | 2/G | S | G full L1–249 plus full feature: registered design addresses G6; persisted Markdown, literal ignore-case ripgrep and runtime-only query/results. Backend/node actual options/stale/capture assertions traced. Nonvisual capability search remains deliberately case-sensitive and separate. |
 | `docs/specs/2026-10-07-hierarchical-focus-navigation-design.md` | 3/P | S | L5: focus nodes/scopes and flat traversal context; hierarchical entry/exit tests untraced. |
 | `docs/specs/2026-10-07-local-build-broker-design.md` | 3/D | S | L5: explicitly design-only future local architecture; remains proposed, no implementation inferred. |
-| `docs/specs/2026-10-08-graph-outline-view-design.md` | 2/G | S | L5: same objects, roots-based indented projection; traversal/cycle definitions untraced. |
+| `docs/specs/2026-10-08-graph-outline-view-design.md` | 2/G | S | G full L1–147: registered design addresses G4; outgoing DFS/first occurrence over visible map edges, not domain child order. Actual pure projection and root/cycle assertions traced; complete renderer interaction/reload proof not claimed. |
 | `docs/specs/2026-10-08-windows-ci-speedups-design.md` | 3/D | S | L5: speed without losing confidence/packaging; actual timing and release guarantees untraced. |
 | `docs/specs/2026-10-09-github-workflow-cleanup-design.md` | 3/D | U | L7 opening: existing root workflow coverage; what permission/trust/pin invariants are strengthened? Full contract uninspected. |
-| `docs/specs/2026-10-09-outline-compact-projection-design.md` | 2/G | S | L5 opening: outline not merely graph-looking list rows; point-owned interaction traces missing. |
+| `docs/specs/2026-10-09-outline-compact-projection-design.md` | 2/G | S | G L1–16 plus paired plan scope/current doctrine: row rectangles caused interaction drift; compact points own interaction. G4 c3 retains refinement; complete hit-target/teardown and visual matrix not sampled. |
 | `docs/specs/2026-10-09-windows-main-ci-design.md` | 3/D | U | L7 opening: combined Linux/Windows test context; what post-merge/manual coverage replaces queue coverage? Full workflow boundary uninspected. |
-| `docs/specs/2026-10-11-dict-entity-design.md` | 2/G | S | L5 opening: keyed collection primitive complements existing types; persistence/reference semantics untraced. |
-| `docs/specs/2026-10-11-graph-projection-runtime-design.md` | 2/G | U | L5: separate projection implementations; what shared lifecycle preserves separate state? Full runtime contract uninspected. |
+| `docs/specs/2026-10-11-dict-entity-design.md` | 2/G | S | G full L1–190: registered design addresses G8, keyed references not inline scalars. JSON reload/mutation/error/no-op assertions sampled and store paths inspected; later normalization/deletion uses G9 instead of repeating obsolete physical-delete naming. |
+| `docs/specs/2026-10-11-graph-projection-runtime-design.md` | 2/G | S | G full L1–157: registered design addresses G2; common lifecycle/camera mechanism with separate mode state, map selection ownership unchanged. Runtime and camera test definitions sampled, whole activity/teardown surface not proven. |
 | `docs/specs/2026-10-11-opencode-mcp-bridge-core-design.md` | 2/A | S | L14 opening: duplicated bridge mechanism in three clients; policy-neutral extraction regression traces missing. |
-| `docs/specs/2026-10-12-outline-marker-box-design.md` | 2/G | S | L5 opening: measured TreeView already accepted; marker measurement/hit ownership traces missing. |
-| `docs/specs/2026-10-12-tree-view-outline-design.md` | 2/G | S | L5: fixed-stride raw placement versus reusable widget; measured row behavior untraced. |
-| `docs/specs/2026-10-14-entity-type-catalog-design.md` | 2/G | S | L5 opening: replace duplicated hard-coded Entities menu; catalog completeness untraced. |
+| `docs/specs/2026-10-12-outline-marker-box-design.md` | 2/G | S | G L1–16: stable compact marker footprint prevents focus/selection height shifts without uniform row height. G4 supporting visual refinement; marker measurement/glyph/layout assertions not independently traced. |
+| `docs/specs/2026-10-12-tree-view-outline-design.md` | 2/G | S | G L1–16: measured reusable widget, graph-owned roots/selection/interaction remain separate. G4 supporting layout refinement, generic TreeView belongs to platform; no fixed-stride preservation or new hierarchy inferred. |
+| `docs/specs/2026-10-14-entity-type-catalog-design.md` | 2/G | S | G full L1–118 and full feature: registered design addresses G7; immutable browsable metadata, separate loader installation, same injected code store. Actual catalog validation/order/copy assertions traced; full startup/browser callback matrix remains untraced. |
 | `docs/specs/2026-10-15-fast-dev-independent-workflow-design.md` | 3/D | S | L5 opening: efficient user-selected interactive development; direct edit/review/publication boundaries untraced. |
 | `docs/specs/2026-10-15-live-dev-design.md` | 3/D | S | L5 opening: user-selected live primary; verified checkout/manual refresh tests untraced. |
-| `docs/specs/2026-10-15-reference-lifecycle-design.md` | 2/G | S | L5 opening: entities rather than wrappers, morph changes representation; identity/delete invariants untraced. |
+| `docs/specs/2026-10-15-reference-lifecycle-design.md` | 2/G | S | G full L1–251 plus original f2002a60 Git object and full feature: registered design addresses G9. Owning normalization, transitive incoming cleanup, source-last morph and no-write map presentation. Coordinator/closure/alias/history assertions sampled; world/board/recovery/preview matrix explicitly not exhaustive. |
 | `docs/specs/2026-10-15-reload-boundary-contract-design.md` | 3/P | S | L5 opening: dependable whole-app reload plus future boundaries; narrow-unit readiness untraced. |
-| `docs/specs/2026-10-15-uniform-graph-access-design.md` | 2/G | S | Task 2 full L1–193 and corrected original 545f36051effc5fe73cb3fcca34e1be58c2097ff inspected: explicit same-path scope correction excludes transports/universal CRUD. ART-46414157-af80-4192-8dbe-5afb6213b3e2 addresses REQ-d2bc21f4-40e5-48de-8f56-ca772f539805 / REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1 / REQ-77d53d5a-9303-490e-a031-34827a59e6c6; actual dispatch/provider/editor assertions inspected. Later alias-inclusive relationship projection differs from the original direct-link/no-dereference slice; lifecycle authority reconciliation remains open, not silently resolved. |
+| `docs/specs/2026-10-15-uniform-graph-access-design.md` | 2/G | S | Retain predecessor full L1–193, original545f36051effc5fe73cb3fcca34e1be58c2097ff and all existing Access/Isolation/revision IDs/artifacts. G independently reread original no-dereference slice; full feature L362–381 and original13d86a985c8e9faea3154c9bffc719c7b09b85af amendment explicitly extend DTO resolution, supported by lifecycle design/plan. Actual L292–338 alias/raw-byte assertions confirm definitions, not execution; historical scope is not rewritten. |
 | `docs/specs/2026-10-16-secure-record-publication-design.md` | 3/N | S | L5 opening: user-authorized native Windows overwrite correction; private publication invariants untraced. |
 | `docs/specs/2026-10-16-windows-validation-diagnostics-design.md` | 3/D | S | L5 opening: failing cross-build diagnosis authorization; contamination-free evidence untraced. |
 | `docs/specs/2026-10-16-wine-suite-lifecycle-design.md` | 3/D | S | L5 opening: artifact-safe instrumented reproduction at 9b261b0; finite budget/cleanup evidence untraced. |

@@ -189,3 +189,84 @@ SHA-256 `0362e5d52622b95ecb7dc0f829f71a23b337c8896ed6164d8f01a1d1016f87af`,
 unchanged before/after. No no-op write. Runtime compile/application constraints
 are not applicable to ledger/docs-only mutations. Independent complete-range
 review and completion of remaining Task 2 obligations are still required.
+
+## Task 2/G bounded continuation — graph/entities reconciled, Task 2 still incomplete
+
+Continuation BASE `7e65f11c8930a38637c7444c56ed56a23b22919b`, original Task2
+BASE `c4322c63735c51a347e2c928c83614718a2b616f`, branch `juicyrebel/ridley`, actor
+`implementer/baseline-task-2-G`, strict supervisor lane. Retain predecessor partial
+checkpoints `bfa1e94f` and `ae4a7ddf` and their independent pass only for the five
+represented graph/text records. This completes the assigned G baseline slice,
+not the outstanding A19/T9 continuation or complete Task2 review. See the appended
+[G report](./2026-10-30-baseline-task-2-report.md) for all exact IDs/artifacts,
+inspection/actual assertion ranges, source-history reconciliation and gate evidence.
+
+Requirements reconciliation: missing product representation plus refinement and
+evidenced extension, not application repair. All33 prior requirement bodies and
+provenance compared before creation; retain Graph, Workspace, live-development,
+Access, Isolation and text IDs unchanged. Ten independently meaningful family
+contracts, all proposed revision1, are represented by G1–G10 in the dispositions:
+explicit materialization/domain ownership; independent maps/projection cameras;
+map-owned islands; outgoing first-occurrence outline; contextual commands;
+persisted-string graphical search; immutable browsing catalog; dictionary
+references; stable-reference lifecycle/passive presentation; and domain-owned
+parent-associated ordered children. Last is design-only with unknown implementation,
+not falsely equated with island list layout or visible-edge outline traversal.
+Supporting presentation refinements and behavior-preserving merge/composition
+maintenance do not receive document-per-requirement inflation.
+
+CLI exact expected revisions33→34 (10 requirements),34→35 (39 artifacts),35→36
+(later capability feature contract artifact),36→37 (78 relations). Totals43
+requirements /81 artifacts /276 relations; G delta10/40/78. New relation types:
+22 addresses,9 realizes,9 contributes_to,8 constrains,9 implements,11 verifies,
+10 exercises. All explicit; no old records, relations, history,17 assessments or63
+verifications changed. No activation, satisfaction, criterion verification or
+runtime/product test result inferred. G1's constraint applicability is limited
+to G2/G3/G4/G6/G8/G9 and its own actual design/plan. Existing nonvisual Isolation
+scope is not broadened.
+
+Every72 G row now has independently inspected scope and a reasoned source-specific
+disposition. Other290 frozen filename rows unchanged; exact362-member set preserved.
+Main designs/features fully read; supplementary specs/plans opening L1–16 unless
+the row declares deeper inspection. Projection-runtime and catalog plans full,
+lifecycle plan through361. Representative code/assertion sampling, not exhaustive
+micro-contract proof: nine G records have some sampled implementation presence,
+G10 unknown; no complete implementation coverage denominator or goal-achievement
+claim. Catalog metadata is not loader registration/CRUD. Graphical ripgrep search
+is ignore-case; nonvisual provider search retains its separate case-sensitive
+literal contract. Native publication remains Task3; boards/restart/preview UI
+assertion completeness remains an explicit sampling limit, not an application fix.
+
+Resolved predecessor identity-projection discrepancy with original Git evidence:
+corrected design545f3605 and first-family6be4ffa1 retain initial direct-link/no-
+dereference scope historically. Original lifecycle designf2002a60 L169–186 and
+plan373f0ab9 L206–236 require alias/resolved-endpoint preservation. Later original
+merge amendment13d86a985c8e9faea3154c9bffc719c7b09b85af explicitly changes capability
+feature DTO resolution through the exact owning IdentityStore (original L355–374,
+current F L362–381). Actual provider L60–65 and actual capability assertions
+L292–338 preserve raw link bytes, aliases, direction and submitted-subject cursors.
+This is later explicit contract extension, not inferred original scope or a new
+identity capability family. No requirement/history rewritten.
+
+Validation order: product compile/app constraints not applicable (ledger/docs
+only); `make requirements-check` timeout600000 passed348 tests in174.99s,
+canonical valid/projection current at37. Constraint Impact: not applicable to
+application edits. Preservation/unique endpoint/locator checks passed; all72 source
+bytes match frozenF. Scoped10-ID and all-record coverage not truncated; G10 reports
+missing test/evidence linkage and G1 unsatisfied constraint assessment honestly.
+Context depth32/paths1000 truncates; narrowed individual both-direction traces at
+depth2 still depth-truncate, so direct tuples inspected and no complete impact or
+readiness verdict follows. G-only repeat self-review found no further justified
+mutations; Task4 still owes every-family second sweep. Revision37 ledger digest
+`52aabd333824dadfdb9afe2d349bed9a45b2b31fd8f7c048081e8da7c5907215`, index digest
+`44303460342241e20175cafff39da4ffa412da80161599719bfc670b086efb23`.
+
+Next: independent complete continuation range review `7e65f11c..G_HEAD`, then
+serial A/T and original full Task2 range review; no Task3 advance from this slice.
+No consultation trigger, budget reset, policy change or approval claimed.
+
+Source-consistency gap from self-review: graph-maps L188's aggregate movement
+“during the drag” differs from the dedicated member-drag plan L13–16, doctrine
+L96–103 and actual island assertions L784–795 (other members stay put until drop).
+G3 follows the specific contract and corroborating assertions; no live observation,
+product repair or summary-document supersession is inferred.
