@@ -2,7 +2,7 @@
 
 > Generated from the canonical ledger; do not edit.
 
-Revision: 19
+Revision: 23
 
 Trace links, lifecycle and observations never imply satisfaction.
 
@@ -31,6 +31,7 @@ Trace links, lifecycle and observations never imply satisfaction.
 | ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb | test | test_requirements_render.py | scripts/tests/test_requirements_render.py |
 | ART-2fb0de2c-6f6c-4d5a-8687-889d1a5c91d3 | test | test_requirements_evidence.py | scripts/tests/test_requirements_evidence.py |
 | ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be | evidence | Task 5 fix 1 observed validation | docs/requirements/2026-10-30-task-5-fix-1-validation.md |
+| ART-36cca881-3bb5-4713-8c2c-13804304efd4 | evidence | Final bounded evidence and explicit constraint reconciliation | docs/requirements/2026-10-30-final-evidence-reconciliation.md |
 | ART-52e4021c-9e73-475a-95fb-8904969605af | test | test_requirements_demos.py | scripts/tests/test_requirements_demos.py |
 | ART-7121890a-8068-4b53-ba47-3c4eb4d98687 | design | 2026-10-29-requirements-driven-engineering-design.md | docs/specs/2026-10-29-requirements-driven-engineering-design.md |
 | ART-9668b374-021c-442a-a548-6bdfa4cd1ea8 | test | test_requirements_workflow_contracts.py | scripts/tests/test_requirements_workflow_contracts.py |
@@ -70,6 +71,8 @@ Trace links, lifecycle and observations never imply satisfaction.
 | REL-190697d8-22b2-48d4-ade6-c48dd01e7f4d | implements | ART-dee90f4b-aee9-4dde-b4bc-139789f5481a → ART-d5aa9361-7216-43f1-99e2-1bdd9446070b | explicit | Assigned Python/workflow implementation. |
 | REL-1b10f83f-2526-414e-8667-2aa5fd6733b8 | verifies | ART-9668b374-021c-442a-a548-6bdfa4cd1ea8 → REQ-49e62b92-aada-447d-9d15-531625fa0dcc | explicit | Focused test definition; execution evidence is separate. |
 | REL-1c46ba0c-edb3-4d5b-a59a-f058a442de96 | addresses | ART-7121890a-8068-4b53-ba47-3c4eb4d98687 → REQ-0bf07879-9bbb-421a-85ab-37f495b6e552 | explicit | Reviewed design specifies this explicit obligation. |
+| REL-20b5e9e8-524d-47cd-8fdb-be7f5125103b | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
+| REL-20e9a07e-3a6a-4147-9dc9-90ba4ccf7c5c | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-218eef2f-7d20-43f3-8f3a-44c3481fe077 | addresses | ART-d5aa9361-7216-43f1-99e2-1bdd9446070b → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Reviewed plan assigns implementation/validation; final integration remains controller-owned. |
 | REL-21a28fc2-d05c-403a-bd83-31e2a87d5d9e | verifies | ART-52e4021c-9e73-475a-95fb-8904969605af → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Focused test definition; execution evidence is separate. |
 | REL-248507b5-8851-4d24-b1d0-85f241a07c91 | verifies | ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb → REQ-0bf07879-9bbb-421a-85ab-37f495b6e552 | explicit | Focused test definition; execution evidence is separate. |
@@ -89,6 +92,7 @@ Trace links, lifecycle and observations never imply satisfaction.
 | REL-36e2d9f9-6388-405b-b1df-db8816bc57ac | supports | ART-fe7ad787-6a08-4913-ae90-76a6cc80c0cb → REQ-8e50a634-76ae-4100-9f60-90e4552ec954 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
 | REL-37ec0e00-db0e-4a0d-a12c-3ae27b03cd8e | implements | ART-c009aed8-a9a3-4290-86b3-877059c01265 → ART-d5aa9361-7216-43f1-99e2-1bdd9446070b | explicit | Assigned Python/workflow implementation. |
 | REL-39306120-5725-42dd-946d-ee72366381f5 | verifies | ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Focused test definition; execution evidence is separate. |
+| REL-39dfb5f4-a51c-47ef-8ba9-cac702260a06 | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-3e8c458d-e4ea-4434-a24d-d5c201f0f41c | supports | ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be → REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
 | REL-4061e7e2-cfde-4bbc-8dc1-3c2c7149b4af | supports | ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be → REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
 | REL-42de22e3-f1da-40e0-bdfa-6eef58824357 | implements | ART-e6db684a-aeba-4034-837f-d2dd8826a514 → ART-d5aa9361-7216-43f1-99e2-1bdd9446070b | explicit | Assigned Python/workflow implementation. |
@@ -98,11 +102,14 @@ Trace links, lifecycle and observations never imply satisfaction.
 | REL-4b034797-3671-4289-8eaa-84ef2072eda6 | addresses | ART-7121890a-8068-4b53-ba47-3c4eb4d98687 → REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | explicit | Reviewed design specifies this explicit obligation. |
 | REL-4b71d561-4755-4409-8605-74c3400febf2 | supports | ART-fe7ad787-6a08-4913-ae90-76a6cc80c0cb → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
 | REL-4c327da1-39ea-4dc1-be2e-c18c93078de3 | realizes | ART-d5aa9361-7216-43f1-99e2-1bdd9446070b → ART-7121890a-8068-4b53-ba47-3c4eb4d98687 | explicit | Plan executes the reviewed design. |
+| REL-4c5f56a1-1419-4179-8e98-a4356e3b3786 | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-4d9da407-f4f9-427d-ba20-02a24c805b01 | exercises | ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c → ART-b7346d33-ff24-437b-8350-29e3cf618f4c | explicit | Test exercises this implementation surface. |
 | REL-4db8cbb9-09f1-435d-878c-fab6f5ec3553 | supports | ART-aa0c3dcd-6340-4226-b355-1ed58007541b → REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87 | explicit | Scoped fix-2 requirements/docs revalidation; original history and partial assessments preserved, no R1-1 review verdict inferred. |
 | REL-4def2540-6bd6-49b7-8d61-29c3c4086654 | supports | ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be → REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
+| REL-4f709b8e-aea8-41a5-8f5b-5b6615c753ce | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-8e50a634-76ae-4100-9f60-90e4552ec954 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-4fea9c39-5e1a-4d69-89e2-64c0422b089f | supports | ART-aa0c3dcd-6340-4226-b355-1ed58007541b → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Scoped fix-2 requirements/docs revalidation; original history and partial assessments preserved, no R1-1 review verdict inferred. |
 | REL-533f43ba-f278-4980-939f-cbfe11791a18 | implements | ART-02d98c1b-e036-4697-a0cd-d062047f940c → ART-d5aa9361-7216-43f1-99e2-1bdd9446070b | explicit | Assigned Python/workflow implementation. |
+| REL-53da8747-9748-4b78-b807-68970d54d446 | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-5561e131-9d55-4468-97a9-6b091da39df5 | supports | ART-f9568bda-b223-48e3-8da4-752bcfde8dbd → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Safe summary of actual bounded local validation, not independent approval or empirical outcome. |
 | REL-5c99613b-0f8a-4a70-b7e1-135f5ca5be51 | addresses | ART-7121890a-8068-4b53-ba47-3c4eb4d98687 → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Reviewed design specifies this explicit obligation. |
 | REL-5edacd9d-7296-4614-9d3c-3d8a39f881c3 | addresses | ART-d5aa9361-7216-43f1-99e2-1bdd9446070b → REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | explicit | Reviewed plan assigns implementation/validation; final integration remains controller-owned. |
@@ -119,9 +126,11 @@ Trace links, lifecycle and observations never imply satisfaction.
 | REL-7684b6a3-6348-4313-9a61-8e1375a3f5c4 | implements | ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81 → ART-d5aa9361-7216-43f1-99e2-1bdd9446070b | explicit | Assigned Python/workflow implementation. |
 | REL-78ff07c0-8f92-44c3-9959-008f21d95b08 | addresses | ART-d5aa9361-7216-43f1-99e2-1bdd9446070b → REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf | explicit | Reviewed plan assigns implementation/validation; final integration remains controller-owned. |
 | REL-7ec8620b-1b67-4baf-bd0c-a36a0eadcee8 | supports | ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
+| REL-7ede00f3-909c-4ac4-aaf7-f0f846b9887c | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-7f985d6c-3120-4d05-a74b-30c509168987 | supports | ART-f9568bda-b223-48e3-8da4-752bcfde8dbd → REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | explicit | Safe summary of actual bounded local validation, not independent approval or empirical outcome. |
 | REL-8022e1ca-52f5-49e6-9eb2-3530eea2e71e | supports | ART-f9568bda-b223-48e3-8da4-752bcfde8dbd → ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c | explicit | Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI. |
 | REL-825121a8-7dcc-4c40-a301-87211f10e8f2 | addresses | ART-d5aa9361-7216-43f1-99e2-1bdd9446070b → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Reviewed plan assigns implementation/validation; final integration remains controller-owned. |
+| REL-87e44aa8-01e5-4952-afd7-d2964c006287 | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-884139f7-996d-40c1-8cbe-d6deb6075d5d | exercises | ART-9668b374-021c-442a-a548-6bdfa4cd1ea8 → ART-e6e4b0ec-f905-4e18-a7dc-5be95f9574d9 | explicit | Test exercises this implementation surface. |
 | REL-8b9a650e-202d-4e04-ad63-7350b0290739 | addresses | ART-d5aa9361-7216-43f1-99e2-1bdd9446070b → REQ-49e62b92-aada-447d-9d15-531625fa0dcc | explicit | Reviewed plan assigns implementation/validation; final integration remains controller-owned. |
 | REL-8d447b45-fcb8-4811-b935-a6d5b1512fe2 | verifies | ART-f2d727a7-0469-4b4c-b96f-a34686d27d0e → REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | explicit | Focused test definition; execution evidence is separate. |
@@ -153,6 +162,7 @@ Trace links, lifecycle and observations never imply satisfaction.
 | REL-bf299953-4f1b-4acf-99c1-0c812c39eb88 | addresses | ART-7121890a-8068-4b53-ba47-3c4eb4d98687 → REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6 | explicit | Reviewed design specifies this explicit obligation. |
 | REL-c0b8a90f-ee35-4af9-a10f-ed6fd0169659 | contributes_to | REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87 → REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf | explicit | Supports the goal without establishing empirical achievement. |
 | REL-c32e5937-ea64-48c9-97eb-be3ff565b581 | supports | ART-aa0c3dcd-6340-4226-b355-1ed58007541b → REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | explicit | Scoped fix-2 requirements/docs revalidation; original history and partial assessments preserved, no R1-1 review verdict inferred. |
+| REL-c870c956-3fee-473c-affe-eff2d86d1163 | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-49e62b92-aada-447d-9d15-531625fa0dcc | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-ca99bebb-a8ea-4987-8159-6f90cb10add1 | exercises | ART-ba707559-a75c-4bf9-bc96-f870f83d48c4 → ART-02d98c1b-e036-4697-a0cd-d062047f940c | explicit | Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI. |
 | REL-cc284cbc-a4a0-4345-aead-2ae66c3b0fc3 | supports | ART-304c3761-4ad7-4316-b8a6-106f3d3cb9be → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |
 | REL-d0a4fe84-e9cf-43a7-b824-dec0c1b6fd93 | supports | ART-f9568bda-b223-48e3-8da4-752bcfde8dbd → REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc | explicit | Safe summary of actual bounded local validation, not independent approval or empirical outcome. |
@@ -165,6 +175,7 @@ Trace links, lifecycle and observations never imply satisfaction.
 | REL-d9cc9636-11cf-47c6-abd2-a589f9bd1169 | contributes_to | REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc → REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf | explicit | Supports the goal without establishing empirical achievement. |
 | REL-da27d32e-cf71-4f38-8db2-fd23aa125810 | contributes_to | REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 → REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf | explicit | Supports the goal without establishing empirical achievement. |
 | REL-db286a46-f473-47c7-ac84-2c31464affb7 | supports | ART-f9568bda-b223-48e3-8da4-752bcfde8dbd → REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | explicit | Safe summary of actual bounded local validation, not independent approval or empirical outcome. |
+| REL-dbb91480-cd6a-427e-9bd4-ececefe7db74 | supports | ART-36cca881-3bb5-4713-8c2c-13804304efd4 → REQ-0bf07879-9bbb-421a-85ab-37f495b6e552 | explicit | Actual final-source requirements/docs validation and bounded historical source corroboration; not independent approval, live compliance or merge. |
 | REL-dcfb718c-c4f6-4eb2-8955-c8abdc82c89d | contributes_to | REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 → REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf | explicit | Supports the goal without establishing empirical achievement. |
 | REL-df6dc2ae-b66a-4425-ad08-7a039aef5846 | supports | ART-f9568bda-b223-48e3-8da4-752bcfde8dbd → ART-ba707559-a75c-4bf9-bc96-f870f83d48c4 | explicit | Observed full requirements run includes this definition; store tests exercise schema and transactions directly and via CLI. |
 | REL-e389676e-9da0-42ae-8f40-9f60ce8e271e | supports | ART-fe7ad787-6a08-4913-ae90-76a6cc80c0cb → REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6 | explicit | Accepted R1-1: audited criterion-specific source manifest; prior observations preserved, no satisfaction inferred. |

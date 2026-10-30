@@ -868,4 +868,69 @@ source replay remains required; static prompt tests alone prove no agent behavio
   canonical bytes; no exception interpretation or fabricated history. Next transition:
   task-only validated local checkpoint and independent review of complete
   FIX_BASE..HEAD. Exact commands, follow-up checks and checkpoint identity are in
-  `.superpowers/sdd/2026-10-29-requirements-driven-engineering-3c4275b7/final-fix-report.md`.
+   `.superpowers/sdd/2026-10-29-requirements-driven-engineering-3c4275b7/final-fix-report.md`.
+
+### REQ-FINAL-EVIDENCE — scoped reconciliation, not final approval
+
+- Identity: supervisor/strict SDD assigned implementer, `juicyrebel/scoter`; verified
+  required clean BASE `954b3007c92591c7782b44b3f2dc504da455872e` before changes.
+  Author session identifier not exposed, delivery correction_used=0. No new review,
+  correction allowance or fix/consultation budget is implied by this assignment.
+- Reconciliation conclusion: clarification of existing evidence currency and explicit
+  reassessment of current obligations, not a new requirement/design. Sources: actual
+  code/tests/design/plan, retained Task 5 capture/verify scripts, immutable Git source
+  snapshots and the controller's supplied independent-review records. Original
+  requirement identities/revisions/lifecycles, observations and safe pages persist.
+- Bounded read-only `git show` authentication passes: evidence anchors 10/30/40/40
+  at `15957052`/`1aa86ea2`/`7488959a`/BASE; original observation prefixes,
+  requirements/assessments and older execution pages preserved. Dependency comparisons
+  pass 180 / 2632 / 2634 / 2636 pairs for initial/pending/fix1/fix2 captures. Pending
+  fix-1 progress uses the **15957052** bytes; do not assert its digest equals the
+  post-append `1aa86ea2` bytes. Reconstructed capture membership agrees with audited
+  groups; original eighteen-file incompleteness remains explicitly historical.
+  Source authentication does not replay historical command execution.
+- Review history update from controller: Task 5 `ses_e7601615fffeNHdP1mh12CHBTl`
+  fix-1 audit now complete (retained correction_used=0). Whole-branch source reviewer
+  `ses_e73daf36effecE5Qs8sDqOl8YZ` (correction_used=0) R1-1/R1-2 independently
+  verified fixed in `7488959a..954b3007`; verifier session not separately supplied.
+  This supersedes only the earlier pending coverage state, not immutable payloads.
+- Whole-ledger recorded coverage: original 1–2802 & 9223–11606; supplemental
+  `ses_e73c34cf0ffegtG7wPCaS1aNZB` 2809–4408; bounded
+  `ses_e73c0f9e4ffeSjwDK8LAUrT43y` 4409–6008,
+  `ses_e73c0f9afffe4MxgX7wgiJCO4Q` 6009–7608,
+  `ses_e73c0f984ffe98jZfRJ4x7fMPa` 7609–9228. Dispatch states all text contiguous
+  inspected, but literal ranges leave 2803–2808 unaccounted for. Retain that
+  uncertainty for controller reconciliation rather than fabricate coverage; the
+  supplemental/bounded correction counters are unknown because not supplied.
+  Two reviewers' requested hash/source-map corroborations are addressed above, not
+  converted into a manufactured whole-branch pass.
+- Explicit bounded assessments: transactional safety
+  `REQ-0bf07879-9bbb-421a-85ab-37f495b6e552` and historical compatibility
+  `REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c` warrant satisfied author assessments
+  on inspected implementation, direct criterion coverage, supplied independent reviews
+  and current validation, **not test passes alone**. Autonomous-review safeguards
+  `REQ-49e62b92-aada-447d-9d15-531625fa0dcc` remain partial pending reconciliation
+  of coverage metadata/counters, aggregate review disposition and review of this new
+  complete range. See the
+  [bounded evidence and exact remaining steps](/requirements/2026-10-30-final-evidence-reconciliation).
+  No empirical methodology
+  goal, future guarantee, final merge, live compliance or publication is credited.
+- Current source checks: focused graph/store/render/scenarios/evidence/workflow
+  selection **310 passed**; complete requirements gate **332 passed in 116.33s**
+  (revision 20 valid/projection current). Docs scripts **56 passed**, inventory
+  generation passed; 4096 MiB Node docs build **142.73s** and navigation passed
+  **186 plans / 165 specs**, with known highlighting/chunk warnings. Final evidence
+  registration/observation/assessment captures and final checks follow; actual
+  results/checkpoint are in the requested author report, not recursively rewritten
+  anchored evidence. No Python/runtime/Fennel source changes in this assignment;
+  compile/Space constraints not applicable, constraint impact **not applicable**.
+  Prior verification records are stale from the final source/progress fix, not fresh
+  proof. Assigned canonical updates use real expected-revision CLI transactions;
+  new observations follow actual requirements/docs validation, preserving old maps.
+  Progress remains a material docs input. Its registered snapshot is refreshed after
+  this append; the new evidence and generated projection are procedure outputs,
+  independently anchored/checked, not an endless self-referential freshness cycle.
+- Next transition: validated self-reviewed local checkpoint and independent review
+  over the entire new BASE..HEAD, including all additions/ledger/projection/progress.
+  Later finishing full gate and guarded integration remain controller-owned. No
+  fetch/push/PR/merge or destructive Git operation is authorized or performed here.
