@@ -993,3 +993,77 @@ source replay remains required; static prompt tests alone prove no agent behavio
   Empirical methodology goal/actual merge remain pending; scoped readiness grants no
   permissions or integration authority. Later finishing gate remains separate. No
   fetch/push/merge/rebase/reset/clean/amend/discard/publication authorized or performed.
+
+### REQ-MERGED-EVIDENCE — post-merge applicability and fresh scoped validation
+
+- Identity: assigned implementer for supervisor/strict SDD, `juicyrebel/scoter`;
+  verified clean BASE/merge `a5465e620ee711b69e8d110e556794d014f320d4` with ordered
+  parents `2692081f79b6898deb6822a161360086d428f1bc` and
+  `1336238034d601487daaac12481858ff4af511d6`. Author session ID not exposed,
+  correction_used=0; substantive follow-up, not a correction/budget reset. This local
+  main-input merge is not PR integration or empirical `mergedAt` evidence.
+- Controller supplies prior final-readiness review **pass**
+  `ses_e73939419ffeju7x3hO1zw27uK` and guarded merge-resolution independent **pass**
+  `ses_e73860ecaffez47a1u8yns0aDt`, correction_used=0 for the latter, over both
+  parents. Retained merge report confirms the original 512-pass/9-fail Python run:
+  eight obsolete full-frontmatter pins and one exact-phrase supervisor guard.
+  Diagnostic advisor `ses_e738c476effevK7shjki1kJh6m` confirmed both causes before
+  authorized focused repair. Final merge checks were 537 Python/47 Node passes,
+  exact 194-plan/168-spec source inventory, 60 staged paths with 56 inherited
+  entries unchanged. Earlier mistaken 53 count remains corrected in that report;
+  no failed execution, payload, review identity or correction count is rewritten.
+- Reconciliation conclusion: maintenance/clarification of existing evidence,
+  not a new obligation or a requirements-ledger migration. Inspected actual merged
+  AGENTS/supervisor/worker/fast-live contracts, checker/test diffs, Makefile, docs
+  scripts/config, upstream routing/autonomy progress and inherited graph/SFTP
+  source changes. Current explicit dispatch and canonical user/system guidance
+  establish intentional upstream routing and targeted consultation. Historical
+  fixed-model/dual-model language remains historical, not a current pin or universal
+  expert prerequisite. Requirements work does not author routing, permissions or
+  runtime changes; this scoped preservation boundary does not prohibit independently
+  authorized upstream work. No normative requirement revision is needed or invented.
+- Actual merged supervisor retains exact-range independent artifact review **before**
+  autonomous progression, strict diagnostic/review/capability gates and human-owned
+  policy/safety boundaries. Fast/live retain direct ownership, explicit wrap-up,
+  one observational review and live manual/refresh lifecycle. Nonrouting frontmatter
+  remains protected; routing presence/syntax are independently checked. Frozen old
+  observations/probes are not rescored as current routing or universal live behavior.
+- Initial real read-only CLI coverage at revision 26 finds **all ten analytical
+  observations stale**, one stale registered workflow-test artifact, and the two
+  retained empirical gaps. Three-constraint code-scope readiness is
+  **needs-investigation**, no blockers, three stale-verification unknowns,
+  grants_permissions=false; this is not a stale-based clearance. Actual focused
+  reruns passed **50** workflow cases and **537** combined workflow/permissions/
+  delivery/recovery cases. Initial merged `make opencode-check` returned exit 0
+  (348 requirements tests, canonical/projection valid, permission checker pass);
+  a final unfiltered capture and full docs validation follow in the new evidence.
+- Re-audited manifests retain the conservative core/policy/docs boundary and add
+  the two newly tracked recovery sources and newly built upstream documentation,
+  plus the preceding completed readiness evidence. Core includes imported
+  requirements modules/locking, real CLI/helpers/tests and inspected workflow
+  sources; policy includes actual wrapper/tests/fixtures/config; docs follows actual
+  VitePress exclusions and package build/navigation inputs. Refresh registered test
+  and appended-progress identities via actual expected-revision CLI only. Preserve
+  all 53 old observations, 16 assessments, 138 relations, requirements/conflicts
+  and older safe evidence byte-for-byte. New observations follow real execution;
+  no old maps are resealed. New evidence/projection are separately validated outputs,
+  not their own independent prerequisites or a recursive freshness loop.
+- Existing transactional-safety and historical-compatibility satisfied assessments
+  are reused with unchanged rationale and fresh validation, not inferred again from
+  tests. The workflow safeguard assessment is explicitly reconsidered for the merged
+  current policy in the [new evidence](/requirements/2026-10-30-merged-evidence-reconciliation),
+  retaining all previous partial/satisfied history. Empirical methodology use and
+  actual PR CI/merge remain pending; no automatic satisfaction or review approval.
+- Inherited upstream Fennel graph publication/display-edge and raw-part changes and
+  C++ checked SFTP finalization/CMake/native tests were inspected for applicability,
+  not reimplemented or independently re-reviewed here. These are outside the
+  requirements Python/docs validation claim. No local Fennel/C++ edits; compile and
+  Space constraints not applicable to this authored surface, **Constraint Impact:
+  not applicable**. Controller must decide fresh runtime build/full test before
+  finishing; this evidence does not waive those gates or activate loaded roles.
+- Next transition: final real requirements/docs gates, append-only observation and
+  justified assessment capture, exact material analytical readiness query, validated
+  self-reviewed local checkpoint and independent review of complete new BASE..HEAD
+  including additions. No fetch/push/PR/merge/rebase/reset/clean/amend/discard is
+  authorized here. Final queries, timings and checkpoint identity belong in the
+  private author report, avoiding post-capture edits to this material docs input.
