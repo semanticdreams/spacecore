@@ -58,7 +58,7 @@ durable scheduled host-side automation on current Orca versions.
 ## Prompt
 
 ```text
-Run the repo's daily devlog automation. Recover meaningful uncovered work since the latest journal, creating a brief narrative entry for each warranted missing landing date; preserve all existing dated sources. Review and validate the changes, then publish through a protected pull request on the run's automation branch and auto-merge when repository policy allows.
+Run the repo's daily devlog automation. Recover meaningful uncovered work since the latest journal, creating a brief narrative entry for each warranted missing landing date or autonomously correcting an existing entry on its actual landing date; preserve accurate existing content. Review and validate the changes, then publish through a protected pull request on the run's automation branch and auto-merge when repository policy allows.
 ```
 
 The UI prompt is intentionally short because `.opencode/skills/daily-devlog-automation/SKILL.md` owns the durable workflow.
@@ -96,12 +96,16 @@ The UTC run date is independent of journal dates: one run may create several
 warranted missing landing-date entries, with timestamps converted to UTC. An
 October 23 branch can recover October 22 without creating an October 23 entry.
 Skip already-covered or non-meaningful candidates with reasons, not filler.
-Preserve all pre-existing dated journal sources byte-for-byte. Meaningful uncovered
-work on an existing published source requires a human publication-treatment
-decision, not a rewrite, misdated entry, or successful no-op.
+Autonomously correct omissions in existing entries on their actual landing dates.
+Preserve accurate narrative, useful links, dates/frontmatter and attribution, and
+retain the single short paragraph and compression/style pass. Source presence alone
+is not a human decision or successful no-op. An explicit immutable-publication
+restriction is a real conflict to surface, not override. Use
+`AGENTS.md#autonomous-workflow-decisions` within existing scope and authority.
 
 Before no-op, account for the whole interval with the pinned tip, inclusive
-boundary, and concise covered/skipped reasons in the normal review handoff. If
+boundary, concise covered/skipped reasons, created/corrected dates and unresolved
+explicit restrictions in the normal review handoff. If
 pre-PR freshness finds a different main tip, pin it and repeat discovery,
 reconciling pending entries with newly published sources and reviewing any repairs.
 After PR queue entry, merge queue handles freshness; do not chase main movement.
@@ -131,8 +135,9 @@ produces a stale or malformed entry, diagnose it and route a reviewed repair
 through the owning skill's validation-failure workflow, not blanket branch
 discard. Every implementation/fix handoff is stage-only and uncommitted: review
 the complete assigned staged diff, including generated changes, before the
-supervisor commits exact approved content. Never rewrite a pre-existing dated
-source; unresolved published-source treatment requires a human decision. Keep
+supervisor commits exact approved content. Corrections to existing dated sources
+use this same reviewed repair lane, not a separate approval merely for source
+presence; genuine immutable-publication restrictions remain boundaries. Keep
 guarded capability boundaries, clean-tree checks, branch protection, required
 tests, and merge-queue polling through actual merge unchanged.
 

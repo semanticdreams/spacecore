@@ -19,6 +19,7 @@ let opencodeWorkflowContent = ''
 let githubOperatorContent = ''
 let prOperatorContent = ''
 let fastDevContent = ''
+let liveDevContent = ''
 let fastDevReviewerContent = ''
 let fastDevWrapUpContent = ''
 
@@ -35,6 +36,7 @@ async function loadFiles() {
     githubOperatorContent = await readFile(join(repoRoot, '.opencode', 'agents', 'github-operator.md'), 'utf8')
     prOperatorContent = await readFile(join(repoRoot, 'scripts', 'opencode_pr_operator.py'), 'utf8')
     fastDevContent = await readFile(join(repoRoot, '.opencode', 'agents', 'fast-dev.md'), 'utf8')
+    liveDevContent = await readFile(join(repoRoot, '.opencode', 'agents', 'live-dev.md'), 'utf8')
     fastDevReviewerContent = await readFile(join(repoRoot, '.opencode', 'agents', 'fast-dev-reviewer.md'), 'utf8')
     fastDevWrapUpContent = await readFile(join(repoRoot, '.opencode', 'skills', 'fast-dev-wrap-up', 'SKILL.md'), 'utf8')
     try {
@@ -256,13 +258,55 @@ test('daily catch-up recovers every warranted missing day without a separate req
     assert.match(discovery, /already covered.{0,100}not meaningful.{0,100}skip.{0,100}reason/i)
 })
 
-test('daily catch-up preserves existing sources and escalates unresolved published work', async () => {
+test('daily catch-up autonomously corrects existing sources while preserving accurate content', async () => {
     await loadFiles()
     const discovery = sectionText(skillContent, '## Catch-up Discovery and Decision')
-    assert.match(discovery, /preserve all pre-existing dated journal sources byte-for-byte/i)
-    assert.match(discovery, /meaningful uncovered work.{0,100}existing.{0,100}source.{0,100}preserve.{0,100}human publication-treatment decision/i)
+    assert.match(discovery, /meaningful uncovered work.{0,100}existing.{0,100}source.{0,100}correct.{0,100}actual landing date/i)
+    assert.match(discovery, /preserve.{0,100}accurate narrative.{0,100}useful links.{0,100}dates\/frontmatter.{0,100}attribution/i)
+    assert.match(discovery, /explicit.{0,100}immutable-publication restriction/i)
+    assert.doesNotMatch(skillContent, /preserve all pre-existing dated journal sources byte-for-byte|request a human publication-treatment decision/i)
+    const workflow = sectionText(skillContent, '## Workflow')
+    assert.match(workflow, /6\..{0,200}correct.{0,160}stage-only\/no-commit/i)
     assert.match(discovery, /uncertain.{0,100}boundary.{0,100}investigate.{0,100}fail closed/i)
     assert.match(discovery, /no reliable.{0,100}boundary.{0,100}(?:BLOCKED|HUMAN_DECISION_REQUIRED)/)
+})
+
+test('primary guidance references shared autonomous decisions and controller triage', async () => {
+    await loadFiles()
+    for (const content of [supervisorContent, fastDevContent, liveDevContent, opencodeWorkflowContent, notesContent]) {
+        assert.ok(content.includes('AGENTS.md#autonomous-workflow-decisions'))
+    }
+    const rule = sectionText(agentsContent, '## Autonomous workflow decisions')
+    for (const pattern of [/scope.{0,100}evidence/i, /proportionate.{0,100}reversible/i,
+        /applicable.{0,80}lane/i, /record.{0,80}rationale.{0,80}continue/i,
+        /routine.{0,100}(?:choices|decisions).{0,160}no human approval/i,
+        /controller.{0,180}triage/i, /separable permitted work/i,
+        /capability refusals/i, /unknown product\/API\/data policy/i,
+        /explicit publication authority/i, /unauthorized destructive/i,
+        /explicit checkpoints/i, /resource\/evidence exhaustion.{0,160}incomplete/i]) {
+        assert.match(rule, pattern)
+    }
+    const discipline = sectionText(supervisorContent, '## Discipline')
+    assert.match(discipline, /BLOCKED.{0,120}adjudicator.{0,120}triage/i)
+    assert.doesNotMatch(discipline, /adjudicator escalates, present to the human/i)
+    for (const content of [supervisorContent, skillContent, opencodeWorkflowContent]) {
+        assert.doesNotMatch(content, /product\/API\/data\/architecture\s+choice/i)
+    }
+})
+
+test('daily note and trigger align autonomous correction with review-first boundaries', async () => {
+    await loadFiles()
+    for (const heading of ['## Prompt', '## Landing-date attribution', '## Validation and recovery']) {
+        const section = sectionText(notesContent, heading)
+        assert.match(section, /correct.{0,180}existing/i)
+    }
+    assert.doesNotMatch(notesContent, /sources byte-for-byte|Never rewrite a pre-existing|requires a human publication-treatment/i)
+    const attribution = sectionText(notesContent, '## Landing-date attribution')
+    assert.match(attribution, /preserve.{0,100}accurate narrative.{0,100}useful links.{0,100}dates\/frontmatter.{0,100}attribution/i)
+    assert.match(attribution, /explicit.{0,100}immutable-publication restriction/i)
+    const recovery = sectionText(notesContent, '## Validation and recovery')
+    assert.match(recovery, /stage-only.{0,100}uncommitted/i)
+    assert.match(recovery, /complete assigned staged diff/i)
 })
 
 test('daily no-op requires whole-window accounting with no unresolved meaningful work', async () => {
@@ -296,7 +340,7 @@ test('daily canonical trigger requests recovery since latest journal rather than
     const prompt = sectionText(notesContent, '## Prompt')
     assert.match(prompt, /recover.{0,120}since the latest journal/i)
     assert.match(prompt, /each warranted missing landing date/i)
-    assert.match(prompt, /preserve.{0,80}existing.{0,40}sources/i)
+    assert.match(prompt, /preserve.{0,80}accurate.{0,80}content/i)
     assert.match(prompt, /validate.{0,160}protected pull request/i)
     assert.doesNotMatch(prompt, /write today's/i)
 })

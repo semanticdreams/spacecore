@@ -1021,6 +1021,14 @@ files.
 
 ## Validation continuation and current base
 
+Apply `AGENTS.md#autonomous-workflow-decisions`: establish scope/evidence, choose
+proportionate reversible action, use the selected lane, record rationale and
+continue. Controllers triage worker context/blocker and adjudicator reports, gather
+permitted evidence and required advice, and resume workers; a report is not
+automatically a human question. Continue separable permitted work. Ordinary
+technical/editorial/recovery choices need no human approval, without changing
+strict review, fast/live ownership, consultation, capability or publication gates.
+
 Required validation failures are active debugging work, not a terminal workflow
 state. When a required suite fails, agents capture the failing command, failing
 tests, relevant output, current branch state, and `git status --porcelain`;
@@ -1037,8 +1045,9 @@ under their scoped exception. Agents rerun
 validation from a clean tree and proceed only when the required suite is green, or when systematic
 debugging establishes a true human-input blocker such as missing credentials,
 inaccessible infrastructure, an unsafe git-history decision, unreproducible
-behavior after reasonable evidence gathering, or a product/API/data/architecture
-choice.
+behavior after reasonable evidence gathering, or unknown product/API/data
+policy. Actual resource/evidence exhaustion means truthful incomplete status with
+concrete blockers and unfinished obligations, not routine retry approval.
 
 Before final validation, PR creation, or a ready-to-merge claim, agents fetch
 `origin` and evaluate the branch against current `origin/main`. If the branch is
