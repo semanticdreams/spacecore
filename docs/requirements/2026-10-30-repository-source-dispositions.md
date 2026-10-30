@@ -1,6 +1,13 @@
 # Frozen repository source dispositions
 
-## Final Task4 boundary (ledger61)
+## Current Task4 boundary (ledger62 after accepted R1-1)
+
+Accepted currency-report correction refreshes only the existing methodology-guide
+artifact digest. Inventory, source-depth overlay and original dispositions below
+are unchanged. Final after-edit coverage distinguishes26 current/453 unknown
+artifacts from63 retained stale observations (ten latest stale-evidence findings).
+See the appended Task4 fix report; no old dependency digest or observation result
+was rewritten, and complete Task4 re-review/whole-work review remain pending.
 
 All **362 frozen filename rows** remain exactly once:168 specs/194 plans, excluding
 only the two root indexes. Tasks2/3 complete-range independent passes were supplied

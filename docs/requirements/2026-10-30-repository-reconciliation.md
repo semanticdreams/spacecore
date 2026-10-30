@@ -2,7 +2,22 @@
 
 ## Identity, authority and current boundary
 
-**Final Task4 boundary (ledger61): complete one-time baseline at familywide inventory
+**Current Task4 R1-1 boundary (ledger62):** accepted reporting/currency fix from
+reviewer `ses_e713934b0ffeOzGEF6AgShUO88`, FIX_BASE `fec29b78`. Refreshed only
+`ART-f8788ba4-449f-493d-978e-ba2fb78bb726` to the current methodology-guide digest
+through expected-revision CLI; no observations, dependency manifests or evidence
+credit transferred. Final after-edit all-record coverage:603 records,32/1000,
+untruncated;26 current/453 unknown artifacts,685 findings including10 stale-evidence.
+All63 stored observations still declare older guide bytes and compute stale; ten
+latest c1 historical passed results are therefore not current passes. Exact IDs,
+old/current digests, checks and revision62 no-change sweep are in the appended
+[Task4 fix report](./2026-10-30-baseline-task-4-report.md#accepted-r1-1-fix-report-current-final-snapshot-currency).
+Original report's675-findings query is explicitly pre-guide-edit history, not the
+final snapshot. All124 requirement identities/479 artifacts/1103 relations and
+17 assessments/63 observations retained; complete Task4 re-review and whole-work
+review remain pending. No product runtime or empirical goal credit.
+
+**Original Task4 checkpoint boundary (ledger61): complete one-time baseline at familywide inventory
 and honest representative semantic depth, ready for independent review, not approved
 or integrated.** Controller supplies prior complete Task2/Task3 passes. Task4 preserves
 all124 requirement/479 artifact/1103 relation identities, original12 seed obligations,

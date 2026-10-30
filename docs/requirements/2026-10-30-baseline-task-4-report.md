@@ -1,5 +1,17 @@
 # Task4 — final consistency, repeatability and documentation
 
+## Current R1-1 fix boundary — ledger62
+
+Accepted important finding from reviewer `ses_e713934b0ffeOzGEF6AgShUO88`, fix
+round1, FIX_BASE `fec29b78f0eb3e1bdc4145e3a2cbc304513f42a4`. The original report
+below is retained execution history, **not the final currency snapshot**. Its675
+findings/26-current/453-unknown query ran before the methodology-guide edit.
+Current all-record coverage after the fix reports685 findings, including10
+stale-evidence findings. The guide artifact now matches current content; all63
+retained observations remain stale. See the appended fix report for exact IDs,
+dependency digests, final query bounds, validation and repeated no-change sweep.
+Task4 re-review and whole-work review remain pending; no product pass added.
+
 ## Identity and requirements reconciliation
 
 Author/CLI actor `implementer/baseline-task-4` (logical identity; platform session
@@ -179,7 +191,8 @@ valid/current61. `make requirements-check` (timeout600000) passed **348 tests in
 Script tests need only Node and did not establish VitePress installation. Before heap4096, host
 memory7751 MiB/available5425 MiB, swap4095 MiB with3405 free, filesystem19G free.
 
-All-record coverage:603 IDs (124 requirements/479 artifacts), depth32/paths1000,
+**Historical pre-guide-edit query, not final-snapshot currency:** all-record
+coverage:603 IDs (124 requirements/479 artifacts), depth32/paths1000,
 **not truncated**.675 diagnostic findings:453 unknown-artifact,147 missing-linked-
 evidence,52 missing-implementation,11 unaddressed-constraint,9 unsupported-outcome,
 3 missing-explicit-design; these are tool trace/assessment findings, not675 product
@@ -290,3 +303,109 @@ the complete nine-file assigned list above includes this addition.
 **Task4 implementation is complete at declared depth, pending independent complete
 Task4 review and final whole-work review.** No review pass or integration claimed;
 controller retains product-gap/dependency follow-up and guarded finishing ownership.
+
+## Accepted R1-1 fix report — current final-snapshot currency
+
+**Requirements reconciliation:** correction of a reporting/currency defect under
+existing revision1 evidence-separation, retained-history and transaction obligations
+named above, not a new requirement or empirical observation. The accepted reviewer
+finding correctly identified a temporal ordering error: validate/render checked
+integrity/projection, not whether the earlier coverage query described the later
+edited guide. Reproduced the registered digest mismatch and inspected the existing
+methodology guide's artifact-refresh contract and native currency implementation
+(`scripts/requirements_lib/evidence.py:22–101`, read-only). No policy or technical
+decision is unresolved; no consultation trigger arose from this first focused fix.
+
+One in-memory existing CLI `apply --stdin`, actor `implementer/baseline-task-4-R1`,
+expected61→returned62, status ok, `update-artifact` changed only the content digest
+of evidence-kind `ART-f8788ba4-449f-493d-978e-ba2fb78bb726` at
+`docs/dev/features/requirements-driven-engineering.md`:
+
+- Old registered digest: `04f24b168b51e88159958ea3f09bc8f88d35062cc1ec1e8967bce32d3ac00355`.
+- Current guide/registered digest: `9e9e4267a0c35615ef3bd0495a1bc5239a31b72955b3bcbd04f241b0e20ea9d0`.
+
+No guide content changed in this fix. No requirement, relation, lifecycle,
+assessment, verification, evidence result or observation dependency digest changed.
+Updating the registry's content identity does **not** transfer historical evidence
+credit to new bytes. All17 assessments/63 verification records are retained exactly.
+The generated index is updated only by the renderer. Original checkpoint
+`fec29b78` remains history, not an independently approved final snapshot.
+
+### Final query and retained stale dependencies
+
+After all intended tracked documentation edits and digest refresh, executed actual
+read-only `python3 scripts/requirements.py query --stdin` with
+`{"op":"coverage","args":{}}`: status ok, revision62,603 scoped records,
+depth32/paths1000, **truncated:false**. Final artifact currency: **26 current,
+453 unknown,0 stale**. **685 findings** =453 unknown-artifact +147
+missing-linked-evidence +52 missing-implementation +11 unaddressed-constraint +10
+stale-evidence +9 unsupported-outcome +3 missing-explicit-design. Counts concern
+different record/trace axes; current artifact bytes do not imply current observations.
+
+Ten latest c1 criterion results remain historically `passed` but currency **stale**,
+all actor `implementer/REQ-MERGED-EVIDENCE`, timestamp `2026-10-30T12:25:07Z`,
+evidence reference `ART-09f62b39-1c43-430e-a83f-05219d3cd5db`:
+
+| Requirement ID | Retained observation count for c1 |
+| --- | ---: |
+| REQ-0a846556-20fb-4bd3-aff2-eedbda9a96d6 | 6 |
+| REQ-0bf07879-9bbb-421a-85ab-37f495b6e552 | 6 |
+| REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84 | 6 |
+| REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c | 7 |
+| REQ-2824ad77-fbc5-4db6-ac9a-732af10eeabc | 6 |
+| REQ-49e62b92-aada-447d-9d15-531625fa0dcc | 7 |
+| REQ-8e50a634-76ae-4100-9f60-90e4552ec954 | 6 |
+| REQ-9abdf9a9-e9b5-437d-8175-549de16d9c87 | 6 |
+| REQ-e0275d31-a048-4f5c-850e-40bdb647d812 | 7 |
+| REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59 | 6 |
+
+All63 stored observations declare the guide as a dependency:53 retain its old
+`04f24b…0355` digest above;10 retain
+`03fb02e32fa23f1ba77ecbf7a069a539be518b5836224e3f1c7a255adb6de7e6`.
+Neither matches `9e9e42…a9d0`; all63 compute stale under the existing library,
+independently of any other changed dependency. Ten latest stale findings are not
+63 fresh runs. Original results, timestamps, source/dependency manifests and
+evidence digests remain untouched. All112 added baseline obligations still have no
+observations/assessments; strategic outcomes remain unverified. The exact final
+query, projected currencies/findings and complete per-criterion results are retained
+in private `task4-source-execution-evidence.md` for independent inspection.
+
+### Fix validation, every-family sweep and self-review
+
+Compile check: not applicable. Application constraints/Constraint Impact: not
+applicable. TDD: not applicable to this reporting/artifact-identity correction.
+CLI validate/render/render--check returned valid/current62. `make requirements-check`
+(timeout600000) passed **348 tests in174.31s**, then canonical valid/current62;
+output pristine. These tests cover the existing ledger/currency/history/projection
+surface, not fresh product execution or renewed satisfaction. No product tests or
+new observations ran. No navigation/input tooling changed; prior docs-build evidence
+is historical, and this bounded report correction uses diff/format checks rather
+than claiming a fresh full-site build.
+
+Repeated substantive source-to-ledger sweep after the last intended edits/digest
+update: all19 docs families and eight spec/plan owners,124 actual IDs/provenance,
+479 locators/selectors and1103 active tuples compared with source dispositions and
+original authority. Frozen362 filenames remain exact; current1210 docs/nine post-F
+additions and all non-doc root inventory bounds remain unchanged. Same distinct
+contracts, explicit gaps and no speculative new obligations. Zero further justified
+creates/revisions/transitions/links or digest updates; no no-op apply.
+
+| File | Before/after bytes | Before/after SHA-256 |
+| --- | ---: | --- |
+| ledger.json | 3279706 | 8ebc71eb702adb27437a9d02b7fee795b6cf4c4586d8aaf782e2836863c377cd |
+| index.md | 426486 | 2be74aada61acd93e7b34de8e66af4510289b0166576bd1f7939d6f3f89220d6 |
+
+Revision62→62 throughout. Final after-edit coverage query and hashes describe the
+same snapshot; reports are not registered as immutable measurement evidence.
+Self-review checks exact FIX_BASE preservation (all records except that one
+artifact digest), historical versus current labels, stale dependencies, source
+accounting, diff whitespace and assigned file isolation. No new pass, observation,
+runtime verification, historical erasure or evidence-credit transfer.
+
+Fix files: `docs/requirements/ledger.json`, rendered `docs/requirements/index.md`,
+this existing Task4 report, `docs/requirements/2026-10-30-repository-reconciliation.md`
+and `docs/requirements/2026-10-30-repository-source-dispositions.md`. No additions;
+private evidence appended separately. Review complete `fec29b78..FIX_HEAD` and
+Task4's complete original range; checkpoint SHA supplied in handoff. Independent
+re-review and whole-work review/integration remain pending. Existing product gaps,
+docs warnings and dependency advisories remain unchanged, not repaired by this fix.

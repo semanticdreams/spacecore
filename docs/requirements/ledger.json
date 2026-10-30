@@ -2820,7 +2820,7 @@
       "title": "2026-10-04-ssh-integration-foundation.md"
     },
     "ART-f8788ba4-449f-493d-978e-ba2fb78bb726": {
-      "content_digest": "04f24b168b51e88159958ea3f09bc8f88d35062cc1ec1e8967bce32d3ac00355",
+      "content_digest": "9e9e4267a0c35615ef3bd0495a1bc5239a31b72955b3bcbd04f241b0e20ea9d0",
       "id": "ART-f8788ba4-449f-493d-978e-ba2fb78bb726",
       "kind": "evidence",
       "locator": "docs/dev/features/requirements-driven-engineering.md",
@@ -25742,7 +25742,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 61,
+  "revision": 62,
   "schema_version": 1,
   "verifications": [
     {
