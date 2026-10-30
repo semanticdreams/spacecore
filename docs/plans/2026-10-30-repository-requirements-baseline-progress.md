@@ -30,8 +30,14 @@ No delivery corrections, substantive fix rounds, quarantines or consultations us
 
 Preflight: four serial tasks have nonoverlapping scope ownership, one canonical writer, shared records intentionally updated in order. No task conflicts found. Product code/tests/tooling/prompt files remain read-only.
 
-- Task 1: pending dispatch; task BASE to be the checkpoint containing this setup ledger. Brief `.superpowers/sdd/2026-10-30-repository-requirements-baseline-15f6a125/task-1-brief.md`; report `docs/requirements/2026-10-30-baseline-task-1-report.md`.
-- Task 2: pending accepted Task 1.
+- Task 1: complete, committed `3c9d6434897bb32a8a0ee1dc35f4e1fb740503e6..cf9f867f068e364bc75538898f91c4ced63faa0f`, implementer `ses_e72b8837cffedqVKFsl7TidVhX`, correction_used=0. Reviewer `ses_e729bc912ffeophGtQFHyJiNVN` full-range pass after evidence gathering, correction_used=0. Ledger 29→31; 16 requirements created, three separately activated goals, 14 links, no satisfaction assessments. 348 requirements tests pass; valid/current projection; exact frozen source set 168 specs/194 plans, no missing/extra/duplicate rows independently checked by controller. Future family tracing/denominator checks remain obligations, not approval gaps for this task.
+- Task 2: next dispatch, BASE will be controller progress checkpoint; graph doctrine loaded for terminology reconciliation.
 - Task 3: pending accepted Task 2.
 - Task 4: pending accepted Task 3.
 - Whole-range review and guarded finishing: pending all tasks.
+
+### Task 1 intake operational recovery
+
+Implementer delivery eligible in declared Markdown contract, unchanged BASE/branch; NEEDS_CONTEXT before canonical mutation. Original payload retained in author session and interrupted-intake report. A temporary-file `apply_patch` request outside workspace was refused; no bypass or alternate write attempted. This is not a human-owned product/permission decision and no expert trigger is established. Resume same task without transient files: in-memory inspection/query snippets and `apply --stdin` operate only on already-authorized repository sources/canonical output. Do not retry external-directory writes through another tool. The user-authorized ledger task and its budgets are unchanged; no substantive fix round or format correction consumed. Controller progress edits are excluded from worker checkpoint ownership and will be checkpointed separately.
+
+Task 1 reviewer initially returned `requires_human` solely for missing source/execution evidence, with no candidate artifact defects. Controller followed autonomous triage rather than forwarding routine evidence requests: original author provided retained CLI/test/query/equality outputs in private `task-1-source-evidence.md` (new source reads separately labeled), and controller independently verified exact manifest membership plus unchanged original source bytes against frozen Git. Reviewer resumed same complete range and returned pass; no semantic findings replaced, no test rerun solely for review, no format correction or code-fix budget consumed. Original reports remain in both author sessions. First test invocation exceeded 120-second timeout; implementer recorded systematic-debugging and unchanged command passed with sufficient timeout (348/348). No repeated material failure or consultation trigger established.
