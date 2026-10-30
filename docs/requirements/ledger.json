@@ -7,12 +7,24 @@
       "locator": "scripts/requirements_lib/schema.py",
       "title": "schema.py"
     },
+    "ART-02dcf3e0-d5d5-4b25-ba2a-74dc196c7133": {
+      "id": "ART-02dcf3e0-d5d5-4b25-ba2a-74dc196c7133",
+      "kind": "code",
+      "locator": "assets/lua/entities/relationships.fnl",
+      "title": "relationships.fnl"
+    },
     "ART-09f62b39-1c43-430e-a83f-05219d3cd5db": {
       "content_digest": "8eed1c328c494885107f755d38ec04346121737ea3210a0f1332b7c42ddb986f",
       "id": "ART-09f62b39-1c43-430e-a83f-05219d3cd5db",
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-merged-evidence-reconciliation.md",
       "title": "Merged-source applicability and actual scoped validation"
+    },
+    "ART-0c71794a-68aa-4eef-b159-da70bdb78141": {
+      "id": "ART-0c71794a-68aa-4eef-b159-da70bdb78141",
+      "kind": "code",
+      "locator": "assets/lua/lazy-text-source.fnl",
+      "title": "lazy-text-source.fnl"
     },
     "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb": {
       "content_digest": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
@@ -42,12 +54,36 @@
       "locator": "docs/requirements/2026-10-30-final-evidence-reconciliation.md",
       "title": "Final bounded evidence and explicit constraint reconciliation"
     },
+    "ART-42695695-524b-4dfb-8fa0-36fbd00c771a": {
+      "id": "ART-42695695-524b-4dfb-8fa0-36fbd00c771a",
+      "kind": "code",
+      "locator": "assets/lua/graph/capabilities.fnl",
+      "title": "capabilities.fnl"
+    },
+    "ART-46414157-af80-4192-8dbe-5afb6213b3e2": {
+      "id": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-15-uniform-graph-access-design.md",
+      "title": "2026-10-15-uniform-graph-access-design.md"
+    },
     "ART-52e4021c-9e73-475a-95fb-8904969605af": {
       "content_digest": "7f5f14f271bf5cff148cc9a1890eee3fe1f511a69e6f4767b0408b06fe3af505",
       "id": "ART-52e4021c-9e73-475a-95fb-8904969605af",
       "kind": "test",
       "locator": "scripts/tests/test_requirements_demos.py",
       "title": "test_requirements_demos.py"
+    },
+    "ART-5facf444-9ed7-45a4-915a-17074742f5f3": {
+      "id": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-graph-entity-capabilities.fnl",
+      "title": "test-graph-entity-capabilities.fnl"
+    },
+    "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd": {
+      "id": "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-graph-capabilities.fnl",
+      "title": "test-graph-capabilities.fnl"
     },
     "ART-7121890a-8068-4b53-ba47-3c4eb4d98687": {
       "content_digest": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
@@ -56,6 +92,12 @@
       "locator": "docs/specs/2026-10-29-requirements-driven-engineering-design.md",
       "title": "2026-10-29-requirements-driven-engineering-design.md"
     },
+    "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974": {
+      "id": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
+      "kind": "code",
+      "locator": "assets/lua/entities/string.fnl",
+      "title": "string.fnl"
+    },
     "ART-851d9295-f934-4c35-b01b-1cefda8058e1": {
       "content_digest": "1654f2ff56bed0d44f9fbec9abe6394cf29dcc9d7b63f2a39280a6c940d1b456",
       "id": "ART-851d9295-f934-4c35-b01b-1cefda8058e1",
@@ -63,12 +105,36 @@
       "locator": "docs/requirements/2026-10-30-final-readiness-reconciliation.md",
       "title": "Later review-coordinate reconciliation and scoped readiness assessment"
     },
+    "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511": {
+      "id": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-lazy-text-buffer.fnl",
+      "title": "test-lazy-text-buffer.fnl"
+    },
     "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8": {
       "content_digest": "ead09efe7782f8136b16dddeafb0581ccdb4cebe0b75f8b41e6950c34f5dc437",
       "id": "ART-9668b374-021c-442a-a548-6bdfa4cd1ea8",
       "kind": "test",
       "locator": "scripts/tests/test_requirements_workflow_contracts.py",
       "title": "test_requirements_workflow_contracts.py"
+    },
+    "ART-9bad9647-63a6-45a5-9bef-4e82974048dc": {
+      "id": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-30-lazy-text-buffer-virtual-input.md",
+      "title": "2026-08-30-lazy-text-buffer-virtual-input.md"
+    },
+    "ART-9de6f86d-77f5-4489-907d-d8a669b6548f": {
+      "id": "ART-9de6f86d-77f5-4489-907d-d8a669b6548f",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-string-entity-editor.fnl",
+      "title": "test-string-entity-editor.fnl"
+    },
+    "ART-a045816d-f731-48f7-84d6-1bd452779143": {
+      "id": "ART-a045816d-f731-48f7-84d6-1bd452779143",
+      "kind": "code",
+      "locator": "assets/lua/lazy-text-buffer.fnl",
+      "title": "lazy-text-buffer.fnl"
     },
     "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81": {
       "content_digest": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
@@ -90,6 +156,18 @@
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-task-5-fix-2-validation.md",
       "title": "Task 5 fix 2 scoped revalidation"
+    },
+    "ART-ac44c584-ca4e-4783-8d9f-27f7bd8b1bc9": {
+      "id": "ART-ac44c584-ca4e-4783-8d9f-27f7bd8b1bc9",
+      "kind": "code",
+      "locator": "assets/lua/graph/view/string-entity-editor.fnl",
+      "title": "string-entity-editor.fnl"
+    },
+    "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea": {
+      "id": "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea",
+      "kind": "code",
+      "locator": "assets/lua/graph/capabilities/entities.fnl",
+      "title": "entities.fnl"
     },
     "ART-b7346d33-ff24-437b-8350-29e3cf618f4c": {
       "content_digest": "4e5d899c6314dafdcf0837d6daebf62f94551f2e92add8af8f8251cfcb1914a5",
@@ -133,12 +211,24 @@
       "locator": "docs/plans/2026-10-29-requirements-driven-engineering.md",
       "title": "2026-10-29-requirements-driven-engineering.md"
     },
+    "ART-dafc623b-133c-4c39-9056-0bb08134675b": {
+      "id": "ART-dafc623b-133c-4c39-9056-0bb08134675b",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md",
+      "title": "2026-08-30-lazy-text-buffer-virtual-input-design.md"
+    },
     "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a": {
       "content_digest": "41c8c9a07717fb32fd92e3e40ba600fba0749e185c24f08f0e183ad994eaaf1f",
       "id": "ART-dee90f4b-aee9-4dde-b4bc-139789f5481a",
       "kind": "code",
       "locator": "scripts/requirements.py",
       "title": "requirements.py"
+    },
+    "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf": {
+      "id": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-15-graph-capabilities.md",
+      "title": "2026-10-15-graph-capabilities.md"
     },
     "ART-e6db684a-aeba-4034-837f-d2dd8826a514": {
       "content_digest": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
@@ -3104,6 +3194,582 @@
       "source": "REQ-73f67424-c7a6-450b-a8ce-feb67ac00a14",
       "target": "REQ-80869160-7ee8-4062-902d-b90f0d9507aa",
       "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e5394d38-661c-4342-890b-36b09590a080",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "The full corrected graph contract explicitly specifies generic access, nonvisual isolation and displayed-revision replacement; no transport or universal CRUD is inferred.",
+      "retracted": false,
+      "source": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
+      "target": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5f7e1307-cd8c-4bab-a80f-e0a96a362534",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "The full corrected graph contract explicitly specifies generic access, nonvisual isolation and displayed-revision replacement; no transport or universal CRUD is inferred.",
+      "retracted": false,
+      "source": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
+      "target": "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-23cc5676-cd53-48b0-aba0-3193af355bcd",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "The full corrected graph contract explicitly specifies generic access, nonvisual isolation and displayed-revision replacement; no transport or universal CRUD is inferred.",
+      "retracted": false,
+      "source": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
+      "target": "REQ-77d53d5a-9303-490e-a031-34827a59e6c6",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-26da73b2-401c-4281-be2e-34b8c4787a15",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "The full lazy editor design specifies overlay storage, viewport-only rendering and explicit stale-file save detection.",
+      "retracted": false,
+      "source": "ART-dafc623b-133c-4c39-9056-0bb08134675b",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cf30c1f8-68af-4a6a-b846-2aecfdff8091",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "The full lazy editor design specifies overlay storage, viewport-only rendering and explicit stale-file save detection.",
+      "retracted": false,
+      "source": "ART-dafc623b-133c-4c39-9056-0bb08134675b",
+      "target": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-34dad1ae-1d05-47e8-8ba2-0ece8077cc25",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Plan authority names the corrected design and Tasks 1-4 implement registration, owning revisions, first family and GUI convergence.",
+      "retracted": false,
+      "source": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "target": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-15b74d3e-1667-4708-9364-b0741699b3b2",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Plan Tasks 1-4 implement native source/save primitives, lazy buffer, VirtualInput and graph viewer integration.",
+      "retracted": false,
+      "source": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "target": "ART-dafc623b-133c-4c39-9056-0bb08134675b",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-573b661b-bb7e-4abf-b14c-3644f821d954",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Inspected production exports and mutation/dispatch bodies implement the matching named file responsibility in the graph capabilities plan; this is presence, not fresh execution proof.",
+      "retracted": false,
+      "source": "ART-42695695-524b-4dfb-8fa0-36fbd00c771a",
+      "target": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3d3e2695-bad1-4f90-8cfd-8166d30b27be",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Inspected production exports and mutation/dispatch bodies implement the matching named file responsibility in the graph capabilities plan; this is presence, not fresh execution proof.",
+      "retracted": false,
+      "source": "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea",
+      "target": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7a5e6426-83c2-4150-a154-1d84eb4612af",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Inspected production exports and mutation/dispatch bodies implement the matching named file responsibility in the graph capabilities plan; this is presence, not fresh execution proof.",
+      "retracted": false,
+      "source": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
+      "target": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8dccca41-cb76-419e-a753-01314411ec02",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Inspected production exports and mutation/dispatch bodies implement the matching named file responsibility in the graph capabilities plan; this is presence, not fresh execution proof.",
+      "retracted": false,
+      "source": "ART-02dcf3e0-d5d5-4b25-ba2a-74dc196c7133",
+      "target": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0f1a36df-d6f0-4fb8-8c74-b3fc23f6255b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Inspected production exports and mutation/dispatch bodies implement the matching named file responsibility in the graph capabilities plan; this is presence, not fresh execution proof.",
+      "retracted": false,
+      "source": "ART-ac44c584-ca4e-4783-8d9f-27f7bd8b1bc9",
+      "target": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-583c7532-73d9-4031-95fa-68cc57ac1268",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Inspected file source exports and buffer viewport/edit/save/construction sections implement lazy editor plan Task 2; remaining buffer helpers and widget/native integration were not exhaustively audited.",
+      "retracted": false,
+      "source": "ART-0c71794a-68aa-4eef-b159-da70bdb78141",
+      "target": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-100f757f-01ce-4038-b6c8-00d58f0adae7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Inspected file source exports and buffer viewport/edit/save/construction sections implement lazy editor plan Task 2; remaining buffer helpers and widget/native integration were not exhaustively audited.",
+      "retracted": false,
+      "source": "ART-a045816d-f731-48f7-84d6-1bd452779143",
+      "target": "ART-9bad9647-63a6-45a5-9bef-4e82974048dc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9889555a-2d46-4731-a325-c51d00ac5b4a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "The corrected design explicitly requires nonvisual access independent of materialization and interaction state; applicability is limited to this nonvisual capability slice, not all product goals.",
+      "retracted": false,
+      "source": "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1",
+      "target": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4e920d60-a158-40b4-87bb-435f60c22a30",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "The corrected design explicitly requires nonvisual access independent of materialization and interaction state; applicability is limited to this nonvisual capability slice, not all product goals.",
+      "retracted": false,
+      "source": "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1",
+      "target": "ART-46414157-af80-4192-8dbe-5afb6213b3e2",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f529baf0-5166-4ddd-abe9-674db461e8e7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "The corrected design explicitly requires nonvisual access independent of materialization and interaction state; applicability is limited to this nonvisual capability slice, not all product goals.",
+      "retracted": false,
+      "source": "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1",
+      "target": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4647dd75-c264-4370-a370-1d582f83eb45",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Generic capability access helps uniform graph exposure without proving naturalness or speed.",
+      "retracted": false,
+      "source": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d62a6de8-9783-4364-88ee-3b13726e4698",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Shared stale-edit rejection makes capability and participating GUI writes coherent without proving all access behavior.",
+      "retracted": false,
+      "source": "REQ-77d53d5a-9303-490e-a031-34827a59e6c6",
+      "target": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-035c5212-d554-486e-a474-2da238578454",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "File-scale viewing/editing helps the existing workspace loop but does not deliver terminal/browser/media integration.",
+      "retracted": false,
+      "source": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "target": "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4bd219eb-d178-4325-9ed1-266d60e90b7f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Conflict-preserving saves help safe file-scale editing; token checks are not arbitrary external-writer CAS.",
+      "retracted": false,
+      "source": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2ab02c43-a843-4165-90cf-23e70f89de67",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd",
+      "target": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-99fe7fe6-40b4-4aba-b725-d206c0405c40",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd",
+      "target": "ART-42695695-524b-4dfb-8fa0-36fbd00c771a",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dadd381c-5c82-479b-b4ce-b1246f8afd1f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1882691c-0017-4da6-a6cb-930cad88c23d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c98faa81-a4c2-470a-8b35-e9d46eed2d0b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "REQ-77d53d5a-9303-490e-a031-34827a59e6c6",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1286d08b-e564-47e4-958b-cca1a61eee9a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bb4e7ac9-899a-410a-8f87-2e35bc7d4b29",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e7f361bc-3c59-477d-9523-32a7177a5b8c",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
+      "target": "ART-02dcf3e0-d5d5-4b25-ba2a-74dc196c7133",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-60ed06cd-4353-4ebe-9ac7-3d5aa061a099",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-9de6f86d-77f5-4489-907d-d8a669b6548f",
+      "target": "REQ-77d53d5a-9303-490e-a031-34827a59e6c6",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-10aaa7e1-df3f-4028-8405-9cf1f5189aa1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-9de6f86d-77f5-4489-907d-d8a669b6548f",
+      "target": "ART-ac44c584-ca4e-4783-8d9f-27f7bd8b1bc9",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5d2e0aad-2dbe-4b2e-b872-cc0ec27ecb89",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-9de6f86d-77f5-4489-907d-d8a669b6548f",
+      "target": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cfb9e4d4-9879-47e7-b229-413064574047",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
+      "target": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-535da89e-ab47-44f1-92c0-408cbfa1480d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Actual test bodies inspected: generic meter, persisted brief/notes, sentinel-map capture, stale editor revisions or lazy read/edit/save assertions as applicable. Test definition trace only; no test execution, whole-criterion completion or satisfaction is asserted.",
+      "retracted": false,
+      "source": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
+      "target": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-49aa43fa-977e-424f-b8d3-64f69c877d69",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
+      "target": "ART-0c71794a-68aa-4eef-b159-da70bdb78141",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2aa495cc-5b36-492c-bc2e-2b0fa5b3443e",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Test imports/calls the production surface and asserts domain/interaction outcomes, including injected failure cases; definition linkage is not a test-run result.",
+      "retracted": false,
+      "source": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
+      "target": "ART-a045816d-f731-48f7-84d6-1bd452779143",
+      "type": "exercises"
     }
   ],
   "requirements": {
@@ -3588,6 +4254,34 @@
       "revision": 1,
       "statement": "Support user-owned services and distribution through Space pods, libtorrent asset distribution and practical wallet-backed workflows."
     },
+    "REQ-77d53d5a-9303-490e-a031-34827a59e6c6": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "GUI and nonvisual writes invalidate each other in both directions, including same-second and A-to-B-to-A writes; rejected saves leave persisted content and prior baseline intact."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Opening an editor does not write; each editor owns its baseline and advances it only after success or an explicit committed result, while committed notification/storage errors remain visible."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-77d53d5a-9303-490e-a031-34827a59e6c6",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "excerpt": "A conflict preserves the attempted edit and surfaces an explicit error; it does not silently retry with a newly read revision.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
+      "revision": 1,
+      "statement": "Participating graph text editors and nonvisual text replacement must submit the revision of the displayed or read content, reject stale edits explicitly and preserve attempted GUI text without silent retry or merge."
+    },
     "REQ-80869160-7ee8-4062-902d-b90f0d9507aa": {
       "acceptance_criteria": [
         {
@@ -3733,6 +4427,39 @@
       "revision": 1,
       "statement": "Support richer world actors including avatars and vehicles and host multiple game-like experiences in editable shared worlds."
     },
+    "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "File-backed viewport and ordinary anchor-relative navigation use bounded reads and preserve partial/unknown indexing information rather than falling back to whole-file reads."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Edits and selection compose original and added spans, with UTF-8 positions and LF/CRLF behavior; untouched invalid source bytes survive save."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "The graph filesystem viewer uses a viewport-only VirtualInput while small Input/InputModel controls retain their existing behavior; full widget/integration coverage must be independently inspected."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "excerpt": "Represent edits without loading unchanged file content into memory.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
+      "revision": 1,
+      "statement": "Provide file-scale text viewing and editing with lazy source reads, overlay edits and viewport rendering without eagerly loading unchanged file content or substituting whole-buffer InputModel storage."
+    },
     "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5": {
       "acceptance_criteria": [
         {
@@ -3778,6 +4505,39 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Support shared worlds on Matrix with yojimbo realtime synchronization and an explicit shared-world permission model."
+    },
+    "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A test-only second family is discovered and invoked through unchanged generic dispatch without executing a visual loader."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Descriptions and results are detached checked data; unadvertised capabilities, malformed arguments, unavailable registrations and over-budget pages fail explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "A brief and two notes can be discovered, created, related, revision-edited and read after reopening owning stores using returned references and capability metadata."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "excerpt": "Uniform access must not make consumers dispatch on concrete object types.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
+      "revision": 1,
+      "statement": "Expose declared nonvisual graph capabilities through discover, describe and invoke using opaque references and advertised metadata rather than consumer dispatch on concrete object types."
     },
     "REQ-e0275d31-a048-4f5c-850e-40bdb647d812": {
       "acceptance_criteria": [
@@ -3868,6 +4628,29 @@
       "revision": 1,
       "statement": "Make agent-powered workflows coherent and useful by exposing saved conversations through the graph, supporting branch/fork interaction and risk-gated provider-agnostic MCP capabilities subordinate to the entity model."
     },
+    "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Compare a sentinel map capture before and after nonvisual text and relationship writes: map interaction/materialization state stays unchanged; already subscribed labels and derived edges may reflect domain changes."
+        }
+      ],
+      "classification": "constraint",
+      "history": [],
+      "id": "REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "excerpt": "Nonvisual consumers are independent of GraphMap and GraphView state.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-uniform-graph-access-design.md"
+      },
+      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
+      "revision": 1,
+      "statement": "Nonvisual graph access must remain independent of GraphMap and GraphView and must not materialize visual adapters or mutate map membership, explicit display edges, positions, selection, focus, panels or projection state."
+    },
     "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59": {
       "acceptance_criteria": [
         {
@@ -3900,9 +4683,37 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Support typed recursive many-to-many requirement relations without a fixed abstraction ladder or inferred satisfaction."
+    },
+    "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A file modified after opening, including a same-size modification, is not overwritten by a stale save and dirty edits remain available."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "A successful save streams original/add segments, refreshes the baseline token and clears dirty state; no arbitrary external-writer race-free CAS or power-loss durability guarantee is implied."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2",
+        "date": "2026-10-30",
+        "excerpt": "If the file changed externally, return or raise an explicit conflict and keep dirty state true.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md"
+      },
+      "rationale": "Authorized bottom-up intent backfill from the full inspected product contract, not inferred achievement from code. Existing methodology revision safety governs a different ledger domain; Graph/Workspace goals are reused through contribution, not duplicated or assessed. Proposed pending independent reconciliation; no activation or satisfaction claim.",
+      "revision": 1,
+      "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 31,
+  "revision": 33,
   "schema_version": 1,
   "verifications": [
     {

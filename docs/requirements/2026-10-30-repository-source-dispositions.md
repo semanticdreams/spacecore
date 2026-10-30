@@ -69,7 +69,7 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/plans/2026-08-16-workflow-graph-ux.md` | 2/A | S | L5: workflow visual control surfaces; node action traces missing. |
 | `docs/plans/2026-08-26-workflow-preview-decomposition.md` | 2/A | S | L5: compact previews with explicit explorers; discovery traces missing. |
 | `docs/plans/2026-08-29-graph-filesystem-file-interactions.md` | 2/G | S | L5: external edit/module nodes/lazy viewer; file interaction tests untraced. |
-| `docs/plans/2026-08-30-lazy-text-buffer-virtual-input.md` | 2/T | S | L5: file-backed bounded-memory editor; large-file bounds untraced. |
+| `docs/plans/2026-08-30-lazy-text-buffer-virtual-input.md` | 2/T | S | Task 2 full L1–625: lazy source/buffer/widget/viewer plan; ART-9bad9647-63a6-45a5-9bef-4e82974048dc realizes its design, with source/buffer code traces. REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c and REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4; buffer assertions inspected, widget/native/viewer completeness still uninspected. |
 | `docs/plans/2026-09-06-virtual-input-file-viewer-usability.md` | 2/T | S | L5: Vim routing/clipping/caret; regression assertions untraced. |
 | `docs/plans/2026-09-07-graph-titlebar-kind-badges.md` | 2/G | S | L5: badges without topology changes; compact/full-view tests untraced. |
 | `docs/plans/2026-09-10-virtual-input-lazy-anchor-navigation.md` | 2/T | S | L5: bounded h/l/j/k after far jumps; navigation cost evidence missing. |
@@ -166,7 +166,7 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/plans/2026-10-12-tree-view-outline.md` | 2/G | S | L5: measured TreeView instead of stride; row layout tests untraced. |
 | `docs/plans/2026-10-14-entity-type-catalog.md` | 2/G | S | L5: explicit catalog including code entities; browser/catalog parity untraced. |
 | `docs/plans/2026-10-15-fast-dev-independent-workflow.md` | 3/D | S | L5: direct checkpoints/explicit wrap-up; publication authority tests untraced. |
-| `docs/plans/2026-10-15-graph-capabilities.md` | 2/G | S | L5: discover/describe/invoke/stale rejection; capability invocation traces missing. |
+| `docs/plans/2026-10-15-graph-capabilities.md` | 2/G | S | Task 2 full L1–254: corrected contract authority plus Tasks 1–4; ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf realizes ART-46414157-af80-4192-8dbe-5afb6213b3e2. Five production files and three actual test-definition bodies traced; no fresh runtime verification or native publication audit. |
 | `docs/plans/2026-10-15-live-dev.md` | 3/D | S | L5: checkout-scoped verified app refresh; manual lifecycle assertions untraced. |
 | `docs/plans/2026-10-15-reference-lifecycle.md` | 2/G | S | L5: morph preserves relationships/delete cleans incoming references; deletion closure untraced. |
 | `docs/plans/2026-10-15-reload-boundary-contract.md` | 3/P | S | L5 opening: root-default development reload; audited narrow reload boundary needs full-body inspection. |
@@ -264,7 +264,7 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/specs/2026-08-16-workflow-graph-ux-design.md` | 2/A | U | L5 opening: removal of hidden hooks; which explicit actions form editor/control surfaces? Full UX slice uninspected. |
 | `docs/specs/2026-08-26-workflow-preview-decomposition-design.md` | 2/A | U | L5 opening: crowded workflow previews; which child explorer nodes own steps/runs? Full decomposition uninspected. |
 | `docs/specs/2026-08-29-graph-filesystem-file-interactions-design.md` | 2/G | U | L5: fs:path adapters; which file-type interactions are authoritative versus examples? Full action contract uninspected. |
-| `docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md` | 2/T | U | L5 opening: eager Input behavior oracle; what lazy read/edit/save guarantees preserve it? Full buffer contract uninspected. |
+| `docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md` | 2/T | S | Task 2 full L1–276, original introduction 995ed2feeb22a71b86fe25ce396e180aa66a20b2 inspected: overlay edits, bounded viewport and explicit conflict-preserving saves. ART-dafc623b-133c-4c39-9056-0bb08134675b addresses REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c / REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4. Small-control compatibility and full native/widget/viewer assertions remain a concrete coverage gap. |
 | `docs/specs/2026-09-07-graph-titlebar-kind-badges-design.md` | 2/G | S | L5: kinds in full/preview views but unchanged compact points; badge/color scope tests untraced. |
 | `docs/specs/2026-09-14-reloadable-graph-node-units-design.md` | 2/G | S | L5: owned paths/lifecycle with graph topology separate from adapters; preservation tests untraced. |
 | `docs/specs/2026-09-14-shared-text-interaction-engine-design.md` | 2/T | S | L5: expanding modal editing beyond divergent widgets; shared port contract untraced. |
@@ -359,7 +359,7 @@ Plan depth is **opening Goal only** (usually L5), unless a row says otherwise. T
 | `docs/specs/2026-10-15-live-dev-design.md` | 3/D | S | L5 opening: user-selected live primary; verified checkout/manual refresh tests untraced. |
 | `docs/specs/2026-10-15-reference-lifecycle-design.md` | 2/G | S | L5 opening: entities rather than wrappers, morph changes representation; identity/delete invariants untraced. |
 | `docs/specs/2026-10-15-reload-boundary-contract-design.md` | 3/P | S | L5 opening: dependable whole-app reload plus future boundaries; narrow-unit readiness untraced. |
-| `docs/specs/2026-10-15-uniform-graph-access-design.md` | 2/G | U | L5 opening explicitly supersedes earlier six-method proposal; what exact discover/describe/invoke authority and preserved semantics apply? Supersession target/body uninspected. |
+| `docs/specs/2026-10-15-uniform-graph-access-design.md` | 2/G | S | Task 2 full L1–193 and corrected original 545f36051effc5fe73cb3fcca34e1be58c2097ff inspected: explicit same-path scope correction excludes transports/universal CRUD. ART-46414157-af80-4192-8dbe-5afb6213b3e2 addresses REQ-d2bc21f4-40e5-48de-8f56-ca772f539805 / REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1 / REQ-77d53d5a-9303-490e-a031-34827a59e6c6; actual dispatch/provider/editor assertions inspected. Later alias-inclusive relationship projection differs from the original direct-link/no-dereference slice; lifecycle authority reconciliation remains open, not silently resolved. |
 | `docs/specs/2026-10-16-secure-record-publication-design.md` | 3/N | S | L5 opening: user-authorized native Windows overwrite correction; private publication invariants untraced. |
 | `docs/specs/2026-10-16-windows-validation-diagnostics-design.md` | 3/D | S | L5 opening: failing cross-build diagnosis authorization; contamination-free evidence untraced. |
 | `docs/specs/2026-10-16-wine-suite-lifecycle-design.md` | 3/D | S | L5 opening: artifact-safe instrumented reproduction at 9b261b0; finite budget/cleanup evidence untraced. |

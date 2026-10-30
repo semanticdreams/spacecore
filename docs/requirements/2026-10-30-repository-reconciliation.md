@@ -124,3 +124,68 @@ SHA-256 before/after that scoped sweep:
 - index: `3d8bea5e8598fce5d77855f8d7b8776ce35f5d54ba27f7bd14187e1d8f2938cd`
 
 Coverage rationale: schema/history/projection checks cover the only canonical mutations; source-set equality covers exact frozen accounting; original-source/excerpt checks and semantic self-review cover provenance/duplication; typed bounded queries expose missing traces/unknowns without satisfaction inflation. The existing record generator covers touched navigation indexes. Runtime/Fennel compile checks, application constraints and runtime tests are not applicable: no application, Fennel, C++, test, prompt, infrastructure or tooling source changed. Full VitePress build/navigation and final every-family repeatability belong to Task 4, not an implicit Task 1 completion claim. Independent exact-range review remains required.
+
+## Task 2 partial checkpoint — not a completed family reconciliation
+
+Author `implementer/baseline-task-2`, supervisor strict lane, branch
+`juicyrebel/ridley`; BASE `c4322c63735c51a347e2c928c83614718a2b616f`, same
+frozen F. Intake clean. [Task 2 report](./2026-10-30-baseline-task-2-report.md)
+records exact IDs, depth, original Git sources, assertions, validation and unfinished
+scope. **BLOCKED/incomplete due to author context/reasoning capacity**, not missing
+source access or human approval. Do not advance Task 3 from this partial result.
+
+Reconciliation found missing product representation for the full inspected
+uniform-access and lazy-editor contracts, distinct from methodology ledger safety.
+Existing Graph/Agent/Workspace IDs and six revision-1 audit governors were inspected
+and retained. Canonical source bodies and literal/provenance searches were compared;
+no duplicate methodology/product requirement was knowingly created. No code,
+tests, prompt, schema, tooling, historical source or prior ledger record changed.
+
+Actual serial CLI journal: expected revision **31** → returned **32** (five proposed
+requirements, fifteen linked artifacts); expected **32** → returned **33** (36 typed
+relations). New records: Access `REQ-d2bc21f4-40e5-48de-8f56-ca772f539805`,
+Isolation `REQ-e8aa8a17-83f7-4810-8efd-eebc8892eae1`, Text revision
+`REQ-77d53d5a-9303-490e-a031-34827a59e6c6`, Lazy editor
+`REQ-b5e94348-9fab-4aea-9cfb-31fc6553756c`, File save
+`REQ-ffd79d7c-9bd7-44a1-9871-84a476629de4`. All normative revision 1,
+proposed; no new assessment or verification. Total **33 requirements / 41 artifacts /
+198 retained relations**. Relation delta: 5 addresses, 2 realizes, 7 implements,
+3 constrains, 4 contributes_to, 7 verifies, 8 exercises; all explicit. Isolation
+applies only to the nonvisual access capability and its real design/plan, not every
+product goal. Contributions do not establish sufficiency or achievement.
+
+Two full design/plan pairs and four complete test-definition files were inspected,
+with five full graph production modules, full lazy source and sampled buffer
+viewport/edit/save/construction. Full graph doctrine/maps informed ownership.
+Four frozen filename rows were deepened; all remaining assigned rows retain their
+honest Task 1 depth and unanswered traces. Read-only workflow/reference/notebook/
+kernel/agent contract reads are **not** complete family coverage. Every obligation
+in this partial batch has sampled implementation presence and a relevant test
+definition, but no runtime run, historical verification import, empirical outcome
+observation or satisfaction. Widget/native/viewer completeness remains unknown.
+
+Retained source discrepancy: corrected original uniform-access design excludes
+identity dereference in its initial direct-link slice; current provider/features/
+assertions project aliases through owning identities. Later reference-lifecycle
+authority/history must be investigated by remaining Task 2 work. No prohibition,
+policy rewrite, implementation repair or resolution is inferred here. Task 3
+still owns native secure-publication semantics; text-store source presence does
+not prove that boundary.
+
+`validate` / `render --check` passed at revision 33. `make requirements-check`
+(600000 ms) passed **348 tests in 174.93s** and canonical/projection checks. Original
+28 requirements, 26 artifacts, 162 relations, 17 assessments and 63 verifications
+are unchanged. Active relation tuples and artifact locator/selector tuples are
+unique. Scoped five-ID coverage and all-record coverage are not truncated;
+depth32/paths1000 context and each both-direction trace truncate. Depth2 narrowing
+still reports depth truncation (11–27 paths per ID); no complete impact/readiness
+claim. Coverage honestly reports unaddressed Isolation (no satisfied assessment).
+
+A repeat sweep of **only this completed five-record slice** found zero further
+justified creates/revisions/transitions/links. It is not Task 2 completeness or the
+Task 4 every-family sweep. Revision remained 33, ledger SHA-256
+`7de1b61e275505a6b3ea47bae7826142936686ae4275be2fe16ba1fb83016f01`, index
+SHA-256 `0362e5d52622b95ecb7dc0f829f71a23b337c8896ed6164d8f01a1d1016f87af`,
+unchanged before/after. No no-op write. Runtime compile/application constraints
+are not applicable to ledger/docs-only mutations. Independent complete-range
+review and completion of remaining Task 2 obligations are still required.
