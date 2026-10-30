@@ -732,3 +732,51 @@ source replay remains required; static prompt tests alone prove no agent behavio
   actual remote validation/merge. This checkpoint is not approval or completion of
   the high-level empirical goal. Current stage supersedes earlier pending summaries
   without deleting their history.
+
+### Task 5 accepted fixes — round 1 (R1-1 / R1-2)
+
+- Same assignment/author `REQ-IMPL-5` (author session ID not exposed), supervisor/
+  strict SDD, `juicyrebel/scoter`; verified clean FIX_BASE
+  `15957052ffc9d5ff465b8841d6a73bdfd9aed587`, original BASE unchanged
+  `e4efadf63202b859e65496da243c5fcacce18820`. Initial usage-limited dispatch did no
+  work; this continuation does not reset rounds or impersonate another author.
+  Reviewer `ses_e7601615fffeNHdP1mh12CHBTl` returned valid candidates_found,
+  correction_used=0; both Important findings accepted. Independent re-review pending.
+- R1-1 confirmed: all ten original analytical observations used the same incomplete
+  eighteen-source manifest. Actual workflow source, imported helpers/locking and
+  docs build/config/nav inputs were missing. Old command execution is retained, but
+  old `current` never established complete applicability. The currency tool only
+  checks declared sources and cannot discover omitted inputs from a nonempty map.
+- Audited all ten criteria against actual test/CLI/library/workflow/docs sources.
+  Appended honest pending audit observations first, then re-ran relevant gates;
+  corrected passing observations are captured afterwards using actual CLI operations,
+  new safe evidence and audited core/policy/docs manifests. Original ten verification
+  records, requirement identities/revisions and all partial assessments are preserved.
+  No production currency redesign, old digest rewrite or automatic satisfaction.
+- R1-2: historical seed provenance/activation/initial-partial assertions are scoped
+  to the twelve retained IDs; strict schema/graph validation still covers every
+  live record. An independently sourced proposed requirement with no assessment
+  now passes the historical seed contract in a real CLI extended-seed fixture.
+- Actual TDD RED: 13 failed/7 deselected (ten omitted-input checks, two copied-seed
+  workflow mutation currencies incorrectly current, one future-requirement blanket
+  rejection). GREEN: 13 passed/7 deselected. Complete requirement tests 320 passed;
+  requirements-check passed; full opencode-check 320 requirements + permission pass
+  + 1181 policy tests (730.47s). Docs tests 56 passed, records generation passed,
+  capacity-adjusted VitePress build passed (164.66s) and built nav 186 plans/165 specs.
+- Safe [audit](/requirements/2026-10-30-task-5-fix-1-audit) and
+  [new execution evidence](/requirements/2026-10-30-task-5-fix-1-validation) distinguish
+  prior incomplete declarations, pending audit records and newly validated source.
+  Existing safe/raw history is preserved, not presented as proof of live compliance
+  or actual remote merge. No unexpected validation failures in this fix round;
+  known docs highlighting/chunk warnings remain. No Space compile/build/constraints
+  apply; constraint impact **not applicable**. No permission/model/source-policy edits.
+- This progress append is followed by a real expected-revision CLI snapshot update,
+  render/check, docs revalidation and new final observations. Progress now belongs
+  to docs dependency manifests: later changes make those observations stale until
+  revalidated, even if the registered artifact snapshot is refreshed. Source manifests
+  intentionally distinguish generator/evidence outputs from independent prerequisites.
+- Self-review covers complete material input groups, unchanged original observation
+  prefix/partial assessments, isolation of copied fixture mutations, entire-ledger
+  schema coverage and continued independent review/final integration boundaries.
+  Next transition: validated task-only checkpoint and independent targeted re-review
+  of complete FIX_BASE..HEAD; controller retains whole-branch/actual merge gates.

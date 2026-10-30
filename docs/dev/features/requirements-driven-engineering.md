@@ -178,7 +178,15 @@ bytes are independently hashed at record time. Currency (`current`, `stale`, `un
 is separate from result: normative revision, changed evidence or declared dependencies
 can invalidate it; undeclared dependencies leave currency unknown. Unrelated commits
 alone do not. Latest applicable observation time governs, append order breaks ties.
-A current failure is not stale merely because it failed.
+A current failure is not stale merely because it failed. The tool checks **only
+declared dependencies** (plus normative revision and anchored evidence bytes). It
+cannot detect omitted material inputs from a nonempty manifest. Authors must audit
+the actual tested source set: imported helpers/locking code, inspected workflow
+agents/skills/AGENTS.md/Makefile, and docs configuration/build/navigation inputs as
+applicable. A computed `current` result is not proof that this declaration is complete.
+Correct an incomplete manifest by appending a new evidence-backed observation after
+appropriate validation, preserving the original record; never rewrite old digests
+to conceal changed or omitted inputs.
 
 Readiness needs explicit nonempty scope plus material criterion pairs
 `{"requirement_id":"REQ-<uuid>","criterion_id":"c1"}` and constraint IDs.
