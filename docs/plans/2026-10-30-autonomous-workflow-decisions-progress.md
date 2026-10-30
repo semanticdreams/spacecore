@@ -71,3 +71,38 @@
 - Controller rechecked live staged content and unchanged index tree; Task 1 exact
   approved content is eligible for controller commit. Task-wide substantive fixes=0,
   consultations=0, delivery-correction attempts=0; no adverse finding discarded.
+
+## Task 1 checkpoint and Task 2 delivery
+
+- Task 1 complete: controller checkpoint `c08ef20d` contains the independently
+  approved eight-file change plus this controller-owned ledger. Reviewer: pass;
+  guided probes resolved its pending controller check. No subsequent source edits.
+- Task 2 BASE/HEAD: `c08ef20d27bc1ca1e5d04c054a1faae1b1bb0da1`;
+  implementer `ses_e74227dbaffe5qNJ73mQxJs58x`, correction_used=0. Valid stage-only
+  report; six assigned paths including new October 29 source; index tree
+  `9322900cf386875a9cbe7ddca04b09a714bafba6`, immutable diff SHA256
+  `47a52631cc81f543ab4b14160137e072b8d250c0ac7e8ca660c76b7a906aa6d1`.
+- October 28 now also covers bounded SELinux-aware publication and full-text
+  external editing while retaining all previous narrative. October 29 covers
+  recovery, routing/targeted advice, edges/JSON inspection and SFTP finalization.
+  No October 30 source or unmerged-work claims; seven original landings accounted
+  for, other 67 dated sources unchanged. Generated journal/devlog/record indexes
+  are complete and repeat generation produces identical content.
+- Validation: locked dependency install, 58/58 docs script tests, full VitePress
+  build and navigation check (192 plans, 167 specs), canonical shape/preservation/
+  aggregate uniqueness/links checks, exact staged-artifact and whitespace checks
+  pass. Historical observed default-heap OOM and successful 6144 MB rerun justified
+  using that bounded heap setting proactively; no new failed build occurred.
+- Disclosed baseline maintenance notices: npm audit reports nine vulnerabilities
+  (two moderate, seven high); build warns about Fennel highlighting fallback and
+  large chunks. No dependency/build changes or failing required command. Reviewer
+  found no change-induced material regression; these are not suppressed evidence.
+- Reviewer `ses_e741b0adeffecD44Narhn7cuuz`, correction_used=0: valid full-review
+  JSON, pass on all six complete staged paths. Historical landing proof and future
+  integration remain controller checks, not facts established by the editorial diff.
+- Minor deferred: October 29 session-inspection link is a broad feature reference
+  rather than the most specific edges/JSON ledger. It resolves and does not alter
+  factual coverage; no source fix required. Preserve this note for final review.
+- Controller verified live diff/index unchanged before commit. Whole-branch review,
+  final clean/current-main validation and protected PR merge remain outstanding.
+  Substantive fixes=0, consultations=0, delivery-correction attempts=0.

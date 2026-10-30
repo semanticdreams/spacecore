@@ -13,7 +13,10 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 
 ### 2026-10
 
+- 2026-10-30 — [Autonomous Workflow Decisions Implementation Plan](./2026-10-30-autonomous-workflow-decisions.md)
 - 2026-10-29 — [Autonomous Handoff Recovery Implementation Plan](./2026-10-29-autonomous-handoff-recovery.md)
+- 2026-10-29 — [Model-Neutral Agent Routing Implementation Plan](./2026-10-29-model-neutral-agent-routing.md)
+- 2026-10-29 — [SFTP Success Finalization Implementation Plan](./2026-10-29-sftp-success-finalization.md)
 - 2026-10-25 — [Current Layout Boundary Diagnostic Implementation Plan](./2026-10-25-current-layout-boundary-diagnostic.md)
 - 2026-10-25 — [GLM-Default Expert Consultation Implementation Plan](./2026-10-25-glm-default-expert-consultation.md)
 - 2026-10-25 — [Minimal Interactive Canonical Candidates Implementation Plan](./2026-10-25-interactive-canonical-candidates.md)
@@ -206,7 +209,10 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 
 ### 2026-10
 
+- 2026-10-30 — [Autonomous workflow decisions — progress](./2026-10-30-autonomous-workflow-decisions-progress.md)
 - 2026-10-29 — [Autonomous handoff recovery progress](./2026-10-29-autonomous-handoff-recovery-progress.md)
+- 2026-10-29 — [Model-neutral agent routing progress](./2026-10-29-model-neutral-agent-routing-progress.md)
+- 2026-10-29 — [OpenCode presentation-island relationship edges](./2026-10-29-opencode-island-edges-progress.md)
 - 2026-10-28 — [Development-record preservation progress](./2026-10-28-development-records-progress.md)
 - 2026-10-28 — [OpenCode session-graph review and integration progress](./2026-10-28-opencode-session-graph-review-progress.md)
 ### 2026-09
