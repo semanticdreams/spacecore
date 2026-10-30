@@ -536,3 +536,268 @@ all predecessor report bytes are preserved as an exact prefix, all60 referenced
 REQ/ART identities in this report resolve, and `git diff --check` passed with
 exactly the five assigned tracked files changed. No second requirements-suite run
 was needed for reporting-only edits after the successful revision37 gate.
+
+## Task 2/A bounded continuation — application agents/workflows complete
+
+**DONE for the assigned A baseline slice, ready for independent review. Task2
+overall remains incomplete: the nine text/input dispositions and original complete
+Task2 review remain owed.** This append preserves the original partial and G
+reports verbatim; it neither restarts the task nor resets any task-wide budget.
+
+### Identity, scope and reconciliation conclusion
+
+- Author/CLI actor: `implementer/baseline-task-2-A`, this bounded author session;
+  no platform session UUID supplied. Controller supervisor, strict lane, branch
+  `juicyrebel/ridley`, ordinary local checkpoint mode.
+- Continuation BASE/intake clean HEAD:
+  `abc8baa44b0bdf9013051e6de1f6efbc215b17a3`, ledger37. Original Task2 BASE remains
+  `c4322c63735c51a347e2c928c83614718a2b616f`. F remains
+  `fec176453c88fa1c47f22b7fe1d447dfe0ba281b`. Reviewed governing design remains
+  `6fd7c0bcdc16444d18ad4332662eb6c4da0f5b52`; private `task-2-brief.md` read first.
+- Assigned only19 A manifest files plus explicit supporting agent/notebook/kernel
+  contracts and representative real production/assertion evidence. No T-family
+  reconciliation or controller progress edits. Earlier partial/G passes are scoped
+  predecessor review inputs, not whole Task2 acceptance.
+- Review the complete `abc8baa4..A_HEAD` range. A_HEAD is the commit containing this
+  append, subject `docs(requirements): reconcile bounded agent and workflow baseline`;
+  resolve its SHA with `git log --format='%H %s' abc8baa4..HEAD`. The final short
+  handoff enumerates the resolved checkpoint without circular self-reference.
+
+Used **requirements-reconciliation**. Conclusion: **missing representation /
+refinement**, with retained source/solution discrepancies, not application repair.
+Compared all43 existing canonical requirement bodies, provenance and81 artifact
+locators before creating records. Literal workflow/MCP/kernel/notebook searches
+were followed by semantic comparison: strategic Agent/Graph/Core goals, generic
+nonvisual access and stable-reference lifecycle do not already specify durable
+workflow outcomes, chat migration, execution approvals or kernel behavior. Existing
+IDs/revisions/provenance remain unchanged, including all six revision-1 audit
+governors listed in the predecessor report. No new maintenance requirement for
+shared bridge extraction; no per-file obligation quota.
+
+Authority is full inspected tracked design/feature contracts plus original Git
+evidence, classified `justified_interpretation`, not invented user conversation.
+All nine new records remain **proposed revision1**, with analytical, scoped criteria.
+No activation, assessment, verification, supersession, retraction or conflict
+disposition. Historical shipped/done/pass labels establish neither current runtime
+currency nor satisfaction. Unknown contradictory source intent is preserved, not
+silently narrowed by current code. No dependent repair crosses these boundaries,
+so no mandatory expert trigger or new consultation was established. Next transition:
+exact-range independent review, then T continuation and complete Task2 review.
+
+### Actual canonical mutations and exact requirement identities
+
+Only the real CLI `python3 scripts/requirements.py apply --repo-root . --stdin`
+mutated the ledger; envelopes were in memory, with exact expected revisions and
+actual returned IDs used for dependent transactions. Projection is CLI-owned.
+
+| Expected → returned | Successful operation |
+| --- | --- |
+| 37 → 38 | Nine proposed requirements, with provenance and scoped criteria. |
+| 38 → 39 | 51 artifacts:14 designs,8 implementation specs,14 code,15 test definitions. |
+| 39 → 40 | 82 explicit relations:24 addresses,8 realizes,8 implements,17 verifies,15 exercises,9 contributes_to,1 constrains. |
+
+Totals **52 requirements /132 artifacts /358 relations**; delta9/51/82. No
+pre-existing records or histories changed. All17 assessments/63 verifications
+remain unchanged, and none concerns a fresh A product observation.
+
+| Alias | Exact requirement ID | Grounded scope |
+| --- | --- | --- |
+| A1 | REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed | Durable app/user workflow definitions/runs, code-entity execution, explicit outcomes/events |
+| A2 | REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed | Explicit granular graph workflow authoring, compact controls/explorers/payloads |
+| A3 | REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089 | Long-lived workflow chats/event projection, explicit continuity-preserving migration |
+| A4 | REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc | Context presets/provider-independent tool surface with separate execution approval |
+| A5 | REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5 | Loader-aware separate external-unit MCP/isolated config |
+| A6 | REQ-d1352b26-793e-4fbc-b379-ae438c7d9811 | Advisory reconnect/session artifacts, bounded reads, honest live evidence |
+| A7 | REQ-b069793d-01cc-4ea3-a846-9d03a79ea126 | Server-owned OpenCode graph snapshots/projections/live lifetimes |
+| A8 | REQ-ce606fdb-0c1f-4909-9179-519860105d21 | Store-owned graph notebook references/previews/wrapping |
+| A9 | REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3 | Persistent computational kernels/instances with unresolved protocol/history breadth |
+
+A1–A7 contribute only to existing Agent
+`REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461`; A8 to Graph
+`REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6`; A9 to Core
+`REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5`. These links do not prove usefulness,
+naturalness or stability. Existing G1 `REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda`
+constrains **A2 only** in this batch, because the workflow UX explicitly requires
+deliberate map materialization. No blanket application to A7's documented automatic
+island exception, no expansion of nonvisual Isolation and no methodology-governor
+inheritance into every product capability.
+
+### Artifact map, source depth and supported missing chains
+
+Exact new IDs/locators are inspectable in ledger/index; these principal pairs make
+the design/plan chain easy to review. Path stems use `docs/specs/<stem>-design.md`
+and `docs/plans/<stem>.md` respectively.
+
+| Stem | Design ID | Implementation-spec ID |
+| --- | --- | --- |
+| 2026-07-26-external-unit-mcp | ART-3288cf85-aa7a-43bd-9fbd-c412be0a16d0 | ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141 |
+| 2026-08-12-space-agent-live-development-reliability | ART-1ca16574-87c0-4f45-8114-2089517eab3e | ART-8ed1d50d-018f-4df2-80ab-716e71822e3f |
+| 2026-08-14-graph-authored-agent-workflows | ART-056ed83f-b59e-4940-9eec-9453c4a34387 | ART-174639c2-28c9-4f17-b5a4-e31dd98204ef |
+| 2026-08-14-workflow-user-flow-polish | ART-05d6fefd-2635-4217-a9eb-1ba83bdfe499 | ART-a5e260dc-910e-46ec-a670-92c4b85fdb5c |
+| 2026-08-15-workflow-backed-agent-sessions | ART-e0f89a76-22d7-4207-a1b7-3594dff641cf | ART-d49471f3-1595-4e87-a833-70d9b7fa63b8 |
+| 2026-08-16-workflow-graph-ux | ART-e4656ea5-9b50-4c7a-83b7-0352e9bd13d6 | ART-21d9bd54-5822-48f1-b67c-cce768092f0c |
+| 2026-08-26-workflow-preview-decomposition | ART-709a7f3a-fd3a-4cc2-8166-fcbaf75becae | ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365 |
+| 2026-10-11-opencode-mcp-bridge-core | ART-6cf20443-413a-4a04-9f84-ebec41fab04d | ART-3fde2196-8a5a-49ca-a240-632e22b301dc |
+
+OpenCode full reconciled design is `ART-87ac31f2-bcb1-439f-974c-1538abc00f0b`.
+Explicit supporting designs: agent-presets `ART-72f7fe20-2a52-4a3a-819c-5710744caabb`,
+agent-layer `ART-a781780d-3fba-4590-9969-1b615f405658`, graph-notebooks
+`ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f`, kernel feature
+`ART-62ec1cee-4fd4-442b-8260-68f76e2f7b7f`, detailed kernels note
+`ART-ecc4a09b-7e50-4a80-97d3-ac3378c6fbad`. All five read fully. Agent-runner
+feature and external-unit MCP note also read fully; graph doctrine read through145.
+
+All nine A design bodies and both historical progress bodies read fully. Three
+plans read fully: workflow core1045 lines, polish573, decomposition432. Other plans
+sampled through their full opening ownership/global/interface contracts: external
+MCP1–210, live reliability1–180, workflow sessions1–180, UX1–145, shared bridge1–165.
+Their uninspected later tasks are explicit limits, not borrowed explorer depth.
+Every19 A source bytes and every51 registered artifact source bytes match F.
+All19 dispositions updated individually; other343 frozen filename rows unchanged.
+
+Eight justified code→plan edges cover workflow store/executor/runner, run explorer,
+workflow chat runner/migration, external service and shared bridge. A4 tools/preset
+sync, A7 live/common, notebook store and kernels have inspected code/test links but
+**no invented plan or code→requirement shortcut**. Progress summaries are not
+implementation specs or immutable measurement artifacts. No design/plan added, so
+records-index generation is unnecessary. Neither prototypes nor API mirrors are
+independent Space authority; the kernel test's Python launcher is only a named
+conditional test dependency, not normative application architecture.
+
+### Separate implementation/test/history/observation axes
+
+All nine records have **some sampled implementation presence and test-definition
+links**. This 9/9 sampling denominator is not nine complete implementations or
+complete criterion coverage. All assessments unset, criterion observations absent,
+currency unknown. No product test, migration, external service, live reload or SSE
+capture was executed. Historical reports remain historical, not imported passes.
+
+| Scope | Actual production inspection | Actual assertion definitions inspected | Residual gap |
+| --- | --- | --- | --- |
+| A1 | store329–417 validates/publishes persistent definitions; executor full1–149 validates factory/method/outcomes; runner327–481 tick/resume/cancel/events | store90–190 persistence/reopen/dependent deletion history; runner202–347 fixture retry/cancel/branch/loop/join; graph922–1094 real-map canonical edges/capture/preflight/template run | Full scheduling delay/timeouts/restart/failure matrix and owner/native publication not audited |
+| A2 | Full run-explorer1–123 preflights map/loader and revalidates record ownership | Full workflow-run-explorer-cases1–61 rejects foreign/deleted owners and tests store-only loader; graph922–1094 authoring/start preflight/template assertions | All compact-preview buttons, dense payload widgets, lifecycle rollback and complete user-doc scenarios untraced |
+| A3 | workflow runner78–300 persists item/data events; full migration1–242 validates, matches old projection and archives after writes; template40–74 inspected | runner79–241 same-run wait, streaming IDs, cancel/next input, provider context; full migration tests1–201 transcript/metadata/archive failures/idempotency/malformed items; template30–108 nonoverwrite | Full panel/provider network behavior, mapping-report CLI and interruption durability not established |
+| A4 | Full tool-surface1–315 wraps active definitions in approval gates and exports client tools; full preset mcp-sync1–97 owns registrations | agent-layer869–949 pending ask-risk never runs; approved exact retry runs once, changed args require decision; preset-mcp68–158 unrelated retention/collision/rollback | Full preset resolver/defaults/UI and all provider paths not re-audited; visibility conflict retained below |
+| A5 | external service280–459 write/reload best effort, handles, inspect and token resolution; shared bridge full1–206 isolated config/lifecycle | external MCP165–263 ranked candidates/filesystem vs unknown/flat no-create; bridge41–128 fake loopback/config/injection/protected-extra/refresh | All path-containment/stale-write/native permission/security boundaries and installed OpenCode precedence unproven |
+| A6 | SpaceAgent455–539 prompt guidance/reconnect markers/runtime metadata; shared bridge full; chat runner context above | Full reload-evidence fixture1–124 asserts before/after active activity/reactivation/session, bridge fixture as above | Connection does not establish reload/smoke; wrong-instance discovery/bounded internal wrappers and renderer continuity not proven |
+| A7 | opencode-session80–279 freshness and explicit abort/delete state; live full1–81 epochs/backoff/drop; common130–269 map observer/island publication | live-lifecycle47–154 required-pair order, obsolete callbacks/drop/retry; map-lifecycle55–239 real-map restore/edges/metadata/stale/reentrant removal | Entire message/info/codec/view/mutation deadline surface and fresh server/SSE/storage continuity/observed termination unverified |
+| A8 | notebook store1–220 owns records/identity normalization/order; notebook view1–185 samples terminal previews | notebooks30–151 CRUD/signals/unique refs/move;183–221 graph string creation/identity edge | Wrapping, full inline preview teardown/no-write UI and optional pages not established; notebook execution is explicitly not a kernel guarantee |
+| A9 | kernels240–329 request/reply/error callbacks,400–629 internal eval/process instances/selection/CRUD | kernels53–225 internal immutable/eval/generated IDs/name ambiguity/active delete plus conditional subprocess output/registers | PUB/SUB exchange, persisted input/output history and summary field model unresolved; stress/UI/protocol completeness unverified. Tests contain Windows/socket-block skip branches; no unconditional backend claim |
+
+### Retained contradictions and original-source evidence
+
+1. **Tool visibility is not execution approval.** Full agent-layer note L669–675
+   says ask-risk tool should be absent from MCP listing. Current tool surface
+   L56–62/260–273 exposes active definitions; actual agent-layer assertions
+   L893–903 require two definitions yet forbid execution until approval, and
+   L929–949 bind exact arguments. A4 represents common risk-gating intent without
+   claiming authoritative supersession of the old visibility statement. Provider
+   independence is shared capabilities, not a universal provider implementation.
+   Preset note L75 says dangerous defaults must be off, yet its L302 table lists
+   graph-node-map-tools as destructive/auto. This additional intra-source default
+   discrepancy is retained; current built-in/resolver behavior was not independently
+   sampled enough to declare its implementation status or a policy amendment.
+2. **Connection live-label contradiction.** Reliability design L113–116 and code
+   guidance L471–474 require reload/smoke before validation-mode live. Current
+   `record-live-context!` L513–521 sets that label with a successful connection
+   timestamp/session ID, without reload/smoke evidence in that function. This is an
+   implementation/evidence-label gap against explicit intent, not policy ambiguity
+   or proof that a running app was validated. A6 preserves the stronger contract.
+3. **Kernel source conflict retained.** Feature L19/27–32 promises command/startup
+   fields, PUB/SUB exchange and persisted input/output history; detailed note
+   L11–18/60–85/111–147 defines id/name/cmd/cwd, REQ/REP connection-file execution
+   and latest-running instance. Its test-pass claims L24–35 remain historical.
+   Current code/assertions support parts of the detailed contract, not authority
+   to erase the summary. A9 c3 explicitly retains the unclosed reconciliation
+   obligation; do not infer missing-function proof or choose a policy here.
+4. **Shared bridge config evolution, no maintenance requirement.** Original design
+   L198–199/plan L164 say XDG_CONFIG_HOME only. Current full core L164–168 also
+   injects `OPENCODE_CONFIG_CONTENT`; tests L63–64/90–91 assert it and protected
+   extras cannot override permission/MCP fields. Original Git diff
+   `adc95fbb41cdda15e200df01b272fa2c99e21b5e` explicitly adds content injection and
+   protected config extras (`fix(lua): isolate OpenCode online bridge config`).
+   This evidences implementation evolution, not a silent rewrite of original
+   compatibility text or universal proof of deployed config isolation.
+5. **Workflow UX evolution is explicit, not date-inferred.** Polish design
+   L73–77 names the later granular run actions and supersedes generic toggles;
+   retained polish plan L512 still teaches Show Details. Decomposition explicitly
+   moves searches/reveal into explorers. Original workflow purpose/ownership
+   survives; only the specifically replaced interaction is treated as replaced.
+6. **OpenCode bounded materialization exception.** Full design reconciliation
+   L340–384 explicitly replaces click-only children with automatic message/part
+   islands; L386–424 tightens snapshot lifetime and decoded payload guarantees.
+   Island-edge progress L7–19/60–90 records an explicit later user edge request
+   and reentrancy/metadata contract; current common/map assertions corroborate
+   it. Generic G1 is not silently broadened/revised to hide this exception.
+   Bridge config root is not session storage; provider continuity remains unknown.
+
+Original-source `git log F --` inspected workflow/session/external/bridge/OpenCode
+designs and kernel feature/note histories. Returned introductions include workflows
+`91d22466f45e1eeba2500dd96aed04ab3e595897`, sessions
+`07ea7294d526977ab6e4a0f4a5d38ecf9a3d6259`, external MCP
+`e853cf9a9c6074d3722ccd4ec80a3b48e74b919b`, bridge design
+`a9ab8eaf825f7c83f037bf7f114440d1ab63ca2d`, kernel implementation/note
+`d4de9087f1f2fbb93424b01ba4f87e8490ff956d`, later OpenCode integrated design
+`a6ad16fc61138237efd5bdff34d9e2a074b81db2`. The original session design at07ea7294
+was read fully via `git show`; it already requires explicit migration/provider
+continuity. The original adc95fbb bridge diff was inspected. Other Git entries
+are history coordinates, not a claim every original blob was read.
+
+### Validation, self-review and checkpoint handoff
+
+- **Compile check:** not applicable (ledger/docs only; no Fennel/runtime edits).
+- **Application constraints / Constraint Impact:** not applicable. Existing audit
+  transaction/history constraints enforced; one evidenced product constraint
+  applicability edge to workflow UX added without broad inheritance.
+- **Tests:** `make requirements-check`, timeout600000, **348 passed in177.62s**;
+  valid/current projection at40, no warnings observed. Covers schema/typed graph,
+  expected-revision safety, retained history/query/projection—the only executable
+  mutation surface. No product build/full-app suite or empirical claims. TDD not
+  applicable to this ledger/documentation audit; no fabricated RED/GREEN.
+- Preservation against A BASE passed:43 old requirements,81 artifacts,276 relations,
+ 17 assessments,63 verifications,0 conflict dispositions unchanged. All new
+  requirement revisions/lifecycles correct, active relation tuples and artifact
+  locator/selector pairs unique; every new artifact participates in a relation.
+- Exact manifest comparison:362 unique frozen rows,0 missing/extra/duplicates;
+  exactly19 A rows changed,343 non-A rows unchanged. F-byte comparison passed for
+  every19 assigned source and51 registered source artifact. No spec/plan additions.
+- Scoped nine-ID coverage and all-record coverage: not truncated (32/1000).
+  Nine-ID reconciliation context truncates at32/1000. Each individual trace
+  narrowed to depth2/paths1000 still reports depth truncation; direct canonical
+  endpoint/rationale tuples were reviewed. No complete impact/readiness clearance;
+  unlinked behavior/unregistered history remain outside complete blast radius.
+- Self-review checked semantic distinctness against the old43, all new criteria,
+  typed endpoints and actual asserted subsets. Kept missing implementation-spec
+  chains, notebook wrapping, conditional kernel backend tests, native/security
+  limits, source contradictions and historical/fresh observations separate.
+  No uncovered source was labeled superseded by date/name; no observations added.
+- A bounded repeat source/criterion/tuple sweep found zero further justified
+  additions/revisions/transitions/links **in this A slice**. No no-op write or
+  Task4 every-family idempotence claim. Ledger40 SHA256
+  `d8ced683290a55eebdc81ec8d33c2348d2ace10499ad197f86219056e432f86a`;
+  index SHA256 `df30e39b336ffe7417615ca6fd7136a21e798576f8bf3ed6cebf8284f4d654d2`.
+- Local inspection recovery: one multi-hunk disposition patch was rejected because
+  nonadjacent rows shared a hunk; splitting hunks applied cleanly. One library
+  coverage-print command printed the envelope rather than only findings; CLI
+  queries/preservation checks themselves passed. No repeated product failure,
+  bypassed gate or consultation trigger.
+
+Assigned files: `docs/requirements/ledger.json` (CLI only),
+`docs/requirements/index.md` (render only),
+`docs/requirements/2026-10-30-repository-reconciliation.md`,
+`docs/requirements/2026-10-30-repository-source-dispositions.md`, and this report.
+Private source/execution evidence is retained in
+`.superpowers/sdd/2026-10-30-repository-requirements-baseline-15f6a125/task2-A-source-execution-evidence.md`,
+not staged or registered as measurement evidence. No code/test/prompt/tooling,
+controller progress or historical plan changes; no new infrastructure. Ordinary
+task-scoped local checkpoint is a review input, not sign-off; no push/PR/merge.
+Text9 and original complete Task2 range review remain pending before Task3.
+
+Final pre-checkpoint checks: separate CLI `validate` and `render --check` returned
+valid/current at40; `git diff --check` passed. Ledger/index digests above remained
+unchanged through read-only validation/reporting. Predecessor report and audit are
+exact byte prefixes; all92 report and34 disposition REQ/ART references resolve.
+Only the five assigned tracked files are changed; private evidence is ignored and
+excluded. Staged diff/whitespace/privacy inspection precedes the local checkpoint;
+no extra requirements-suite run is needed for documentation-only additions after
+the revision40 successful gate.

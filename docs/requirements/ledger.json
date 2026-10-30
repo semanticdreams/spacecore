@@ -1,5 +1,11 @@
 {
   "artifacts": {
+    "ART-00da571e-8da8-4329-bb7f-3bcbc6ee6f13": {
+      "id": "ART-00da571e-8da8-4329-bb7f-3bcbc6ee6f13",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-workflow-store.fnl",
+      "title": "test-workflow-store.fnl"
+    },
     "ART-02d98c1b-e036-4697-a0cd-d062047f940c": {
       "content_digest": "3afbc3dcf2e2d85c48fdbc4d6e13786b05a8294ddca6698878d636dcd99909f4",
       "id": "ART-02d98c1b-e036-4697-a0cd-d062047f940c",
@@ -12,6 +18,24 @@
       "kind": "code",
       "locator": "assets/lua/entities/relationships.fnl",
       "title": "relationships.fnl"
+    },
+    "ART-056ed83f-b59e-4940-9eec-9453c4a34387": {
+      "id": "ART-056ed83f-b59e-4940-9eec-9453c4a34387",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-14-graph-authored-agent-workflows-design.md",
+      "title": "2026-08-14-graph-authored-agent-workflows-design.md"
+    },
+    "ART-05d6fefd-2635-4217-a9eb-1ba83bdfe499": {
+      "id": "ART-05d6fefd-2635-4217-a9eb-1ba83bdfe499",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-14-workflow-user-flow-polish-design.md",
+      "title": "2026-08-14-workflow-user-flow-polish-design.md"
+    },
+    "ART-075a26b7-1947-40ee-8f98-9e3c69f23b69": {
+      "id": "ART-075a26b7-1947-40ee-8f98-9e3c69f23b69",
+      "kind": "code",
+      "locator": "assets/lua/graph/nodes/opencode-live.fnl",
+      "title": "opencode-live.fnl"
     },
     "ART-07e3d062-f351-4ac3-8df1-aec6abf81334": {
       "id": "ART-07e3d062-f351-4ac3-8df1-aec6abf81334",
@@ -26,11 +50,23 @@
       "locator": "docs/requirements/2026-10-30-merged-evidence-reconciliation.md",
       "title": "Merged-source applicability and actual scoped validation"
     },
+    "ART-0aa767d7-5d8c-46e0-9e39-cc1b3e295cb8": {
+      "id": "ART-0aa767d7-5d8c-46e0-9e39-cc1b3e295cb8",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-external-unit-mcp.fnl",
+      "title": "test-external-unit-mcp.fnl"
+    },
     "ART-0c71794a-68aa-4eef-b159-da70bdb78141": {
       "id": "ART-0c71794a-68aa-4eef-b159-da70bdb78141",
       "kind": "code",
       "locator": "assets/lua/lazy-text-source.fnl",
       "title": "lazy-text-source.fnl"
+    },
+    "ART-0ebe9a1b-338c-424e-9757-09796bf7581f": {
+      "id": "ART-0ebe9a1b-338c-424e-9757-09796bf7581f",
+      "kind": "code",
+      "locator": "assets/lua/llm/opencode-mcp/bridge.fnl",
+      "title": "bridge.fnl"
     },
     "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb": {
       "content_digest": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
@@ -50,6 +86,24 @@
       "kind": "code",
       "locator": "assets/lua/entities/type-catalog.fnl",
       "title": "type-catalog.fnl"
+    },
+    "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef": {
+      "id": "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-14-graph-authored-agent-workflows.md",
+      "title": "2026-08-14-graph-authored-agent-workflows.md"
+    },
+    "ART-1ca16574-87c0-4f45-8114-2089517eab3e": {
+      "id": "ART-1ca16574-87c0-4f45-8114-2089517eab3e",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-12-space-agent-live-development-reliability-design.md",
+      "title": "2026-08-12-space-agent-live-development-reliability-design.md"
+    },
+    "ART-21d9bd54-5822-48f1-b67c-cce768092f0c": {
+      "id": "ART-21d9bd54-5822-48f1-b67c-cce768092f0c",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-16-workflow-graph-ux.md",
+      "title": "2026-08-16-workflow-graph-ux.md"
     },
     "ART-244bad55-88a6-46d3-bdc4-a15135458edf": {
       "id": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
@@ -107,6 +161,12 @@
       "locator": "docs/specs/2026-10-11-dict-entity-design.md",
       "title": "2026-10-11-dict-entity-design.md"
     },
+    "ART-3288cf85-aa7a-43bd-9fbd-c412be0a16d0": {
+      "id": "ART-3288cf85-aa7a-43bd-9fbd-c412be0a16d0",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-26-external-unit-mcp-design.md",
+      "title": "2026-07-26-external-unit-mcp-design.md"
+    },
     "ART-36cca881-3bb5-4713-8c2c-13804304efd4": {
       "content_digest": "c38d42afcfb2d612143c39cd79cb49a667f965fac2c55059af7154b8dd8efc04",
       "id": "ART-36cca881-3bb5-4713-8c2c-13804304efd4",
@@ -114,11 +174,41 @@
       "locator": "docs/requirements/2026-10-30-final-evidence-reconciliation.md",
       "title": "Final bounded evidence and explicit constraint reconciliation"
     },
+    "ART-3a48a48d-941a-4865-87f1-66902ad511b0": {
+      "id": "ART-3a48a48d-941a-4865-87f1-66902ad511b0",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-opencode-map-lifecycle.fnl",
+      "title": "test-opencode-map-lifecycle.fnl"
+    },
+    "ART-3ad2adf8-29c9-49fb-b766-59dac3091498": {
+      "id": "ART-3ad2adf8-29c9-49fb-b766-59dac3091498",
+      "kind": "code",
+      "locator": "assets/lua/llm/presets/mcp-sync.fnl",
+      "title": "mcp-sync.fnl"
+    },
+    "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9": {
+      "id": "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-kernels.fnl",
+      "title": "test-kernels.fnl"
+    },
+    "ART-3fde2196-8a5a-49ca-a240-632e22b301dc": {
+      "id": "ART-3fde2196-8a5a-49ca-a240-632e22b301dc",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-11-opencode-mcp-bridge-core.md",
+      "title": "2026-10-11-opencode-mcp-bridge-core.md"
+    },
     "ART-42695695-524b-4dfb-8fa0-36fbd00c771a": {
       "id": "ART-42695695-524b-4dfb-8fa0-36fbd00c771a",
       "kind": "code",
       "locator": "assets/lua/graph/capabilities.fnl",
       "title": "capabilities.fnl"
+    },
+    "ART-4493c18f-30e8-41a3-b63e-129497ee6537": {
+      "id": "ART-4493c18f-30e8-41a3-b63e-129497ee6537",
+      "kind": "code",
+      "locator": "assets/lua/llm/agent/tool-surface.fnl",
+      "title": "tool-surface.fnl"
     },
     "ART-4537b959-600b-419a-84ee-c76e8a7866c4": {
       "id": "ART-4537b959-600b-419a-84ee-c76e8a7866c4",
@@ -150,6 +240,12 @@
       "locator": "assets/lua/graph/outline.fnl",
       "title": "outline.fnl"
     },
+    "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365": {
+      "id": "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-26-workflow-preview-decomposition.md",
+      "title": "2026-08-26-workflow-preview-decomposition.md"
+    },
     "ART-52e4021c-9e73-475a-95fb-8904969605af": {
       "content_digest": "7f5f14f271bf5cff148cc9a1890eee3fe1f511a69e6f4767b0408b06fe3af505",
       "id": "ART-52e4021c-9e73-475a-95fb-8904969605af",
@@ -175,11 +271,29 @@
       "locator": "assets/lua/tests/test-graph-entity-capabilities.fnl",
       "title": "test-graph-entity-capabilities.fnl"
     },
+    "ART-62ec1cee-4fd4-442b-8260-68f76e2f7b7f": {
+      "id": "ART-62ec1cee-4fd4-442b-8260-68f76e2f7b7f",
+      "kind": "design",
+      "locator": "docs/dev/features/kernel-system.md",
+      "title": "kernel-system.md"
+    },
     "ART-656502be-dd4f-43e2-8f88-80f094f98dec": {
       "id": "ART-656502be-dd4f-43e2-8f88-80f094f98dec",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-09-17-graph-presentation-islands.md",
       "title": "2026-09-17-graph-presentation-islands.md"
+    },
+    "ART-66f388cd-a50d-416f-9578-429290d71bfb": {
+      "id": "ART-66f388cd-a50d-416f-9578-429290d71bfb",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-workflow-graph.fnl",
+      "title": "test-workflow-graph.fnl"
+    },
+    "ART-6914537d-119d-42fa-b617-076831934bb3": {
+      "id": "ART-6914537d-119d-42fa-b617-076831934bb3",
+      "kind": "code",
+      "locator": "assets/lua/llm/agent/workflow-runner.fnl",
+      "title": "workflow-runner.fnl"
     },
     "ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b": {
       "id": "ART-6989c9ab-ff8e-4b6e-bc45-c2535674bd4b",
@@ -193,11 +307,23 @@
       "locator": "docs/specs/2026-10-14-entity-type-catalog-design.md",
       "title": "2026-10-14-entity-type-catalog-design.md"
     },
+    "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141": {
+      "id": "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-26-external-unit-mcp.md",
+      "title": "2026-07-26-external-unit-mcp.md"
+    },
     "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b": {
       "id": "ART-6ca5ec49-eaf6-48da-ad26-6ac215bee13b",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-15-reference-lifecycle.md",
       "title": "2026-10-15-reference-lifecycle.md"
+    },
+    "ART-6cf20443-413a-4a04-9f84-ebec41fab04d": {
+      "id": "ART-6cf20443-413a-4a04-9f84-ebec41fab04d",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-11-opencode-mcp-bridge-core-design.md",
+      "title": "2026-10-11-opencode-mcp-bridge-core-design.md"
     },
     "ART-6d9ebbac-0014-4938-a935-1c280cc54524": {
       "id": "ART-6d9ebbac-0014-4938-a935-1c280cc54524",
@@ -210,6 +336,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-capabilities.fnl",
       "title": "test-graph-capabilities.fnl"
+    },
+    "ART-709a7f3a-fd3a-4cc2-8166-fcbaf75becae": {
+      "id": "ART-709a7f3a-fd3a-4cc2-8166-fcbaf75becae",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-26-workflow-preview-decomposition-design.md",
+      "title": "2026-08-26-workflow-preview-decomposition-design.md"
     },
     "ART-7121890a-8068-4b53-ba47-3c4eb4d98687": {
       "content_digest": "085118ed6dcc5a3f330d3b65e70d427e255514ff42f933423183ce814342bf37",
@@ -224,6 +356,12 @@
       "locator": "assets/lua/graph/view/runtime.fnl",
       "title": "runtime.fnl"
     },
+    "ART-72f7fe20-2a52-4a3a-819c-5710744caabb": {
+      "id": "ART-72f7fe20-2a52-4a3a-819c-5710744caabb",
+      "kind": "design",
+      "locator": "docs/dev/notes/agent-presets.md",
+      "title": "agent-presets.md"
+    },
     "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974": {
       "id": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
       "kind": "code",
@@ -236,11 +374,29 @@
       "locator": "docs/specs/2026-10-11-graph-projection-runtime-design.md",
       "title": "2026-10-11-graph-projection-runtime-design.md"
     },
+    "ART-793e61e4-ff96-4251-8a83-c79a6f73b079": {
+      "id": "ART-793e61e4-ff96-4251-8a83-c79a6f73b079",
+      "kind": "code",
+      "locator": "assets/lua/notebooks/store.fnl",
+      "title": "store.fnl"
+    },
     "ART-7aeee9bb-7334-4def-9500-f0e14a72700c": {
       "id": "ART-7aeee9bb-7334-4def-9500-f0e14a72700c",
       "kind": "code",
       "locator": "assets/lua/graph/view/island-presenters/ordered-list.fnl",
       "title": "ordered-list.fnl"
+    },
+    "ART-7ce80d49-32c7-4e52-b1c9-44107b34bd0e": {
+      "id": "ART-7ce80d49-32c7-4e52-b1c9-44107b34bd0e",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-agent-workflow-runner.fnl",
+      "title": "test-agent-workflow-runner.fnl"
+    },
+    "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f": {
+      "id": "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f",
+      "kind": "design",
+      "locator": "docs/dev/features/graph-notebooks.md",
+      "title": "graph-notebooks.md"
     },
     "ART-83578537-ff54-4047-950d-e9c76170f3fc": {
       "id": "ART-83578537-ff54-4047-950d-e9c76170f3fc",
@@ -261,11 +417,29 @@
       "locator": "docs/specs/2026-10-15-reference-lifecycle-design.md",
       "title": "2026-10-15-reference-lifecycle-design.md"
     },
+    "ART-87ac31f2-bcb1-439f-974c-1538abc00f0b": {
+      "id": "ART-87ac31f2-bcb1-439f-974c-1538abc00f0b",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-26-opencode-session-graph-exposure-design.md",
+      "title": "2026-10-26-opencode-session-graph-exposure-design.md"
+    },
     "ART-88798527-b534-4b72-8964-9436da34a712": {
       "id": "ART-88798527-b534-4b72-8964-9436da34a712",
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-view-islands.fnl",
       "title": "test-graph-view-islands.fnl"
+    },
+    "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f": {
+      "id": "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-12-space-agent-live-development-reliability.md",
+      "title": "2026-08-12-space-agent-live-development-reliability.md"
+    },
+    "ART-90abe2a8-f640-405a-a5eb-dc9fe3817c20": {
+      "id": "ART-90abe2a8-f640-405a-a5eb-dc9fe3817c20",
+      "kind": "code",
+      "locator": "assets/lua/workflows/store.fnl",
+      "title": "store.fnl"
     },
     "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511": {
       "id": "ART-94d739c8-3b4d-4c17-bb9d-9c449d4dd511",
@@ -280,11 +454,23 @@
       "locator": "scripts/tests/test_requirements_workflow_contracts.py",
       "title": "test_requirements_workflow_contracts.py"
     },
+    "ART-98008e6d-42d2-40cf-b9fe-5c1ea4cf10e5": {
+      "id": "ART-98008e6d-42d2-40cf-b9fe-5c1ea4cf10e5",
+      "kind": "code",
+      "locator": "assets/lua/graph/nodes/opencode-common.fnl",
+      "title": "opencode-common.fnl"
+    },
     "ART-9808837f-c18d-4dce-afd5-b60cd39dd351": {
       "id": "ART-9808837f-c18d-4dce-afd5-b60cd39dd351",
       "kind": "code",
       "locator": "assets/lua/graph/commands.fnl",
       "title": "commands.fnl"
+    },
+    "ART-998ef55c-4cf6-458b-bd77-8079a39d58fa": {
+      "id": "ART-998ef55c-4cf6-458b-bd77-8079a39d58fa",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-workflow-runner.fnl",
+      "title": "test-workflow-runner.fnl"
     },
     "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de": {
       "id": "ART-9b66411b-c98e-4bb7-8131-6e6316dcb1de",
@@ -322,6 +508,12 @@
       "locator": "docs/plans/2026-10-01-extensible-leader-command-system.md",
       "title": "2026-10-01-extensible-leader-command-system.md"
     },
+    "ART-a5e260dc-910e-46ec-a670-92c4b85fdb5c": {
+      "id": "ART-a5e260dc-910e-46ec-a670-92c4b85fdb5c",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-14-workflow-user-flow-polish.md",
+      "title": "2026-08-14-workflow-user-flow-polish.md"
+    },
     "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81": {
       "content_digest": "0c344ad6c68a22296cb062a13260c18cb3158681264645b1048effa53c810f12",
       "id": "ART-a65a06b7-5e1c-4091-8509-ece6fa43ed81",
@@ -335,6 +527,12 @@
       "kind": "evidence",
       "locator": "docs/dev/notes/requirement-templates.md",
       "title": "requirement-templates.md"
+    },
+    "ART-a781780d-3fba-4590-9969-1b615f405658": {
+      "id": "ART-a781780d-3fba-4590-9969-1b615f405658",
+      "kind": "design",
+      "locator": "docs/dev/notes/agent-layer-design.md",
+      "title": "agent-layer-design.md"
     },
     "ART-a92759da-d8f4-4ccc-9a7c-efeaf0b9f4cc": {
       "id": "ART-a92759da-d8f4-4ccc-9a7c-efeaf0b9f4cc",
@@ -367,6 +565,12 @@
       "locator": "assets/lua/graph/capabilities/entities.fnl",
       "title": "entities.fnl"
     },
+    "ART-b06b2673-dc93-49ce-ab33-260aba99d812": {
+      "id": "ART-b06b2673-dc93-49ce-ab33-260aba99d812",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-agent-layer.fnl",
+      "title": "test-agent-layer.fnl"
+    },
     "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b": {
       "id": "ART-b249eff6-fd2f-41b4-a774-9dac77a8ec1b",
       "kind": "implementation_spec",
@@ -379,6 +583,12 @@
       "kind": "code",
       "locator": "scripts/requirements_lib/graph.py",
       "title": "graph.py"
+    },
+    "ART-b919bc56-4720-44b5-ba29-90343bbefb8f": {
+      "id": "ART-b919bc56-4720-44b5-ba29-90343bbefb8f",
+      "kind": "code",
+      "locator": "assets/lua/kernels.fnl",
+      "title": "kernels.fnl"
     },
     "ART-ba707559-a75c-4bf9-bc96-f870f83d48c4": {
       "content_digest": "d7b1facdcf90877292d523f95703be7ab123431d844f27e99387428b4221d999",
@@ -394,12 +604,42 @@
       "locator": "docs/plans/2026-10-29-requirements-driven-engineering-progress.md",
       "title": "2026-10-29-requirements-driven-engineering-progress.md"
     },
+    "ART-be50efb6-3aeb-4a2e-8975-c0593997b3d6": {
+      "id": "ART-be50efb6-3aeb-4a2e-8975-c0593997b3d6",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-opencode-live-lifecycle.fnl",
+      "title": "test-opencode-live-lifecycle.fnl"
+    },
+    "ART-bf610b8a-668c-4a3e-b491-bd9ad1e5702d": {
+      "id": "ART-bf610b8a-668c-4a3e-b491-bd9ad1e5702d",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-agent-presets-mcp.fnl",
+      "title": "test-agent-presets-mcp.fnl"
+    },
     "ART-c009aed8-a9a3-4290-86b3-877059c01265": {
       "content_digest": "07a1284e8a2a252d9f61112d15fd0b195bfe22da5e5c9628a2dbf5dd5cc06cbc",
       "id": "ART-c009aed8-a9a3-4290-86b3-877059c01265",
       "kind": "code",
       "locator": "scripts/requirements_lib/render.py",
       "title": "render.py"
+    },
+    "ART-c20aab34-3d24-4b03-a593-6dd07ef62772": {
+      "id": "ART-c20aab34-3d24-4b03-a593-6dd07ef62772",
+      "kind": "code",
+      "locator": "assets/lua/llm/external-unit-mcp/service.fnl",
+      "title": "service.fnl"
+    },
+    "ART-c2edfda0-e670-42f0-b278-4553c00a1fca": {
+      "id": "ART-c2edfda0-e670-42f0-b278-4553c00a1fca",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-opencode-mcp-bridge.fnl",
+      "title": "test-opencode-mcp-bridge.fnl"
+    },
+    "ART-c4876d96-bf30-4977-a1f6-8bccde302fb6": {
+      "id": "ART-c4876d96-bf30-4977-a1f6-8bccde302fb6",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-agent-session-migration.fnl",
+      "title": "test-agent-session-migration.fnl"
     },
     "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c": {
       "content_digest": "6ee410190e75b7c60de2f2eb631882ae46e717777c3c62ca81ef805565329cd7",
@@ -408,12 +648,36 @@
       "locator": "scripts/tests/test_requirements_graph.py",
       "title": "test_requirements_graph.py"
     },
+    "ART-c8d2bf43-0c6d-47ad-a85b-73fd26c70c22": {
+      "id": "ART-c8d2bf43-0c6d-47ad-a85b-73fd26c70c22",
+      "kind": "code",
+      "locator": "assets/lua/workflows/runner.fnl",
+      "title": "runner.fnl"
+    },
+    "ART-cd646807-6487-4641-baa6-79037d135151": {
+      "id": "ART-cd646807-6487-4641-baa6-79037d135151",
+      "kind": "code",
+      "locator": "assets/lua/llm/agent/session-migration.fnl",
+      "title": "session-migration.fnl"
+    },
+    "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8": {
+      "id": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-15-workflow-backed-agent-sessions.md",
+      "title": "2026-08-15-workflow-backed-agent-sessions.md"
+    },
     "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b": {
       "content_digest": "749926d9543187c6a8dd0ee0fe76a5386524d16c76c2623ab14805591740a66c",
       "id": "ART-d5aa9361-7216-43f1-99e2-1bdd9446070b",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-29-requirements-driven-engineering.md",
       "title": "2026-10-29-requirements-driven-engineering.md"
+    },
+    "ART-d7627634-39c7-4ff6-8aaa-01a27b137e94": {
+      "id": "ART-d7627634-39c7-4ff6-8aaa-01a27b137e94",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-notebooks.fnl",
+      "title": "test-notebooks.fnl"
     },
     "ART-dafc623b-133c-4c39-9056-0bb08134675b": {
       "id": "ART-dafc623b-133c-4c39-9056-0bb08134675b",
@@ -446,11 +710,23 @@
       "locator": "docs/plans/2026-10-11-dict-entity.md",
       "title": "2026-10-11-dict-entity.md"
     },
+    "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf": {
+      "id": "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-15-workflow-backed-agent-sessions-design.md",
+      "title": "2026-08-15-workflow-backed-agent-sessions-design.md"
+    },
     "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf": {
       "id": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-15-graph-capabilities.md",
       "title": "2026-10-15-graph-capabilities.md"
+    },
+    "ART-e4656ea5-9b50-4c7a-83b7-0352e9bd13d6": {
+      "id": "ART-e4656ea5-9b50-4c7a-83b7-0352e9bd13d6",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-16-workflow-graph-ux-design.md",
+      "title": "2026-08-16-workflow-graph-ux-design.md"
     },
     "ART-e6db684a-aeba-4034-837f-d2dd8826a514": {
       "content_digest": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
@@ -472,6 +748,18 @@
       "locator": "assets/lua/tests/test-graph-view-camera-persistence.fnl",
       "title": "test-graph-view-camera-persistence.fnl"
     },
+    "ART-ecc4a09b-7e50-4a80-97d3-ac3378c6fbad": {
+      "id": "ART-ecc4a09b-7e50-4a80-97d3-ac3378c6fbad",
+      "kind": "design",
+      "locator": "docs/dev/notes/kernels.md",
+      "title": "kernels.md"
+    },
+    "ART-ee6e1ad5-3fa5-453e-b764-827388b2bb5e": {
+      "id": "ART-ee6e1ad5-3fa5-453e-b764-827388b2bb5e",
+      "kind": "code",
+      "locator": "assets/lua/graph/nodes/workflow-run-explorer.fnl",
+      "title": "workflow-run-explorer.fnl"
+    },
     "ART-f109955a-9de5-4ac6-8a09-82cff648ef97": {
       "id": "ART-f109955a-9de5-4ac6-8a09-82cff648ef97",
       "kind": "test",
@@ -491,6 +779,18 @@
       "locator": "assets/lua/tests/test-graph-map.fnl",
       "title": "test-graph-map.fnl"
     },
+    "ART-f50464f9-f9fe-43fa-bd45-86a0ac961323": {
+      "id": "ART-f50464f9-f9fe-43fa-bd45-86a0ac961323",
+      "kind": "test",
+      "locator": "assets/lua/tests/workflow-run-explorer-cases.fnl",
+      "title": "workflow-run-explorer-cases.fnl"
+    },
+    "ART-f753fb77-b7a6-46e3-bc2b-67700015d619": {
+      "id": "ART-f753fb77-b7a6-46e3-bc2b-67700015d619",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-external-unit-mcp-reload-evidence.fnl",
+      "title": "test-external-unit-mcp-reload-evidence.fnl"
+    },
     "ART-f8788ba4-449f-493d-978e-ba2fb78bb726": {
       "content_digest": "04f24b168b51e88159958ea3f09bc8f88d35062cc1ec1e8967bce32d3ac00355",
       "id": "ART-f8788ba4-449f-493d-978e-ba2fb78bb726",
@@ -504,6 +804,12 @@
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-29-task-5-validation.md",
       "title": "Task 5 observed local validation and limits"
+    },
+    "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788": {
+      "id": "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788",
+      "kind": "code",
+      "locator": "assets/lua/workflows/code-executor.fnl",
+      "title": "code-executor.fnl"
     },
     "ART-fe7ad787-6a08-4913-ae90-76a6cc80c0cb": {
       "content_digest": "3da78ee79c26a0ceb27918a47308440a8d701fda9413e578b6120b5ec472b038",
@@ -5258,6 +5564,1318 @@
       "source": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
       "target": "REQ-a69bedbc-fbf5-48c5-91ac-9b2350d1fb2b",
       "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b4d3fbc1-03da-4953-b447-8bef2a53b162",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-26-external-unit-mcp-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-3288cf85-aa7a-43bd-9fbd-c412be0a16d0",
+      "target": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-185d1747-6843-48d8-975e-45514b7ce602",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-26-external-unit-mcp.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141",
+      "target": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-17ad1f44-0e2d-41d8-88c0-dbd72ce2b88f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-26-external-unit-mcp.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141",
+      "target": "ART-3288cf85-aa7a-43bd-9fbd-c412be0a16d0",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-af0ed317-9516-41b8-8c5b-b544504aadeb",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-12-space-agent-live-development-reliability-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-1ca16574-87c0-4f45-8114-2089517eab3e",
+      "target": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c2d1aa12-45c0-4729-b2f0-e50feb032f3e",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-12-space-agent-live-development-reliability.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f",
+      "target": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-11c0895e-7791-412d-a59d-b90ffdacfeb7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-12-space-agent-live-development-reliability.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f",
+      "target": "ART-1ca16574-87c0-4f45-8114-2089517eab3e",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-00089cfd-17c1-4ac5-84fc-f24a75e908e3",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-14-graph-authored-agent-workflows-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-056ed83f-b59e-4940-9eec-9453c4a34387",
+      "target": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2c4eccfe-fa5c-4859-aecc-4fcd5e369a05",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-14-graph-authored-agent-workflows.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef",
+      "target": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f6ec992c-f857-42b6-80f9-885f4b11b107",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-14-graph-authored-agent-workflows.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef",
+      "target": "ART-056ed83f-b59e-4940-9eec-9453c4a34387",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6cfbd742-c104-4ad1-8980-5e0c1086a510",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-14-workflow-user-flow-polish-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-05d6fefd-2635-4217-a9eb-1ba83bdfe499",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3b3fc32f-e3b2-456b-86fd-b4b267cc2a7c",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-14-workflow-user-flow-polish.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-a5e260dc-910e-46ec-a670-92c4b85fdb5c",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a1cf88d2-6991-48f3-a340-455c312c57c0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-14-workflow-user-flow-polish.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-a5e260dc-910e-46ec-a670-92c4b85fdb5c",
+      "target": "ART-05d6fefd-2635-4217-a9eb-1ba83bdfe499",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e19c4ea3-d6ee-4272-b3af-9637108281b0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-15-workflow-backed-agent-sessions-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf",
+      "target": "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7aa8b175-d413-41c9-b2aa-c06e5c3f1677",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-15-workflow-backed-agent-sessions.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
+      "target": "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ae16ec6f-29b4-4ba1-9056-264dbd554f09",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-15-workflow-backed-agent-sessions.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
+      "target": "ART-e0f89a76-22d7-4207-a1b7-3594dff641cf",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f2da92a4-28e1-4e85-a53c-65a14cdbdeab",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-16-workflow-graph-ux-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-e4656ea5-9b50-4c7a-83b7-0352e9bd13d6",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1d8524ec-500f-4451-ab62-4442b617c40f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-16-workflow-graph-ux.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-21d9bd54-5822-48f1-b67c-cce768092f0c",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-10fbb3bc-32fb-4128-b28c-1d0a7c7004dc",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-16-workflow-graph-ux.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-21d9bd54-5822-48f1-b67c-cce768092f0c",
+      "target": "ART-e4656ea5-9b50-4c7a-83b7-0352e9bd13d6",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1601ac3e-b786-4435-8dbe-07fedb95186f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-26-workflow-preview-decomposition-design.md"
+      },
+      "rationale": "Inspected design contract addresses this scoped obligation; retained historical refinements/conflicts are not satisfaction or new execution authority.",
+      "retracted": false,
+      "source": "ART-709a7f3a-fd3a-4cc2-8166-fcbaf75becae",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5c79bbe5-415d-4b96-b697-fb93a67e17b0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-26-workflow-preview-decomposition.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4b04fb2c-111a-4f5a-b515-9a4884b7f917",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-26-workflow-preview-decomposition.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365",
+      "target": "ART-709a7f3a-fd3a-4cc2-8166-fcbaf75becae",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dd965448-b6d6-42e3-9a3a-6f744272b117",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-opencode-mcp-bridge-core-design.md"
+      },
+      "rationale": "Policy-neutral bridge mechanics support isolated config/lifecycle for this existing capability; extraction itself creates no product requirement and does not unify client policy.",
+      "retracted": false,
+      "source": "ART-6cf20443-413a-4a04-9f84-ebec41fab04d",
+      "target": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-783a577c-3309-4e51-ada6-9ebb4fe185c0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-opencode-mcp-bridge-core.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-3fde2196-8a5a-49ca-a240-632e22b301dc",
+      "target": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c710413e-0e29-4250-b01e-ea9ae00e0ab1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-11-opencode-mcp-bridge-core-design.md"
+      },
+      "rationale": "Policy-neutral bridge mechanics support isolated config/lifecycle for this existing capability; extraction itself creates no product requirement and does not unify client policy.",
+      "retracted": false,
+      "source": "ART-6cf20443-413a-4a04-9f84-ebec41fab04d",
+      "target": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e09ff87f-7c69-4806-910c-6a0749433a13",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-opencode-mcp-bridge-core.md"
+      },
+      "rationale": "Inspected plan Goal/Architecture/global contract specifies the named surface; detailed execution depth is bounded in the report, not all planned assertions audited.",
+      "retracted": false,
+      "source": "ART-3fde2196-8a5a-49ca-a240-632e22b301dc",
+      "target": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2690972a-8a3d-4f25-a493-74e3127a7fb6",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-11-opencode-mcp-bridge-core.md"
+      },
+      "rationale": "Matching named design and explicit ownership/scope in plan; historical implementation instructions are not audit execution authority.",
+      "retracted": false,
+      "source": "ART-3fde2196-8a5a-49ca-a240-632e22b301dc",
+      "target": "ART-6cf20443-413a-4a04-9f84-ebec41fab04d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d97a336b-42c3-4ac5-9edb-782a163e0609",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-26-opencode-session-graph-exposure-design.md"
+      },
+      "rationale": "Full contract grounds this family obligation; source contradictions and optional/deferred scope remain explicit, with no achievement credit.",
+      "retracted": false,
+      "source": "ART-87ac31f2-bcb1-439f-974c-1538abc00f0b",
+      "target": "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3e6466f7-96d1-4857-8141-7dd9deb665fc",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/agent-presets.md"
+      },
+      "rationale": "Full contract grounds this family obligation; source contradictions and optional/deferred scope remain explicit, with no achievement credit.",
+      "retracted": false,
+      "source": "ART-72f7fe20-2a52-4a3a-819c-5710744caabb",
+      "target": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d679b610-3655-4914-895b-ae203e0bf3bb",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/agent-layer-design.md"
+      },
+      "rationale": "Full contract grounds this family obligation; source contradictions and optional/deferred scope remain explicit, with no achievement credit.",
+      "retracted": false,
+      "source": "ART-a781780d-3fba-4590-9969-1b615f405658",
+      "target": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7a57f41a-52c8-444d-bb8d-0860379463cd",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-notebooks.md"
+      },
+      "rationale": "Full contract grounds this family obligation; source contradictions and optional/deferred scope remain explicit, with no achievement credit.",
+      "retracted": false,
+      "source": "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f",
+      "target": "REQ-ce606fdb-0c1f-4909-9179-519860105d21",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fc5b2fb3-185c-4236-8620-780826e81db8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/kernel-system.md"
+      },
+      "rationale": "Full contract grounds this family obligation; source contradictions and optional/deferred scope remain explicit, with no achievement credit.",
+      "retracted": false,
+      "source": "ART-62ec1cee-4fd4-442b-8260-68f76e2f7b7f",
+      "target": "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-93948e1c-9452-4d8c-b10d-b54b74b2328b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/kernels.md"
+      },
+      "rationale": "Full contract grounds this family obligation; source contradictions and optional/deferred scope remain explicit, with no achievement credit.",
+      "retracted": false,
+      "source": "ART-ecc4a09b-7e50-4a80-97d3-ac3378c6fbad",
+      "target": "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e9c70778-6ad9-4825-86f1-598b9b08885b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/workflows/store.fnl"
+      },
+      "rationale": "L329\u2013417 persistence validation/publication; store ownership is independent of maps.",
+      "retracted": false,
+      "source": "ART-90abe2a8-f640-405a-a5eb-dc9fe3817c20",
+      "target": "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f2940281-dec8-48f6-ab43-4fec31fe9146",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/workflows/code-executor.fnl"
+      },
+      "rationale": "Full executor validates code entity factory/method/outcome errors.",
+      "retracted": false,
+      "source": "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788",
+      "target": "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-37dd5c63-32d4-4710-b1bc-92352ebb6f46",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/workflows/runner.fnl"
+      },
+      "rationale": "L327\u2013481 applies persisted outcomes, tick/resume/cancel and event transitions.",
+      "retracted": false,
+      "source": "ART-c8d2bf43-0c6d-47ad-a85b-73fd26c70c22",
+      "target": "ART-174639c2-28c9-4f17-b5a4-e31dd98204ef",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cc52d3c8-7bcd-4033-8cd1-ea4251fa50d1",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/graph/nodes/workflow-run-explorer.fnl"
+      },
+      "rationale": "Full adapter preflights map/loader and revalidates definition ownership before selected run materialization.",
+      "retracted": false,
+      "source": "ART-ee6e1ad5-3fa5-453e-b764-827388b2bb5e",
+      "target": "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a6712cee-f5f0-4975-9256-d6884fd9d281",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/llm/agent/workflow-runner.fnl"
+      },
+      "rationale": "L78\u2013300 event persistence and runner-compatible create/run/cancel/project surface.",
+      "retracted": false,
+      "source": "ART-6914537d-119d-42fa-b617-076831934bb3",
+      "target": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c23f25a7-f8e2-4bd3-a28b-03fe36d612b6",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/llm/agent/session-migration.fnl"
+      },
+      "rationale": "Full migration validates legacy content and compatible reruns, writes workflow events before archive.",
+      "retracted": false,
+      "source": "ART-cd646807-6487-4641-baa6-79037d135151",
+      "target": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e3e8bcbb-2b27-4ea5-b835-a66629b63bcb",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/llm/external-unit-mcp/service.fnl"
+      },
+      "rationale": "L280\u2013459 sampled write/reload recovery, handles, inspect and token resolution; not a complete safety audit.",
+      "retracted": false,
+      "source": "ART-c20aab34-3d24-4b03-a593-6dd07ef62772",
+      "target": "ART-6c1cecb4-25a1-47ac-b730-6dbd2de5d141",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4a212241-6a3b-40c6-a2b5-adca9f77d057",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/llm/opencode-mcp/bridge.fnl"
+      },
+      "rationale": "Full core retains loopback/config lifecycle; later config-content injection is an evidenced evolution, not literal XDG-only conformance.",
+      "retracted": false,
+      "source": "ART-0ebe9a1b-338c-424e-9757-09796bf7581f",
+      "target": "ART-3fde2196-8a5a-49ca-a240-632e22b301dc",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a1a66eb5-229a-4c22-8218-ed30a9bd9927",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-store.fnl"
+      },
+      "rationale": "L90\u2013190 persists/reloads app-scoped definitions/runs/waits, checks dependent deletion history. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-00da571e-8da8-4329-bb7f-3bcbc6ee6f13",
+      "target": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-339a59fe-756c-4872-b7f3-4862f5ac6c18",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-store.fnl"
+      },
+      "rationale": "L90\u2013190 persists/reloads app-scoped definitions/runs/waits, checks dependent deletion history.",
+      "retracted": false,
+      "source": "ART-00da571e-8da8-4329-bb7f-3bcbc6ee6f13",
+      "target": "ART-90abe2a8-f640-405a-a5eb-dc9fe3817c20",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e9f33de6-3da4-412f-b172-e0cfb3bc88a4",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-runner.fnl"
+      },
+      "rationale": "L202\u2013347 uses real store plus executor fixture to assert retries/cancel/branch/loop/join; no provider/runtime result. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-998ef55c-4cf6-458b-bd77-8079a39d58fa",
+      "target": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2726a630-d678-4dd8-a35e-6235c960fc20",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-runner.fnl"
+      },
+      "rationale": "L202\u2013347 uses real store plus executor fixture to assert retries/cancel/branch/loop/join; no provider/runtime result.",
+      "retracted": false,
+      "source": "ART-998ef55c-4cf6-458b-bd77-8079a39d58fa",
+      "target": "ART-c8d2bf43-0c6d-47ad-a85b-73fd26c70c22",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a0c839e0-c831-4434-b9b6-b344715964a8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-graph.fnl"
+      },
+      "rationale": "L922\u20131094 real map authoring/capture/preflight and template execution; full UI flow coverage not implied. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-66f388cd-a50d-416f-9578-429290d71bfb",
+      "target": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b33f70db-2975-4d41-9cf0-fe0d79d253f0",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-graph.fnl"
+      },
+      "rationale": "L922\u20131094 real map authoring/capture/preflight and template execution; full UI flow coverage not implied. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-66f388cd-a50d-416f-9578-429290d71bfb",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cbfd493d-b8cd-4d53-8507-2d1c05097f12",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-workflow-graph.fnl"
+      },
+      "rationale": "L922\u20131094 real map authoring/capture/preflight and template execution; full UI flow coverage not implied.",
+      "retracted": false,
+      "source": "ART-66f388cd-a50d-416f-9578-429290d71bfb",
+      "target": "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-93f1f3e8-364a-46fc-a76b-8bbefa010d72",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/workflow-run-explorer-cases.fnl"
+      },
+      "rationale": "Full helper actual foreign-run and deleted-definition rejection plus store-only loader assertions; invoked by workflow graph suite. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-f50464f9-f9fe-43fa-bd45-86a0ac961323",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1d100941-3e18-455e-9cd1-f6c3bd75ceb9",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/workflow-run-explorer-cases.fnl"
+      },
+      "rationale": "Full helper actual foreign-run and deleted-definition rejection plus store-only loader assertions; invoked by workflow graph suite.",
+      "retracted": false,
+      "source": "ART-f50464f9-f9fe-43fa-bd45-86a0ac961323",
+      "target": "ART-ee6e1ad5-3fa5-453e-b764-827388b2bb5e",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eacd8bf2-108b-4e97-9328-a9d3f3ad6c8f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-workflow-runner.fnl"
+      },
+      "rationale": "L79\u2013241 workflow run identity/wait, streaming callbacks, cancel/next turn and provider continuity assertions. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-7ce80d49-32c7-4e52-b1c9-44107b34bd0e",
+      "target": "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4ea8db55-445d-493e-8d73-718ceaedd7a2",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-workflow-runner.fnl"
+      },
+      "rationale": "L79\u2013241 workflow run identity/wait, streaming callbacks, cancel/next turn and provider continuity assertions.",
+      "retracted": false,
+      "source": "ART-7ce80d49-32c7-4e52-b1c9-44107b34bd0e",
+      "target": "ART-6914537d-119d-42fa-b617-076831934bb3",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e2ac68ec-efac-4f44-8c71-0bb629275459",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-session-migration.fnl"
+      },
+      "rationale": "Full test defines transcript/metadata/archive-after-success/idempotency/incompatible-rerun/malformed-item assertions. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-c4876d96-bf30-4977-a1f6-8bccde302fb6",
+      "target": "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3169be46-1031-4534-96a3-592f65931682",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-session-migration.fnl"
+      },
+      "rationale": "Full test defines transcript/metadata/archive-after-success/idempotency/incompatible-rerun/malformed-item assertions.",
+      "retracted": false,
+      "source": "ART-c4876d96-bf30-4977-a1f6-8bccde302fb6",
+      "target": "ART-cd646807-6487-4641-baa6-79037d135151",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ac26ade3-3fd3-4aad-b13e-86c844eb9567",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-layer.fnl"
+      },
+      "rationale": "L869\u2013949 asserts visible ask-risk tool does not execute pending approval, exact retry succeeds and changed arguments require a new decision. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-b06b2673-dc93-49ce-ab33-260aba99d812",
+      "target": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f70ff12b-103b-43b8-8aa2-582f7535df07",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-layer.fnl"
+      },
+      "rationale": "L869\u2013949 asserts visible ask-risk tool does not execute pending approval, exact retry succeeds and changed arguments require a new decision.",
+      "retracted": false,
+      "source": "ART-b06b2673-dc93-49ce-ab33-260aba99d812",
+      "target": "ART-4493c18f-30e8-41a3-b63e-129497ee6537",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bf7b8faf-04d3-444c-87c6-703acbc13d3d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-presets-mcp.fnl"
+      },
+      "rationale": "L68\u2013158 asserts unrelated-tool retention, source replacement, unmanaged collision and failed-start listener rollback. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-bf610b8a-668c-4a3e-b491-bd9ad1e5702d",
+      "target": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-042f34c9-8ded-45c5-a316-9e1f7e82b9fd",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-agent-presets-mcp.fnl"
+      },
+      "rationale": "L68\u2013158 asserts unrelated-tool retention, source replacement, unmanaged collision and failed-start listener rollback.",
+      "retracted": false,
+      "source": "ART-bf610b8a-668c-4a3e-b491-bd9ad1e5702d",
+      "target": "ART-3ad2adf8-29c9-49fb-b766-59dac3091498",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7f8fcdb1-6591-425a-a4ef-e6e1cce6ffc3",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-external-unit-mcp.fnl"
+      },
+      "rationale": "L165\u2013263 asserts ranked vague resolution and filesystem/unknown handles without create on flat units. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-0aa767d7-5d8c-46e0-9e39-cc1b3e295cb8",
+      "target": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5bc1ee52-2a22-4dc0-9191-84e6a133f0ad",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-external-unit-mcp.fnl"
+      },
+      "rationale": "L165\u2013263 asserts ranked vague resolution and filesystem/unknown handles without create on flat units.",
+      "retracted": false,
+      "source": "ART-0aa767d7-5d8c-46e0-9e39-cc1b3e295cb8",
+      "target": "ART-c20aab34-3d24-4b03-a593-6dd07ef62772",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-61f7f4f6-d658-4280-9331-917d16f3c6ff",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-external-unit-mcp-reload-evidence.fnl"
+      },
+      "rationale": "Full fixture asserts active activity before/after/reactivation/session evidence; it does not observe live renderer smoke. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-f753fb77-b7a6-46e3-bc2b-67700015d619",
+      "target": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9c2c1f90-6ce1-433a-85d5-f6f002382050",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-external-unit-mcp-reload-evidence.fnl"
+      },
+      "rationale": "Full fixture asserts active activity before/after/reactivation/session evidence; it does not observe live renderer smoke.",
+      "retracted": false,
+      "source": "ART-f753fb77-b7a6-46e3-bc2b-67700015d619",
+      "target": "ART-c20aab34-3d24-4b03-a593-6dd07ef62772",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a426f701-14b2-4b11-afa0-d2353dd89351",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-mcp-bridge.fnl"
+      },
+      "rationale": "L41\u2013128 fake server asserts loopback/config isolation, config-content injection, protected extras and refresh; no installed OpenCode proof. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-c2edfda0-e670-42f0-b278-4553c00a1fca",
+      "target": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b5258670-b2ba-4add-b79c-6018e9181f9a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-mcp-bridge.fnl"
+      },
+      "rationale": "L41\u2013128 fake server asserts loopback/config isolation, config-content injection, protected extras and refresh; no installed OpenCode proof. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-c2edfda0-e670-42f0-b278-4553c00a1fca",
+      "target": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4ae3cbda-58fe-4f2f-8a49-6fe4362d0ed8",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-mcp-bridge.fnl"
+      },
+      "rationale": "L41\u2013128 fake server asserts loopback/config isolation, config-content injection, protected extras and refresh; no installed OpenCode proof.",
+      "retracted": false,
+      "source": "ART-c2edfda0-e670-42f0-b278-4553c00a1fca",
+      "target": "ART-0ebe9a1b-338c-424e-9757-09796bf7581f",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-443b11ad-b25e-4851-8fe9-0853d536e638",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-live-lifecycle.fnl"
+      },
+      "rationale": "L47\u2013154 fixture asserts required-pair barrier, old epoch rejection/drop and bounded delayed retries; no live network run. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-be50efb6-3aeb-4a2e-8975-c0593997b3d6",
+      "target": "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b1bda3aa-62b4-4e94-8d40-12779f18fd72",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-live-lifecycle.fnl"
+      },
+      "rationale": "L47\u2013154 fixture asserts required-pair barrier, old epoch rejection/drop and bounded delayed retries; no live network run.",
+      "retracted": false,
+      "source": "ART-be50efb6-3aeb-4a2e-8975-c0593997b3d6",
+      "target": "ART-075a26b7-1947-40ee-8f98-9e3c69f23b69",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-70aafda7-80d4-46d6-aa80-540827d6dfcc",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-map-lifecycle.fnl"
+      },
+      "rationale": "L55\u2013239 real-map fixture asserts child hydration, restore/replacement, retained edges/metadata, stale barriers and reentrant removal/invalidation. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-3a48a48d-941a-4865-87f1-66902ad511b0",
+      "target": "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1718d0ca-6dc1-4c77-a788-5f3d0999ef36",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-opencode-map-lifecycle.fnl"
+      },
+      "rationale": "L55\u2013239 real-map fixture asserts child hydration, restore/replacement, retained edges/metadata, stale barriers and reentrant removal/invalidation.",
+      "retracted": false,
+      "source": "ART-3a48a48d-941a-4865-87f1-66902ad511b0",
+      "target": "ART-98008e6d-42d2-40cf-b9fe-5c1ea4cf10e5",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5396745f-e571-4d2f-8d0b-2a4e2497626a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-notebooks.fnl"
+      },
+      "rationale": "L30\u2013151 owning CRUD/signals/reference uniqueness/order; L183\u2013221 graph-linked string creation. Inline wrapping and full preview UI remain untraced. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-d7627634-39c7-4ff6-8aaa-01a27b137e94",
+      "target": "REQ-ce606fdb-0c1f-4909-9179-519860105d21",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-23a9c1f8-6f14-46f0-87d4-fb0c91e995dd",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-notebooks.fnl"
+      },
+      "rationale": "L30\u2013151 owning CRUD/signals/reference uniqueness/order; L183\u2013221 graph-linked string creation. Inline wrapping and full preview UI remain untraced.",
+      "retracted": false,
+      "source": "ART-d7627634-39c7-4ff6-8aaa-01a27b137e94",
+      "target": "ART-793e61e4-ff96-4251-8a83-c79a6f73b079",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e145b705-257a-4197-86f6-bf8ae4af05b3",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-kernels.fnl"
+      },
+      "rationale": "L53\u2013225 defines immutable internal kernel, CRUD, generated IDs, ambiguity, active-instance deletion and conditional subprocess output/register assertions; not PUB/SUB/history coverage. Test definition only, not execution or complete criteria verification.",
+      "retracted": false,
+      "source": "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9",
+      "target": "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9262b6b3-3ae7-4ad5-b200-b773f5617d99",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-kernels.fnl"
+      },
+      "rationale": "L53\u2013225 defines immutable internal kernel, CRUD, generated IDs, ambiguity, active-instance deletion and conditional subprocess output/register assertions; not PUB/SUB/history coverage.",
+      "retracted": false,
+      "source": "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9",
+      "target": "ART-b919bc56-4720-44b5-ba29-90343bbefb8f",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dfce2100-784b-45fa-aa57-a99ea8d4ad7a",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-14-graph-authored-agent-workflows-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5d60decb-5656-4e41-9d5b-a9456c7321eb",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-26-workflow-preview-decomposition-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f19dd1d3-e19f-49de-bcad-c73d361ce745",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-15-workflow-backed-agent-sessions-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-060d322e-d258-44bd-93ce-6ff262dc56b7",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/agent-layer-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-130f96a2-bb12-4a08-bbe9-072b995f7d67",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-26-external-unit-mcp-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d3fdc755-cbf2-4b8c-9363-e0a43493c469",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-12-space-agent-live-development-reliability-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9184960b-3e67-4663-b833-0c175fd2af9b",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-26-opencode-session-graph-exposure-design.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126",
+      "target": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-574a969a-3397-400f-90a4-f605e192573d",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-notebooks.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-ce606fdb-0c1f-4909-9179-519860105d21",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8f4854b7-12dd-408c-beb9-2319bd728e8f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/kernel-system.md"
+      },
+      "rationale": "This bounded capability helps the existing strategic goal without establishing usefulness, seamlessness, stability or empirical satisfaction.",
+      "retracted": false,
+      "source": "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ff12d7c4-60f6-4c20-b544-c2d3094c924f",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-16-workflow-graph-ux-design.md"
+      },
+      "rationale": "Workflow-specific explicit discovery/global ownership applies directly to deliberate explorer and action materialization. Not applied to the later bounded OpenCode automatic-islands exception.",
+      "retracted": false,
+      "source": "REQ-9b38aa4b-09ec-4c75-80af-8a2923c7afda",
+      "target": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "type": "constrains"
     }
   ],
   "requirements": {
@@ -5481,6 +7099,39 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Connect graph, terminal, search, file/code views and basic editing into an integrated workspace workflow, including browser and media reference surfaces."
+    },
+    "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Multiple user turns resume the same waiting workflow run; the sidebar runner API and streaming item identities/shapes remain compatible, cancellation permits subsequent input, and editable default source is not overwritten."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Projection folds ordered events without a dedicated transcript cache; duplicate append IDs and updates to missing IDs fail loudly; provider IDs, runtime context, timestamps and artifact/report paths survive."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Explicit migration validates legacy files, preserves ordered items and continuity metadata, returns old-to-new mapping, archives only after durable conversion, and rejects incompatible reruns without duplication or source loss; runtime does not scan old session JSON."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-1d8cd04b-a1d4-46dd-acea-3d15fb70e089",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "Workflow events are the durable transcript source of truth.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-15-workflow-backed-agent-sessions-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Represent sidebar agent chats as long-lived workflow runs with event-projected transcript/status/data and explicit continuity-preserving legacy migration, not startup dual reading."
     },
     "REQ-1f81f38f-6167-4f28-81b4-9264ffe56245": {
       "acceptance_criteria": [
@@ -5711,6 +7362,39 @@
       "revision": 1,
       "statement": "Graph maps must retain independent interaction contexts over shared domain objects, with map-local adapters and separately captured spatial and outline camera/view state across switching and reload."
     },
+    "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Resolve descriptions to ranked handles with loader/source/edit/test/commit capability metadata, inspect/read by loader-relative source IDs, and fail explicitly for unsupported capabilities; future loader implementations are not implied."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Writes enforce containment and available expected-hash protection; expose focused tests, reload evidence, logs and snapshots without claiming atomic restoration of arbitrary runtime state."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Use a separate loopback tool registry and isolated OpenCode config, never global config; native filesystem fallback requires explicit human approval plus a Space-reported local source handle."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-4351cb0b-b1e1-484c-8130-81dfbfe8f7e5",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "The external surface exposes high-level unit operations, not raw paths.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-26-external-unit-mcp-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Provide a separate loader-aware external user-unit MCP surface for discovery, source operations, tests, reload and evidence inspection without assuming a user-data filesystem path or broad native access."
+    },
     "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3": {
       "acceptance_criteria": [
         {
@@ -5902,6 +7586,44 @@
       "revision": 1,
       "statement": "Support user-owned services and distribution through Space pods, libtorrent asset distribution and practical wallet-backed workflows."
     },
+    "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Start discovers Workflows when available; explicit New Workflow/New Step creates durable template-backed steps and linked editable code, and graph step connections/removals mutate canonical workflow edges."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Definition previews expose Start, New Step, Open Steps and Open Runs without embedded searches; explorers scope records to their definition and materialize only selected records or explicitly requested step groups."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Run actions expose timeline, run steps, failed steps, payloads and status-appropriate cancellation; remove generic Show/Hide Details aliases, render long payloads in multiline/panel widgets, and document goal-oriented complete flows."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c4",
+          "text": "Graph-dependent mutations preflight required loaders/map before durable effects or roll back domain and partial topology changes; invalid selection/foreign records fail explicitly."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-7549a36b-f01d-4896-b41a-13ffc056e4ed",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "Use a compact workflow definition preview plus dedicated explorer nodes:",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-26-workflow-preview-decomposition-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Offer deliberate granular graph workflow authoring and run inspection through compact controls, definition-scoped explorers and dense payload views rather than hidden expansion or generic details dumping."
+    },
     "REQ-77d53d5a-9303-490e-a031-34827a59e6c6": {
       "acceptance_criteria": [
         {
@@ -6047,6 +7769,39 @@
       "revision": 1,
       "statement": "Graph exposure must leave domain persistence with owning systems and materialize related visual topology only through explicit user preview, view, search or action controls, not hidden bulk relationship hooks."
     },
+    "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Definitions, step references, control/data edges, run-step waits/state and ordered events reload without a world or graph map; deleting a step handles dependent edges explicitly and retains historical runs."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Code-entity step factories return validated success, failure, wait, retry, cancellation or skip outcomes; invalid contracts record structured failures rather than silent completion."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Runs expose branch/loop/join, data routing, wait/resume and cancellation state transitions through events; workflow code has full app access, not a sandbox."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "The graph is one interface over the workflow system, not the owner of workflow data.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-14-graph-authored-agent-workflows-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Persist app/user-scoped code-entity-backed workflow definitions and inspectable runs independently of worlds and graph maps, with explicit orchestration outcomes and domain-owned topology."
+    },
     "REQ-9d648a91-af2e-40e6-8e4e-41a2972373cf": {
       "acceptance_criteria": [
         {
@@ -6117,6 +7872,44 @@
       "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
       "revision": 1,
       "statement": "Preserve stable logical references and presentation through string-to-code morph, and coordinate genuine deletion of supported live incoming references across owning stores, workflows and persisted worlds without deleting independent targets or rewriting history."
+    },
+    "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Well-formed graph keys hydrate adapters without network-dependent loader disappearance; fetches use the current provider, distinguish unavailable/not-found/absent/stale and preserve complete decoded payloads with current-vs-last-known labeling."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Explicit abort/delete suppress duplicate submissions, retain separate acknowledged/error results and never retry ambiguous writes; acknowledgment is not observed termination, current config is not historical session-effective config."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Subscribe before snapshot, coalesce invalidations until metadata and transcript both settle, reject old epochs/generations and post-drop callbacks, and bound delayed reconnect with explicit errors; provider storage continuity remains unproven."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c4",
+          "text": "Message/part collections own automatic ordered-list presentation islands as the documented bounded exception to click-only children: hydrate before publication, preserve presentation state on restore/replacement, retain existing explicit edge metadata and do not treat membership as server truth."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-b069793d-01cc-4ea3-a846-9d03a79ea126",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "the OpenCode server owns all session data. Space stores only ephemeral snapshots in node adapters and artifact references in run records.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-26-opencode-session-graph-exposure-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Expose OpenCode-server-owned sessions through ephemeral graph snapshots and message/part/info projections, retaining explicit freshness/failure states and bounded live invalidation lifetimes."
     },
     "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2": {
       "acceptance_criteria": [
@@ -6285,6 +8078,100 @@
       "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
       "revision": 1,
       "statement": "Present related graph nodes as map-owned islands hosted by presenter kind, with ordered-list placement following owning-list order and independent absolute body positions rather than moving domain order into the view."
+    },
+    "REQ-ce606fdb-0c1f-4909-9179-519860105d21": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Create/edit/reload named notebook collections and ordered unique identity references through the owning store; graph adapters expose the same records and preserve reference meaning."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Linked entities render inline previews and text wraps to layout constraints; optional page structure is not assumed implemented, and notebook execution semantics are not introduced."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-ce606fdb-0c1f-4909-9179-519860105d21",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "Notebook data lives in the notebook store. The graph node is a projection.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-notebooks.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Expose persistent notebooks as graph-adapted structured knowledge collections with stable identity references, inline linked previews and wrapping text rather than graph-owned content or executable notebooks."
+    },
+    "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Persist advisory endpoint/provider/instance context and session-scoped artifact/report paths; refresh stale connection setup and bound safe lookup retries, surfacing wrong-instance or unavailable evidence instead of silent success."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Bound internal reads to Space-owned runtime/code/log/artifact roots, deny secret-looking paths and native writes/shell; do not infer hard multi-instance isolation."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Reports distinguish live from disk-only with compile/constraints/focused-test evidence; live validation requires successful reload/smoke, not connection alone; active-unit reload returns before/after activity/reactivation evidence or explicit failure."
+        }
+      ],
+      "classification": "behavior",
+      "history": [],
+      "id": "REQ-d1352b26-793e-4fbc-b379-ae438c7d9811",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "If a report is disk-only, the supervisor should not describe the running app as validated until a live reload/smoke step succeeds.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-12-space-agent-live-development-reliability-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Keep internal live-development reconnect/context and bounded artifact access inspectable, and distinguish connection evidence from actual live reload/smoke validation."
+    },
+    "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Definitions persist and graph management exposes lifecycle and execution results/errors; detailed contract includes immutable internal kernel 0, generated user IDs, name ambiguity errors and multiple subprocess instances."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "The detailed execution contract uses connection-file bootstrapping and ZMQ request/reply with code/registers/error fields, selecting the latest running instance and surfacing missing-instance/spawn/timeout/protocol failures."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "The feature summary separately promises PUB/SUB kernel exchange and persisted input/output history with command/startup fields; reconcile this against the REQ/REP id/name/cmd/cwd detailed contract with explicit authority before claiming complete coverage. Current code alone cannot supersede the summary."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-d167d9ed-6eab-4a04-911c-7cce3547fed3",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "Kernels are persisted as JSON files, with history tracking and instance lifecycle management.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/kernel-system.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Provide persistent graph-visible computational kernel definitions and managed live execution instances for internal Fennel and subprocess code, retaining unresolved communication/history intent instead of declaring it superseded."
     },
     "REQ-d2bc21f4-40e5-48de-8f56-ca772f539805": {
       "acceptance_criteria": [
@@ -6464,6 +8351,39 @@
       "revision": 1,
       "statement": "Support typed recursive many-to-many requirement relations without a fixed abstraction ladder or inferred satisfaction."
     },
+    "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Pure preset definitions resolve context and session Auto/On/Off overrides deterministically; high-risk defaults require explicit enabling and sync removes only its own tools, rejecting unmanaged collisions."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "The shared tool surface converts active definitions for MCP and client-side providers without making the lifecycle runner choose providers; exposing a tool is not approval to execute it."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Ask-risk calls do not execute while pending or denied; approval binds the exact tool/source/arguments and a changed argument set needs a separate decision. Historical hidden-tool guidance remains an unresolved visibility discrepancy, not an inferred ban on current exposure."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-f4361260-119d-4c3a-8f2c-460fa8eb5bbc",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-2-A",
+        "date": "2026-10-30",
+        "excerpt": "AgentToolSurface is the shared source of active tool definitions and local `call` behavior, so all providers obey the same preset and approval rules.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/notes/agent-layer-design.md"
+      },
+      "rationale": "Authorized one-time A-family baseline representation after semantic/provenance comparison at revision37; distinct from strategic Agent/Graph/Core goals, generic access and reference lifecycle. Proposed only; source conflicts and sampled trace gaps remain explicit in Task 2 A report. No application repair, automatic assessment or maintenance-derived obligation.",
+      "revision": 1,
+      "statement": "Expose context-aware provider-agnostic preset capabilities through MCP and client-side tool definitions while retaining user overrides, registry ownership and execution-time risk approval."
+    },
     "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20": {
       "acceptance_criteria": [
         {
@@ -6526,7 +8446,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 37,
+  "revision": 40,
   "schema_version": 1,
   "verifications": [
     {

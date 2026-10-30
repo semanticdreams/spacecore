@@ -270,3 +270,64 @@ Source-consistency gap from self-review: graph-maps L188's aggregate movement
 L96–103 and actual island assertions L784–795 (other members stay put until drop).
 G3 follows the specific contract and corroborating assertions; no live observation,
 product repair or summary-document supersession is inferred.
+
+## Task 2/A bounded continuation — application agents/workflows reconciled
+
+Actor `implementer/baseline-task-2-A`, supervisor strict lane, branch
+`juicyrebel/ridley`, clean continuation BASE `abc8baa44b0bdf9013051e6de1f6efbc215b17a3`.
+Original Task2 BASE/F/governing design and predecessor partial/G records unchanged.
+This completes the assigned19 A sources plus supporting explicit agent/notebook/
+kernel contracts at representative code/assertion depth, not Task2 overall; T9 and
+original full Task2 review remain pending. See appended A report for exact IDs,
+artifact pairs, full inspection ranges, contradictions and review instructions.
+
+Requirements-reconciliation conclusion: grounded missing representation/refinement,
+not product repair. All43 old requirements/provenance and81 artifact locators
+compared before creation; strategic Agent/Graph/Core, nonvisual access and reference
+lifecycle reused unchanged. CLI in-memory exact-revision transactions37→38→39→40
+created9 proposed revision1 obligations,51 linked artifacts and82 explicit edges.
+Totals52 requirements/132 artifacts/358 relations. No old normative/history records,
+17 assessments or63 verifications changed; no activation or satisfaction inferred.
+
+A1–A9 in the report/dispositions cover durable code-backed workflows, granular
+workflow graph UX, long-lived event-backed sidebar sessions/explicit migration,
+provider-independent presets/execution-risk gates, separate loader-aware external
+MCP, advisory live context/honest evidence, server-owned OpenCode projections,
+store-owned notebooks, and computational kernels. Shared bridge extraction remains
+supporting maintenance—not a new obligation. Only existing G1→A2 constraint
+applicability added; no universal inheritance or code→requirement shortcuts. Missing
+plan chains for A4/A7/notebooks/kernels remain gaps, not fabricated artifacts.
+
+Retained material discrepancies, without application repair or unsupported
+supersession: agent-layer note says hide ask-risk tools while current code/tests
+expose them but gate exact execution; SpaceAgent marks validation-mode live on
+connection despite explicit reload/smoke guidance; kernel summary promises
+PUB/SUB/history/command-startup fields while detailed contract/code use REQ/REP and
+id/name/cmd/cwd. A9 preserves both until evidenced reconciliation. Bridge's original
+XDG-only compatibility wording differs from later config-content injection; original
+adc95fbb diff proves the evolution, not deployed isolation. Later workflow granular
+controls explicitly replace generic toggles. OpenCode design explicitly authorizes
+automatic message/part islands, a bounded exception to click-only children, with
+server data ownership and map-owned presentation still separate. Historical progress
+test/live/review results are retained as reported history only, not fresh evidence.
+
+All19 A dispositions updated,343 non-A rows unchanged; exact frozen362-row set
+preserved and all assigned/registered source bytes match F. Nine designs and two
+progress summaries read fully; three workflow plans full, remaining five plan
+opening contracts sampled with exact bounds in rows/report. All9 obligations have
+some implementation/test-definition samples, **not**9 complete implementations.
+Inline notebook wrapping, complete UI/rollback/provider/native/security/protocol
+boundaries and empirical usefulness remain unverified with explicit gaps.
+
+Validation: compile/application constraints not applicable; Constraint Impact not
+applicable. `make requirements-check` timeout600000 passed348 in177.62s; valid/current
+projection40. Old-record preservation, unique tuples/locators and manifest/F-byte
+checks passed. Scoped/all coverage not truncated; depth32/paths1000 context and
+individual depth2 traces truncate, so direct tuple inspection is not complete
+impact/readiness. A-only repeat sweep found no further justified mutations; Task4
+every-family sweep still owed. Revision40 ledger SHA256
+`d8ced683290a55eebdc81ec8d33c2348d2ace10499ad197f86219056e432f86a`, index SHA256
+`df30e39b336ffe7417615ca6fd7136a21e798576f8bf3ed6cebf8284f4d654d2`.
+Next: independent complete `abc8baa4..A_HEAD` review, T continuation, then original
+Task2 full-range review. No budget reset, technical advice dispatch, new product
+observations or approval claimed.
