@@ -106,3 +106,25 @@
 - Controller verified live diff/index unchanged before commit. Whole-branch review,
   final clean/current-main validation and protected PR merge remain outstanding.
   Substantive fixes=0, consultations=0, delivery-correction attempts=0.
+
+## Whole-branch review and finishing handoff
+
+- Task 2 complete in controller checkpoint `517b2f10`; exact six independently
+  approved staged paths plus this controller-owned ledger were committed. No source
+  or generated edits followed the task pass.
+- Artifact-only preparation resumed the same Task 2 implementer, correction_used=0,
+  with no source/test/doc changes, staging, tests or builds. Complete immutable
+  branch range `15b8fe8a3779d197845a75128f359585e1033ac3` through
+  `517b2f10484c40d59a5f4a0ac3333671d565332d`: four commits, 17 changed paths;
+  diff SHA256 `eb3eb35c60f97419367b4712092398272f1e6fb8bb34d37d796143b3d663d8ac`.
+- Final reviewer `ses_e741697deffeoL896WtjgJsyMg`, correction_used=0: declared
+  full JSON validated, pass on every one of the 17 manifest paths. Retained broad
+  inspection-link minor note remains non-blocking; no parked or material findings.
+  Historical Git/probe/order evidence remains retained in original controller
+  records; no supplied summary is treated as runtime proof or universal approval.
+- Guarded fetch/status `ses_e7418a3f9ffemJbfZJDNrkqd0g` after Task 2 commit:
+  clean tree, main still `15b8fe8a`, origin-main ancestor=true, current=true,
+  safe_merge_needed=false. Initial whole-window accounting remains current.
+- Both planned tasks and all five guided probes are complete. Final clean/current-
+  base revalidation, refreshed pre-push freshness, protected PR CI and actual
+  merge remain unfinished; no ready-to-merge or completion claim yet.
