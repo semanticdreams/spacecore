@@ -1,10 +1,28 @@
 {
   "artifacts": {
+    "ART-007b3639-8746-407e-abfc-00777be895c5": {
+      "id": "ART-007b3639-8746-407e-abfc-00777be895c5",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-27-activity-owned-presentation.md",
+      "title": "2026-07-27-activity-owned-presentation.md"
+    },
     "ART-00da571e-8da8-4329-bb7f-3bcbc6ee6f13": {
       "id": "ART-00da571e-8da8-4329-bb7f-3bcbc6ee6f13",
       "kind": "test",
       "locator": "assets/lua/tests/test-workflow-store.fnl",
       "title": "test-workflow-store.fnl"
+    },
+    "ART-01602244-d984-408e-a922-558a4fe4f864": {
+      "id": "ART-01602244-d984-408e-a922-558a4fe4f864",
+      "kind": "design",
+      "locator": "docs/dev/features/cef-in-world-browser.md",
+      "title": "cef-in-world-browser.md"
+    },
+    "ART-023e2fcf-7b14-4a50-9670-6d253f0fc717": {
+      "id": "ART-023e2fcf-7b14-4a50-9670-6d253f0fc717",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-15-runtime-fennel-directory-modules-design.md",
+      "title": "2026-09-15-runtime-fennel-directory-modules-design.md"
     },
     "ART-02d98c1b-e036-4697-a0cd-d062047f940c": {
       "content_digest": "3afbc3dcf2e2d85c48fdbc4d6e13786b05a8294ddca6698878d636dcd99909f4",
@@ -18,6 +36,12 @@
       "kind": "code",
       "locator": "assets/lua/entities/relationships.fnl",
       "title": "relationships.fnl"
+    },
+    "ART-03554c0e-eb8c-4d0c-ade4-6e2f9b9db085": {
+      "id": "ART-03554c0e-eb8c-4d0c-ade4-6e2f9b9db085",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-07-hierarchical-focus-navigation-design.md",
+      "title": "2026-10-07-hierarchical-focus-navigation-design.md"
     },
     "ART-056ed83f-b59e-4940-9eec-9453c4a34387": {
       "id": "ART-056ed83f-b59e-4940-9eec-9453c4a34387",
@@ -62,11 +86,23 @@
       "locator": "assets/lua/lazy-text-source.fnl",
       "title": "lazy-text-source.fnl"
     },
+    "ART-0c9f4870-d22d-443e-8fa2-6d142ceae582": {
+      "id": "ART-0c9f4870-d22d-443e-8fa2-6d142ceae582",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-15-reload-boundary-contract-design.md",
+      "title": "2026-10-15-reload-boundary-contract-design.md"
+    },
     "ART-0ebe9a1b-338c-424e-9757-09796bf7581f": {
       "id": "ART-0ebe9a1b-338c-424e-9757-09796bf7581f",
       "kind": "code",
       "locator": "assets/lua/llm/opencode-mcp/bridge.fnl",
       "title": "bridge.fnl"
+    },
+    "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968": {
+      "id": "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-13-activity-camera-boundary.md",
+      "title": "2026-08-13-activity-camera-boundary.md"
     },
     "ART-107382f4-3fc1-42a5-b5ae-b15cdd743fcb": {
       "content_digest": "af9f1b6d02f691425a921c3123cd2a161cfdf594a5b323dc1bb62035c10bf954",
@@ -74,6 +110,12 @@
       "kind": "test",
       "locator": "scripts/tests/test_requirements_render.py",
       "title": "test_requirements_render.py"
+    },
+    "ART-1212bae9-cf6f-4ed8-b55b-59733de6851f": {
+      "id": "ART-1212bae9-cf6f-4ed8-b55b-59733de6851f",
+      "kind": "design",
+      "locator": "docs/dev/features/terrain-heightfield-system.md",
+      "title": "terrain-heightfield-system.md"
     },
     "ART-1234dc5e-771d-4791-8ed6-c5dd746ca145": {
       "id": "ART-1234dc5e-771d-4791-8ed6-c5dd746ca145",
@@ -93,11 +135,29 @@
       "locator": "docs/plans/2026-08-14-graph-authored-agent-workflows.md",
       "title": "2026-08-14-graph-authored-agent-workflows.md"
     },
+    "ART-17ce8a0a-10bf-44b6-aa14-dc8fed73b659": {
+      "id": "ART-17ce8a0a-10bf-44b6-aa14-dc8fed73b659",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-16-bugsink-sentry-error-reporting-design.md",
+      "title": "2026-09-16-bugsink-sentry-error-reporting-design.md"
+    },
+    "ART-182f014f-6138-4cbe-98ed-fa4ad282f75d": {
+      "id": "ART-182f014f-6138-4cbe-98ed-fa4ad282f75d",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-16-windows-desktop-cli-launch.md",
+      "title": "2026-09-16-windows-desktop-cli-launch.md"
+    },
     "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900": {
       "id": "ART-197df1f5-7a84-48d1-a06b-7b2c4fc16900",
       "kind": "design",
       "locator": "docs/specs/2026-09-14-shared-text-interaction-engine-design.md",
       "title": "2026-09-14-shared-text-interaction-engine-design.md"
+    },
+    "ART-1ad41a56-8b01-4b4c-a332-afd0be19295f": {
+      "id": "ART-1ad41a56-8b01-4b4c-a332-afd0be19295f",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-sandbox-toolbar-state.fnl",
+      "title": "test-sandbox-toolbar-state.fnl"
     },
     "ART-1ca16574-87c0-4f45-8114-2089517eab3e": {
       "id": "ART-1ca16574-87c0-4f45-8114-2089517eab3e",
@@ -111,11 +171,29 @@
       "locator": "assets/lua/text-state.fnl",
       "title": "text-state.fnl"
     },
+    "ART-1f20f3bb-8b71-47d4-bb3a-ec3be223cd01": {
+      "id": "ART-1f20f3bb-8b71-47d4-bb3a-ec3be223cd01",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-02-snackbar-system-implementation-plan.md",
+      "title": "2026-10-02-snackbar-system-implementation-plan.md"
+    },
+    "ART-2067b2c2-eedc-4638-8d6d-216b2b64d34d": {
+      "id": "ART-2067b2c2-eedc-4638-8d6d-216b2b64d34d",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-30-native-log-directory-design.md",
+      "title": "2026-07-30-native-log-directory-design.md"
+    },
     "ART-21d9bd54-5822-48f1-b67c-cce768092f0c": {
       "id": "ART-21d9bd54-5822-48f1-b67c-cce768092f0c",
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-08-16-workflow-graph-ux.md",
       "title": "2026-08-16-workflow-graph-ux.md"
+    },
+    "ART-23600410-0a5d-46b3-94d0-bd38cd5c4184": {
+      "id": "ART-23600410-0a5d-46b3-94d0-bd38cd5c4184",
+      "kind": "design",
+      "locator": "docs/specs/2026-10-02-snackbar-system-design.md",
+      "title": "2026-10-02-snackbar-system-design.md"
     },
     "ART-244bad55-88a6-46d3-bdc4-a15135458edf": {
       "id": "ART-244bad55-88a6-46d3-bdc4-a15135458edf",
@@ -128,6 +206,18 @@
       "kind": "design",
       "locator": "docs/specs/2026-09-17-ordered-thought-children-semantics-design.md",
       "title": "2026-09-17-ordered-thought-children-semantics-design.md"
+    },
+    "ART-24d6bd70-e6f2-4ea1-85e8-7206cd71f229": {
+      "id": "ART-24d6bd70-e6f2-4ea1-85e8-7206cd71f229",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-runtime-fennel-path.fnl",
+      "title": "test-runtime-fennel-path.fnl"
+    },
+    "ART-272c8758-3665-4870-9a06-b85fc1241362": {
+      "id": "ART-272c8758-3665-4870-9a06-b85fc1241362",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-16-runtime-asset-overlay.md",
+      "title": "2026-09-16-runtime-asset-overlay.md"
     },
     "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300": {
       "id": "ART-296aa3e4-9e9e-4db3-a6fe-960c29b66300",
@@ -173,6 +263,12 @@
       "locator": "docs/requirements/2026-10-30-task-5-fix-1-validation.md",
       "title": "Task 5 fix 1 observed validation"
     },
+    "ART-322a9b41-6884-4faa-a019-17bc1a0dcfd2": {
+      "id": "ART-322a9b41-6884-4faa-a019-17bc1a0dcfd2",
+      "kind": "design",
+      "locator": "docs/dev/features/panel-transfer-system.md",
+      "title": "panel-transfer-system.md"
+    },
     "ART-32591a81-b586-4591-a539-c45149063603": {
       "id": "ART-32591a81-b586-4591-a539-c45149063603",
       "kind": "implementation_spec",
@@ -191,12 +287,36 @@
       "locator": "docs/specs/2026-07-26-external-unit-mcp-design.md",
       "title": "2026-07-26-external-unit-mcp-design.md"
     },
+    "ART-339eb6c6-b04e-4cd6-93a9-a3f6c3b16b43": {
+      "id": "ART-339eb6c6-b04e-4cd6-93a9-a3f6c3b16b43",
+      "kind": "code",
+      "locator": "assets/lua/activity-surface-boundary.fnl",
+      "title": "activity-surface-boundary.fnl"
+    },
     "ART-36cca881-3bb5-4713-8c2c-13804304efd4": {
       "content_digest": "c38d42afcfb2d612143c39cd79cb49a667f965fac2c55059af7154b8dd8efc04",
       "id": "ART-36cca881-3bb5-4713-8c2c-13804304efd4",
       "kind": "evidence",
       "locator": "docs/requirements/2026-10-30-final-evidence-reconciliation.md",
       "title": "Final bounded evidence and explicit constraint reconciliation"
+    },
+    "ART-372573e3-b490-4dc3-90ae-69603dd590a6": {
+      "id": "ART-372573e3-b490-4dc3-90ae-69603dd590a6",
+      "kind": "design",
+      "locator": "docs/dev/features/stylus-drawing-input.md",
+      "title": "stylus-drawing-input.md"
+    },
+    "ART-376f2584-75b8-4571-88a9-bc5aafd7f4b6": {
+      "id": "ART-376f2584-75b8-4571-88a9-bc5aafd7f4b6",
+      "kind": "code",
+      "locator": "assets/lua/activities.fnl",
+      "title": "activities.fnl"
+    },
+    "ART-393ec78e-caac-4734-a312-a61f9597ca5c": {
+      "id": "ART-393ec78e-caac-4734-a312-a61f9597ca5c",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-25-sandbox-scene-activity.md",
+      "title": "2026-07-25-sandbox-scene-activity.md"
     },
     "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d": {
       "id": "ART-39a56fae-0b56-44ef-8d4d-b68fb3785c7d",
@@ -216,6 +336,18 @@
       "locator": "assets/lua/llm/presets/mcp-sync.fnl",
       "title": "mcp-sync.fnl"
     },
+    "ART-3b60893f-7206-414e-97ca-d18d8b0c3345": {
+      "id": "ART-3b60893f-7206-414e-97ca-d18d8b0c3345",
+      "kind": "code",
+      "locator": "assets/lua/sandbox-toolbar-state.fnl",
+      "title": "sandbox-toolbar-state.fnl"
+    },
+    "ART-3b855794-7788-460d-b609-c326a53a1f60": {
+      "id": "ART-3b855794-7788-460d-b609-c326a53a1f60",
+      "kind": "code",
+      "locator": "assets/lua/hot-reload.fnl",
+      "title": "hot-reload.fnl"
+    },
     "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9": {
       "id": "ART-3e43b8c7-c00d-4271-84ba-e552b77d78b9",
       "kind": "test",
@@ -228,11 +360,29 @@
       "locator": "docs/plans/2026-10-11-opencode-mcp-bridge-core.md",
       "title": "2026-10-11-opencode-mcp-bridge-core.md"
     },
+    "ART-40e098fd-b7f2-4abc-9206-7727908b5068": {
+      "id": "ART-40e098fd-b7f2-4abc-9206-7727908b5068",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-13-activity-camera-boundary-design.md",
+      "title": "2026-08-13-activity-camera-boundary-design.md"
+    },
+    "ART-422cad7a-7fad-4cc8-b090-b1c5cf87e730": {
+      "id": "ART-422cad7a-7fad-4cc8-b090-b1c5cf87e730",
+      "kind": "code",
+      "locator": "src/asset_manager.cpp",
+      "title": "asset_manager.cpp"
+    },
     "ART-42695695-524b-4dfb-8fa0-36fbd00c771a": {
       "id": "ART-42695695-524b-4dfb-8fa0-36fbd00c771a",
       "kind": "code",
       "locator": "assets/lua/graph/capabilities.fnl",
       "title": "capabilities.fnl"
+    },
+    "ART-434cd811-5839-47ce-8cd3-baed4c68a774": {
+      "id": "ART-434cd811-5839-47ce-8cd3-baed4c68a774",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-16-windows-desktop-cli-launch-design.md",
+      "title": "2026-09-16-windows-desktop-cli-launch-design.md"
     },
     "ART-4493c18f-30e8-41a3-b63e-129497ee6537": {
       "id": "ART-4493c18f-30e8-41a3-b63e-129497ee6537",
@@ -270,11 +420,23 @@
       "locator": "assets/lua/graph/outline.fnl",
       "title": "outline.fnl"
     },
+    "ART-4b383f57-47ab-415c-9d36-1faa6f54f3e3": {
+      "id": "ART-4b383f57-47ab-415c-9d36-1faa6f54f3e3",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-activity-surface-boundary.fnl",
+      "title": "test-activity-surface-boundary.fnl"
+    },
     "ART-4c172618-88a6-4e17-a1fd-f241e126f76d": {
       "id": "ART-4c172618-88a6-4e17-a1fd-f241e126f76d",
       "kind": "test",
       "locator": "assets/lua/tests/test-text-editing-port.fnl",
       "title": "test-text-editing-port.fnl"
+    },
+    "ART-4dcdac42-b9a2-4977-9142-3c47b1a520ab": {
+      "id": "ART-4dcdac42-b9a2-4977-9142-3c47b1a520ab",
+      "kind": "code",
+      "locator": "assets/lua/focus.fnl",
+      "title": "focus.fnl"
     },
     "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365": {
       "id": "ART-4e37a463-3cdf-46d7-8e85-c8a3f2c96365",
@@ -295,17 +457,47 @@
       "locator": "assets/lua/entities/dict.fnl",
       "title": "dict.fnl"
     },
+    "ART-5407b9f5-5ec9-4f1b-8867-684e5ce10a9f": {
+      "id": "ART-5407b9f5-5ec9-4f1b-8867-684e5ce10a9f",
+      "kind": "code",
+      "locator": "src/browser_system.cpp",
+      "title": "browser_system.cpp"
+    },
+    "ART-5a504208-866e-4b71-865b-406756dfe4a2": {
+      "id": "ART-5a504208-866e-4b71-865b-406756dfe4a2",
+      "kind": "code",
+      "locator": "assets/lua/panel-transfer.fnl",
+      "title": "panel-transfer.fnl"
+    },
     "ART-5baad141-b7f8-4144-925c-208cd39d6a95": {
       "id": "ART-5baad141-b7f8-4144-925c-208cd39d6a95",
       "kind": "design",
       "locator": "docs/specs/2026-10-01-extensible-leader-command-system-design.md",
       "title": "2026-10-01-extensible-leader-command-system-design.md"
     },
+    "ART-5c499de2-a4ca-462c-8806-2e348a29497e": {
+      "id": "ART-5c499de2-a4ca-462c-8806-2e348a29497e",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-08-06-sandbox-interaction-modes.md",
+      "title": "2026-08-06-sandbox-interaction-modes.md"
+    },
     "ART-5facf444-9ed7-45a4-915a-17074742f5f3": {
       "id": "ART-5facf444-9ed7-45a4-915a-17074742f5f3",
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-entity-capabilities.fnl",
       "title": "test-graph-entity-capabilities.fnl"
+    },
+    "ART-60c9a794-b912-4408-938a-99c8459f5af5": {
+      "id": "ART-60c9a794-b912-4408-938a-99c8459f5af5",
+      "kind": "design",
+      "locator": "docs/dev/features/ffmpeg-video-playback.md",
+      "title": "ffmpeg-video-playback.md"
+    },
+    "ART-61498e77-e39a-49ca-9315-b522381bd7ab": {
+      "id": "ART-61498e77-e39a-49ca-9315-b522381bd7ab",
+      "kind": "design",
+      "locator": "docs/dev/features/activities.md",
+      "title": "activities.md"
     },
     "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662": {
       "id": "ART-621582b4-38a6-4b9e-ac7f-0ded4572f662",
@@ -349,6 +541,12 @@
       "locator": "docs/specs/2026-10-14-entity-type-catalog-design.md",
       "title": "2026-10-14-entity-type-catalog-design.md"
     },
+    "ART-6af7b060-f465-497a-84fa-9d6ee43d20bd": {
+      "id": "ART-6af7b060-f465-497a-84fa-9d6ee43d20bd",
+      "kind": "test",
+      "locator": "tests/test_error_reporting.cpp",
+      "title": "test_error_reporting.cpp"
+    },
     "ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6": {
       "id": "ART-6c040e5b-b1e9-467a-9ef0-c495f319d7a6",
       "kind": "code",
@@ -379,11 +577,23 @@
       "locator": "docs/specs/2026-10-11-opencode-mcp-bridge-core-design.md",
       "title": "2026-10-11-opencode-mcp-bridge-core-design.md"
     },
+    "ART-6d18107f-fc2a-470b-a6f3-c944140b974e": {
+      "id": "ART-6d18107f-fc2a-470b-a6f3-c944140b974e",
+      "kind": "design",
+      "locator": "docs/dev/features/layout-widget-engine.md",
+      "title": "layout-widget-engine.md"
+    },
     "ART-6d9ebbac-0014-4938-a935-1c280cc54524": {
       "id": "ART-6d9ebbac-0014-4938-a935-1c280cc54524",
       "kind": "test",
       "locator": "assets/lua/tests/test-dict-entities.fnl",
       "title": "test-dict-entities.fnl"
+    },
+    "ART-6e4f8ad4-5fb7-46c8-9c2e-9ae6c437f6e7": {
+      "id": "ART-6e4f8ad4-5fb7-46c8-9c2e-9ae6c437f6e7",
+      "kind": "code",
+      "locator": "src/error_reporting.cpp",
+      "title": "error_reporting.cpp"
     },
     "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd": {
       "id": "ART-6ef96c97-9847-4c8e-b7f1-cea8d26d18bd",
@@ -416,6 +626,12 @@
       "locator": "docs/dev/notes/agent-presets.md",
       "title": "agent-presets.md"
     },
+    "ART-74ad2c08-efb5-44b3-8da6-9b6a847a83a4": {
+      "id": "ART-74ad2c08-efb5-44b3-8da6-9b6a847a83a4",
+      "kind": "code",
+      "locator": "src/space_log_path.cpp",
+      "title": "space_log_path.cpp"
+    },
     "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974": {
       "id": "ART-770f48f6-d8c4-4dbc-8d20-2d786ec8c974",
       "kind": "code",
@@ -434,6 +650,12 @@
       "locator": "assets/lua/notebooks/store.fnl",
       "title": "store.fnl"
     },
+    "ART-7acae389-21ef-4991-8831-32ed511c00de": {
+      "id": "ART-7acae389-21ef-4991-8831-32ed511c00de",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-07-hierarchical-focus-navigation.md",
+      "title": "2026-10-07-hierarchical-focus-navigation.md"
+    },
     "ART-7aeee9bb-7334-4def-9500-f0e14a72700c": {
       "id": "ART-7aeee9bb-7334-4def-9500-f0e14a72700c",
       "kind": "code",
@@ -446,11 +668,23 @@
       "locator": "assets/lua/tests/test-agent-workflow-runner.fnl",
       "title": "test-agent-workflow-runner.fnl"
     },
+    "ART-80d01324-3cbb-4867-9705-c3b6df9f742e": {
+      "id": "ART-80d01324-3cbb-4867-9705-c3b6df9f742e",
+      "kind": "code",
+      "locator": "assets/lua/physics-point-grab.fnl",
+      "title": "physics-point-grab.fnl"
+    },
     "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4": {
       "id": "ART-81c18e25-3180-48c1-8b59-6c00888ecbe4",
       "kind": "code",
       "locator": "assets/lua/virtual-input.fnl",
       "title": "virtual-input.fnl"
+    },
+    "ART-82610317-b66c-449b-bd73-2c163b385450": {
+      "id": "ART-82610317-b66c-449b-bd73-2c163b385450",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-30-runtime-asset-discovery.md",
+      "title": "2026-07-30-runtime-asset-discovery.md"
     },
     "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f": {
       "id": "ART-82fcfa0d-c4c5-43e3-a1d3-8eefd8931e1f",
@@ -501,6 +735,18 @@
       "locator": "assets/lua/tests/e2e/test-fs-file-viewer-virtual-input.fnl",
       "title": "test-fs-file-viewer-virtual-input.fnl"
     },
+    "ART-8b9f95be-06da-4494-b968-38eb132502fe": {
+      "id": "ART-8b9f95be-06da-4494-b968-38eb132502fe",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-27-activity-owned-presentation-design.md",
+      "title": "2026-07-27-activity-owned-presentation-design.md"
+    },
+    "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21": {
+      "id": "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-10-15-reload-boundary-contract.md",
+      "title": "2026-10-15-reload-boundary-contract.md"
+    },
     "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f": {
       "id": "ART-8ed1d50d-018f-4df2-80ab-716e71822e3f",
       "kind": "implementation_spec",
@@ -512,6 +758,12 @@
       "kind": "code",
       "locator": "assets/lua/workflows/store.fnl",
       "title": "store.fnl"
+    },
+    "ART-9130321c-b373-40e1-8410-6042a3c58df0": {
+      "id": "ART-9130321c-b373-40e1-8410-6042a3c58df0",
+      "kind": "design",
+      "locator": "docs/specs/2026-08-06-sandbox-interaction-modes-design.md",
+      "title": "2026-08-06-sandbox-interaction-modes-design.md"
     },
     "ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab": {
       "id": "ART-93f6aab0-29c7-4594-a5a3-8f6ec7d3f9ab",
@@ -537,6 +789,12 @@
       "kind": "test",
       "locator": "scripts/tests/test_requirements_workflow_contracts.py",
       "title": "test_requirements_workflow_contracts.py"
+    },
+    "ART-97976783-6dd4-4d15-8649-2732f25699c9": {
+      "id": "ART-97976783-6dd4-4d15-8649-2732f25699c9",
+      "kind": "code",
+      "locator": "src/lua_runtime.cpp",
+      "title": "lua_runtime.cpp"
     },
     "ART-98008e6d-42d2-40cf-b9fe-5c1ea4cf10e5": {
       "id": "ART-98008e6d-42d2-40cf-b9fe-5c1ea4cf10e5",
@@ -574,6 +832,18 @@
       "locator": "assets/lua/tests/test-string-entity-editor.fnl",
       "title": "test-string-entity-editor.fnl"
     },
+    "ART-9dedbc37-6391-4a37-8189-db89a5ec0979": {
+      "id": "ART-9dedbc37-6391-4a37-8189-db89a5ec0979",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-panel-transfer.fnl",
+      "title": "test-panel-transfer.fnl"
+    },
+    "ART-9fd536ea-a329-4395-9494-fcc1843814a4": {
+      "id": "ART-9fd536ea-a329-4395-9494-fcc1843814a4",
+      "kind": "code",
+      "locator": "assets/lua/snackbar-host.fnl",
+      "title": "snackbar-host.fnl"
+    },
     "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca": {
       "id": "ART-9fed509d-aa2b-48ba-a6b6-243a3cf596ca",
       "kind": "test",
@@ -586,11 +856,29 @@
       "locator": "assets/lua/lazy-text-buffer.fnl",
       "title": "lazy-text-buffer.fnl"
     },
+    "ART-a147fbca-73cf-4a56-966b-7824e3841408": {
+      "id": "ART-a147fbca-73cf-4a56-966b-7824e3841408",
+      "kind": "code",
+      "locator": "assets/lua/layout.fnl",
+      "title": "layout.fnl"
+    },
     "ART-a2d9d03b-e8b6-4449-96cb-453fc6e46135": {
       "id": "ART-a2d9d03b-e8b6-4449-96cb-453fc6e46135",
       "kind": "code",
       "locator": "assets/lua/reference-lifecycle/init.fnl",
       "title": "init.fnl"
+    },
+    "ART-a3902b3c-824d-4500-82e6-1cf4e61dae33": {
+      "id": "ART-a3902b3c-824d-4500-82e6-1cf4e61dae33",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-video.fnl",
+      "title": "test-video.fnl"
+    },
+    "ART-a4b95409-006a-43c5-a1d7-2242c3c3ddee": {
+      "id": "ART-a4b95409-006a-43c5-a1d7-2242c3c3ddee",
+      "kind": "code",
+      "locator": "assets/lua/heightfield-terrain.fnl",
+      "title": "heightfield-terrain.fnl"
     },
     "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b": {
       "id": "ART-a516ba17-65dd-479b-85c1-c6bc11dd308b",
@@ -643,11 +931,35 @@
       "locator": "assets/lua/graph/view/string-entity-editor.fnl",
       "title": "string-entity-editor.fnl"
     },
+    "ART-ac97e19d-fcc4-47c5-aef4-5029ca59ff16": {
+      "id": "ART-ac97e19d-fcc4-47c5-aef4-5029ca59ff16",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-units.fnl",
+      "title": "test-units.fnl"
+    },
+    "ART-ac9eda6c-8f01-4207-984f-69c0bd760ac0": {
+      "id": "ART-ac9eda6c-8f01-4207-984f-69c0bd760ac0",
+      "kind": "test",
+      "locator": "tests/test_asset_manager.cpp",
+      "title": "test_asset_manager.cpp"
+    },
     "ART-ae1f5a08-45ec-40ed-8ace-2d14df3a7191": {
       "id": "ART-ae1f5a08-45ec-40ed-8ace-2d14df3a7191",
       "kind": "code",
       "locator": "assets/lua/graph/map.fnl",
       "title": "map.fnl"
+    },
+    "ART-aefd7863-960a-47da-b0a1-d03e856e43fe": {
+      "id": "ART-aefd7863-960a-47da-b0a1-d03e856e43fe",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-activity-retention.fnl",
+      "title": "test-activity-retention.fnl"
+    },
+    "ART-afd4497f-efe1-4243-bb34-88c3e696f9c6": {
+      "id": "ART-afd4497f-efe1-4243-bb34-88c3e696f9c6",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-07-30-native-log-directory.md",
+      "title": "2026-07-30-native-log-directory.md"
     },
     "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea": {
       "id": "ART-b05b1ab6-d674-40f7-a5d2-ba909570a3ea",
@@ -666,6 +978,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-10-08-graph-outline-view.md",
       "title": "2026-10-08-graph-outline-view.md"
+    },
+    "ART-b5564ea2-0a21-419b-93cf-224f8f2f569b": {
+      "id": "ART-b5564ea2-0a21-419b-93cf-224f8f2f569b",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-cef-browser-smoke.fnl",
+      "title": "test-cef-browser-smoke.fnl"
     },
     "ART-b7346d33-ff24-437b-8350-29e3cf618f4c": {
       "content_digest": "4e5d899c6314dafdcf0837d6daebf62f94551f2e92add8af8f8251cfcb1914a5",
@@ -686,6 +1004,12 @@
       "kind": "test",
       "locator": "scripts/tests/test_requirements_store.py",
       "title": "test_requirements_store.py"
+    },
+    "ART-bbf8ab9e-c939-4cdd-a202-d349e3185c17": {
+      "id": "ART-bbf8ab9e-c939-4cdd-a202-d349e3185c17",
+      "kind": "test",
+      "locator": "tests/test_native_logging_integration.cpp",
+      "title": "test_native_logging_integration.cpp"
     },
     "ART-bcf4c87c-bbac-44ce-a779-2be4b2d851e3": {
       "content_digest": "5f85370f63bb6b5bffa4c02047c6ae2aa49e5daf80a64233adb52a75cd546fc8",
@@ -731,6 +1055,12 @@
       "locator": "assets/lua/tests/test-agent-session-migration.fnl",
       "title": "test-agent-session-migration.fnl"
     },
+    "ART-c5a41fc6-b927-4d23-8421-4f1eed85ce63": {
+      "id": "ART-c5a41fc6-b927-4d23-8421-4f1eed85ce63",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-layout.fnl",
+      "title": "test-layout.fnl"
+    },
     "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c": {
       "content_digest": "6ee410190e75b7c60de2f2eb631882ae46e717777c3c62ca81ef805565329cd7",
       "id": "ART-c5b367b4-0d93-4d17-ac2d-24b6bab64e8c",
@@ -744,6 +1074,18 @@
       "locator": "assets/lua/workflows/runner.fnl",
       "title": "runner.fnl"
     },
+    "ART-ca9c0863-077d-468b-9868-6329248aae0e": {
+      "id": "ART-ca9c0863-077d-468b-9868-6329248aae0e",
+      "kind": "code",
+      "locator": "src/lua_video.cpp",
+      "title": "lua_video.cpp"
+    },
+    "ART-cbd4604f-e13c-4e5c-b0b0-f49c01409347": {
+      "id": "ART-cbd4604f-e13c-4e5c-b0b0-f49c01409347",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-15-runtime-fennel-directory-modules.md",
+      "title": "2026-09-15-runtime-fennel-directory-modules.md"
+    },
     "ART-cd646807-6487-4641-baa6-79037d135151": {
       "id": "ART-cd646807-6487-4641-baa6-79037d135151",
       "kind": "code",
@@ -755,6 +1097,18 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-virtual-input.fnl",
       "title": "test-virtual-input.fnl"
+    },
+    "ART-d360acf1-0d73-4aea-b73e-edd492a04aa8": {
+      "id": "ART-d360acf1-0d73-4aea-b73e-edd492a04aa8",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-focus.fnl",
+      "title": "test-focus.fnl"
+    },
+    "ART-d36792d6-23b4-4279-ae47-c5d5cc984656": {
+      "id": "ART-d36792d6-23b4-4279-ae47-c5d5cc984656",
+      "kind": "code",
+      "locator": "assets/lua/padding.fnl",
+      "title": "padding.fnl"
     },
     "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8": {
       "id": "ART-d49471f3-1595-4e87-a833-70d9b7fa63b8",
@@ -769,17 +1123,41 @@
       "locator": "docs/plans/2026-10-29-requirements-driven-engineering.md",
       "title": "2026-10-29-requirements-driven-engineering.md"
     },
+    "ART-d6a36989-cc57-44aa-b9fd-85b2e849934e": {
+      "id": "ART-d6a36989-cc57-44aa-b9fd-85b2e849934e",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-30-runtime-asset-discovery-design.md",
+      "title": "2026-07-30-runtime-asset-discovery-design.md"
+    },
     "ART-d7627634-39c7-4ff6-8aaa-01a27b137e94": {
       "id": "ART-d7627634-39c7-4ff6-8aaa-01a27b137e94",
       "kind": "test",
       "locator": "assets/lua/tests/test-notebooks.fnl",
       "title": "test-notebooks.fnl"
     },
+    "ART-d883ccf0-4bcd-40a8-be82-9eb224d48068": {
+      "id": "ART-d883ccf0-4bcd-40a8-be82-9eb224d48068",
+      "kind": "code",
+      "locator": "assets/lua/drawing/input.fnl",
+      "title": "input.fnl"
+    },
+    "ART-daa1e75a-4924-4a62-a1e2-4bf7428b2070": {
+      "id": "ART-daa1e75a-4924-4a62-a1e2-4bf7428b2070",
+      "kind": "implementation_spec",
+      "locator": "docs/plans/2026-09-16-bugsink-sentry-error-reporting.md",
+      "title": "2026-09-16-bugsink-sentry-error-reporting.md"
+    },
     "ART-dafc623b-133c-4c39-9056-0bb08134675b": {
       "id": "ART-dafc623b-133c-4c39-9056-0bb08134675b",
       "kind": "design",
       "locator": "docs/specs/2026-08-30-lazy-text-buffer-virtual-input-design.md",
       "title": "2026-08-30-lazy-text-buffer-virtual-input-design.md"
+    },
+    "ART-db4c1ef8-80d2-4b1c-8fbf-e1b65388ceaf": {
+      "id": "ART-db4c1ef8-80d2-4b1c-8fbf-e1b65388ceaf",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-snackbar-host.fnl",
+      "title": "test-snackbar-host.fnl"
     },
     "ART-dbf29841-3584-4ca5-a546-7b4eb04531ae": {
       "id": "ART-dbf29841-3584-4ca5-a546-7b4eb04531ae",
@@ -824,6 +1202,12 @@
       "locator": "docs/specs/2026-08-15-workflow-backed-agent-sessions-design.md",
       "title": "2026-08-15-workflow-backed-agent-sessions-design.md"
     },
+    "ART-e210f9a0-29b4-4fc8-8d00-9784bfbefad3": {
+      "id": "ART-e210f9a0-29b4-4fc8-8d00-9784bfbefad3",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-drawing-document.fnl",
+      "title": "test-drawing-document.fnl"
+    },
     "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf": {
       "id": "ART-e2dae7e7-a13b-45d6-af66-1d4780d2c7cf",
       "kind": "implementation_spec",
@@ -835,6 +1219,12 @@
       "kind": "design",
       "locator": "docs/specs/2026-08-16-workflow-graph-ux-design.md",
       "title": "2026-08-16-workflow-graph-ux-design.md"
+    },
+    "ART-e4dc5965-b345-4e06-aa63-38771c1ed5bd": {
+      "id": "ART-e4dc5965-b345-4e06-aa63-38771c1ed5bd",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-drawing-input.fnl",
+      "title": "test-drawing-input.fnl"
     },
     "ART-e6db684a-aeba-4034-837f-d2dd8826a514": {
       "content_digest": "06cd42f9e6cff9389b068edad0ca36c29703f9e6a678823a778d38402f0b7b47",
@@ -855,6 +1245,12 @@
       "kind": "implementation_spec",
       "locator": "docs/plans/2026-09-14-virtual-input-shared-input-policies.md",
       "title": "2026-09-14-virtual-input-shared-input-policies.md"
+    },
+    "ART-eb44c628-5574-4d18-b3b1-6938d8a64fb6": {
+      "id": "ART-eb44c628-5574-4d18-b3b1-6938d8a64fb6",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-heightfield-terrain.fnl",
+      "title": "test-heightfield-terrain.fnl"
     },
     "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e": {
       "id": "ART-ec6709c9-9bdd-4c90-9106-46fa091d779e",
@@ -880,6 +1276,12 @@
       "locator": "assets/lua/graph/nodes/workflow-run-explorer.fnl",
       "title": "workflow-run-explorer.fnl"
     },
+    "ART-ef6033dd-b2bf-4c68-89a3-b340a2f6c7a1": {
+      "id": "ART-ef6033dd-b2bf-4c68-89a3-b340a2f6c7a1",
+      "kind": "design",
+      "locator": "docs/dev/features/core-platform.md",
+      "title": "core-platform.md"
+    },
     "ART-f109955a-9de5-4ac6-8a09-82cff648ef97": {
       "id": "ART-f109955a-9de5-4ac6-8a09-82cff648ef97",
       "kind": "test",
@@ -893,11 +1295,23 @@
       "locator": "scripts/tests/test_requirements_scenarios.py",
       "title": "test_requirements_scenarios.py"
     },
+    "ART-f318ef34-fa79-4779-9e23-a9fc78f89fe7": {
+      "id": "ART-f318ef34-fa79-4779-9e23-a9fc78f89fe7",
+      "kind": "design",
+      "locator": "docs/specs/2026-07-25-sandbox-scene-activity-design.md",
+      "title": "2026-07-25-sandbox-scene-activity-design.md"
+    },
     "ART-f3e79018-c4f8-4035-b370-a45984259711": {
       "id": "ART-f3e79018-c4f8-4035-b370-a45984259711",
       "kind": "test",
       "locator": "assets/lua/tests/test-graph-map.fnl",
       "title": "test-graph-map.fnl"
+    },
+    "ART-f4f32b9d-12a8-44fb-83ae-5246b38b716c": {
+      "id": "ART-f4f32b9d-12a8-44fb-83ae-5246b38b716c",
+      "kind": "test",
+      "locator": "assets/lua/tests/test-padding.fnl",
+      "title": "test-padding.fnl"
     },
     "ART-f50464f9-f9fe-43fa-bd45-86a0ac961323": {
       "id": "ART-f50464f9-f9fe-43fa-bd45-86a0ac961323",
@@ -910,6 +1324,12 @@
       "kind": "test",
       "locator": "assets/lua/tests/test-external-unit-mcp-reload-evidence.fnl",
       "title": "test-external-unit-mcp-reload-evidence.fnl"
+    },
+    "ART-f7d4db46-b9fa-44ed-a4d5-6f915a5df20a": {
+      "id": "ART-f7d4db46-b9fa-44ed-a4d5-6f915a5df20a",
+      "kind": "design",
+      "locator": "docs/dev/widget-ownership-and-teardown.md",
+      "title": "widget-ownership-and-teardown.md"
     },
     "ART-f8788ba4-449f-493d-978e-ba2fb78bb726": {
       "content_digest": "04f24b168b51e88159958ea3f09bc8f88d35062cc1ec1e8967bce32d3ac00355",
@@ -925,6 +1345,12 @@
       "locator": "docs/requirements/2026-10-29-task-5-validation.md",
       "title": "Task 5 observed local validation and limits"
     },
+    "ART-f96fead0-3450-414c-afee-8aa45d567cd4": {
+      "id": "ART-f96fead0-3450-414c-afee-8aa45d567cd4",
+      "kind": "code",
+      "locator": "CMakeLists.txt",
+      "title": "CMakeLists.txt"
+    },
     "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788": {
       "id": "ART-fb40573c-f110-4f48-bd6f-fd7fc3739788",
       "kind": "code",
@@ -936,6 +1362,12 @@
       "kind": "code",
       "locator": "assets/lua/text-input-caret-policy.fnl",
       "title": "text-input-caret-policy.fnl"
+    },
+    "ART-fd16a353-4a18-49c2-89ce-cb3cfcb8a45d": {
+      "id": "ART-fd16a353-4a18-49c2-89ce-cb3cfcb8a45d",
+      "kind": "design",
+      "locator": "docs/specs/2026-09-16-runtime-asset-overlay-design.md",
+      "title": "2026-09-16-runtime-asset-overlay-design.md"
     },
     "ART-fe7ad787-6a08-4913-ae90-76a6cc80c0cb": {
       "content_digest": "3da78ee79c26a0ceb27918a47308440a8d701fda9413e578b6120b5ec472b038",
@@ -7882,6 +8314,2165 @@
       "source": "REQ-59840f6a-b150-495b-bfe4-2b6d8dec5732",
       "target": "REQ-e97a2474-dd88-4105-94c7-600ef82d0778",
       "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2839abc9-07f3-4a5a-9d50-2b1cf751c43e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-runtime-asset-overlay-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-fd16a353-4a18-49c2-89ce-cb3cfcb8a45d",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-629b95db-45b6-4845-8854-b9e6a32b68a5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-30-native-log-directory-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-2067b2c2-eedc-4638-8d6d-216b2b64d34d",
+      "target": "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ba4f408a-ff99-4615-a00e-3ca576528f85",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-bugsink-sentry-error-reporting-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-17ce8a0a-10bf-44b6-aa14-dc8fed73b659",
+      "target": "REQ-1c472bd2-b64f-4919-b4a9-ac3aaea75aa5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0cff6a9d-b1ce-4487-a021-22730048154f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/layout-widget-engine.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-6d18107f-fc2a-470b-a6f3-c944140b974e",
+      "target": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-40bf8063-56ae-4329-baf2-34463a6f1848",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/activities.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-61498e77-e39a-49ca-9315-b522381bd7ab",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-dfd23973-f1a9-4ad5-ba4d-be41ba88554e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-13-activity-camera-boundary-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-40e098fd-b7f2-4abc-9206-7727908b5068",
+      "target": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-557a4650-4f94-4c5c-991e-dc61e182b5d8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-06-sandbox-interaction-modes-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-9130321c-b373-40e1-8410-6042a3c58df0",
+      "target": "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-744aab31-8030-4a3a-9d0f-f157aeacd47b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/terrain-heightfield-system.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-1212bae9-cf6f-4ed8-b55b-59733de6851f",
+      "target": "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f81e63f0-fa7f-45b2-a906-40778f7fd7a5",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/stylus-drawing-input.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-372573e3-b490-4dc3-90ae-69603dd590a6",
+      "target": "REQ-8d6d78dd-7dbc-4a4a-85bb-06078e028124",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a69c9d20-3fbb-4467-b49e-712ff31ebb7c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/cef-in-world-browser.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-01602244-d984-408e-a922-558a4fe4f864",
+      "target": "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-abd04e75-2fc3-42ed-a182-c010513c05e3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/ffmpeg-video-playback.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-60c9a794-b912-4408-938a-99c8459f5af5",
+      "target": "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e6f81b57-2768-4200-ae4a-6e67ce9c50f6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reload-boundary-contract-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-0c9f4870-d22d-443e-8fa2-6d142ceae582",
+      "target": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-76acfefb-ab9f-4f79-bb5c-604d1957805e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-07-hierarchical-focus-navigation-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-03554c0e-eb8c-4d0c-ade4-6e2f9b9db085",
+      "target": "REQ-601ebbac-e437-42a6-a6fe-57b82f142857",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b335683a-3ae6-42c4-a9cb-d96ff6d50728",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-02-snackbar-system-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-23600410-0a5d-46b3-94d0-bd38cd5c4184",
+      "target": "REQ-2e30beb0-645a-4b43-9e8b-321f28165f00",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f4f72152-5626-42a5-bc90-f1d69a3c6a57",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-windows-desktop-cli-launch-design.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-434cd811-5839-47ce-8cd3-baed4c68a774",
+      "target": "REQ-2b7311e9-771e-418f-9b64-c634fc8d40ea",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-745e0e07-6a59-4c34-9238-50cfc5259d44",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/panel-transfer-system.md"
+      },
+      "rationale": "Inspected original contract describes this bounded platform obligation; definition, not verification.",
+      "retracted": false,
+      "source": "ART-322a9b41-6884-4faa-a019-17bc1a0dcfd2",
+      "target": "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-47e17926-6b92-43f1-85d0-bcd800024884",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/widget-ownership-and-teardown.md"
+      },
+      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "retracted": false,
+      "source": "ART-f7d4db46-b9fa-44ed-a4d5-6f915a5df20a",
+      "target": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-514b9b0c-6a65-48a4-930e-96306ad6933f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-25-sandbox-scene-activity-design.md"
+      },
+      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "retracted": false,
+      "source": "ART-f318ef34-fa79-4779-9e23-a9fc78f89fe7",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-39089c29-b03a-468a-95e8-66faa8b81249",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-27-activity-owned-presentation-design.md"
+      },
+      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "retracted": false,
+      "source": "ART-8b9f95be-06da-4494-b968-38eb132502fe",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-433bc3a0-9911-45b9-8576-8080e3dbb466",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-30-runtime-asset-discovery-design.md"
+      },
+      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "retracted": false,
+      "source": "ART-d6a36989-cc57-44aa-b9fd-85b2e849934e",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-24c64048-49b4-4854-a40c-08ac6d900853",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-15-runtime-fennel-directory-modules-design.md"
+      },
+      "rationale": "Supporting contract addresses this obligation; earlier asset precedence is historical, later overlay explicitly changes that policy.",
+      "retracted": false,
+      "source": "ART-023e2fcf-7b14-4a50-9670-6d253f0fc717",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3a4ff40e-bb4b-4052-b05c-76fa2ab9d2af",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The existing core goal source enumerates native engine/widget/media/reload interactions, retaining qualitative stability/performance gaps.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/core-platform.md"
+      },
+      "rationale": "The existing core goal source enumerates native engine/widget/media/reload interactions, retaining qualitative stability/performance gaps.",
+      "retracted": false,
+      "source": "ART-ef6033dd-b2bf-4c68-89a3-b340a2f6c7a1",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-abdd3190-307c-4664-b9d1-1a6be7d9ad76",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-30-runtime-asset-discovery.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-82610317-b66c-449b-bd73-2c163b385450",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f132328d-7076-4651-a8ac-75fdc35b8448",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-30-runtime-asset-discovery.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-82610317-b66c-449b-bd73-2c163b385450",
+      "target": "ART-d6a36989-cc57-44aa-b9fd-85b2e849934e",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b6508357-9291-4f7b-a40e-2c3b200ee435",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-16-runtime-asset-overlay.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-272c8758-3665-4870-9a06-b85fc1241362",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d24bcd22-bca7-4519-805a-8d96b89fe0cb",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-16-runtime-asset-overlay.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-272c8758-3665-4870-9a06-b85fc1241362",
+      "target": "ART-fd16a353-4a18-49c2-89ce-cb3cfcb8a45d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-8f457917-c9fe-49fd-ab35-c667bbbf4af9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-15-runtime-fennel-directory-modules.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-cbd4604f-e13c-4e5c-b0b0-f49c01409347",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b35dc058-e3b0-43d8-b3a8-cd016b1ea6e4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-15-runtime-fennel-directory-modules.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-cbd4604f-e13c-4e5c-b0b0-f49c01409347",
+      "target": "ART-023e2fcf-7b14-4a50-9670-6d253f0fc717",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-318f94ed-c838-4f2e-9c87-6ab98a5750e4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-30-native-log-directory.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-afd4497f-efe1-4243-bb34-88c3e696f9c6",
+      "target": "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7c27ed38-f298-4a4a-9343-a4073c777e04",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-30-native-log-directory.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-afd4497f-efe1-4243-bb34-88c3e696f9c6",
+      "target": "ART-2067b2c2-eedc-4638-8d6d-216b2b64d34d",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-45ec2df1-ef2d-40d3-8372-08119d7e4a52",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-16-bugsink-sentry-error-reporting.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-daa1e75a-4924-4a62-a1e2-4bf7428b2070",
+      "target": "REQ-1c472bd2-b64f-4919-b4a9-ac3aaea75aa5",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e8b6c4f2-652e-4294-9fdf-66ad929d89c1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-16-bugsink-sentry-error-reporting.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-daa1e75a-4924-4a62-a1e2-4bf7428b2070",
+      "target": "ART-17ce8a0a-10bf-44b6-aa14-dc8fed73b659",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-47b0cf37-16d7-422a-93a0-129d2d6c9744",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-25-sandbox-scene-activity.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-393ec78e-caac-4734-a312-a61f9597ca5c",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-196ea368-d946-49d7-8244-7aa0a13a066f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-25-sandbox-scene-activity.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-393ec78e-caac-4734-a312-a61f9597ca5c",
+      "target": "ART-f318ef34-fa79-4779-9e23-a9fc78f89fe7",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e68c3301-5537-45a5-a5c2-d9ebebadd9f3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-27-activity-owned-presentation.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-007b3639-8746-407e-abfc-00777be895c5",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e2965dc0-5f8f-42ae-9c9d-6402c0b73bc2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-07-27-activity-owned-presentation.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-007b3639-8746-407e-abfc-00777be895c5",
+      "target": "ART-8b9f95be-06da-4494-b968-38eb132502fe",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-79f5e03a-ec5e-46b9-a274-c618ef4a52a6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-13-activity-camera-boundary.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968",
+      "target": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ed1e5198-ba2e-40ed-9368-ff5dce321058",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-13-activity-camera-boundary.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968",
+      "target": "ART-40e098fd-b7f2-4abc-9206-7727908b5068",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5dd74181-7429-4d62-9e46-518e26582a75",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-06-sandbox-interaction-modes.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-5c499de2-a4ca-462c-8806-2e348a29497e",
+      "target": "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-eea42d6f-f41c-4068-9473-a80fb7cbbdc0",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-08-06-sandbox-interaction-modes.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-5c499de2-a4ca-462c-8806-2e348a29497e",
+      "target": "ART-9130321c-b373-40e1-8410-6042a3c58df0",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fd8ce333-7cb8-4d18-a3a7-b1e8e54a7b92",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-15-reload-boundary-contract.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21",
+      "target": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-99c6d7b3-ea73-498e-b0b3-afc8ebf6408f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-15-reload-boundary-contract.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21",
+      "target": "ART-0c9f4870-d22d-443e-8fa2-6d142ceae582",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-63df50c7-baa0-4a09-bd3d-60468adcc274",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-07-hierarchical-focus-navigation.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-7acae389-21ef-4991-8831-32ed511c00de",
+      "target": "REQ-601ebbac-e437-42a6-a6fe-57b82f142857",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7719d2b7-748c-48a0-81dd-522a9561c000",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-07-hierarchical-focus-navigation.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-7acae389-21ef-4991-8831-32ed511c00de",
+      "target": "ART-03554c0e-eb8c-4d0c-ade4-6e2f9b9db085",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4330a3ce-92b1-4758-aa8e-0de465668955",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-02-snackbar-system-implementation-plan.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-1f20f3bb-8b71-47d4-bb3a-ec3be223cd01",
+      "target": "REQ-2e30beb0-645a-4b43-9e8b-321f28165f00",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-475b83e2-2efa-4266-82f8-5992bb6e8e6c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-10-02-snackbar-system-implementation-plan.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-1f20f3bb-8b71-47d4-bb3a-ec3be223cd01",
+      "target": "ART-23600410-0a5d-46b3-94d0-bd38cd5c4184",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-50a0cf4e-a025-47e6-96ba-c401a417f87b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-16-windows-desktop-cli-launch.md"
+      },
+      "rationale": "Actual implementation plan specifies this bounded contract; opening architecture/file map inspected, later task bodies not claimed fully read.",
+      "retracted": false,
+      "source": "ART-182f014f-6138-4cbe-98ed-fa4ad282f75d",
+      "target": "REQ-2b7311e9-771e-418f-9b64-c634fc8d40ea",
+      "type": "addresses"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7a5fafdd-b7e6-4ae3-8a56-b08460f3a9f3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/plans/2026-09-16-windows-desktop-cli-launch.md"
+      },
+      "rationale": "Plan names and operationalizes the matching original design, without a synthetic plan or completion inference.",
+      "retracted": false,
+      "source": "ART-182f014f-6138-4cbe-98ed-fa4ad282f75d",
+      "target": "ART-434cd811-5839-47ce-8cd3-baed4c68a774",
+      "type": "realizes"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-14e028b2-2458-4da3-a230-5f92b2d27e8c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/asset_manager.cpp"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-422cad7a-7fad-4cc8-b090-b1c5cf87e730",
+      "target": "ART-272c8758-3665-4870-9a06-b85fc1241362",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-43d41b45-4c2a-48e1-b9df-2f4232bf7bd4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/lua_runtime.cpp"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-97976783-6dd4-4d15-8649-2732f25699c9",
+      "target": "ART-272c8758-3665-4870-9a06-b85fc1241362",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-676268cb-d92a-4655-803d-2c5b537676f9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/lua_runtime.cpp"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-97976783-6dd4-4d15-8649-2732f25699c9",
+      "target": "ART-cbd4604f-e13c-4e5c-b0b0-f49c01409347",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-992a0c0d-6465-4f93-91bf-f015831c3e76",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/space_log_path.cpp"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-74ad2c08-efb5-44b3-8da6-9b6a847a83a4",
+      "target": "ART-afd4497f-efe1-4243-bb34-88c3e696f9c6",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-537ebb09-929a-49e9-9d0d-273fe3466618",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:src/error_reporting.cpp"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-6e4f8ad4-5fb7-46c8-9c2e-9ae6c437f6e7",
+      "target": "ART-daa1e75a-4924-4a62-a1e2-4bf7428b2070",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-42ca3ffb-a433-4934-b2c3-0f598af35895",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/activities.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-376f2584-75b8-4571-88a9-bc5aafd7f4b6",
+      "target": "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-103bd709-66ff-4c32-bced-f07009eb2033",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/activity-surface-boundary.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-339eb6c6-b04e-4cd6-93a9-a3f6c3b16b43",
+      "target": "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-35dacf14-fd8f-424b-b856-f8713d2d3c1a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/sandbox-toolbar-state.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-3b60893f-7206-414e-97ca-d18d8b0c3345",
+      "target": "ART-5c499de2-a4ca-462c-8806-2e348a29497e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e651d112-8392-44fc-821b-fd791f66bfda",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/physics-point-grab.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-80d01324-3cbb-4867-9705-c3b6df9f742e",
+      "target": "ART-5c499de2-a4ca-462c-8806-2e348a29497e",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ad9d7968-d91c-4c4d-a534-de55065fd181",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/hot-reload.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-3b855794-7788-460d-b609-c326a53a1f60",
+      "target": "ART-8c4f1ef8-d789-4dbb-8412-14b214647d21",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ba70b9d0-7099-4d84-9a67-dbfd7b9588ad",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/focus.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-4dcdac42-b9a2-4977-9142-3c47b1a520ab",
+      "target": "ART-7acae389-21ef-4991-8831-32ed511c00de",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-48ce569a-0a71-480b-81d0-0b75dabbed10",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/snackbar-host.fnl"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-9fd536ea-a329-4395-9494-fcc1843814a4",
+      "target": "ART-1f20f3bb-8b71-47d4-bb3a-ec3be223cd01",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5ef75e1f-bc2b-404d-93c1-c5b452a17ec7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:CMakeLists.txt"
+      },
+      "rationale": "Sampled actual production path implements the named plan boundary; not an assertion of whole-plan coverage.",
+      "retracted": false,
+      "source": "ART-f96fead0-3450-414c-afee-8aa45d567cd4",
+      "target": "ART-182f014f-6138-4cbe-98ed-fa4ad282f75d",
+      "type": "implements"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5be42ef8-19d8-4167-bc1f-77b07cb8d695",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Lookup precedence, fallbacks and searched-path diagnostic assertions sampled at L150-379.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_asset_manager.cpp"
+      },
+      "rationale": "Lookup precedence, fallbacks and searched-path diagnostic assertions sampled at L150-379.",
+      "retracted": false,
+      "source": "ART-ac9eda6c-8f01-4207-984f-69c0bd760ac0",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3eedf1ef-e31d-4960-960e-bbf12b57b835",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Lookup precedence, fallbacks and searched-path diagnostic assertions sampled at L150-379.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_asset_manager.cpp"
+      },
+      "rationale": "Lookup precedence, fallbacks and searched-path diagnostic assertions sampled at L150-379.",
+      "retracted": false,
+      "source": "ART-ac9eda6c-8f01-4207-984f-69c0bd760ac0",
+      "target": "ART-422cad7a-7fad-4cc8-b090-b1c5cf87e730",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e5bde637-27d1-4e31-a709-e099a1a78a8c",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual directory module and macro-import exports asserted; environment-isolation registration still needs separate inspection.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-runtime-fennel-path.fnl"
+      },
+      "rationale": "Actual directory module and macro-import exports asserted; environment-isolation registration still needs separate inspection.",
+      "retracted": false,
+      "source": "ART-24d6bd70-e6f2-4ea1-85e8-7206cd71f229",
+      "target": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c22ddfa7-8464-4d18-95f4-e40cbd4a4d1d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual directory module and macro-import exports asserted; environment-isolation registration still needs separate inspection.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-runtime-fennel-path.fnl"
+      },
+      "rationale": "Actual directory module and macro-import exports asserted; environment-isolation registration still needs separate inspection.",
+      "retracted": false,
+      "source": "ART-24d6bd70-e6f2-4ea1-85e8-7206cd71f229",
+      "target": "ART-97976783-6dd4-4d15-8649-2732f25699c9",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-793b1c97-a966-4fbb-b101-a40254757399",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual invalid log-path exit/diagnostic/no-CWD-gl.log and dotenv isolation assertions sampled at L180-366.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_native_logging_integration.cpp"
+      },
+      "rationale": "Actual invalid log-path exit/diagnostic/no-CWD-gl.log and dotenv isolation assertions sampled at L180-366.",
+      "retracted": false,
+      "source": "ART-bbf8ab9e-c939-4cdd-a202-d349e3185c17",
+      "target": "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-31c75a1c-9ed7-4294-82bf-a9537ebbb036",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual invalid log-path exit/diagnostic/no-CWD-gl.log and dotenv isolation assertions sampled at L180-366.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_native_logging_integration.cpp"
+      },
+      "rationale": "Actual invalid log-path exit/diagnostic/no-CWD-gl.log and dotenv isolation assertions sampled at L180-366.",
+      "retracted": false,
+      "source": "ART-bbf8ab9e-c939-4cdd-a202-d349e3185c17",
+      "target": "ART-74ad2c08-efb5-44b3-8da6-9b6a847a83a4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-58cbf581-702c-4986-8d34-78c379d0f454",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Disabled/invalid DSN, local delivery and bounded slow/unavailable fixture assertions inspected, not executed.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_error_reporting.cpp"
+      },
+      "rationale": "Disabled/invalid DSN, local delivery and bounded slow/unavailable fixture assertions inspected, not executed.",
+      "retracted": false,
+      "source": "ART-6af7b060-f465-497a-84fa-9d6ee43d20bd",
+      "target": "REQ-1c472bd2-b64f-4919-b4a9-ac3aaea75aa5",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1f223a7c-7257-4a60-b945-6c34beab14b6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Disabled/invalid DSN, local delivery and bounded slow/unavailable fixture assertions inspected, not executed.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:tests/test_error_reporting.cpp"
+      },
+      "rationale": "Disabled/invalid DSN, local delivery and bounded slow/unavailable fixture assertions inspected, not executed.",
+      "retracted": false,
+      "source": "ART-6af7b060-f465-497a-84fa-9d6ee43d20bd",
+      "target": "ART-6e4f8ad4-5fb7-46c8-9c2e-9ae6c437f6e7",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ca202e16-b7d6-4d12-a139-44c3654187e9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual dirt tracking, clipped and rotated intersection assertions sampled at L1-130.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-layout.fnl"
+      },
+      "rationale": "Actual dirt tracking, clipped and rotated intersection assertions sampled at L1-130.",
+      "retracted": false,
+      "source": "ART-c5a41fc6-b927-4d23-8421-4f1eed85ce63",
+      "target": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-98f3cd00-743f-4926-9875-c1aef9ca552f",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual dirt tracking, clipped and rotated intersection assertions sampled at L1-130.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-layout.fnl"
+      },
+      "rationale": "Actual dirt tracking, clipped and rotated intersection assertions sampled at L1-130.",
+      "retracted": false,
+      "source": "ART-c5a41fc6-b927-4d23-8421-4f1eed85ce63",
+      "target": "ART-a147fbca-73cf-4a56-966b-7824e3841408",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4fc506a3-3853-4d53-a55a-06e808df6ce4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual child transform, size and drop-called assertions inspected; boolean does not prove every descendant exactly once.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-padding.fnl"
+      },
+      "rationale": "Actual child transform, size and drop-called assertions inspected; boolean does not prove every descendant exactly once.",
+      "retracted": false,
+      "source": "ART-f4f32b9d-12a8-44fb-83ae-5246b38b716c",
+      "target": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c6afe3db-635f-43f8-8cf1-8d8fc3843456",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual child transform, size and drop-called assertions inspected; boolean does not prove every descendant exactly once.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-padding.fnl"
+      },
+      "rationale": "Actual child transform, size and drop-called assertions inspected; boolean does not prove every descendant exactly once.",
+      "retracted": false,
+      "source": "ART-f4f32b9d-12a8-44fb-83ae-5246b38b716c",
+      "target": "ART-d36792d6-23b4-4279-ae47-c5d5cc984656",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c19a01e8-7246-4e60-b146-8e433a8d5527",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual graph/drawing/board presentation identity retention and inactive hiding assertions at L148-190.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-activity-retention.fnl"
+      },
+      "rationale": "Actual graph/drawing/board presentation identity retention and inactive hiding assertions at L148-190.",
+      "retracted": false,
+      "source": "ART-aefd7863-960a-47da-b0a1-d03e856e43fe",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-853bb5d3-ead3-4ac9-91dd-5cf6cbcf6e07",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual graph/drawing/board presentation identity retention and inactive hiding assertions at L148-190.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-activity-retention.fnl"
+      },
+      "rationale": "Actual graph/drawing/board presentation identity retention and inactive hiding assertions at L148-190.",
+      "retracted": false,
+      "source": "ART-aefd7863-960a-47da-b0a1-d03e856e43fe",
+      "target": "ART-376f2584-75b8-4571-88a9-bc5aafd7f4b6",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-48148049-fe22-4da9-81b1-faa6fd4f1ef4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual dynamic foreign-slot denial and stale slot visibility/interactivity assertions at L89-270.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-activity-surface-boundary.fnl"
+      },
+      "rationale": "Actual dynamic foreign-slot denial and stale slot visibility/interactivity assertions at L89-270.",
+      "retracted": false,
+      "source": "ART-4b383f57-47ab-415c-9d36-1faa6f54f3e3",
+      "target": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0e90cd0e-a41d-4dcc-9743-43c7c77889ca",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual dynamic foreign-slot denial and stale slot visibility/interactivity assertions at L89-270.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-activity-surface-boundary.fnl"
+      },
+      "rationale": "Actual dynamic foreign-slot denial and stale slot visibility/interactivity assertions at L89-270.",
+      "retracted": false,
+      "source": "ART-4b383f57-47ab-415c-9d36-1faa6f54f3e3",
+      "target": "ART-339eb6c6-b04e-4cd6-93a9-a3f6c3b16b43",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4180c51f-4216-4f19-9954-97e26d5acb11",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual dynamic foreign-slot denial and stale slot visibility/interactivity assertions at L89-270.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-activity-surface-boundary.fnl"
+      },
+      "rationale": "Actual dynamic foreign-slot denial and stale slot visibility/interactivity assertions at L89-270.",
+      "retracted": false,
+      "source": "ART-4b383f57-47ab-415c-9d36-1faa6f54f3e3",
+      "target": "ART-376f2584-75b8-4571-88a9-bc5aafd7f4b6",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0c8fd3a1-7139-4542-97a3-d24abaf0d94a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual all-mode validation, legacy migration and absence of runtime alias assertions inspected.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-sandbox-toolbar-state.fnl"
+      },
+      "rationale": "Actual all-mode validation, legacy migration and absence of runtime alias assertions inspected.",
+      "retracted": false,
+      "source": "ART-1ad41a56-8b01-4b4c-a332-afd0be19295f",
+      "target": "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-adecc52a-99c5-4b36-92f6-0221b445abd4",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual all-mode validation, legacy migration and absence of runtime alias assertions inspected.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-sandbox-toolbar-state.fnl"
+      },
+      "rationale": "Actual all-mode validation, legacy migration and absence of runtime alias assertions inspected.",
+      "retracted": false,
+      "source": "ART-1ad41a56-8b01-4b4c-a332-afd0be19295f",
+      "target": "ART-3b60893f-7206-414e-97ca-d18d8b0c3345",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fcde6913-e87a-4bfd-a7fa-789512ab0e90",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual chunk normalization and falling-body/raised-terrain collision assertions L142-190 and779-893; brushes/persistence not established.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-heightfield-terrain.fnl"
+      },
+      "rationale": "Actual chunk normalization and falling-body/raised-terrain collision assertions L142-190 and779-893; brushes/persistence not established.",
+      "retracted": false,
+      "source": "ART-eb44c628-5574-4d18-b3b1-6938d8a64fb6",
+      "target": "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bf0d6059-878a-438c-9411-3b2f6a509a2d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual chunk normalization and falling-body/raised-terrain collision assertions L142-190 and779-893; brushes/persistence not established.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-heightfield-terrain.fnl"
+      },
+      "rationale": "Actual chunk normalization and falling-body/raised-terrain collision assertions L142-190 and779-893; brushes/persistence not established.",
+      "retracted": false,
+      "source": "ART-eb44c628-5574-4d18-b3b1-6938d8a64fb6",
+      "target": "ART-a4b95409-006a-43c5-a1d7-2242c3c3ddee",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-63c71d2b-0108-4a11-ad00-c02fd5002f7b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual active-input/graph command isolation and pen-tool gesture assertions at L57-200.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-drawing-input.fnl"
+      },
+      "rationale": "Actual active-input/graph command isolation and pen-tool gesture assertions at L57-200.",
+      "retracted": false,
+      "source": "ART-e4dc5965-b345-4e06-aa63-38771c1ed5bd",
+      "target": "REQ-8d6d78dd-7dbc-4a4a-85bb-06078e028124",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-409bbd91-73e3-42c8-afe0-7926f0349669",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual active-input/graph command isolation and pen-tool gesture assertions at L57-200.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-drawing-input.fnl"
+      },
+      "rationale": "Actual active-input/graph command isolation and pen-tool gesture assertions at L57-200.",
+      "retracted": false,
+      "source": "ART-e4dc5965-b345-4e06-aa63-38771c1ed5bd",
+      "target": "ART-d883ccf0-4bcd-40a8-be82-9eb224d48068",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-5dff00e9-5dac-448b-9c4b-fa2ec2027f87",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual raster sidecar persistence, zero-pressure visibility and unloaded-tile preservation assertions L1380-1444; controller chain not fully traced.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-drawing-document.fnl"
+      },
+      "rationale": "Actual raster sidecar persistence, zero-pressure visibility and unloaded-tile preservation assertions L1380-1444; controller chain not fully traced.",
+      "retracted": false,
+      "source": "ART-e210f9a0-29b4-4fc8-8d00-9784bfbefad3",
+      "target": "REQ-8d6d78dd-7dbc-4a4a-85bb-06078e028124",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7568e7f9-cbe3-48c0-9ed5-d00d1e460fcd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual data-URL surface creation and texture-allocated/positive-paint-count assertions inspected; input routing not asserted here.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-cef-browser-smoke.fnl"
+      },
+      "rationale": "Actual data-URL surface creation and texture-allocated/positive-paint-count assertions inspected; input routing not asserted here.",
+      "retracted": false,
+      "source": "ART-b5564ea2-0a21-419b-93cf-224f8f2f569b",
+      "target": "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-26954f30-dc4e-4e4f-9d57-67dbf7e97554",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual data-URL surface creation and texture-allocated/positive-paint-count assertions inspected; input routing not asserted here.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-cef-browser-smoke.fnl"
+      },
+      "rationale": "Actual data-URL surface creation and texture-allocated/positive-paint-count assertions inspected; input routing not asserted here.",
+      "retracted": false,
+      "source": "ART-b5564ea2-0a21-419b-93cf-224f8f2f569b",
+      "target": "ART-5407b9f5-5ec9-4f1b-8867-684e5ce10a9f",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d3c58c00-9cbc-4232-9cca-2e729c8b1c52",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual texture readiness/dimensions, seek/end, pause stability/resume and loop assertions L24-146; no audio quality observation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-video.fnl"
+      },
+      "rationale": "Actual texture readiness/dimensions, seek/end, pause stability/resume and loop assertions L24-146; no audio quality observation.",
+      "retracted": false,
+      "source": "ART-a3902b3c-824d-4500-82e6-1cf4e61dae33",
+      "target": "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b89c1f40-0c33-45b3-ac31-ba2a94b114ac",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual texture readiness/dimensions, seek/end, pause stability/resume and loop assertions L24-146; no audio quality observation.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-video.fnl"
+      },
+      "rationale": "Actual texture readiness/dimensions, seek/end, pause stability/resume and loop assertions L24-146; no audio quality observation.",
+      "retracted": false,
+      "source": "ART-a3902b3c-824d-4500-82e6-1cf4e61dae33",
+      "target": "ART-ca9c0863-077d-468b-9868-6329248aae0e",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-18deb849-f40c-49b6-bc1c-0d28aa374de7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual deferred-wrapper no-inline-unload and final-target-only lifecycle matrix L583-685 inspected.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-units.fnl"
+      },
+      "rationale": "Actual deferred-wrapper no-inline-unload and final-target-only lifecycle matrix L583-685 inspected.",
+      "retracted": false,
+      "source": "ART-ac97e19d-fcc4-47c5-aef4-5029ca59ff16",
+      "target": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e364ec3b-3fcd-4633-bb75-d99912a17edd",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual deferred-wrapper no-inline-unload and final-target-only lifecycle matrix L583-685 inspected.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-units.fnl"
+      },
+      "rationale": "Actual deferred-wrapper no-inline-unload and final-target-only lifecycle matrix L583-685 inspected.",
+      "retracted": false,
+      "source": "ART-ac97e19d-fcc4-47c5-aef4-5029ca59ff16",
+      "target": "ART-3b855794-7788-460d-b609-c326a53a1f60",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fa2548a6-09e4-46b7-b6a9-3b00b2f8d495",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual first/remembered entry, nearest nested exit, closed-scope pruning and directional isolation L375-522.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-focus.fnl"
+      },
+      "rationale": "Actual first/remembered entry, nearest nested exit, closed-scope pruning and directional isolation L375-522.",
+      "retracted": false,
+      "source": "ART-d360acf1-0d73-4aea-b73e-edd492a04aa8",
+      "target": "REQ-601ebbac-e437-42a6-a6fe-57b82f142857",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-0dede20d-4a1b-4a01-bbb5-30efe84814d0",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual first/remembered entry, nearest nested exit, closed-scope pruning and directional isolation L375-522.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-focus.fnl"
+      },
+      "rationale": "Actual first/remembered entry, nearest nested exit, closed-scope pruning and directional isolation L375-522.",
+      "retracted": false,
+      "source": "ART-d360acf1-0d73-4aea-b73e-edd492a04aa8",
+      "target": "ART-4dcdac42-b9a2-4977-9142-3c47b1a520ab",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9b47c5cc-3e33-420e-abf5-3fd7501ba196",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual host-required manager, child exactly-once drop and disconnect assertions L99-157.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-snackbar-host.fnl"
+      },
+      "rationale": "Actual host-required manager, child exactly-once drop and disconnect assertions L99-157.",
+      "retracted": false,
+      "source": "ART-db4c1ef8-80d2-4b1c-8fbf-e1b65388ceaf",
+      "target": "REQ-2e30beb0-645a-4b43-9e8b-321f28165f00",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3aa9e624-b933-4534-9b3a-938c5d6773d2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual host-required manager, child exactly-once drop and disconnect assertions L99-157.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-snackbar-host.fnl"
+      },
+      "rationale": "Actual host-required manager, child exactly-once drop and disconnect assertions L99-157.",
+      "retracted": false,
+      "source": "ART-db4c1ef8-80d2-4b1c-8fbf-e1b65388ceaf",
+      "target": "ART-9fd536ea-a329-4395-9494-fcc1843814a4",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6a0175e9-d4f4-4774-ad4d-7ebb98054c86",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual failed/thrown source detach assertions preserve source and release destination L597-644; complete atomicity not proven.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-panel-transfer.fnl"
+      },
+      "rationale": "Actual failed/thrown source detach assertions preserve source and release destination L597-644; complete atomicity not proven.",
+      "retracted": false,
+      "source": "ART-9dedbc37-6391-4a37-8189-db89a5ec0979",
+      "target": "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27",
+      "type": "verifies"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-90ee1b5e-fbba-4fde-ae65-2fc50837dce9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Actual failed/thrown source detach assertions preserve source and release destination L597-644; complete atomicity not proven.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:assets/lua/tests/test-panel-transfer.fnl"
+      },
+      "rationale": "Actual failed/thrown source detach assertions preserve source and release destination L597-644; complete atomicity not proven.",
+      "retracted": false,
+      "source": "ART-9dedbc37-6391-4a37-8189-db89a5ec0979",
+      "target": "ART-5a504208-866e-4b71-865b-406756dfe4a2",
+      "type": "exercises"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-2e9e3e26-b3ad-4458-a05c-fd4aeba9a83a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-runtime-asset-overlay-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-faf241f9-4ce1-44c1-a1b7-6c8b4da629cb",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-30-native-log-directory-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-36df2f2c-1659-4224-bac8-59ce50b8c7a9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-bugsink-sentry-error-reporting-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-1c472bd2-b64f-4919-b4a9-ac3aaea75aa5",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f744b720-207b-47f4-b726-903b8225dce8",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/layout-widget-engine.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c70cb745-a280-4816-ba01-8af82932b957",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/activities.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-672d3294-1946-4b1b-95d9-ba73cf3ba07b",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/activities.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "target": "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b2cf7237-3910-4994-9864-9c1f46c03df1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-06-sandbox-interaction-modes-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-4d6ad453-d28f-40c7-ad29-465495aeb4e2",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-06-sandbox-interaction-modes-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e",
+      "target": "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-cb50e7ee-68de-4be5-88a7-b42512846c12",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/terrain-heightfield-system.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bf91f981-a774-408c-9c01-9c56d211f59e",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/terrain-heightfield-system.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378",
+      "target": "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3d8e89b6-8f0e-4a39-a43a-435b981cbbd6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/stylus-drawing-input.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-8d6d78dd-7dbc-4a4a-85bb-06078e028124",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-67686653-4a57-4224-85ac-deab97cb1f7d",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/cef-in-world-browser.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-07940413-2887-4fa5-b9ca-1786561aa6c6",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/cef-in-world-browser.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001",
+      "target": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-70d64402-1e25-42e3-a0f5-e6a565e1ceee",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/cef-in-world-browser.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001",
+      "target": "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-24e8f444-46fa-4e7c-872c-dcca56b1a477",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/ffmpeg-video-playback.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ce68bca7-9fb2-4e2f-8576-855164595291",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/ffmpeg-video-playback.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24",
+      "target": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c8202ed2-2028-43f6-86d8-c4298a9eae72",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/ffmpeg-video-playback.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24",
+      "target": "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ba0b516f-26e3-4063-bc61-6f6aeee3c0e7",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reload-boundary-contract-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-436a8822-96a6-40cd-ab0f-466683ab6e0a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reload-boundary-contract-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c85c626d-c702-4c56-a546-3924d8198886",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reload-boundary-contract-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "target": "REQ-3ec80f9e-aef5-4b29-88ad-0721b9951370",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-bb8a3a87-b2c8-46cc-a2df-0351a9d7675a",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-07-hierarchical-focus-navigation-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-601ebbac-e437-42a6-a6fe-57b82f142857",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-c50a89ff-7f3b-4512-b468-bf47b93bd5c3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-07-hierarchical-focus-navigation-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-601ebbac-e437-42a6-a6fe-57b82f142857",
+      "target": "REQ-1aac8981-1d70-4471-b6a7-42ff6f81a56a",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-1b62331f-16a9-4c90-ba73-37ed9708cb87",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-02-snackbar-system-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-2e30beb0-645a-4b43-9e8b-321f28165f00",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-40de6f86-05a9-46ea-9ef5-68d0eb811ec3",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-windows-desktop-cli-launch-design.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-2b7311e9-771e-418f-9b64-c634fc8d40ea",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9f01e169-bcdd-4599-a53d-e41989d332c1",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/panel-transfer-system.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27",
+      "target": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-aa1a9c66-c871-4520-b310-7e3a471c2bf9",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/panel-transfer-system.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27",
+      "target": "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7d3956e9-1ddd-474a-8b9f-62d9287ac629",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/panel-transfer-system.md"
+      },
+      "rationale": "The documented capability helps the existing broader goal/workflow without sufficiency, activation or empirical success.",
+      "retracted": false,
+      "source": "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27",
+      "target": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-9436c69d-d4ce-4b9c-a654-89496fc13975",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Camera/input/ray owner isolation applies specifically to supported activity presentation and its actual boundary design/plan, not all product/runtime code.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-13-activity-camera-boundary-design.md"
+      },
+      "rationale": "Camera/input/ray owner isolation applies specifically to supported activity presentation and its actual boundary design/plan, not all product/runtime code.",
+      "retracted": false,
+      "source": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "target": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-adfecc6e-dd59-4160-baa7-6fd0bd41f682",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Camera/input/ray owner isolation applies specifically to supported activity presentation and its actual boundary design/plan, not all product/runtime code.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-13-activity-camera-boundary-design.md"
+      },
+      "rationale": "Camera/input/ray owner isolation applies specifically to supported activity presentation and its actual boundary design/plan, not all product/runtime code.",
+      "retracted": false,
+      "source": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "target": "ART-40e098fd-b7f2-4abc-9206-7727908b5068",
+      "type": "constrains"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-b18b06ec-e9af-4874-8b91-df3f86f97a47",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Camera/input/ray owner isolation applies specifically to supported activity presentation and its actual boundary design/plan, not all product/runtime code.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-13-activity-camera-boundary-design.md"
+      },
+      "rationale": "Camera/input/ray owner isolation applies specifically to supported activity presentation and its actual boundary design/plan, not all product/runtime code.",
+      "retracted": false,
+      "source": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "target": "ART-0fdd8d4a-76f6-4994-90e4-e62b6b482968",
+      "type": "constrains"
     }
   ],
   "requirements": {
@@ -7984,6 +10575,67 @@
       "revision": 1,
       "statement": "Keep canonical mutations strict, serialized and atomic with expected revisions, safe locators and explicit recoverable projection failures."
     },
+    "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Decode to reusable GL textures with bounded queues and playback play/pause/seek/stop/loop/mute behavior; shared manager owns update coordination rather than duplicating widget updates."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Offer positional OpenAL audio and inspectable availability/active clock, drift, queue drop/flush and decode telemetry; missing FFmpeg exposes unavailable status and explicit construction error. Stable A/V quality and backend/device behavior are empirical follow-up, not implied by exports."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-0f989a1e-eebd-4d09-8e98-388006d12c24",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Supports loop, mute, positional audio, and extensive playback telemetry.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/ffmpeg-video-playback.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide texture-first in-world FFmpeg video playback with playback controls, positional audio and explicit availability and clock/queue telemetry."
+    },
+    "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Owned paths/common ancestors choose a candidate, then explicit eligibility chooses the execution target before module collection/snapshot/teardown; mixed siblings require an eligible common enclosing target and debug evidence names the actual target."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "App-root watcher requests execute after the detecting update stack unwinds, with supported snapshot restoration inside the native process; this is not a native restart or atomic rollback of globals/external effects/pending work."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Direct Unit/manager/agent/MCP operations remain caller-managed outside controller routing unless separately contracted; lifecycle ownership/discovery is not independent safety certification or multiplayer sandboxing."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-17c67dd9-bab6-4649-aa14-3d40fe6daabb",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Omitted or empty means only the configured root is eligible.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-15-reload-boundary-contract-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Default controller-driven development reload to the app-root lifecycle, allowing only explicitly audited narrow boundaries and preserving truthful scheduling, state and recovery limits."
+    },
     "REQ-1970c4a9-a5dc-4d1b-93ce-dc88ed42df84": {
       "acceptance_criteria": [
         {
@@ -8082,6 +10734,39 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Make graph browsing, editing and linking natural, fast and useful through a uniform view-agnostic interface to objects without making the graph own the exposed domain systems."
+    },
+    "REQ-1c472bd2-b64f-4919-b4a9-ac3aaea75aa5": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Requiring error-reporting does not initialize; each entrypoint chooses its DSN, pre-init capture returns false and invalid options/DSNs or initialization failures surface explicitly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "After initialization native and Fennel central failure paths use the same required vendored SDK while preserving stderr/log/exit semantics; pre-initialization failures remain outside capture scope."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Tests and local validation use disabled capture or local fixture DSNs only, never the production endpoint; broad consent/PII policy is not invented by this initial integration."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-1c472bd2-b64f-4919-b4a9-ac3aaea75aa5",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Tests must never send events to the production Bugsink server.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-bugsink-sentry-error-reporting-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide entrypoint-owned explicit native error-reporting initialization shared by native and Fennel failure capture while keeping uninitialized entrypoints and validation isolated from production reporting."
     },
     "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8": {
       "acceptance_criteria": [
@@ -8278,6 +10963,62 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Separate explicit satisfaction assessments from criterion observations, preserving empirical applicability, latest results and content currency."
+    },
+    "REQ-2b7311e9-771e-418f-9b64-c634fc8d40ea": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Build GUI-subsystem space.exe and console-subsystem space-cli.exe from the same main.cpp; both accept alternate module/file/command entries while console workflows use space-cli and non-Windows names stay unchanged."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Package both executables and keep desktop/installer shortcuts on space.exe; surface GUI startup errors visibly while retaining console stderr. PE subsystem and native/Wine/installer observations are required before claiming delivery."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-2b7311e9-771e-418f-9b64-c634fc8d40ea",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Keep one implementation of Space startup and entry-point parsing.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-windows-desktop-cli-launch-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide separate Windows GUI and console launchers sharing the full runtime entry parser, preserving desktop no-terminal launch and reliable script/stdin/stdout behavior."
+    },
+    "REQ-2e30beb0-645a-4b43-9e8b-321f28165f00": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Managers own entries/ids, queue/priority/dedup/overflow policy, timers and handles; hosts own rendered text/action/custom-content widgets and release children/subscriptions exactly once."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Default theme-configurable top-right host uses dynamically measured center/middle bounds excluding panels/toolbars/rails, not static offsets or full-overlay positioning; overflow is policy-managed, not a scrolling history."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-2e30beb0-645a-4b43-9e8b-321f28165f00",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Support independently scoped snackbar managers and hosts from the beginning.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-02-snackbar-system-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide independently scoped actionable snackbar feedback with widget-free queue/timer policy and exactly owned layout-native hosts that avoid dynamic HUD chrome."
     },
     "REQ-3211043c-28c4-4777-aca7-d716dddb508d": {
       "acceptance_criteria": [
@@ -8607,6 +11348,62 @@
       "revision": 1,
       "statement": "Make the 3D world editable, usable and playable through interactive terrain, in-world widgets, live geometry, physics and spatial lighting controls."
     },
+    "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Create multiple id/url/size/texture browser surfaces and route pointer, wheel, focus and keyboard input to the intended surface; destroy owned surfaces cleanly."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Expose browser output as reusable mesh/material textures. Unsupported or unavailable backend configurations must not be counted as working browser support; Windows CEF is not promised."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-5f2eb0b7-56a4-45c1-9038-3833bc336001",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "CEF integration: Linux-only",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/cef-in-world-browser.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "On supported CEF-enabled Linux builds, present interactive web pages as independently managed world-surface textures usable on arbitrary geometry."
+    },
+    "REQ-601ebbac-e437-42a6-a6fe-57b82f142857": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Normal nodes may enter scopes; entry prefers a valid remembered descendant then first traversable child, exit returns the nearest owner, and parent traversal excludes unopened interiors."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "One-shot Space f commands and existing Tab/directional shortcuts use the same hierarchy without persistent focus mode or plain-Enter overload; graph commands apply only to the graph node focus target, not any focused preview child."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-601ebbac-e437-42a6-a6fe-57b82f142857",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Parent-level traversal should not accidentally enter a child entry scope.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-10-07-hierarchical-focus-navigation-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide generic nested focus entry/exit and level-bounded traversal while preserving explicit container focus versus interior-widget focus."
+    },
     "REQ-73f67424-c7a6-450b-a8ce-feb67ac00a14": {
       "acceptance_criteria": [
         {
@@ -8696,6 +11493,67 @@
       "revision": 1,
       "statement": "Participating graph text editors and nonvisual text replacement must submit the revision of the displayed or read content, reject stale edits explicitly and preserve attempted GUI text without silent retry or merge."
     },
+    "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Choose nonempty SPACE_LOG_DIR, otherwise get_user_log_dir(space), before the first native log_init; CLI/stdin/file/REPL/module entry modes share this bootstrap and Fennel preserves the selected path."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Invalid log setup emits an explicit startup diagnostic and nonzero exit; retain the explicit Fennel logging.init path API without adding LOGS_DIR aliases."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-7f44b26f-78b7-4132-a485-a3a8b7df4f2e",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Fail loudly if the selected log directory cannot be created or used.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-07-30-native-log-directory-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Initialize native logging before application entry execution at an explicit SPACE_LOG_DIR or user-log-directory space.log path, never an arbitrary launch-directory gl.log."
+    },
+    "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Honor ordered nonempty SPACE_ASSETS_PATH roots (platform separators), then cwd/assets, user data, executable sibling/share/Resources and system fallbacks; deduplicate equivalent roots and preserve packaged arbitrary-CWD launch."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Reject absolute requests and root-escaping traversal; missing required assets report the request and searched candidates rather than succeeding silently."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Compose module paths across overlay roots; within each root flat Fennel precedes directory init.fnl and runtime installs both module and macro paths without external FENNEL_PATH/FENNEL_MACRO_PATH."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-7f5ec4f8-2a34-421c-810d-74299da7e89c",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Candidate roots are ordered overlays: the first root containing the requested path wins, and later roots provide defaults.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-09-16-runtime-asset-overlay-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Resolve runtime assets and embedded Lua/Fennel modules through ordered project overlays with executable-relative fallbacks, independent of launch working directory or shell path repairs."
+    },
     "REQ-80869160-7ee8-4062-902d-b90f0d9507aa": {
       "acceptance_criteria": [
         {
@@ -8718,6 +11576,62 @@
       "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
       "revision": 1,
       "statement": "Enable user-owned infrastructure with self-hosted and federated sync, communication, identity and software distribution."
+    },
+    "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Public slot mutation accepts only active/activating owners and switching deactivates foreign slots; generated/dynamic activities follow the same ownership rule as built-ins."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Ambiguous bare surface rays fail with actionable errors; active presentation/slot targets or explicit view/projection matrices remain supported, without retained camera/control fallback. This is accidental-misrouting prevention, not a malicious-code sandbox."
+        }
+      ],
+      "classification": "constraint",
+      "history": [],
+      "id": "REQ-88a2b536-65bb-4709-b6f1-9eadb5a54f57",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "No activity may mutate another activity's camera by mistake through supported",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-13-activity-camera-boundary-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Supported active-activity surface, input and screen-ray APIs must not select or mutate foreign activity camera/control state or silently fall back to retained-surface/global presentation."
+    },
+    "REQ-8d6d78dd-7dbc-4a4a-85bb-06078e028124": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Route stylus events with pressure/tilt to Drawing only and suppress touch during drawing; active text input and other activities must not accidentally receive drawing commands."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Pressure controls stroke width/opacity and raster painting while vector/raster layers coexist; device behavior, complete pressure response and persistence require separate observations."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-8d6d78dd-7dbc-4a4a-85bb-06078e028124",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Vector and raster layers coexist in the same drawing document",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/stylus-drawing-input.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Support pressure-sensitive drawing with coexisting vector and raster layers and explicit drawing-surface pen routing that avoids accidental touch input."
     },
     "REQ-8e50a634-76ae-4100-9f60-90e4552ec954": {
       "acceptance_criteria": [
@@ -8812,6 +11726,34 @@
       "rationale": "One-time graph/entity baseline backfill after semantic comparison with all 33 existing requirement bodies/provenance. A distinct family contract, not a document-count quota, activation, implementation repair or empirical achievement. Representative traces and explicit unknowns remain in the Task 2 G report.",
       "revision": 1,
       "statement": "Graph exposure must leave domain persistence with owning systems and materialize related visual topology only through explicit user preview, view, search or action controls, not hidden bulk relationship hooks."
+    },
+    "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Compose layout primitives and leaf widgets through build closures returning layout/drop; measure/layout and dirt processing preserve placement, clipping and depth ordering."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Composite drop recursively drops direct owned widgets, not merely Layout links and not manually duplicated descendants; separately release owned listeners/jobs/resources."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-9b56173c-a23f-46ac-beb9-54384aeb3e29",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "composite widgets own their children; teardown cascades through the widget tree",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/layout-widget-engine.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide declaratively composable 2D/3D widgets with explicit measurement/layout, dirty tracking and depth ordering, keeping direct widget-child lifetime ownership distinct from layout links."
     },
     "REQ-9bd4cedf-4f87-4c3f-a5b7-767f64c664ed": {
       "acceptance_criteria": [
@@ -9077,6 +12019,34 @@
       "revision": 1,
       "statement": "Provide file-scale text viewing and editing with lazy source reads, overlay edits and viewport rendering without eagerly loading unchanged file content or substituting whole-buffer InputModel storage."
     },
+    "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Create/edit/persist terrain height data as world-state-backed objects, expose typed graph properties without graph-owned storage, and support raise/lower/smooth/flatten editing with feedback and undo."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Physics collision follows editable terrain height rather than only an infinite floor; full edit/collision/persistence integration and natural workflow quality need separate verification."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-c4f89689-b5d4-420e-b1a1-3359d6713378",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Terrain data lives in world scene state; the graph node is a projection.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/terrain-heightfield-system.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Expose editable heightfield terrain with generation, brush editing, collision and persistence owned by world/activity scene state and projected through graph adapters."
+    },
     "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5": {
       "acceptance_criteria": [
         {
@@ -9339,6 +12309,39 @@
       "revision": 1,
       "statement": "Declare update dependencies explicitly and generate optimized update functions from their dependency graph."
     },
+    "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Graph/Drawing/Board/Sandbox switches retain sessions rather than normal drop/recreation; inactive slots contribute neither draw nor input, and Sandbox alone initially owns the former default 3D workspace."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Activity sessions own cameras/controls, environment and containment; shared native services consume only active presentation targets, empty scene slots are inert and stale owner work cannot install into another slot."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Normalize legacy world scene/containment and activity fields once into canonical activity-session owners, preserving data with no long-term fallback reads. Instantaneous-switch intent requires empirical evaluation; no threshold is invented."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-e5bf3868-20e2-448b-8090-13b6c069fe50",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Inactive activity draw data must not render.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/activities.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Provide world-local retained HomeWorld activities whose isolated surface slots and sessions explicitly own presentation, interactions and persisted state rather than inheriting the Sandbox workspace."
+    },
     "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461": {
       "acceptance_criteria": [
         {
@@ -9489,6 +12492,67 @@
       "revision": 1,
       "statement": "Expose context-aware provider-agnostic preset capabilities through MCP and client-side tool definitions while retaining user overrides, registry ownership and execution-time risk approval."
     },
+    "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "Receiver-based transfer preserves panel wrapper state across surfaces, commits a successful move or rolls back completely on failure, and cleans failed destination resources without losing usable source content."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Skip persistence during transfer to avoid half-written state and migrate legacy pre-transfer panels; the complete rollback and persistence contract requires fault-path and restart verification, not only a happy-path move."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-f93cb581-15d4-458e-a83e-7e4c67267f27",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Transfer succeeds atomically or rolls back completely",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/panel-transfer-system.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Move panels between HUD, Scene, Canvas and Board while preserving wrapper state and transactional transfer/rollback and persistence boundaries."
+    },
+    "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "One canonical interaction-mode defaults to flight; restore migrates old toolbar payloads without runtime aliases. No Alt-drag bypass; only Move/Grab start object drag and their selection suppresses camera movement."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c2",
+          "text": "Walk uses yaw-relative WASD, arrow yaw/clamped pitch, grounded-only Space jump and terrain following, failing before mutation if sampling is missing; Fly preserves free navigation."
+        },
+        {
+          "applicability": "analytical",
+          "id": "c3",
+          "text": "Grab controls the clicked local surface pivot through a Bullet point-to-point constraint, updating targets and releasing constraints on end/drop/target loss; required bindings/body failures do not silently become Move."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-fcc4e073-84b5-4753-be05-cc739f8c527e",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-3-P",
+        "date": "2026-10-30",
+        "excerpt": "Object dragging should happen only when the selected mode is an object manipulation mode.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/specs/2026-08-06-sandbox-interaction-modes-design.md"
+      },
+      "rationale": "Authorized one-time P baseline after semantic/provenance comparison at ledger43. Independently meaningful platform contract, not document-per-patch inflation, maintenance invention, activation or empirical achievement. Representative trace gaps and source evolution are retained in Task3 report.",
+      "revision": 1,
+      "statement": "Offer mutually exclusive Sandbox Fly, Walk, Move and Grab interaction modes with mode-gated navigation/manipulation and clicked-point physics grabbing."
+    },
     "REQ-fe18aeb4-afdf-42af-a456-bf4078ca2f20": {
       "acceptance_criteria": [
         {
@@ -9551,7 +12615,7 @@
       "statement": "Explicit file-editor saves must detect known external file changes, refuse a stale save with an explicit conflict and retain dirty in-memory edits; only a successful save refreshes the source baseline and clears dirty state."
     }
   },
-  "revision": 43,
+  "revision": 45,
   "schema_version": 1,
   "verifications": [
     {

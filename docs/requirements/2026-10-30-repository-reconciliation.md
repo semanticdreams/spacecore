@@ -2,6 +2,13 @@
 
 ## Identity, authority and current boundary
 
+**Current Task3/P boundary (ledger45): all41 P filename dispositions and the
+associated representative platform/runtime/world/media baseline reconciled.**
+Controller supplied Task2 FULL independent pass through `3215f2a4`; the Task2
+pending-review statements below are retained execution history. P checkpoint is
+only a review input. Remaining Task3 H/Time/N/D and Task4 remain pending; no runtime
+verification or product outcome credit. See the [Task3 report](./2026-10-30-baseline-task-3-report.md).
+
 **Current Task2 boundary (ledger43): complete representative Task2 baseline,
 ready for independent review, not every micro-contract verified or approved.**
 All original100 assigned source rows are accounted (G72/A19/T9). Historical
@@ -415,3 +422,92 @@ Next: exact T continuation review and original full Task2 range review, retainin
 all earlier passes only within their ranges. Local checkpoints are review inputs,
 not approval. No restart, budget reset, fresh product observation, consultation
 dispatch, push or integration. Full evidence/depth/file list in appended T report.
+
+## Task 3/P — bounded platform/runtime/world/media continuation
+
+Author/CLI actor `implementer/baseline-task-3-P`, supervisor strict lane, branch
+`juicyrebel/ridley`; original and continuation BASE
+`c054ef5beb4ad40750133f1252585af4a1ae5c8e`, same frozen F. Intake clean. Controller
+reports Task2 FULL independent pass through3215f2a4; its prior incomplete/review
+pending entries above remain history, not a new blocker or invalidated approval.
+Only41 P manifest rows and associated capabilities assigned. H/Time/N/D remain
+serial pending work; temporal/security/distribution/workflow-policy are not silently
+absorbed here. [Task3 report](./2026-10-30-baseline-task-3-report.md) records exact
+IDs, original Git authority, artifact structure, read depths, assertions and gaps.
+
+Requirements-reconciliation conclusion: grounded missing representation/refinement,
+not new product work, synthetic maintenance or application repair. Compared all55
+existing statements/revisions/provenance and153 artifact locators at43. Reuse
+World/Core/Spatial/Live, Workspace/Malleable and six revision1 audit governors
+unchanged. Generic focus and activity camera ownership are distinct from existing
+text-focus and map-projection isolation. Historical HUD patches support existing
+Core plus widget ownership/composition, not a requirement per cosmetic patch.
+
+Exact-revision serial CLI transactions43→44→45 created16 proposed revision1
+requirements (15 capabilities/one constraint),72 artifacts (22 designs,13 actual
+plans,19 code,18 test definitions),127 explicit relations (35 addresses,13 realizes,
+13 implements,18 verifies,18 exercises,27 contributes_to,3 constrains). Totals
+**71 requirements/225 artifacts/540 relations**. All55 prior requirements,
+153 artifacts,413 relations,17 assessments and63 verifications unchanged. No
+activation, assessment/partial satisfaction, observation/verification, supersession
+or retraction. Every new artifact linked; no artificial plan or code→requirement
+edge. General widget/terrain/drawing/browser/video/panel feature plan chains remain
+missing, not fabricated for coverage. P6 applicability only P5 and actual camera
+boundary design/plan, not all runtime code or a malicious-code sandbox.
+
+P1–P16 aliases in report cover ordered assets/module/macro paths, native logs,
+entrypoint reporting/validation isolation, widgets/layout ownership, retained
+activities/services, camera/input/ray boundary, Fly/Walk/Move/Grab, domain-owned
+editable terrain, stylus/vector/raster drawing, Linux CEF browser, conditional
+FFmpeg/positional audio/telemetry, root-default reload, nested focus, scoped
+snackbars, shared-bootstrap Windows GUI/console launch and transactional panel
+transfer. All16 have sampled production/declaration presence,15/16 sampled test
+definitions; Windows lacks a test link. This is not16 complete implementations.
+
+Original Git reconciliation: a74f0e1a explicitly changes discovery precedence from
+executable-before-CWD/single env root to project overlay/ordered roots, retaining
+packaged fallbacks. cb4232df explicitly replaces independent toggles/Alt/force-grab
+with exclusive modes/point constraints. d80cc2a0 scopes root-default controller
+policy without certifying direct tools or future multiplayer boundaries. Original
+terrain graph-storage prose at a709a289 is explicitly corrected by8eee15bf exposure
+versus domain ownership; existing World/G1 obligations preserved. Core `done` and
+feature `shipped` labels are not runtime observations. Historical HUD geometry
+refinements retain exact later rail-only/zero-shell contracts without wholesale
+date-based supersession.
+
+Full principal design/feature bodies plus bounded supporting plans and actual
+code/assertions inspected. Every41 P row now states its depth and concrete
+remaining gap;321 non-P rows unchanged, frozen362/362 unique,0 missing/extra/duplicate.
+All72 registered source bytes match F/BASE. Representative assertions cover ordered
+lookup, invalid logging, disabled/local capture, layout/child drop, retained/dynamic
+activity isolation, mode migration, terrain collision, drawing persistence/pressure,
+browser paint, video controls, deferred/final-target reload, nested focus, snackbar
+drop and transfer rollback. Full owner/native/device/fault/restart matrices remain
+unproven; no tests were executed through Space. CEF is Linux-only and optional;
+FFmpeg requires enabled/discovered dev packages, with explicit unavailable module
+behavior. OpenGL/Bullet/OpenAL/PortAudio/aubio declarations and Windows target
+definitions do not establish installed backends, active devices or packaging.
+Qualitative performance, stability, naturalness, readability, switching latency
+and A/V quality retain measurement/protocol/threshold gaps.
+
+Validation order: compile/app constraints not applicable (docs/ledger only);
+Constraint Impact not applicable. CLI validate/render/render-check valid/current45;
+`make requirements-check` timeout600000 passed348 in182.14s, then valid/current45,
+output pristine. Preservation, unique tuples/locators, linked-artifact and manifest
+checks passed. Scoped16-ID/all296-record coverage not truncated; P15 missing
+test/evidence and P6 unassessed constraint remain findings. Context32/1000 and each
+both-direction trace32/1000 truncate; individual narrowing2/1000 still depth-truncates
+(23–41 paths). Direct tuples inspected, not complete impact/readiness clearance.
+New artifacts have no immutable measurement digest, so query currency remains
+unknown rather than fresh verification. Product runtime tests/builds/constraints
+were not appropriate to this change. Full depth/evidence and next-transition rules
+are retained in Task3 report; complete P range still needs independent review.
+
+P-only repeat self-review found zero further justified creates/revisions/transitions/
+links, no no-op apply; revision45 unchanged. Ledger SHA256
+`cdf97bd8dde6e529fb2b6ac38b5bd10f7d0203207be64574fa85ebb0b06d0fe9`, index SHA256
+`6080a4ee1f97bed700963671e2501ba2ebe681dcd0c59ba9d9e687e4d7d63409` unchanged
+before/after. This does not discharge Task4 every-family idempotence. P complete
+at declared depth only; independent complete `c054ef5b..P_HEAD` review pending,
+remaining Task3 H/Time/N/D pending. No consultation trigger, budget reset, publication
+or integration claimed.
