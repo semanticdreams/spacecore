@@ -780,3 +780,42 @@ source replay remains required; static prompt tests alone prove no agent behavio
   schema coverage and continued independent review/final integration boundaries.
   Next transition: validated task-only checkpoint and independent targeted re-review
   of complete FIX_BASE..HEAD; controller retains whole-branch/actual merge gates.
+
+### Task 5 accepted new breakage — fix round 2
+
+- Same assignment/author `REQ-IMPL-5` (session ID not exposed), supervisor/strict SDD,
+  `juicyrebel/scoter`; verified clean FIX_BASE
+  `1aa86ea2a200f35982fac6a1285ce7358aba8cf6`, original BASE unchanged. Usage-limited
+  dispatch performed no edits; this is not a task/round/budget reset. Reviewer
+  `ses_e7601615fffeNHdP1mh12CHBTl` targeted delivery was valid `fix_failed`,
+  correction_used=0. R1-2 verified fixed; R1-1 has an incomplete immutable-ledger
+  review coverage item, not a confirmed persistent failure. Controller assesses
+  that separately; this edit addresses only accepted new fixture-copy breakage.
+- The helper unconditionally required every historical dependency file to exist.
+  Retained missing dependency bytes are valid unknown evidence, not corruption.
+  Fixture copying now preserves those absences while explicitly requiring ledger,
+  projection and supervisor mutation inputs. Tests use separate source/destination
+  fixture roots, real CLI observations and a retired fixture-only dependency; no
+  checkout dependency is removed and no production schema/currency rule changes.
+- Actual RED: one reproducer failed with `FileNotFoundError`; the two-case focused
+  run then failed 2/20 deselected for retired optional and required supervisor inputs.
+  GREEN: 2 passed/20 deselected; demo/evidence selection 102 passed; all requirements
+  tests 322 passed. This is a new fix-induced issue, not repeat proof about R1-1.
+- Safe [fix-round-2 execution record](/requirements/2026-10-30-task-5-fix-2-validation)
+  distinguishes actual new requirements/docs checks from retained prior policy
+  evidence. Subsequent scoped gate results and checkpoint SHA are recorded in the
+  appended author handoff. No new policy-suite pass, live compliance or actual merge
+  is claimed; unchanged policy inputs do not require another broad suite for this
+  fixture-only fix. No Space compile/build/constraints apply; constraint impact
+  **not applicable**. Known docs warnings remain disclosed.
+- The changed test source stales previous observations. Preserve all thirty prior
+  observations, safe evidence and twelve partial assessments, append new scoped
+  validation observations only after actual checks, and refresh the progress artifact
+  through the CLI after this append. Progress remains a material docs dependency;
+  no old observation digest is rewritten to conceal source changes.
+- Reconciliation: implementation defect in the test utility against the existing
+  missing-evidence contract; no new requirement, architecture, consultation scope or
+  permissions change. Self-review checks optional versus required input handling,
+  byte-copy isolation, history preservation and actual new evidence correspondence.
+  Next: ordinary validated task-only checkpoint and complete FIX_BASE..HEAD targeted
+  re-review; all final independent review/guarded integration gates remain unchanged.

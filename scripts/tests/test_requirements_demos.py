@@ -151,15 +151,20 @@ def test_current_task_seed_is_grounded_linked_and_honest():
     assert_seed_contract(REPO_ROOT)
 
 
-def copy_seed_fixture(root):
+def copy_seed_fixture(root, source_root=REPO_ROOT):
     """Copy a snapshot, then mutate only through real CLI operations.
 
     Copy declared source/evidence bytes too: no symlink to the working checkout,
     so the workflow mutation regression cannot edit real supervisor guidance.
+    Absent historical bytes remain absent, as permitted by the evidence model;
+    only inputs required by these seed/mutation tests are mandatory.
     """
-    ledger = requirements_lib().load_ledger(REPO_ROOT)
-    paths = {"docs/requirements/ledger.json", "docs/requirements/index.md",
-             ".opencode/agents/supervisor.md"}
+    ledger = requirements_lib().load_ledger(source_root)
+    required = {"docs/requirements/ledger.json", "docs/requirements/index.md",
+                ".opencode/agents/supervisor.md"}
+    for path in sorted(required):
+        assert (source_root / path).is_file(), f"Required fixture input missing: {path}"
+    paths = set(required)
     paths.update(a["locator"] for a in ledger["artifacts"].values())
     for verification in ledger["verifications"]:
         paths.update(ledger["artifacts"][key]["locator"] if key.startswith("ART-") else key
@@ -167,10 +172,54 @@ def copy_seed_fixture(root):
         ref = verification["evidence_ref"]
         paths.add(ref.get("locator") or ledger["artifacts"][ref["artifact_id"]]["locator"])
     for path in sorted(paths):
+        source = source_root / path
+        if not source.is_file():
+            continue
         destination = root / path
         destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(REPO_ROOT / path, destination)
+        shutil.copyfile(source, destination)
     return ledger
+
+
+def test_seed_fixture_preserves_missing_historical_dependency(tmp_path):
+    source = tmp_path / "source"
+    ledger = copy_seed_fixture(source)
+    rid = SEED_IDS["entity"]
+    original = latest_verification(ledger, rid)
+    obsolete = "retired-input.txt"
+    (source / obsolete).write_text("Retained historical input, subsequently retired")
+    supervisor = ".opencode/agents/supervisor.md"
+    args = {k: v for k, v in original.items() if k not in ("actor", "evidence_digest")}
+    time = datetime.fromisoformat(original["timestamp"].replace("Z", "+00:00"))
+    ops = []
+    for seconds, dependency in ((1, obsolete), (2, supervisor)):
+        observation = dict(args,
+            timestamp=(time + timedelta(seconds=seconds)).isoformat().replace("+00:00", "Z"),
+            procedure="Fixture-only revalidation after retiring an input",
+            dependency_digests={dependency: hashlib.sha256((source / dependency).read_bytes()).hexdigest()})
+        ops.append({"op": "record-verification", "args": observation})
+    result = run_cli(source, "apply", request=apply_request(
+        *ops, expected_revision=ledger["revision"]))
+    assert result.returncode == 0, result.stdout + result.stderr
+    (source / obsolete).unlink()  # Isolated fixture only, never the checkout.
+    def current(root):
+        return requirements_lib().query(root, {"op": "get", "args": {"id": rid}})["result"]["criteria_latest"]["c1"]
+    assert current(source)["currency"] == "current"
+    copied = tmp_path / "copied"
+    retained = copy_seed_fixture(copied, source_root=source)
+    assert not (copied / obsolete).exists()
+    assert (copied / supervisor).is_file(), "Mutation-test input must be present"
+    assert obsolete in retained["verifications"][-2]["dependency_digests"]
+    assert retained["verifications"] == requirements_lib().load_ledger(copied)["verifications"]
+    assert (current(copied)["result"], current(copied)["currency"]) == ("passed", "current")
+
+
+def test_seed_fixture_requires_mutation_input(tmp_path):
+    source = tmp_path / "source"
+    copy_seed_fixture(source)
+    (source / ".opencode/agents/supervisor.md").unlink()
+    with pytest.raises(AssertionError, match="Required fixture input.*supervisor"):
+        copy_seed_fixture(tmp_path / "copied", source_root=source)
 
 
 def test_seed_contract_allows_independently_sourced_proposed_requirement(tmp_path):
