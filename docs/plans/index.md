@@ -14,6 +14,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 ### 2026-10
 
 - 2026-10-30 — [Autonomous Workflow Decisions Implementation Plan](./2026-10-30-autonomous-workflow-decisions.md)
+- 2026-10-30 — [Repository Requirements Baseline Implementation Plan](./2026-10-30-repository-requirements-baseline.md)
 - 2026-10-29 — [Autonomous Handoff Recovery Implementation Plan](./2026-10-29-autonomous-handoff-recovery.md)
 - 2026-10-29 — [Model-Neutral Agent Routing Implementation Plan](./2026-10-29-model-neutral-agent-routing.md)
 - 2026-10-29 — [Goal-aware requirements-driven engineering Implementation Plan](./2026-10-29-requirements-driven-engineering.md)
@@ -211,6 +212,7 @@ Generated from the Markdown records in this directory, newest first. Indexes ref
 ### 2026-10
 
 - 2026-10-30 — [Autonomous workflow decisions — progress](./2026-10-30-autonomous-workflow-decisions-progress.md)
+- 2026-10-30 — [Repository requirements baseline audit progress](./2026-10-30-repository-requirements-baseline-progress.md)
 - 2026-10-29 — [Autonomous handoff recovery progress](./2026-10-29-autonomous-handoff-recovery-progress.md)
 - 2026-10-29 — [Model-neutral agent routing progress](./2026-10-29-model-neutral-agent-routing-progress.md)
 - 2026-10-29 — [OpenCode presentation-island relationship edges](./2026-10-29-opencode-island-edges-progress.md)

@@ -2866,6 +2866,244 @@
       "source": "ART-09f62b39-1c43-430e-a83f-05219d3cd5db",
       "target": "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59",
       "type": "supports"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-e2aec03f-d85e-49b2-9321-0790a8b39b7b",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Edit widgets in context, improve live code reload, support multi-repo development with fast reload and rollback.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m04-live-development.md"
+      },
+      "rationale": "In-context widget editing, multiple repositories and rollback make the documented in-place live-programming goal more precise.",
+      "retracted": false,
+      "source": "REQ-3ec80f9e-aef5-4b29-88ad-0721b9951370",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "refines"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-f2a47c68-b0c4-4216-a988-ec8ade38cceb",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "A small set of terrain, geometry, widget, physics, and lighting workflows feel natural",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/world-building.md"
+      },
+      "rationale": "Interactive terrain, lighting, physics and in-world widgets help spatial computing without proving the whole goal.",
+      "retracted": false,
+      "source": "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172",
+      "target": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-64f09fd3-2039-440f-aab5-f29812080170",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "stable and performant",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/core-platform.md"
+      },
+      "rationale": "Runtime rendering, widget/layout and media surfaces help spatial computing; platform done label is not goal achievement.",
+      "retracted": false,
+      "source": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "target": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-7cc7fa61-7c98-4390-a840-2434e2d10a77",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "stable and performant",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/core-platform.md"
+      },
+      "rationale": "Snapshot/restore reload tooling helps code changes while running; no user-experience result is implied.",
+      "retracted": false,
+      "source": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-ad79af31-2df2-4ddb-90f5-bc2c93ad3493",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "MCP tool integration stays provider-agnostic",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/agent-tools.md"
+      },
+      "rationale": "Graph-exposed saved conversations and links to tasks/code/notes help the usable graph goal, without establishing general graph usability.",
+      "retracted": false,
+      "source": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-3e6c811e-28ff-45fc-97ce-b32313435f62",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Connect graph, terminal, search, file/code views, and basic editing into one coherent workflow.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m02-workspace-loop.md"
+      },
+      "rationale": "Connecting graph/search/file views/editing helps the graph navigation and linking goal; integration alone is not seamlessness.",
+      "retracted": false,
+      "source": "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8",
+      "target": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-53ddeed1-8d2a-4b13-8398-de2e1da27d58",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Declare update dependencies explicitly and generate optimized update functions from the dependency graph.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m06-compiled-update.md"
+      },
+      "rationale": "Explicit dependency-based update generation is a plausible aid to a programmable running environment; no claim it suffices or is implemented.",
+      "retracted": false,
+      "source": "REQ-e08c9e47-df7b-4894-9bc6-42e701c5bcb2",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-c902b722-30eb-4012-bbe6-41301432b465",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Generate update functions in C at runtime via GCC JIT, explore live-generated renderers.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m07-native-generation.md"
+      },
+      "rationale": "Runtime C generation and renderer exploration are a plausible aid to live programming; not proof of reload or safe native code.",
+      "retracted": false,
+      "source": "REQ-4966274c-ebaf-4826-b7ea-0f4826d49430",
+      "target": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-705cd6da-c6cd-4953-971c-0a860b965013",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Shared worlds on Matrix, realtime synchronization via yojimbo, shared-world permission model.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m08-matrix-worlds.md"
+      },
+      "rationale": "Matrix world sharing, realtime sync and permissions help persistent multi-user collaboration; proposed track does not prove it.",
+      "retracted": false,
+      "source": "REQ-c9bba90c-9d93-4f7d-a530-f79cb197ae88",
+      "target": "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "inferred",
+      "history": [],
+      "id": "REL-9dc1f389-441e-46e1-ac29-cb4ce10b2fc6",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Shared worlds on Matrix, realtime synchronization via yojimbo, shared-world permission model.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m08-matrix-worlds.md"
+      },
+      "rationale": "Matrix-based shared services can help federated user-owned infrastructure; hosting and ownership remain unverified.",
+      "retracted": false,
+      "source": "REQ-c9bba90c-9d93-4f7d-a530-f79cb197ae88",
+      "target": "REQ-80869160-7ee8-4062-902d-b90f0d9507aa",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-a70fc602-d3fd-4a03-8f3c-cb1ed5acba70",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Profile pages, discussions based on Matrix, contribution-oriented views around code/assets/worlds, one-click tipping via wallet-core.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m09-social.md"
+      },
+      "rationale": "Profiles and Matrix discussions help social interaction in shared spaces; tipping alone is not collaboration.",
+      "retracted": false,
+      "source": "REQ-5babb6e9-88c4-43f5-8904-d6321f5bf795",
+      "target": "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-6927cd89-3054-4247-bad4-6780006b87a4",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Richer world actors (avatars, vehicles), host multiple game-like experiences inside editable worlds.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m10-gameplay.md"
+      },
+      "rationale": "Actors and multiple shared-world experiences help multi-user social interaction, without proving persistence or quality.",
+      "retracted": false,
+      "source": "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2",
+      "target": "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-d809b141-24b5-43ab-9c12-84698afe66d9",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Richer world actors (avatars, vehicles), host multiple game-like experiences inside editable worlds.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m10-gameplay.md"
+      },
+      "rationale": "Actors in editable worlds help spatial interaction; an example game is not satisfaction of this roadmap.",
+      "retracted": false,
+      "source": "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2",
+      "target": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "type": "contributes_to"
+    },
+    {
+      "confidence": "explicit",
+      "history": [],
+      "id": "REL-fa83e28c-dc01-42f9-b5b3-5e571e663174",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Space pods, libtorrent asset distribution, wallet-backed practical workflows.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m11-services.md"
+      },
+      "rationale": "Space pods and libtorrent distribution help user-owned services/software distribution; wallet workflows do not establish ownership alone.",
+      "retracted": false,
+      "source": "REQ-73f67424-c7a6-450b-a8ce-feb67ac00a14",
+      "target": "REQ-80869160-7ee8-4062-902d-b90f0d9507aa",
+      "type": "contributes_to"
     }
   ],
   "requirements": {
@@ -2968,6 +3206,108 @@
       "revision": 1,
       "statement": "Trace requirements bidirectionally to justified designs, implementation specifications, code, tests and evidence."
     },
+    "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe inspection/edit/navigation and linking across tasks, notes, code, errors, files and conversations; naturalness, speed and seamlessness thresholds and protocol remain unspecified."
+        }
+      ],
+      "classification": "goal",
+      "history": [
+        {
+          "actor": "implementer/baseline-task-1",
+          "authority": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/goals.md#active and fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-foundation.md frontmatter status: active and Summary/Success criteria",
+          "date": "2026-10-30",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Backfill an explicitly current active product goal, not satisfaction or authorization to execute its historical plans.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-1bfc6cf6-25ea-4c94-9440-6cfe534d2ea6",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "The graph model stays view-agnostic",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/graph-foundation.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Make graph browsing, editing and linking natural, fast and useful through a uniform view-agnostic interface to objects without making the graph own the exposed domain systems."
+    },
+    "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A scoped workspace scenario traverses graph, terminal, search, file/code viewing and editing with browser/media reference access; coherence needs separate user observation."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-1d7a72a9-2614-4508-955f-ffd0455546f8",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Connect graph, terminal, search, file/code views, and basic editing into one coherent workflow.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m02-workspace-loop.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Connect graph, terminal, search, file/code views and basic editing into an integrated workspace workflow, including browser and media reference surfaces."
+    },
+    "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe multiple users collaborating and communicating in a persisted shared space; scale, durability and user-experience thresholds remain unspecified."
+        }
+      ],
+      "classification": "goal",
+      "history": [],
+      "id": "REQ-1fdd5124-6c03-4b71-b7c7-400278f8e82c",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Shared Worlds",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:README.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Enable persistent multi-user shared spaces for collaboration, communication and social interaction."
+    },
+    "REQ-260bf539-61dc-404e-b182-0692acbf744d": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe the documented spatial media, surface, widget and visualization workflows in a running 3D space; usability/quality thresholds and measurement protocol remain unspecified."
+        }
+      ],
+      "classification": "goal",
+      "history": [],
+      "id": "REQ-260bf539-61dc-404e-b182-0692acbf744d",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Spatial Computing",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:README.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Enable spatial computing with 3D spaces, in-world media, embedded surfaces, spatial widgets and interactive visualization."
+    },
     "REQ-26f18ef2-15f6-4278-b9a1-9c7b4b246e5c": {
       "acceptance_criteria": [
         {
@@ -3034,6 +3374,52 @@
       "revision": 1,
       "statement": "Separate explicit satisfaction assessments from criterion observations, preserving empirical applicability, latest results and content currency."
     },
+    "REQ-3ec80f9e-aef5-4b29-88ad-0721b9951370": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A scenario edits a widget in context, reloads code spanning multiple repositories and rolls back an unsuccessful change; no numeric fast-reload threshold is defined."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-3ec80f9e-aef5-4b29-88ad-0721b9951370",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Edit widgets in context, improve live code reload, support multi-repo development with fast reload and rollback.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m04-live-development.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Support malleable live development with in-context widget editing and multi-repository code development, fast reload and rollback."
+    },
+    "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe an in-place inspect/edit/reload workflow in a running world; continuity and usability measurement protocol remains to be established."
+        }
+      ],
+      "classification": "goal",
+      "history": [],
+      "id": "REQ-4546e4f3-1a73-4811-8e10-7815d31776c3",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Live Programming",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:README.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Enable live programming by inspecting, modifying and reloading code in place while the world is running."
+    },
     "REQ-454f6972-1fb2-49f3-b39c-41c04a67012a": {
       "acceptance_criteria": [
         {
@@ -3067,6 +3453,29 @@
       "revision": 1,
       "statement": "Complete final integration only through safeguarded actual remote validation, independent review and confirmed merge, not local simulation."
     },
+    "REQ-4966274c-ebaf-4826-b7ea-0f4826d49430": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A scenario generates and invokes a C update function through runtime GCC JIT; renderer exploration must record its result without assuming production readiness."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-4966274c-ebaf-4826-b7ea-0f4826d49430",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Generate update functions in C at runtime via GCC JIT, explore live-generated renderers.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m07-native-generation.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Generate update functions in C at runtime through GCC JIT and explore live-generated renderers."
+    },
     "REQ-49e62b92-aada-447d-9d15-531625fa0dcc": {
       "acceptance_criteria": [
         {
@@ -3099,6 +3508,108 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Advance strict requirements, design and implementation-spec work autonomously through independent artifact reviews while retaining safeguards and fast/live exceptions."
+    },
+    "REQ-5babb6e9-88c4-43f5-8904-d6321f5bf795": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A safe scenario exercises profiles, Matrix discussions, contribution views and the wallet-core tipping interaction without authorizing real fund movement; transaction/security policy remains to be specified."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-5babb6e9-88c4-43f5-8904-d6321f5bf795",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Profile pages, discussions based on Matrix, contribution-oriented views around code/assets/worlds, one-click tipping via wallet-core.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m09-social.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Provide profiles, Matrix-based discussions, contribution-oriented code/asset/world views and one-click tipping through wallet-core."
+    },
+    "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe terrain creation/edit/persistence as world state exposed through the graph, editable-terrain collision, spatial lighting and widget placement; natural-workflow measurement protocol and thresholds remain unspecified."
+        }
+      ],
+      "classification": "goal",
+      "history": [
+        {
+          "actor": "implementer/baseline-task-1",
+          "authority": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/goals.md#active and fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/world-building.md frontmatter status: active and Summary/Success criteria",
+          "date": "2026-10-30",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Backfill an explicitly current active product goal, not satisfaction or authorization to execute its historical plans.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-5d09d4e2-2cd6-4c62-8d6a-f1070825a172",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "A small set of terrain, geometry, widget, physics, and lighting workflows feel natural",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/world-building.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Make the 3D world editable, usable and playable through interactive terrain, in-world widgets, live geometry, physics and spatial lighting controls."
+    },
+    "REQ-73f67424-c7a6-450b-a8ce-feb67ac00a14": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A safe scenario connects Space pods, libtorrent asset distribution and a wallet-backed workflow; service ownership, practical usefulness and financial policy require further definition before real operations."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-73f67424-c7a6-450b-a8ce-feb67ac00a14",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Space pods, libtorrent asset distribution, wallet-backed practical workflows.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m11-services.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Support user-owned services and distribution through Space pods, libtorrent asset distribution and practical wallet-backed workflows."
+    },
+    "REQ-80869160-7ee8-4062-902d-b90f0d9507aa": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe self-hosted and federated workflows for sync, communication, identity and distribution; ownership/usability evaluation protocol and thresholds remain unspecified."
+        }
+      ],
+      "classification": "goal",
+      "history": [],
+      "id": "REQ-80869160-7ee8-4062-902d-b90f0d9507aa",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "User-Owned Infrastructure",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:README.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Enable user-owned infrastructure with self-hosted and federated sync, communication, identity and software distribution."
     },
     "REQ-8e50a634-76ae-4100-9f60-90e4552ec954": {
       "acceptance_criteria": [
@@ -3199,6 +3710,75 @@
       "revision": 1,
       "statement": "Evolve the existing agentic development system into goal-aware, requirements-driven engineering."
     },
+    "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A bounded scenario places avatars/vehicles and multiple game-like experiences in an editable shared world; experience quality and multiplayer scale require separately defined empirical evaluation."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-b08e4d4b-38c4-4096-874b-a4f46aaaafc2",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Richer world actors (avatars, vehicles), host multiple game-like experiences inside editable worlds.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m10-gameplay.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Support richer world actors including avatars and vehicles and host multiple game-like experiences in editable shared worlds."
+    },
+    "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe the documented engine, widget, media, reload/panel-transfer and activity/stylus/touch workflows; stability and performance thresholds remain unspecified. The source done label is not verification."
+        }
+      ],
+      "classification": "goal",
+      "history": [],
+      "id": "REQ-c8ffc754-34a3-4c0f-aeda-89f7ac7de1e5",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "stable and performant",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/core-platform.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Provide a stable, performant core runtime foundation with C++ rendering/physics/audio/input, composable Fennel widgets/layout, in-world browser/video, reload tooling and interaction surfaces."
+    },
+    "REQ-c9bba90c-9d93-4f7d-a530-f79cb197ae88": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A bounded multi-user scenario exercises Matrix world sharing, yojimbo synchronization and allowed/denied actions under an explicitly documented permission model; policy choices remain unresolved and this record grants no access."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-c9bba90c-9d93-4f7d-a530-f79cb197ae88",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Shared worlds on Matrix, realtime synchronization via yojimbo, shared-world permission model.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m08-matrix-worlds.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Support shared worlds on Matrix with yojimbo realtime synchronization and an explicit shared-world permission model."
+    },
     "REQ-e0275d31-a048-4f5c-850e-40bdb647d812": {
       "acceptance_criteria": [
         {
@@ -3231,6 +3811,62 @@
       "rationale": "Current explicit user contract captured in reviewed design; no historical product inference.",
       "revision": 1,
       "statement": "Document actual APIs, templates, navigation, limitations and all fifteen scenarios plus four real-tool demonstrations with relevant validation."
+    },
+    "REQ-e08c9e47-df7b-4894-9bc6-42e701c5bcb2": {
+      "acceptance_criteria": [
+        {
+          "applicability": "analytical",
+          "id": "c1",
+          "text": "A scenario declares update dependencies and demonstrates generated update functions respect their dependency order; optimization requires separate measurement with an as-yet unspecified baseline/threshold."
+        }
+      ],
+      "classification": "capability",
+      "history": [],
+      "id": "REQ-e08c9e47-df7b-4894-9bc6-42e701c5bcb2",
+      "lifecycle": "proposed",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "Declare update dependencies explicitly and generate optimized update functions from the dependency graph.",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/milestones/m06-compiled-update.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Declare update dependencies explicitly and generate optimized update functions from their dependency graph."
+    },
+    "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461": {
+      "acceptance_criteria": [
+        {
+          "applicability": "empirical",
+          "id": "c1",
+          "text": "Observe saved-conversation graph links to tasks/code/notes, branch/fork workflows and risk-gated provider-agnostic capabilities in actual use; usefulness and clean-interaction measurement thresholds are not specified."
+        }
+      ],
+      "classification": "goal",
+      "history": [
+        {
+          "actor": "implementer/baseline-task-1",
+          "authority": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/project/goals.md#active and fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/agent-tools.md frontmatter status: active and Summary/Success criteria",
+          "date": "2026-10-30",
+          "from_lifecycle": "proposed",
+          "kind": "transition",
+          "reason": "Backfill an explicitly current active product goal, not satisfaction or authorization to execute its historical plans.",
+          "to_lifecycle": "active"
+        }
+      ],
+      "id": "REQ-e7bad2ed-a3b7-40d7-83ef-f4f61d6d2461",
+      "lifecycle": "active",
+      "provenance": {
+        "actor": "implementer/baseline-task-1",
+        "date": "2026-10-30",
+        "excerpt": "MCP tool integration stays provider-agnostic",
+        "origin": "justified_interpretation",
+        "source_reference": "fec176453c88fa1c47f22b7fe1d447dfe0ba281b:docs/dev/features/agent-tools.md"
+      },
+      "rationale": "Grounded top-down baseline backfill from inspected product intent; not inferred from implementation or completion labels. Distinct from existing requirements-methodology obligations. Roadmap work remains proposed; no satisfaction is claimed.",
+      "revision": 1,
+      "statement": "Make agent-powered workflows coherent and useful by exposing saved conversations through the graph, supporting branch/fork interaction and risk-gated provider-agnostic MCP capabilities subordinate to the entity model."
     },
     "REQ-eb1aed20-d61f-419e-97cd-79f35b32aa59": {
       "acceptance_criteria": [
@@ -3266,7 +3902,7 @@
       "statement": "Support typed recursive many-to-many requirement relations without a fixed abstraction ladder or inferred satisfaction."
     }
   },
-  "revision": 29,
+  "revision": 31,
   "schema_version": 1,
   "verifications": [
     {
