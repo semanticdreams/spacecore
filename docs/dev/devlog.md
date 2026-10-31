@@ -1,5 +1,8 @@
 # Devlog
 
+## 2026-10-30
+[Requirements-driven engineering](/dev/features/requirements-driven-engineering) connects intent and provenance to a canonical ledger and typed traces, separating implementation presence from verified outcomes. A [repository-wide baseline](/plans/2026-10-30-repository-requirements-baseline-progress) grounds project obligations while keeping roadmaps proposed and evidence gaps explicit. Alongside this foundation, [agent workflow guidance](/dev/features/opencode-agent-workflow) delegates routine reversible decisions, and [daily devlog automation](/dev/notes/daily-devlog-automation) permits reviewed corrections on the original landing date without weakening permission boundaries or publication gates.
+
 ## 2026-10-29
 [Agent workflow guidance](/dev/features/opencode-agent-workflow) supports autonomous recovery from unusable handoffs while retaining evidence, independent review and task-wide failure accounting; model-neutral role routing pairs configurable models with targeted expert consultation rather than universal advice gates. Enumerated message/part edges and real JSON views make [live session inspection](/dev/features/workflow-backed-agent-sessions) more transparent. [SFTP transfers](/dev/subsystems/ssh#sftp-finalization) report success only after checked local I/O, checked remote-file close and SFTP-session teardown, making completion truthful without promising storage durability.
 
